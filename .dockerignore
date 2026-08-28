@@ -8,6 +8,9 @@ uploads/profile/*
 uploads/projects/*
 !uploads/projects/.gitkeep
 
+runtime/rate-limit/*
+!runtime/rate-limit/.gitkeep
+
 *-result.html
 login-result.txt
 photo-debug.txt

@@ -1,5 +1,10 @@
 <?php
 require_once __DIR__ . '/includes/admin_session.php';
+require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/rate_limit.php';
+
+const LOGIN_RATE_LIMIT_ATTEMPTS = 5;
+const LOGIN_RATE_LIMIT_WINDOW_SECONDS = 300;
 
 startAdminSession();
 
@@ -22,17 +27,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = isset($_POST['password']) && is_string($_POST['password'])
         ? $_POST['password']
         : '';
+    $rateLimitIdentity = rateLimitClientIp() . "\0" . strtolower($username);
 
-    if ($authConfigured && hash_equals($adminUsername, $username) && password_verify($password, $adminPasswordHash)) {
+    try {
+        $rateLimit = consumeRateLimit('login', $rateLimitIdentity, LOGIN_RATE_LIMIT_ATTEMPTS, LOGIN_RATE_LIMIT_WINDOW_SECONDS);
+    } catch (Throwable $exception) {
+        reportApplicationError($exception, 'login.php', 'login_rate_limit');
+        $rateLimit = ['allowed' => true, 'retry_after' => 0];
+    }
+
+    if (!$rateLimit['allowed']) {
+        http_response_code(429);
+        header('Retry-After: ' . $rateLimit['retry_after']);
+        $loginError = 'Please try again later.';
+    } elseif ($authConfigured && hash_equals($adminUsername, $username) && password_verify($password, $adminPasswordHash)) {
+        try {
+            clearRateLimit('login', $rateLimitIdentity);
+        } catch (Throwable $exception) {
+            reportApplicationError($exception, 'login.php', 'login_rate_limit_clear');
+        }
+
         session_regenerate_id(true);
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_username'] = $username;
 
         header('Location: admin.php');
         exit;
+    } else {
+        $loginError = 'Invalid username or password.';
     }
-
-    $loginError = 'Invalid username or password.';
 }
 ?>
 <!DOCTYPE html>
