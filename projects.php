@@ -7,71 +7,11 @@ requireAdminAuthentication();
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/validation.php';
+require_once __DIR__ . '/includes/project_actions.php';
 
 function escapeProjectAdminHtml(string $value): string
 {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-}
-
-function validProjectId($value): ?int
-{
-    if (!is_string($value) || !ctype_digit($value) || (int) $value < 1) {
-        return null;
-    }
-    return (int) $value;
-}
-
-function uploadProjectImage(array $file, array &$errors): ?string
-{
-    if (isset($file['error']) && $file['error'] === UPLOAD_ERR_INI_SIZE) {
-        $errors[] = 'The image must be 2 MB or smaller.';
-        return null;
-    }
-
-    if (!isset($file['error'], $file['tmp_name'], $file['size']) || $file['error'] !== UPLOAD_ERR_OK) {
-        $errors[] = 'The image upload failed.';
-        return null;
-    }
-
-    if ($file['size'] > 2 * 1024 * 1024) {
-        $errors[] = 'The image must be 2 MB or smaller.';
-        return null;
-    }
-
-    $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mimeType = finfo_file($fileInfo, $file['tmp_name']);
-    finfo_close($fileInfo);
-    $extensions = [
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/webp' => 'webp',
-    ];
-    if (!isset($extensions[$mimeType])) {
-        $errors[] = 'Only JPG, PNG, and WEBP images are allowed.';
-        return null;
-    }
-
-    $filename = 'project_' . bin2hex(random_bytes(16)) . '.' . $extensions[$mimeType];
-    $relativePath = 'uploads/projects/' . $filename;
-    $destination = __DIR__ . '/' . $relativePath;
-    if (!move_uploaded_file($file['tmp_name'], $destination)) {
-        $errors[] = 'The image could not be saved.';
-        return null;
-    }
-
-    return $relativePath;
-}
-
-function deleteProjectImage(?string $imagePath): void
-{
-    if ($imagePath !== null && str_starts_with($imagePath, 'uploads/projects/')
-        && basename($imagePath) === substr($imagePath, strlen('uploads/projects/'))) {
-        $file = __DIR__ . '/' . $imagePath;
-        if (is_file($file)) {
-            unlink($file);
-        }
-    }
 }
 
 $projects = [];
@@ -79,98 +19,25 @@ $formErrors = [];
 $pageMessage = '';
 $databaseError = '';
 $formMode = 'add';
-$editingProject = ['id' => '', 'title' => '', 'category' => '', 'description' => '', 'github_url' => '', 'image_path' => null];
+$editingProject = projectFormDefaults();
 
 try {
     $database = getDatabaseConnection();
 
+    $pageMessage = takeProjectSuccessFlash();
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
-        $action = isset($_POST['action']) && is_string($_POST['action']) ? $_POST['action'] : '';
-
-        if ($action === 'delete') {
-            $projectId = validProjectId($_POST['id'] ?? null);
-            if ($projectId === null) {
-                $formErrors[] = 'Please provide a valid project ID.';
-            } else {
-                $find = $database->prepare('SELECT image_path FROM projects WHERE id = :id');
-                $find->execute(['id' => $projectId]);
-                $project = $find->fetch();
-                if ($project === false) {
-                    $formErrors[] = 'Project not found.';
-                } else {
-                    $statement = $database->prepare('DELETE FROM projects WHERE id = :id');
-                    $statement->execute(['id' => $projectId]);
-                    deleteProjectImage($project['image_path']);
-                    $pageMessage = 'Project deleted successfully.';
-                }
-            }
-        } elseif ($action === 'add' || $action === 'update') {
-            $title = isset($_POST['title']) && is_string($_POST['title']) ? trim($_POST['title']) : '';
-            $category = isset($_POST['category']) && is_string($_POST['category']) ? trim($_POST['category']) : '';
-            $description = isset($_POST['description']) && is_string($_POST['description']) ? trim($_POST['description']) : '';
-            $githubUrl = isset($_POST['github_url']) && is_string($_POST['github_url']) ? trim($_POST['github_url']) : '';
-            $formMode = $action === 'update' ? 'edit' : 'add';
-            $editingProject = ['id' => $_POST['id'] ?? '', 'title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'image_path' => null];
-            foreach (['title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl] as $field => $value) {
-                if ($value === '') {
-                    $formErrors[] = ucfirst(str_replace('_', ' ', $field)) . ' is required.';
-                }
-            }
-            if ($githubUrl !== '' && !isSafeHttpUrl($githubUrl)) {
-                $formErrors[] = 'Please enter a valid HTTP or HTTPS URL.';
-            }
-
-            $projectId = $action === 'update' ? validProjectId($_POST['id'] ?? null) : null;
-            $oldImagePath = null;
-            if ($action === 'update' && $projectId === null) {
-                $formErrors[] = 'Please provide a valid project ID.';
-            } elseif ($action === 'update' && $projectId !== null) {
-                $find = $database->prepare('SELECT image_path FROM projects WHERE id = :id');
-                $find->execute(['id' => $projectId]);
-                $existing = $find->fetch();
-                if ($existing === false) {
-                    $formErrors[] = 'Project not found.';
-                } else {
-                    $oldImagePath = $existing['image_path'];
-                    $editingProject['image_path'] = $oldImagePath;
-                }
-            }
-
-            $newImagePath = null;
-            $hasUpload = isset($_FILES['project_image']) && $_FILES['project_image']['error'] !== UPLOAD_ERR_NO_FILE;
-            if ($formErrors === [] && $hasUpload) {
-                $newImagePath = uploadProjectImage($_FILES['project_image'], $formErrors);
-            }
-
-            if ($formErrors === []) {
-                try {
-                    if ($action === 'add') {
-                        $statement = $database->prepare('INSERT INTO projects (title, category, description, github_url, image_path) VALUES (:title, :category, :description, :github_url, :image_path)');
-                        $statement->execute(['title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'image_path' => $newImagePath]);
-                        $pageMessage = 'Project added successfully.';
-                        $editingProject = ['id' => '', 'title' => '', 'category' => '', 'description' => '', 'github_url' => '', 'image_path' => null];
-                    } else {
-                        $removeImage = isset($_POST['remove_image']) && $_POST['remove_image'] === '1';
-                        $imagePath = $newImagePath ?? ($removeImage ? null : $oldImagePath);
-                        $statement = $database->prepare('UPDATE projects SET title = :title, category = :category, description = :description, github_url = :github_url, image_path = :image_path WHERE id = :id');
-                        $statement->execute(['title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'image_path' => $imagePath, 'id' => $projectId]);
-                        if ($newImagePath !== null || $removeImage) {
-                            deleteProjectImage($oldImagePath);
-                        }
-                        $pageMessage = 'Project updated successfully.';
-                    }
-                } catch (PDOException $exception) {
-                    reportApplicationError($exception, 'projects.php', 'project_' . $action);
-                    deleteProjectImage($newImagePath);
-                    $formErrors[] = 'The project could not be saved.';
-                }
-            } elseif ($newImagePath !== null) {
-                deleteProjectImage($newImagePath);
-            }
+        $result = handleProjectAction($database, $_POST, $_FILES);
+        $formErrors = $result['errors'];
+        $formMode = $result['form_mode'];
+        $editingProject = $result['editing_project'];
+        if ($result['redirect'] !== null) {
+            header('Location: ' . $result['redirect']);
+            exit;
         }
     } elseif (isset($_GET['edit'])) {
-        $projectId = validProjectId($_GET['edit']);
+        $projectId = projectActionId($_GET['edit']);
         if ($projectId === null) {
             $formErrors[] = 'Please provide a valid project ID.';
         } else {
