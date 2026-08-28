@@ -7,54 +7,11 @@ requireAdminAuthentication();
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/validation.php';
+require_once __DIR__ . '/includes/profile_actions.php';
 
 function escapePersonalInfoHtml(string $value): string
 {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-}
-
-function uploadProfileImage(array $file, array &$errors): ?string
-{
-    if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || (($file['size'] ?? 0) > 8 * 1024 * 1024)) {
-        $errors[] = 'Profile photo must be 8 MB or smaller.';
-        return null;
-    }
-    if (($file['error'] ?? null) !== UPLOAD_ERR_OK || !isset($file['tmp_name'])) {
-        $errors[] = 'The uploaded image could not be processed.';
-        return null;
-    }
-    $info = finfo_open(FILEINFO_MIME_TYPE);
-    $mime = finfo_file($info, $file['tmp_name']);
-    finfo_close($info);
-    $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png'];
-    $dimensions = @getimagesize($file['tmp_name']);
-    if (!isset($extensions[$mime])) {
-        $errors[] = 'Please upload a JPG or PNG image.';
-        return null;
-    }
-    if ($dimensions === false || $dimensions[0] < 400 || $dimensions[1] < 400) {
-        $errors[] = 'Profile photo must be at least 400 × 400 pixels.';
-        return null;
-    }
-    $filename = 'profile_' . bin2hex(random_bytes(16)) . '.' . $extensions[$mime];
-    $relativePath = 'uploads/profile/' . $filename;
-    if (!move_uploaded_file($file['tmp_name'], __DIR__ . '/' . $relativePath)) {
-        $errors[] = 'The uploaded image could not be processed.';
-        return null;
-    }
-    return $relativePath;
-}
-
-function deleteProfileImage(?string $path): void
-{
-    $prefix = 'uploads/profile/';
-    if ($path !== null && str_starts_with($path, $prefix) && basename($path) === substr($path, strlen($prefix))) {
-        $file = __DIR__ . '/' . $path;
-        if (is_file($file)) {
-            unlink($file);
-        }
-    }
 }
 
 $fields = [
@@ -76,88 +33,12 @@ try {
     $currentImagePath = $current['profile_image_path'] ?? null;
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
-        $action = isset($_POST['action']) && is_string($_POST['action']) ? $_POST['action'] : '';
-        if ($action === 'upload_profile_image') {
-            $newImagePath = uploadProfileImage($_FILES['profile_image'] ?? [], $errors);
-            if ($errors === [] && $current !== false) {
-                $statement = $database->prepare('UPDATE personal_info SET profile_image_path = :path WHERE id = :id');
-                $statement->execute(['path' => $newImagePath, 'id' => $current['id']]);
-                deleteProfileImage($currentImagePath);
-                header('Location: personal_info.php?photo_updated=1');
-                exit;
-            }
-            deleteProfileImage($newImagePath);
-        } elseif ($action === 'save_profile') {
-            foreach ($fields as $field) {
-                $profile[$field] = isset($_POST[$field]) && is_string($_POST[$field]) ? trim($_POST[$field]) : '';
-            }
-            if ($profile['full_name'] === '') {
-                $errors[] = 'Full name is required.';
-            }
-            if ($profile['email'] !== '' && filter_var($profile['email'], FILTER_VALIDATE_EMAIL) === false) {
-                $errors[] = 'Please enter a valid email address.';
-            }
-            foreach (['linkedin_url', 'github_url', 'instagram_url', 'facebook_url', 'website_url'] as $urlField) {
-                if ($profile[$urlField] !== '' && !isSafeHttpUrl($profile[$urlField])) {
-                    $errors[] = 'Please enter valid URLs.';
-                    break;
-                }
-            }
-            if ($errors === []) {
-                $existing = $current;
-                $imagePath = $currentImagePath;
-                $values = array_combine(
-                    array_map(fn ($field) => ':' . $field, $fields),
-                    array_map(fn ($field) => $profile[$field], $fields)
-                );
-                $values[':profile_image_path'] = $imagePath;
-                if ($existing === false) {
-                    $statement = $database->prepare(
-                        'INSERT INTO personal_info (' . implode(', ', $profileFields) . ') VALUES (' . implode(', ', array_keys($values)) . ')'
-                    );
-                } else {
-                    $updates = implode(', ', array_map(fn ($field) => "$field = :$field", $profileFields));
-                    $statement = $database->prepare("UPDATE personal_info SET $updates WHERE id = :id");
-                    $values[':id'] = $existing['id'];
-                }
-                $statement->execute($values);
-                header('Location: personal_info.php?saved=1');
-                exit;
-            }
-        } elseif ($action === 'remove_profile_image') {
-            if ($current !== false && $currentImagePath !== null) {
-                $statement = $database->prepare('UPDATE personal_info SET profile_image_path = NULL WHERE id = :id');
-                $statement->execute(['id' => $current['id']]);
-                deleteProfileImage($currentImagePath);
-            }
-            header('Location: personal_info.php?photo_removed=1');
+        $result = handleProfileAction($database, $_POST, $_FILES, $current, $currentImagePath, $fields, $profile);
+        $errors = $result['errors'];
+        $profile = $result['profile'];
+        if ($result['redirect'] !== null) {
+            header('Location: ' . $result['redirect']);
             exit;
-        } elseif ($action === 'add_skill') {
-            $skill = isset($_POST['skill_name']) && is_string($_POST['skill_name']) ? trim($_POST['skill_name']) : '';
-            if ($skill === '' || strlen($skill) > 100) {
-                $errors[] = 'Skill must be between 1 and 100 characters.';
-            } else {
-                $statement = $database->prepare('SELECT id FROM skills WHERE skill_name = :skill LIMIT 1');
-                $statement->execute(['skill' => $skill]);
-                if ($statement->fetch() !== false) {
-                    $errors[] = 'That skill already exists.';
-                } else {
-                    $statement = $database->prepare('INSERT INTO skills (skill_name) VALUES (:skill)');
-                    $statement->execute(['skill' => $skill]);
-                    header('Location: personal_info.php?skill_added=1');
-                    exit;
-                }
-            }
-        } elseif ($action === 'delete_skill') {
-            $skillId = filter_var($_POST['skill_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-            if ($skillId === false) {
-                $errors[] = 'Please provide a valid skill.';
-            } else {
-                $statement = $database->prepare('DELETE FROM skills WHERE id = :id');
-                $statement->execute(['id' => $skillId]);
-                header('Location: personal_info.php?skill_deleted=1');
-                exit;
-            }
         }
     } else {
         if (isset($_GET['saved'])) $message = 'Personal information saved successfully.';
