@@ -6,6 +6,7 @@ startAdminSession();
 requireAdminAuthentication();
 
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/error_reporting.php';
 
 $projectCount = 0;
 $skillCount = 0;
@@ -25,7 +26,8 @@ try {
         $completedFields = count(array_filter($profileFields, static fn ($field) => !empty($profile[$field])));
         $profileCompletion = (int) round(($completedFields + ($skillCount > 0 ? 1 : 0)) / (count($profileFields) + 1) * 100);
     }
-} catch (PDOException $exception) {
+} catch (PDOException | DatabaseConfigurationException $exception) {
+    reportApplicationError($exception, 'admin.php', 'dashboard_load');
     $dashboardError = 'Some dashboard data is temporarily unavailable.';
 }
 $activePage = 'dashboard';

@@ -1,7 +1,10 @@
 <?php
-session_start();
+require_once __DIR__ . '/includes/session.php';
+require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/classes/Project.php';
+
+startApplicationSession();
 
 // Session data is stored on the server and referenced by the session ID cookie.
 if (!isset($_SESSION['page_views'])) {
@@ -12,7 +15,13 @@ $pageViews = $_SESSION['page_views'];
 
 // This harmless cookie is stored on the visitor's browser to remember a previous visit.
 $hasVisited = isset($_COOKIE['portfolio_visited']);
-setcookie('portfolio_visited', '1', time() + (365 * 24 * 60 * 60), '/');
+setcookie('portfolio_visited', '1', [
+    'expires' => time() + (365 * 24 * 60 * 60),
+    'path' => '/',
+    'secure' => applicationSessionCookieIsSecure(),
+    'httponly' => false,
+    'samesite' => 'Lax',
+]);
 
 $portfolioTitle = 'My Portfolio';
 $major = 'Artificial Intelligence And Data Science';
@@ -62,7 +71,8 @@ try {
         $personalInfo = array_merge($personalInfo, $savedProfile);
     }
     $skills = $database->query('SELECT skill_name FROM skills ORDER BY created_at ASC, id ASC')->fetchAll();
-} catch (PDOException $exception) {
+} catch (PDOException | DatabaseConfigurationException $exception) {
+    reportApplicationError($exception, 'index.php', 'portfolio_load');
     $databaseError = 'Projects are temporarily unavailable.';
 }
 
@@ -123,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 $formSuccess = 'Message submitted successfully.';
             } catch (PDOException $exception) {
+                reportApplicationError($exception, 'index.php', 'contact_submit');
                 $formErrors[] = 'The message could not be saved right now.';
             }
         } else {

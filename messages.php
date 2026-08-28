@@ -6,6 +6,7 @@ startAdminSession();
 requireAdminAuthentication();
 
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/error_reporting.php';
 
 function escapeMessageHtml(string $value): string
 {
@@ -34,7 +35,9 @@ try {
     );
     $messageStatement->execute();
     $messages = $messageStatement->fetchAll();
-} catch (PDOException $exception) {
+} catch (PDOException | DatabaseConfigurationException $exception) {
+    reportApplicationError($exception, 'messages.php', 'messages_load');
+    http_response_code(503);
     $databaseError = 'Messages are temporarily unavailable.';
 }
 ?>

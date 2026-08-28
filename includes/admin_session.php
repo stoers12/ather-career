@@ -1,9 +1,10 @@
 <?php
 
+require_once __DIR__ . '/session.php';
+
 function adminSessionIsSecureRequest(): bool
 {
-    return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (isset($_SERVER['SERVER_PORT']) && (string) $_SERVER['SERVER_PORT'] === '443');
+    return applicationSessionCookieIsSecure();
 }
 
 function startAdminSession(): void
@@ -12,16 +13,7 @@ function startAdminSession(): void
         return;
     }
 
-    ini_set('session.use_strict_mode', '1');
-    session_name('portfolio_admin_session');
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path' => '/',
-        'secure' => adminSessionIsSecureRequest(),
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
-    session_start();
+    startApplicationSession('portfolio_admin_session');
 }
 
 function isAdminAuthenticated(): bool
