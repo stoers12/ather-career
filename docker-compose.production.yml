@@ -1,0 +1,43 @@
+name: portfolio_course_production
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    ports:
+      - "127.0.0.1:8098:80"
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
+    volumes:
+      - portfolio_production_uploads:/var/www/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - portfolio_production_db_data:/var/lib/mysql
+      - ./database/portfolio_db.sql:/docker-entrypoint-initdb.d/01-portfolio.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysqladmin ping -h localhost -u root --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  portfolio_production_db_data:
+  portfolio_production_uploads:
