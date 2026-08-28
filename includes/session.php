@@ -6,7 +6,7 @@ function applicationRequestIsHttps(): bool
         || (isset($_SERVER['SERVER_PORT']) && (string) $_SERVER['SERVER_PORT'] === '443');
 }
 
-function applicationSessionCookieIsSecure(): bool
+function configuredSessionCookieIsSecure(): ?bool
 {
     $configured = getenv('SESSION_COOKIE_SECURE');
     if (is_string($configured) && $configured !== '') {
@@ -17,6 +17,16 @@ function applicationSessionCookieIsSecure(): bool
         if (in_array($normalized, ['0', 'false'], true)) {
             return false;
         }
+    }
+
+    return null;
+}
+
+function applicationSessionCookieIsSecure(): bool
+{
+    $configured = configuredSessionCookieIsSecure();
+    if ($configured !== null) {
+        return $configured;
     }
 
     return applicationRequestIsHttps();

@@ -1,10 +1,13 @@
 FROM php:8.3-apache
 
-RUN docker-php-ext-install pdo pdo_mysql
+RUN docker-php-ext-install pdo pdo_mysql \
+    && a2enmod headers
 
 COPY docker/php/production.ini /usr/local/etc/php/conf.d/portfolio-production.ini
 COPY docker/apache/access-policy.conf /etc/apache2/conf-enabled/zzz-portfolio-access-policy.conf
+COPY docker/apache/security-headers.conf /etc/apache2/conf-enabled/zzz-portfolio-security-headers.conf
 COPY docker/apache/production-vhost.conf /etc/apache2/sites-available/000-default.conf
+COPY docker/production-entrypoint.sh /usr/local/bin/portfolio-production-entrypoint
 
 WORKDIR /var/www/app
 
@@ -14,4 +17,7 @@ RUN mkdir -p /var/www/public/api /var/www/app/uploads/profile /var/www/app/uploa
     && cp -a /var/www/app/public/. /var/www/public/ \
     && cp /var/www/app/style.css /var/www/app/admin.css /var/www/app/script.js /var/www/app/admin.js /var/www/public/ \
     && cp /var/www/app/ChatGPT-Image-Apr-14-2025-065043-PM.png /var/www/public/ \
-    && chown -R www-data:www-data /var/www/app/uploads /var/www/app/runtime
+    && chown -R www-data:www-data /var/www/app/uploads /var/www/app/runtime \
+    && chmod 755 /usr/local/bin/portfolio-production-entrypoint
+
+CMD ["/usr/local/bin/portfolio-production-entrypoint"]
