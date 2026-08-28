@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+
+uploads/profile/*
+!uploads/profile/.gitkeep
+uploads/projects/*
+!uploads/projects/.gitkeep
+
+*-result.html
+login-result.txt
+photo-debug.txt
+*.log
+
+.vscode/
+.DS_Store
+Thumbs.db
