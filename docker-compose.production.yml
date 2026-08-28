@@ -16,8 +16,10 @@ services:
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE}
       ADMIN_USERNAME: ${ADMIN_USERNAME}
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
+      RATE_LIMIT_STATE_DIR: /var/www/app/runtime/rate-limit
     volumes:
       - portfolio_production_uploads:/var/www/app/uploads
+      - portfolio_production_rate_limit:/var/www/app/runtime/rate-limit
     depends_on:
       db:
         condition: service_healthy
@@ -41,3 +43,4 @@ services:
 volumes:
   portfolio_production_db_data:
   portfolio_production_uploads:
+  portfolio_production_rate_limit:

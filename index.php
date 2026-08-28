@@ -1,8 +1,16 @@
 <?php
 require_once __DIR__ . '/includes/session.php';
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/rate_limit.php';
+require_once __DIR__ . '/includes/validation.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/classes/Project.php';
+
+const CONTACT_NAME_MAX_LENGTH = 100;
+const CONTACT_EMAIL_MAX_LENGTH = 255;
+const CONTACT_MESSAGE_MAX_LENGTH = 5000;
+const CONTACT_RATE_LIMIT_ATTEMPTS = 3;
+const CONTACT_RATE_LIMIT_WINDOW_SECONDS = 900;
 
 startApplicationSession();
 
@@ -95,7 +103,10 @@ function displayProjectCard(Project $project): void
 }
 
 $formErrors = [];
-$formSuccess = '';
+$formSuccess = isset($_SESSION['contact_success_flash']) && is_string($_SESSION['contact_success_flash'])
+    ? $_SESSION['contact_success_flash']
+    : '';
+unset($_SESSION['contact_success_flash']);
 $name = '';
 $email = '';
 $message = '';
@@ -107,20 +118,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($name === '') {
         $formErrors[] = 'Name is required.';
+    } elseif (($nameLength = utf8CharacterLength($name)) === null || $nameLength > CONTACT_NAME_MAX_LENGTH) {
+        $formErrors[] = 'Name must be 100 characters or fewer.';
     }
 
     if ($email === '') {
         $formErrors[] = 'Email is required.';
+    } elseif (($emailLength = utf8CharacterLength($email)) === null || $emailLength > CONTACT_EMAIL_MAX_LENGTH) {
+        $formErrors[] = 'Email must be 255 characters or fewer.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $formErrors[] = 'Please enter a valid email address.';
     }
 
     if ($message === '') {
         $formErrors[] = 'Message is required.';
+    } elseif (($messageLength = utf8CharacterLength($message)) === null || $messageLength > CONTACT_MESSAGE_MAX_LENGTH) {
+        $formErrors[] = 'Message must be 5000 characters or fewer.';
     }
 
     if ($formErrors === []) {
-        if ($database instanceof PDO) {
+        try {
+            $rateLimit = consumeRateLimit('contact', rateLimitClientIp(), CONTACT_RATE_LIMIT_ATTEMPTS, CONTACT_RATE_LIMIT_WINDOW_SECONDS);
+        } catch (Throwable $exception) {
+            reportApplicationError($exception, 'index.php', 'contact_rate_limit');
+            http_response_code(503);
+            $formErrors[] = 'Messages are temporarily unavailable. Please try again later.';
+            $rateLimit = null;
+        }
+
+        if ($rateLimit === null) {
+            // The safe error response was set above; do not accept an unthrottled submission.
+        } elseif (!$rateLimit['allowed']) {
+            http_response_code(429);
+            header('Retry-After: ' . $rateLimit['retry_after']);
+            $formErrors[] = 'Please wait before sending another message.';
+        } elseif ($database instanceof PDO) {
             try {
                 $messageStatement = $database->prepare(
                     'INSERT INTO messages (name, email, message)
@@ -131,7 +163,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'email' => $email,
                     'message' => $message,
                 ]);
-                $formSuccess = 'Message submitted successfully.';
+                $_SESSION['contact_success_flash'] = 'Message submitted successfully.';
+                header('Location: index.php#contact', true, 303);
+                exit;
             } catch (PDOException $exception) {
                 reportApplicationError($exception, 'index.php', 'contact_submit');
                 $formErrors[] = 'The message could not be saved right now.';
@@ -200,13 +234,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
                 <label for="name">Name</label>
-                <input type="text" id="name" name="name" value="<?php echo escapeHtml($name); ?>" required autocomplete="name">
+                <input type="text" id="name" name="name" value="<?php echo escapeHtml($name); ?>" maxlength="<?php echo CONTACT_NAME_MAX_LENGTH; ?>" required autocomplete="name">
 
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" value="<?php echo escapeHtml($email); ?>" required autocomplete="email">
+                <input type="email" id="email" name="email" value="<?php echo escapeHtml($email); ?>" maxlength="<?php echo CONTACT_EMAIL_MAX_LENGTH; ?>" required autocomplete="email">
 
                 <label for="message">Message</label>
-                <textarea id="message" name="message" required><?php echo escapeHtml($message); ?></textarea>
+                <textarea id="message" name="message" maxlength="<?php echo CONTACT_MESSAGE_MAX_LENGTH; ?>" required><?php echo escapeHtml($message); ?></textarea>
 
                 <button class="btn btn-primary" type="submit"><span>Send Message</span><span class="button-loading" aria-hidden="true">Sending…</span></button></form>
             <?php endif; ?></div></section>
