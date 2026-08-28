@@ -1,13 +1,9 @@
--- Portfolio database schema for the introductory SQL phase.
--- This script designs the database only; PHP does not connect to it yet.
+-- Fresh-database bootstrap schema. Run this only against an empty selected
+-- database, then run `php database/migrate.php` to record baseline version 001.
+-- Upgrade history lives in database/migrations/; do not use this file to upgrade
+-- a populated database.
 
-CREATE DATABASE IF NOT EXISTS portfolio_db
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-USE portfolio_db;
-
-CREATE TABLE IF NOT EXISTS projects (
+CREATE TABLE projects (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(150) NOT NULL,
     category VARCHAR(100) NOT NULL,
@@ -17,7 +13,7 @@ CREATE TABLE IF NOT EXISTS projects (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS messages (
+CREATE TABLE messages (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -25,7 +21,7 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS personal_info (
+CREATE TABLE personal_info (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(150) NOT NULL,
     professional_title VARCHAR(150) NULL,
@@ -44,7 +40,7 @@ CREATE TABLE IF NOT EXISTS personal_info (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS skills (
+CREATE TABLE skills (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     skill_name VARCHAR(100) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP

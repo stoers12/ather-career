@@ -1,0 +1,5 @@
+-- Immutable adoption marker for the accepted single-owner schema baseline.
+-- The schema itself is defined once in database/portfolio_db.sql for fresh,
+-- empty databases. The migration runner verifies that exact baseline before
+-- recording this version for an existing or freshly bootstrapped database.
+-- Future schema changes must use new ordered migration files (002, 003, ...).
