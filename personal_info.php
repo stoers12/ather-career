@@ -6,6 +6,8 @@ startAdminSession();
 requireAdminAuthentication();
 
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/validation.php';
 
 function escapePersonalInfoHtml(string $value): string
 {
@@ -96,7 +98,7 @@ try {
                 $errors[] = 'Please enter a valid email address.';
             }
             foreach (['linkedin_url', 'github_url', 'instagram_url', 'facebook_url', 'website_url'] as $urlField) {
-                if ($profile[$urlField] !== '' && filter_var($profile[$urlField], FILTER_VALIDATE_URL) === false) {
+                if ($profile[$urlField] !== '' && !isSafeHttpUrl($profile[$urlField])) {
                     $errors[] = 'Please enter valid URLs.';
                     break;
                 }
@@ -172,7 +174,9 @@ try {
     $skills = $database->query('SELECT id, skill_name FROM skills ORDER BY created_at ASC, id ASC')->fetchAll();
     $completionFields = ['full_name', 'professional_title', 'email', 'phone_primary', 'about_me', 'work_description', 'location', 'linkedin_url', 'github_url', 'profile_image_path'];
     $profileCompletion = (int) round((count(array_filter($completionFields, static fn ($field) => !empty($profile[$field]))) + (count($skills) > 0 ? 1 : 0)) / (count($completionFields) + 1) * 100);
-} catch (PDOException $exception) {
+} catch (PDOException | DatabaseConfigurationException $exception) {
+    reportApplicationError($exception, 'personal_info.php', 'profile_request');
+    http_response_code(503);
     $errors[] = 'Personal information is temporarily unavailable.';
     $skills = [];
 }

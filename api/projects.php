@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -16,7 +17,8 @@ try {
         'success' => true,
         'projects' => $projectStatement->fetchAll(),
     ], JSON_UNESCAPED_SLASHES);
-} catch (PDOException $exception) {
+} catch (PDOException | DatabaseConfigurationException $exception) {
+    reportApplicationError($exception, 'api/projects.php', 'projects_list');
     http_response_code(500);
     echo json_encode([
         'success' => false,

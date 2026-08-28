@@ -6,6 +6,8 @@ startAdminSession();
 requireAdminAuthentication();
 
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/validation.php';
 
 function escapeProjectAdminHtml(string $value): string
 {
@@ -18,19 +20,6 @@ function validProjectId($value): ?int
         return null;
     }
     return (int) $value;
-}
-
-function isSafeProjectUrl(string $url): bool
-{
-    if (filter_var($url, FILTER_VALIDATE_URL) === false) {
-        return false;
-    }
-
-    $parts = parse_url($url);
-    return $parts !== false
-        && isset($parts['scheme'], $parts['host'])
-        && in_array(strtolower($parts['scheme']), ['http', 'https'], true)
-        && $parts['host'] !== '';
 }
 
 function uploadProjectImage(array $file, array &$errors): ?string
@@ -128,7 +117,7 @@ try {
                     $formErrors[] = ucfirst(str_replace('_', ' ', $field)) . ' is required.';
                 }
             }
-            if ($githubUrl !== '' && !isSafeProjectUrl($githubUrl)) {
+            if ($githubUrl !== '' && !isSafeHttpUrl($githubUrl)) {
                 $formErrors[] = 'Please enter a valid HTTP or HTTPS URL.';
             }
 
@@ -172,6 +161,7 @@ try {
                         $pageMessage = 'Project updated successfully.';
                     }
                 } catch (PDOException $exception) {
+                    reportApplicationError($exception, 'projects.php', 'project_' . $action);
                     deleteProjectImage($newImagePath);
                     $formErrors[] = 'The project could not be saved.';
                 }
@@ -199,7 +189,9 @@ try {
     $statement = $database->prepare('SELECT id, title, category, description, github_url, image_path FROM projects ORDER BY created_at ASC, id ASC');
     $statement->execute();
     $projects = $statement->fetchAll();
-} catch (PDOException $exception) {
+} catch (PDOException | DatabaseConfigurationException $exception) {
+    reportApplicationError($exception, 'projects.php', 'project_request');
+    http_response_code(503);
     $databaseError = 'Project management is temporarily unavailable.';
 }
 
