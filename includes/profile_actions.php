@@ -95,6 +95,12 @@ function handleProfileAction(PDO $database, array $post, array $files, $current,
             if ($profile['full_name'] === '') {
                 $errors[] = 'Full name is required.';
             }
+            foreach (PERSONAL_INFO_FIELD_MAX_LENGTHS as $field => $maximum) {
+                $error = utf8FieldLengthError($profile[$field], $maximum, ucwords(str_replace('_', ' ', $field)));
+                if ($error !== null) {
+                    $errors[] = $error;
+                }
+            }
             if ($profile['email'] !== '' && filter_var($profile['email'], FILTER_VALIDATE_EMAIL) === false) {
                 $errors[] = 'Please enter a valid email address.';
             }
@@ -122,6 +128,13 @@ function handleProfileAction(PDO $database, array $post, array $files, $current,
                 $values[':id'] = $current['id'];
             }
             $statement->execute($values);
+            if ($current !== false && $statement->rowCount() === 0) {
+                $verify = $database->prepare('SELECT id FROM personal_info WHERE id = :id');
+                $verify->execute(['id' => $current['id']]);
+                if ($verify->fetch() === false) {
+                    return profileActionResult(['Your personal information could not be saved. Please reload and try again.'], $profile);
+                }
+            }
             return profileActionResult([], $profile, 'personal_info.php?saved=1');
         }
 
@@ -142,7 +155,8 @@ function handleProfileAction(PDO $database, array $post, array $files, $current,
 
         if ($action === 'add_skill') {
             $skill = isset($post['skill_name']) && is_string($post['skill_name']) ? trim($post['skill_name']) : '';
-            if ($skill === '' || strlen($skill) > 100) {
+            $skillLength = utf8CharacterLength($skill);
+            if ($skill === '' || $skillLength === null || $skillLength > SKILL_NAME_MAX_LENGTH) {
                 return profileActionResult(['Skill must be between 1 and 100 characters.'], $profile);
             }
 
