@@ -11,6 +11,8 @@ uploads/projects/*
 runtime/rate-limit/*
 !runtime/rate-limit/.gitkeep
 
+backups/
+
 *-result.html
 login-result.txt
 photo-debug.txt

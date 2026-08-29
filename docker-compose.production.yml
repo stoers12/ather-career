@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.production
+      args:
+        APP_VERSION: ${APP_VERSION:-unknown}
+    restart: unless-stopped
     ports:
       - "127.0.0.1:8098:80"
     environment:
@@ -23,9 +26,21 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php -r '$$body = @file_get_contents(\"http://127.0.0.1/health.php\"); exit($$body === \"OK\\n\" ? 0 : 1);'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
     image: mysql:8.4
+    restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
@@ -39,6 +54,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   portfolio_production_db_data:
