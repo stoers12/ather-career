@@ -55,6 +55,7 @@ $personalInfo = [
 $skills = [];
 $databaseError = '';
 $database = null;
+$databaseException = null;
 
 try {
     $database = getDatabaseConnection();
@@ -81,6 +82,7 @@ try {
     $skills = $database->query('SELECT skill_name FROM skills ORDER BY created_at ASC, id ASC')->fetchAll();
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'index.php', 'portfolio_load');
+    $databaseException = $exception;
     $databaseError = 'Projects are temporarily unavailable.';
 }
 
@@ -168,9 +170,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             } catch (PDOException $exception) {
                 reportApplicationError($exception, 'index.php', 'contact_submit');
+                http_response_code(503);
                 $formErrors[] = 'The message could not be saved right now.';
             }
         } else {
+            if ($databaseException instanceof Throwable) {
+                reportApplicationError($databaseException, 'index.php', 'contact_submit_unavailable');
+            }
+            http_response_code(503);
             $formErrors[] = 'The message could not be saved right now.';
         }
     }

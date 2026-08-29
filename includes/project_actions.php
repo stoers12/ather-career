@@ -5,6 +5,7 @@ require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/validation.php';
 
 const PROJECT_IMAGE_PREFIX = 'uploads/projects/';
+const PROJECT_ID_MAXIMUM = '4294967295';
 
 function projectFormDefaults(): array
 {
@@ -13,7 +14,15 @@ function projectFormDefaults(): array
 
 function projectActionId($value): ?int
 {
-    if (!is_string($value) || !ctype_digit($value) || (int) $value < 1) {
+    if (!is_string($value) || !ctype_digit($value) || $value === '' || strlen($value) > strlen(PROJECT_ID_MAXIMUM)) {
+        return null;
+    }
+
+    if (trim($value, '0') === '') {
+        return null;
+    }
+
+    if (strlen($value) === strlen(PROJECT_ID_MAXIMUM) && strcmp($value, PROJECT_ID_MAXIMUM) > 0) {
         return null;
     }
 
@@ -140,6 +149,16 @@ function handleProjectAction(PDO $database, array $post, array $files): array
         foreach (['title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl] as $field => $value) {
             if ($value === '') {
                 $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' is required.';
+            }
+        }
+        foreach ([
+            [$title, PROJECT_TITLE_MAX_LENGTH, 'Title'],
+            [$category, PROJECT_CATEGORY_MAX_LENGTH, 'Category'],
+            [$githubUrl, PROJECT_GITHUB_URL_MAX_LENGTH, 'GitHub URL'],
+        ] as [$value, $maximum, $label]) {
+            $error = utf8FieldLengthError($value, $maximum, $label);
+            if ($error !== null) {
+                $errors[] = $error;
             }
         }
         if ($githubUrl !== '' && !isSafeHttpUrl($githubUrl)) {
