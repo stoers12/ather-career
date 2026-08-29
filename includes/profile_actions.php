@@ -6,6 +6,15 @@ require_once __DIR__ . '/validation.php';
 
 const PROFILE_IMAGE_PREFIX = 'uploads/profile/';
 
+function isMySqlDuplicateKeyViolation(PDOException $exception): bool
+{
+    $driverCode = $exception->errorInfo[1] ?? null;
+
+    return safePdoErrorCode($exception) === '23000'
+        && (is_int($driverCode) || ctype_digit((string) $driverCode))
+        && (int) $driverCode === 1062;
+}
+
 function storeValidatedProfileImage(array $file, array &$errors): ?string
 {
     if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || (($file['size'] ?? 0) > 8 * 1024 * 1024)) {
@@ -188,6 +197,13 @@ function handleProfileAction(PDO $database, array $post, array $files, $current,
 
         return profileActionResult([], $profile);
     } catch (PDOException $exception) {
+        if ($action === 'add_skill' && isMySqlDuplicateKeyViolation($exception)) {
+            return profileActionResult(['That skill already exists.'], $profile);
+        }
+        if ($action === 'save_profile' && $current === false && isMySqlDuplicateKeyViolation($exception)) {
+            return profileActionResult(['Profile was initialized by another request. Please reload and try again.'], $profile);
+        }
+
         reportApplicationError($exception, 'personal_info.php', 'profile_' . ($action === '' ? 'unknown' : $action));
         if (isset($newImagePath)) {
             cleanProfileImage($newImagePath, 'profile_database_compensation');

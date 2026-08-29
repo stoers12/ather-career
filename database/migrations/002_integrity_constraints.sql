@@ -1,0 +1,9 @@
+-- Migration 002 is deliberately executed by the narrowly scoped guarded path
+-- in database/migrate.php. MySQL 8.4 does not support IF NOT EXISTS for the
+-- required CREATE UNIQUE INDEX / ALTER TABLE forms; the runner therefore
+-- validates dirty-data preconditions and recognizes an exact prior partial
+-- application before issuing the two invariant DDL operations.
+--
+-- It enforces:
+--   skills.uq_skills_skill_name (skill_name)
+--   personal_info.singleton_guard GENERATED ALWAYS AS (1), unique

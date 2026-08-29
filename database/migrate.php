@@ -9,6 +9,10 @@ if (PHP_SAPI !== 'cli') {
 
 require_once __DIR__ . '/../config/database.php';
 
+class MigrationPreconditionException extends RuntimeException
+{
+}
+
 const MIGRATION_LOCK_NAME = 'ather_career_schema_migrations';
 const MIGRATION_LOCK_TIMEOUT_SECONDS = 5;
 const BASELINE_MIGRATION_VERSION = '001';
@@ -236,8 +240,102 @@ function recordMigration(PDO $database, array $migration): void
     $statement->execute(['version' => $migration['version'], 'name' => $migration['name']]);
 }
 
+function fetchIndexDefinition(PDO $database, string $table, string $index): array
+{
+    $statement = $database->prepare(
+        'SELECT column_name AS column_name, non_unique AS non_unique
+         FROM information_schema.statistics
+         WHERE table_schema = DATABASE() AND table_name = :table AND index_name = :index
+         ORDER BY seq_in_index'
+    );
+    $statement->execute(['table' => $table, 'index' => $index]);
+
+    return $statement->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function hasExpectedUniqueIndex(PDO $database, string $table, string $index, string $column): bool
+{
+    $definition = fetchIndexDefinition($database, $table, $index);
+    if ($definition === []) {
+        return false;
+    }
+
+    if (count($definition) !== 1 || $definition[0]['column_name'] !== $column || (string) $definition[0]['non_unique'] !== '0') {
+        throw new RuntimeException("Migration 002 found an unexpected {$table}.{$index} definition.");
+    }
+
+    return true;
+}
+
+function hasExpectedSingletonGuard(PDO $database): bool
+{
+    $statement = $database->query(
+        "SELECT generation_expression
+         FROM information_schema.columns
+         WHERE table_schema = DATABASE() AND table_name = 'personal_info' AND column_name = 'singleton_guard'"
+    );
+    $expression = $statement->fetchColumn();
+    if ($expression === false) {
+        return false;
+    }
+
+    if (trim((string) $expression) !== '1') {
+        throw new RuntimeException('Migration 002 found an unexpected personal_info.singleton_guard definition.');
+    }
+
+    return true;
+}
+
+function verifyIntegrityConstraintPreconditions(PDO $database): void
+{
+    if ((int) $database->query('SELECT COUNT(*) FROM personal_info')->fetchColumn() > 1) {
+        throw new MigrationPreconditionException('Migration 002 requires at most one personal_info row.');
+    }
+
+    $duplicate = $database->query(
+        'SELECT skill_name
+         FROM skills
+         GROUP BY skill_name
+         HAVING COUNT(*) > 1
+         LIMIT 1'
+    )->fetchColumn();
+    if ($duplicate !== false) {
+        throw new MigrationPreconditionException('Migration 002 requires unique skills under the current database collation.');
+    }
+}
+
+function executeIntegrityConstraintsMigration(PDO $database): void
+{
+    verifyIntegrityConstraintPreconditions($database);
+
+    if (!hasExpectedUniqueIndex($database, 'skills', 'uq_skills_skill_name', 'skill_name')) {
+        $database->exec('CREATE UNIQUE INDEX uq_skills_skill_name ON skills (skill_name)');
+    }
+
+    $hasGuard = hasExpectedSingletonGuard($database);
+    $hasSingletonIndex = hasExpectedUniqueIndex($database, 'personal_info', 'uq_personal_info_singleton_guard', 'singleton_guard');
+    if (!$hasGuard && !$hasSingletonIndex) {
+        // This is one atomic MySQL DDL operation: a failed uniqueness check leaves neither change applied.
+        $database->exec(
+            'ALTER TABLE personal_info
+             ADD COLUMN singleton_guard TINYINT GENERATED ALWAYS AS (1) STORED,
+             ADD UNIQUE INDEX uq_personal_info_singleton_guard (singleton_guard)'
+        );
+        return;
+    }
+
+    if (!$hasGuard || !$hasSingletonIndex) {
+        throw new RuntimeException('Migration 002 found a partial personal_info singleton constraint. Manual inspection is required.');
+    }
+}
+
 function executeSqlMigration(PDO $database, array $migration): void
 {
+    if ($migration['version'] === '002' && $migration['name'] === 'integrity_constraints') {
+        executeIntegrityConstraintsMigration($database);
+        return;
+    }
+
     $sql = file_get_contents($migration['path']);
     if ($sql === false || trim($sql) === '') {
         throw new RuntimeException('Migration SQL is empty or unreadable.');
@@ -304,9 +402,12 @@ function runMigrations(): void
         if ($pending === 0) {
             fwrite(STDOUT, "No pending migrations.\n");
         }
-    } catch (Throwable) {
+    } catch (Throwable $exception) {
         if ($currentVersion !== null) {
             fwrite(STDERR, "Migration {$currentVersion} failed. Manual inspection may be required.\n");
+        }
+        if ($exception instanceof MigrationPreconditionException) {
+            fwrite(STDERR, $exception->getMessage() . "\n");
         }
         fwrite(STDERR, "Migration runner stopped without applying later migrations.\n");
         exit(1);
