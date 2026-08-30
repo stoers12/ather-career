@@ -34,3 +34,7 @@ body:has(.admin-layout){margin:0;background:var(--admin-bg);color:var(--admin-te
 @media (max-width:799px){.admin-page-header-actions{width:100%;align-items:stretch;flex-direction:column}.admin-page-header-actions :is(button,a){width:100%}}
 @media (max-width:600px){.quick-actions-grid{grid-template-columns:1fr}}
 .sidebar-logout-form{margin:0}.sidebar-footer .sidebar-logout-button{display:flex;align-items:center;gap:10px;width:100%;margin:0;padding:10px;border:0;border-radius:9px;background:transparent;color:#fca5a5;font:inherit;text-align:left;cursor:pointer}.sidebar-footer .sidebar-logout-button:hover{background:var(--admin-sidebar-hover);color:#fca5a5}.sidebar-footer .sidebar-logout-button .nav-icon{display:inline-flex;width:18px;height:18px;flex:0 0 18px}.sidebar-footer .sidebar-logout-button svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8}
+/* Stage 7 release-quality accessibility and dynamic-content safeguards. */
+.admin-skip-link:focus{top:12px}
+.admin-layout .admin-content :is(a,button,input,textarea,select,[tabindex]):focus-visible,.admin-layout .admin-sidebar :is(a,button):focus-visible,.login-section :is(a,button,input):focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 5px #1d4ed8}
+.admin-page-title,.admin-page-description,.profile-summary strong,.profile-summary span,.skill-row>span,.admin-project-grid h3,.admin-project-grid p,.message-card h2,.message-card p,.message-email a{overflow-wrap:anywhere}

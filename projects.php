@@ -8,6 +8,7 @@ requireAdminAuthentication();
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/includes/project_actions.php';
+require_once __DIR__ . '/includes/presentation.php';
 
 function escapeProjectAdminHtml(string $value): string
 {
@@ -70,15 +71,16 @@ $showProjectForm = $formMode === 'edit' || $formErrors !== [] || isset($_GET['ad
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
     <title>Projects - My Portfolio</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="admin.css">
-    <script src="admin.js" defer></script>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('style.css'); ?>">
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('admin.css'); ?>">
+    <script src="<?php echo versionedAssetUrl('admin.js'); ?>" defer></script>
 </head>
 <body>
 <div class="admin-layout">
     <?php require __DIR__ . '/includes/admin_sidebar.php'; ?>
-    <main class="admin-content">
+    <main class="admin-content" id="main-content">
         <section>
             <div class="admin-page-header">
                 <div class="admin-page-header-copy">
@@ -101,10 +103,10 @@ $showProjectForm = $formMode === 'edit' || $formErrors !== [] || isset($_GET['ad
                     <input type="hidden" name="csrf_token" value="<?php echo escapeProjectAdminHtml(getCsrfToken()); ?>">
                     <?php if ($formMode === 'edit'): ?><input type="hidden" name="id" value="<?php echo (int) $editingProject['id']; ?>"><?php endif; ?>
                     <div class="form-grid">
-                        <label class="form-field" for="title"><span>Title</span><input type="text" id="title" name="title" value="<?php echo escapeProjectAdminHtml((string) $editingProject['title']); ?>" required></label>
-                        <label class="form-field" for="category"><span>Category</span><input type="text" id="category" name="category" value="<?php echo escapeProjectAdminHtml((string) $editingProject['category']); ?>" required></label>
+                        <label class="form-field" for="title"><span>Title</span><input type="text" id="title" name="title" value="<?php echo escapeProjectAdminHtml((string) $editingProject['title']); ?>" maxlength="<?php echo PROJECT_TITLE_MAX_LENGTH; ?>" required></label>
+                        <label class="form-field" for="category"><span>Category</span><input type="text" id="category" name="category" value="<?php echo escapeProjectAdminHtml((string) $editingProject['category']); ?>" maxlength="<?php echo PROJECT_CATEGORY_MAX_LENGTH; ?>" required></label>
                         <label class="form-field form-field-full" for="description"><span>Description</span><textarea id="description" name="description" required><?php echo escapeProjectAdminHtml((string) $editingProject['description']); ?></textarea></label>
-                        <label class="form-field form-field-full" for="github_url"><span>GitHub URL</span><input type="url" id="github_url" name="github_url" value="<?php echo escapeProjectAdminHtml((string) $editingProject['github_url']); ?>" required></label>
+                        <label class="form-field form-field-full" for="github_url"><span>GitHub URL</span><input type="url" id="github_url" name="github_url" value="<?php echo escapeProjectAdminHtml((string) $editingProject['github_url']); ?>" maxlength="<?php echo PROJECT_GITHUB_URL_MAX_LENGTH; ?>" required></label>
                         <div class="form-field form-field-full">
                             <span class="field-label">Project Image <em>(optional)</em></span>
                             <input class="visually-hidden" type="file" id="project_image" name="project_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-project-image-input aria-describedby="project-image-help project-image-status">

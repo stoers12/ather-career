@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/admin_session.php';
 require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/includes/rate_limit.php';
+require_once __DIR__ . '/includes/presentation.php';
 
 const LOGIN_RATE_LIMIT_ATTEMPTS = 5;
 const LOGIN_RATE_LIMIT_WINDOW_SECONDS = 300;
@@ -63,10 +64,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
     <title>Admin Login - My Portfolio</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="admin.css">
-    <script src="admin.js" defer></script>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('style.css'); ?>">
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('admin.css'); ?>">
+    <script src="<?php echo versionedAssetUrl('admin.js'); ?>" defer></script>
 </head>
 <body>
     <main>
