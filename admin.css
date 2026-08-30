@@ -38,3 +38,5 @@ body:has(.admin-layout){margin:0;background:var(--admin-bg);color:var(--admin-te
 .admin-skip-link:focus{top:12px}
 .admin-layout .admin-content :is(a,button,input,textarea,select,[tabindex]):focus-visible,.admin-layout .admin-sidebar :is(a,button):focus-visible,.login-section :is(a,button,input):focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 5px #1d4ed8}
 .admin-page-title,.admin-page-description,.profile-summary strong,.profile-summary span,.skill-row>span,.admin-project-grid h3,.admin-project-grid p,.message-card h2,.message-card p,.message-email a{overflow-wrap:anywhere}
+.login-card label{display:block}
+.login-card input:not([type="hidden"]){display:block;box-sizing:border-box;width:100%}
