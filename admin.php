@@ -7,6 +7,7 @@ requireAdminAuthentication();
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/presentation.php';
 
 $projectCount = 0;
 $skillCount = 0;
@@ -37,15 +38,16 @@ $activePage = 'dashboard';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
     <title>Admin Dashboard - My Portfolio</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="admin.css">
-    <script src="admin.js" defer></script>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('style.css'); ?>">
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('admin.css'); ?>">
+    <script src="<?php echo versionedAssetUrl('admin.js'); ?>" defer></script>
 </head>
 <body>
     <div class="admin-layout">
         <?php require __DIR__ . '/includes/admin_sidebar.php'; ?>
-        <main class="admin-content">
+        <main class="admin-content" id="main-content">
             <section>
                 <div class="admin-page-header">
                     <div class="admin-page-header-copy">

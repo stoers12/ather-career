@@ -40,7 +40,7 @@
     }
 
     var loadButton = document.getElementById('load-projects');
-    var projectContainer = document.getElementById('json-projects');
+    var projectContainer = document.getElementById('project-grid');
     var jsonStatus = document.getElementById('json-status');
     if (loadButton && projectContainer) {
         function loadProjects() {
@@ -66,9 +66,12 @@
                                 image.src = project.image_path;
                                 image.alt = project.title || 'Project image';
                                 image.className = 'project-image';
+                                image.loading = 'lazy';
+                                image.decoding = 'async';
                                 article.appendChild(image);
                             }
                             var badge = document.createElement('span');
+                            article.dir = 'auto';
                             badge.className = 'badge';
                             badge.textContent = project.category || 'Project';
                             article.appendChild(badge);

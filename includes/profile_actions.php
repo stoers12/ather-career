@@ -3,8 +3,7 @@
 require_once __DIR__ . '/error_reporting.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/validation.php';
-
-const PROFILE_IMAGE_PREFIX = 'uploads/profile/';
+require_once __DIR__ . '/profile_presentation.php';
 
 function isMySqlDuplicateKeyViolation(PDOException $exception): bool
 {
@@ -44,6 +43,8 @@ function storeValidatedProfileImage(array $file, array &$errors): ?string
     $relativePath = storeManagedUpload($file, PROFILE_IMAGE_PREFIX, $filename);
     if ($relativePath === null) {
         $errors[] = 'The uploaded image could not be processed.';
+    } else {
+        generateProfilePresentationImage($relativePath);
     }
 
     return $relativePath;
@@ -60,6 +61,9 @@ function cleanProfileImage(?string $imagePath, string $action): void
         return;
     }
 
+    if (!deleteProfilePresentationImage($imagePath)) {
+        reportApplicationError(new RuntimeException('Profile presentation cleanup failed.'), 'personal_info.php', $action . '_presentation_cleanup_failed');
+    }
     if (!deleteManagedFile($imagePath, PROFILE_IMAGE_PREFIX)) {
         reportApplicationError(new RuntimeException('Profile image cleanup failed.'), 'personal_info.php', $action . '_cleanup_failed');
     }

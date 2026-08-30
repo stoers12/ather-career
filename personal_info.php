@@ -8,6 +8,7 @@ requireAdminAuthentication();
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/includes/profile_actions.php';
+require_once __DIR__ . '/includes/presentation.php';
 
 function escapePersonalInfoHtml(string $value): string
 {
@@ -67,15 +68,16 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
     <title>Personal Info - My Portfolio</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="admin.css">
-    <script src="admin.js" defer></script>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('style.css'); ?>">
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('admin.css'); ?>">
+    <script src="<?php echo versionedAssetUrl('admin.js'); ?>" defer></script>
 </head>
 <body>
 <div class="admin-layout">
     <?php require __DIR__ . '/includes/admin_sidebar.php'; ?>
-    <main class="admin-content">
+    <main class="admin-content" id="main-content">
         <section>
             <div class="admin-page-header">
                 <div class="admin-page-header-copy">
@@ -94,7 +96,7 @@ try {
                     <?php if (!empty($profile['profile_image_path'])): ?>
                         <img src="<?php echo escapePersonalInfoHtml($profile['profile_image_path']); ?>" alt="<?php echo escapePersonalInfoHtml($profile['full_name']); ?>">
                     <?php else: ?>
-                        <?php echo escapePersonalInfoHtml(strtoupper(substr($profile['full_name'] ?: 'P', 0, 1))); ?>
+                        <?php echo escapePersonalInfoHtml(profileInitials($profile['full_name'] ?: 'P')); ?>
                     <?php endif; ?>
                 </div>
                 <div><strong><?php echo escapePersonalInfoHtml($profile['full_name'] ?: 'Your name'); ?></strong><span><?php echo escapePersonalInfoHtml($profile['professional_title'] ?: 'Add a professional title'); ?></span></div>
@@ -105,7 +107,7 @@ try {
                     <?php if (!empty($profile['profile_image_path'])): ?>
                         <img id="profile-photo-preview" data-saved-src="<?php echo escapePersonalInfoHtml($profile['profile_image_path']); ?>" src="<?php echo escapePersonalInfoHtml($profile['profile_image_path']); ?>" alt="<?php echo escapePersonalInfoHtml($profile['full_name']); ?>">
                     <?php else: ?>
-                        <?php $photoInitials = strtoupper(substr($profile['full_name'], 0, 1) . (strrpos($profile['full_name'], ' ') !== false ? substr($profile['full_name'], strrpos($profile['full_name'], ' ') + 1, 1) : '')); ?>
+                        <?php $photoInitials = profileInitials($profile['full_name']); ?>
                         <span data-profile-initials><?php echo escapePersonalInfoHtml($photoInitials); ?></span><img id="profile-photo-preview" alt="" hidden>
                     <?php endif; ?>
                 </div>
@@ -130,14 +132,14 @@ try {
                         'email' => 'Email', 'phone_primary' => 'Primary Phone',
                         'phone_secondary' => 'Secondary Phone', 'location' => 'Location',
                     ] as $field => $label): ?>
-                        <label class="form-field" for="<?php echo $field; ?>"><span><?php echo $label; ?></span><input type="<?php echo $field === 'email' ? 'email' : 'text'; ?>" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo escapePersonalInfoHtml($profile[$field]); ?>" <?php echo $field === 'full_name' ? 'required' : ''; ?>></label>
+                        <label class="form-field" for="<?php echo $field; ?>"><span><?php echo $label; ?></span><input type="<?php echo $field === 'email' ? 'email' : 'text'; ?>" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo escapePersonalInfoHtml($profile[$field]); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS[$field]; ?>" <?php echo $field === 'full_name' ? 'required' : ''; ?>></label>
                     <?php endforeach; ?>
                     <h2 class="form-section-title">About Me</h2>
                     <label class="form-field form-field-full" for="about_me"><span>About Me</span><textarea id="about_me" name="about_me"><?php echo escapePersonalInfoHtml($profile['about_me']); ?></textarea></label>
                     <label class="form-field form-field-full" for="work_description"><span>Work / Professional Description</span><textarea id="work_description" name="work_description"><?php echo escapePersonalInfoHtml($profile['work_description']); ?></textarea></label>
                     <h2 class="form-section-title">Social Accounts</h2>
                     <?php foreach (['linkedin_url' => 'LinkedIn URL', 'github_url' => 'GitHub URL', 'instagram_url' => 'Instagram URL', 'facebook_url' => 'Facebook URL', 'website_url' => 'Personal Website URL'] as $field => $label): ?>
-                        <label class="form-field" for="<?php echo $field; ?>"><span><?php echo $label; ?></span><input type="url" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo escapePersonalInfoHtml($profile[$field]); ?>"></label>
+                        <label class="form-field" for="<?php echo $field; ?>"><span><?php echo $label; ?></span><input type="url" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo escapePersonalInfoHtml($profile[$field]); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS[$field]; ?>"></label>
                     <?php endforeach; ?>
                 </div>
                 <div class="form-actions"><span class="form-hint">Changes are saved to your public profile.</span><button class="button-primary" type="submit">Save Changes</button></div>
@@ -146,19 +148,19 @@ try {
             <?php if ($skills === []): ?><div class="empty-state admin-empty"><strong>No skills added yet</strong><span>Add your first skill to help visitors understand your strengths.</span></div><?php endif; ?>
             <div class="skills-chips"><?php foreach ($skills as $skill): ?>
                 <div class="skill-row" data-skill-name="<?php echo escapePersonalInfoHtml($skill['skill_name']); ?>">
-                    <span><?php echo escapePersonalInfoHtml($skill['skill_name']); ?></span>
-                    <form method="POST" action="personal_info.php">
+                    <span dir="auto"><?php echo escapePersonalInfoHtml($skill['skill_name']); ?></span>
+                    <form method="POST" action="personal_info.php" data-confirm="Remove this skill?" data-confirm-title="Remove skill?" data-confirm-action="Remove">
                         <input type="hidden" name="action" value="delete_skill">
                         <input type="hidden" name="csrf_token" value="<?php echo escapePersonalInfoHtml(getCsrfToken()); ?>">
                         <input type="hidden" name="skill_id" value="<?php echo (int) $skill['id']; ?>">
-                        <button type="submit" class="button-danger" data-confirm="Remove this skill?">Remove</button>
+                        <button type="submit" class="button-danger">Remove</button>
                     </form>
                 </div>
             <?php endforeach; ?></div>
             <form class="skill-add-form" method="POST" action="personal_info.php">
                 <input type="hidden" name="action" value="add_skill">
                 <input type="hidden" name="csrf_token" value="<?php echo escapePersonalInfoHtml(getCsrfToken()); ?>">
-                <label class="form-field" for="skill_name"><span>Skill Name</span><input type="text" id="skill_name" name="skill_name" maxlength="100" required><span id="skill-feedback" class="field-feedback" aria-live="polite"></span></label>
+                <label class="form-field" for="skill_name"><span>Skill Name</span><input type="text" id="skill_name" name="skill_name" maxlength="<?php echo SKILL_NAME_MAX_LENGTH; ?>" required><span id="skill-feedback" class="field-feedback" aria-live="polite"></span></label>
                 <button class="button-primary" type="submit">Add Skill</button>
             </form>
         </section>

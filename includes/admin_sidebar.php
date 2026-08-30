@@ -1,3 +1,4 @@
+<a class="skip-link admin-skip-link" href="#main-content">Skip to main content</a>
 <aside class="admin-sidebar">
     <a class="admin-brand" href="admin.php"><span class="brand-mark">P</span><span>Portfolio Admin</span></a>
     <nav aria-label="Admin navigation">
