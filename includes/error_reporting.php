@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/security_events.php';
+
 function safeErrorContext(string $value): string
 {
     $sanitized = preg_replace('/[^A-Za-z0-9_.:\/-]/', '_', $value);

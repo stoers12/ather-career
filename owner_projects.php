@@ -10,6 +10,7 @@ require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/owner_actions.php';
 require_once __DIR__ . '/includes/portfolio_scoped_data.php';
 require_once __DIR__ . '/includes/owner_layout.php';
+require_once __DIR__ . '/includes/operational_security.php';
 
 startOwnerSession();
 
@@ -27,13 +28,34 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
-        $result = handleAuthorizedProjectAction($database, $context, $_POST, $_FILES);
-        $formErrors = $result['errors'];
-        $formMode = $result['form_mode'];
-        $editingProject = $result['editing_project'];
-        if ($result['redirect'] !== null) {
-            header('Location: ' . $result['redirect'], true, 303);
-            exit;
+        $mayMutate = true;
+        $hasUpload = isset($_FILES['project_image']) && (($_FILES['project_image']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE);
+        if ($hasUpload) {
+            try {
+                $limit = consumeOwnerUploadRateLimit($context);
+                if (!$limit['allowed']) {
+                    reportRateLimitDenial('owner_upload', $context);
+                    http_response_code(429);
+                    header('Retry-After: ' . $limit['retry_after']);
+                    $formErrors[] = 'Please wait before uploading another image.';
+                    $mayMutate = false;
+                }
+            } catch (Throwable $exception) {
+                reportApplicationError($exception, 'owner_projects.php', 'owner_upload_rate_limit');
+                http_response_code(503);
+                $formErrors[] = 'Image uploads are temporarily unavailable.';
+                $mayMutate = false;
+            }
+        }
+        if ($mayMutate) {
+            $result = handleAuthorizedProjectAction($database, $context, $_POST, $_FILES);
+            $formErrors = $result['errors'];
+            $formMode = $result['form_mode'];
+            $editingProject = $result['editing_project'];
+            if ($result['redirect'] !== null) {
+                header('Location: ' . $result['redirect'], true, 303);
+                exit;
+            }
         }
     } elseif (isset($_GET['edit'])) {
         $projectId = ownerActionId($_GET['edit']);

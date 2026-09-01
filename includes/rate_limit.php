@@ -56,7 +56,7 @@ function rateLimitStateFromJson(string $contents): array
         || !is_int($state['attempts'])
         || $state['window_started'] < 0
         || $state['attempts'] < 0) {
-        return ['window_started' => 0, 'attempts' => 0];
+        throw new RuntimeException('Rate limit state is corrupt.');
     }
 
     return $state;

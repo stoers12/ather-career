@@ -10,6 +10,7 @@ require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/owner_actions.php';
 require_once __DIR__ . '/includes/portfolio_scoped_data.php';
 require_once __DIR__ . '/includes/owner_layout.php';
+require_once __DIR__ . '/includes/operational_security.php';
 
 startOwnerSession();
 
@@ -32,12 +33,32 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
-        $result = handleAuthorizedProfileAction($database, $context, $_POST, $_FILES, $current, $fields, $profile);
-        $errors = $result['errors'];
-        $profile = $result['profile'];
-        if ($result['redirect'] !== null) {
-            header('Location: ' . $result['redirect'], true, 303);
-            exit;
+        $mayMutate = true;
+        if (($_POST['action'] ?? null) === 'upload_profile_image') {
+            try {
+                $limit = consumeOwnerUploadRateLimit($context);
+                if (!$limit['allowed']) {
+                    reportRateLimitDenial('owner_upload', $context);
+                    http_response_code(429);
+                    header('Retry-After: ' . $limit['retry_after']);
+                    $errors[] = 'Please wait before uploading another image.';
+                    $mayMutate = false;
+                }
+            } catch (Throwable $exception) {
+                reportApplicationError($exception, 'owner_profile.php', 'owner_upload_rate_limit');
+                http_response_code(503);
+                $errors[] = 'Image uploads are temporarily unavailable.';
+                $mayMutate = false;
+            }
+        }
+        if ($mayMutate) {
+            $result = handleAuthorizedProfileAction($database, $context, $_POST, $_FILES, $current, $fields, $profile);
+            $errors = $result['errors'];
+            $profile = $result['profile'];
+            if ($result['redirect'] !== null) {
+                header('Location: ' . $result['redirect'], true, 303);
+                exit;
+            }
         }
     } else {
         if (isset($_GET['saved'])) $message = 'Personal information saved successfully.';

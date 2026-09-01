@@ -53,6 +53,7 @@ try {
         PUBLIC_CONTACT_RATE_LIMIT_WINDOW_SECONDS,
     );
     if (!$rateLimit['allowed']) {
+        reportSecurityEvent('rate_limit_denial', 'denied', ['scope' => 'public_contact', 'reason' => 'threshold_exceeded']);
         header('Retry-After: ' . $rateLimit['retry_after']);
         publicContactError(429, ['Please wait before sending another message.']);
     }

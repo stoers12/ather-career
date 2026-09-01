@@ -15,6 +15,16 @@ function productionSecurityDirectiveIsEnabled(string $name): bool
 
 $failures = [];
 
+if (getenv('APP_ENV') === 'test' || getenv('ATHERCAR_TEST_MODE') === '1') {
+    $failures[] = 'test-mode configuration is forbidden in production.';
+}
+$adminUsername = getenv('ADMIN_USERNAME');
+$adminPasswordHash = getenv('ADMIN_PASSWORD_HASH');
+if (in_array($adminUsername, ['fixture', 'test', 'admin'], true)
+    || (is_string($adminPasswordHash) && preg_match('/replace|fixture|password/i', $adminPasswordHash))) {
+    $failures[] = 'known test or placeholder credentials are forbidden.';
+}
+
 try {
     requirePrivateStorageRoot();
 } catch (PrivateStorageConfigurationException $exception) {

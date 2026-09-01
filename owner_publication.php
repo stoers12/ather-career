@@ -9,6 +9,7 @@ require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/public_lifecycle.php';
 require_once __DIR__ . '/includes/owner_layout.php';
+require_once __DIR__ . '/includes/operational_security.php';
 
 startOwnerSession();
 
@@ -22,24 +23,48 @@ try {
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
         $action = $_POST['action'] ?? null;
-        if ($action === 'set_slug') {
+        if (in_array($action, ['set_slug', 'publish', 'unpublish'], true)) {
+            try {
+                $limit = consumeOwnerPublicationRateLimit($context);
+            } catch (Throwable $exception) {
+                reportApplicationError($exception, 'owner_publication.php', 'owner_publication_rate_limit');
+                http_response_code(503);
+                $errors[] = 'Publication changes are temporarily unavailable.';
+                $limit = null;
+            }
+            if (is_array($limit) && !$limit['allowed']) {
+                reportRateLimitDenial('owner_publication', $context);
+                http_response_code(429);
+                header('Retry-After: ' . $limit['retry_after']);
+                $errors[] = 'Please wait before changing publication settings.';
+                $limit = null;
+            }
+            if ($limit === null) {
+                $state = ownedPublicLifecycleState($database, $context);
+            }
+        } else {
+            $limit = [];
+        }
+        if ($action === 'set_slug' && $limit !== null) {
             setOwnedPublicSlug($database, $context, $_POST['public_slug'] ?? null);
             header('Location: owner_publication.php?slug_saved=1', true, 303);
             exit;
         }
-        if ($action === 'publish') {
+        if ($action === 'publish' && $limit !== null) {
             publishOwnedPortfolio($database, $context);
             header('Location: owner_publication.php?published=1', true, 303);
             exit;
         }
-        if ($action === 'unpublish') {
+        if ($action === 'unpublish' && $limit !== null) {
             unpublishOwnedPortfolio($database, $context);
             header('Location: owner_publication.php?unpublished=1', true, 303);
             exit;
         }
 
-        http_response_code(400);
-        $errors[] = 'Invalid publication action.';
+        if (!in_array($action, ['set_slug', 'publish', 'unpublish'], true)) {
+            http_response_code(400);
+            $errors[] = 'Invalid publication action.';
+        }
     } elseif (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
         http_response_code(405);
         header('Allow: GET, POST');

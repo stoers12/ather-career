@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/security_events.php';
+
 final class PrivateStorageConfigurationException extends RuntimeException
 {
 }
@@ -11,6 +13,11 @@ const PRIVATE_MEDIA_COLLECTIONS = [
     'profile_presentation' => ['profile', 'presentation'],
     'projects' => ['projects'],
 ];
+const PORTFOLIO_STORAGE_QUOTA_BYTES = 104857600;
+
+final class PortfolioQuotaExceededException extends RuntimeException
+{
+}
 
 function isAbsoluteFilesystemPath(string $path): bool
 {
@@ -111,6 +118,55 @@ function ensurePrivateMediaDirectory(int $portfolioId, string $collection): ?str
     return is_writable($directory) ? $directory : null;
 }
 
+function portfolioStorageDirectory(int $portfolioId, bool $create = false): ?string
+{
+    if ($portfolioId < 1) return null;
+    $root = requirePrivateStorageRoot($create);
+    $directory = $root . DIRECTORY_SEPARATOR . 'portfolios' . DIRECTORY_SEPARATOR . $portfolioId;
+    if ($create && !is_dir($directory) && !@mkdir($directory, 0700, true) && !is_dir($directory)) return null;
+
+    return is_dir($directory) ? $directory : null;
+}
+
+function portfolioStorageUsageBytes(int $portfolioId): int
+{
+    $directory = portfolioStorageDirectory($portfolioId);
+    if ($directory === null) return 0;
+    $bytes = 0;
+    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
+    foreach ($iterator as $entry) {
+        if ($entry->isFile() && $entry->getFilename() !== '.quota.lock') $bytes += $entry->getSize();
+    }
+
+    return $bytes;
+}
+
+function withPortfolioQuotaReservation(int $portfolioId, int $reservedBytes, callable $operation): mixed
+{
+    if ($reservedBytes < 0 || $reservedBytes > PORTFOLIO_STORAGE_QUOTA_BYTES) {
+        throw new PortfolioQuotaExceededException('Portfolio storage quota exceeded.');
+    }
+    $directory = portfolioStorageDirectory($portfolioId, true);
+    if ($directory === null) throw new RuntimeException('Portfolio quota namespace is unavailable.');
+    $lockPath = $directory . DIRECTORY_SEPARATOR . '.quota.lock';
+    $handle = @fopen($lockPath, 'c+');
+    if ($handle === false) throw new RuntimeException('Portfolio quota lock could not be opened.');
+    try {
+        if (!flock($handle, LOCK_EX)) throw new RuntimeException('Portfolio quota lock could not be acquired.');
+        $usage = portfolioStorageUsageBytes($portfolioId);
+        if ($usage > PORTFOLIO_STORAGE_QUOTA_BYTES - $reservedBytes) {
+            reportSecurityEvent('quota_denial', 'denied', ['portfolio_id' => $portfolioId, 'reason' => 'aggregate_limit']);
+            throw new PortfolioQuotaExceededException('Portfolio storage quota exceeded.');
+        }
+
+        return $operation();
+    } finally {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+        @chmod($lockPath, 0600);
+    }
+}
+
 function createManagedUploadFilename(string $prefix, string $extension): string
 {
     if (preg_match('/^[a-z0-9]{1,24}$/', $prefix) !== 1 || preg_match('/^[a-z0-9]{2,5}$/', $extension) !== 1) {
@@ -125,27 +181,32 @@ function storePrivateUploadedImage(array $file, int $portfolioId, string $collec
     if (!isset($file['tmp_name']) || !is_string($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
         return null;
     }
-    $directory = ensurePrivateMediaDirectory($portfolioId, $collection);
-    $filename = createManagedUploadFilename($prefix, $extension);
-    $key = managedMediaKey($portfolioId, $collection, $filename);
-    if ($directory === null || $key === null) {
-        return null;
-    }
+    $incomingBytes = @filesize($file['tmp_name']);
+    if (!is_int($incomingBytes) || $incomingBytes < 1) return null;
 
-    $staged = $directory . DIRECTORY_SEPARATOR . '.stage-' . bin2hex(random_bytes(12));
-    $final = $directory . DIRECTORY_SEPARATOR . $filename;
-    if (!move_uploaded_file($file['tmp_name'], $staged)) {
+    try {
+        return withPortfolioQuotaReservation($portfolioId, $incomingBytes, static function () use ($file, $portfolioId, $collection, $prefix, $extension, $expectedMime): ?string {
+            $directory = ensurePrivateMediaDirectory($portfolioId, $collection);
+            $filename = createManagedUploadFilename($prefix, $extension);
+            $key = managedMediaKey($portfolioId, $collection, $filename);
+            if ($directory === null || $key === null) return null;
+            $staged = $directory . DIRECTORY_SEPARATOR . '.stage-' . bin2hex(random_bytes(12));
+            $final = $directory . DIRECTORY_SEPARATOR . $filename;
+            if (!move_uploaded_file($file['tmp_name'], $staged)) return null;
+            $mime = @mime_content_type($staged);
+            $dimensions = @getimagesize($staged);
+            if ($mime !== $expectedMime || $dimensions === false || file_exists($final) || !@rename($staged, $final)) {
+                if (is_file($staged)) @unlink($staged);
+                return null;
+            }
+            @chmod($final, 0600);
+            return $key;
+        });
+    } catch (PortfolioQuotaExceededException $exception) {
+        throw $exception;
+    } catch (RuntimeException) {
         return null;
     }
-    $mime = @mime_content_type($staged);
-    $dimensions = @getimagesize($staged);
-    if ($mime !== $expectedMime || $dimensions === false || file_exists($final) || !@rename($staged, $final)) {
-        if (is_file($staged)) @unlink($staged);
-        return null;
-    }
-    @chmod($final, 0600);
-
-    return $key;
 }
 
 function copyFileToPrivateMedia(string $source, int $portfolioId, string $collection, string $filename): ?string
@@ -153,26 +214,30 @@ function copyFileToPrivateMedia(string $source, int $portfolioId, string $collec
     if (!is_file($source) || !is_readable($source)) {
         return null;
     }
-    $directory = ensurePrivateMediaDirectory($portfolioId, $collection);
-    $key = managedMediaKey($portfolioId, $collection, $filename);
-    if ($directory === null || $key === null) {
+    $incomingBytes = filesize($source);
+    if (!is_int($incomingBytes) || $incomingBytes < 1) return null;
+    try {
+        return withPortfolioQuotaReservation($portfolioId, $incomingBytes, static function () use ($source, $portfolioId, $collection, $filename): ?string {
+            $directory = ensurePrivateMediaDirectory($portfolioId, $collection);
+            $key = managedMediaKey($portfolioId, $collection, $filename);
+            if ($directory === null || $key === null) return null;
+            $staged = $directory . DIRECTORY_SEPARATOR . '.stage-' . bin2hex(random_bytes(12));
+            $final = $directory . DIRECTORY_SEPARATOR . $filename;
+            $sourceHash = hash_file('sha256', $source);
+            if ($sourceHash === false || !@copy($source, $staged)) return null;
+            $stagedHash = hash_file('sha256', $staged);
+            if (!hash_equals($sourceHash, (string) $stagedHash) || @getimagesize($staged) === false || file_exists($final) || !@rename($staged, $final)) {
+                if (is_file($staged)) @unlink($staged);
+                return null;
+            }
+            @chmod($final, 0600);
+            return $key;
+        });
+    } catch (PortfolioQuotaExceededException $exception) {
+        throw $exception;
+    } catch (RuntimeException) {
         return null;
     }
-
-    $staged = $directory . DIRECTORY_SEPARATOR . '.stage-' . bin2hex(random_bytes(12));
-    $final = $directory . DIRECTORY_SEPARATOR . $filename;
-    $sourceHash = hash_file('sha256', $source);
-    if ($sourceHash === false || !@copy($source, $staged)) {
-        return null;
-    }
-    $stagedHash = hash_file('sha256', $staged);
-    if (!hash_equals($sourceHash, (string) $stagedHash) || @getimagesize($staged) === false || file_exists($final) || !@rename($staged, $final)) {
-        if (is_file($staged)) @unlink($staged);
-        return null;
-    }
-    @chmod($final, 0600);
-
-    return $key;
 }
 
 function deletePrivateMediaFile(mixed $key, int $portfolioId, string $collection): bool

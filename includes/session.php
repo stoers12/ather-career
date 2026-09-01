@@ -1,6 +1,9 @@
 <?php
 
 const INTERNAL_USER_SESSION_KEY = 'internal_user_session';
+const INTERNAL_SESSION_IDLE_TIMEOUT_SECONDS = 1800;
+const INTERNAL_SESSION_ABSOLUTE_LIFETIME_SECONDS = 43200;
+const INTERNAL_SESSION_CLOCK_TOLERANCE_SECONDS = 60;
 
 function applicationRequestIsHttps(): bool
 {
@@ -78,10 +81,12 @@ function establishVerifiedInternalUserSession(int $internalUserId, int $observed
         throw new RuntimeException('Could not regenerate the authenticated session identifier.');
     }
 
+    $now = time();
     $_SESSION[INTERNAL_USER_SESSION_KEY] = [
         'internal_user_id' => $internalUserId,
         'authz_version' => $observedAuthzVersion,
-        'authenticated_at' => time(),
+        'authenticated_at' => $now,
+        'last_activity_at' => $now,
     ];
 }
 
@@ -90,22 +95,25 @@ function establishVerifiedInternalUserSession(int $internalUserId, int $observed
  * Portfolio operation and does not substitute for the later current-User
  * account-status/authz-version lookup.
  *
- * @return array{internal_user_id: int, authz_version: int, authenticated_at: int}|null
+ * @return array{internal_user_id: int, authz_version: int, authenticated_at: int, last_activity_at: int}|null
  */
 function currentInternalUserSession(): ?array
 {
     $state = $_SESSION[INTERNAL_USER_SESSION_KEY] ?? null;
     if (!is_array($state)
-        || count($state) !== 3
+        || count($state) !== 4
         || !array_key_exists('internal_user_id', $state)
         || !array_key_exists('authz_version', $state)
         || !array_key_exists('authenticated_at', $state)
+        || !array_key_exists('last_activity_at', $state)
         || !is_int($state['internal_user_id'])
         || !is_int($state['authz_version'])
         || !is_int($state['authenticated_at'])
+        || !is_int($state['last_activity_at'])
         || $state['internal_user_id'] < 1
         || $state['authz_version'] < 1
-        || $state['authenticated_at'] < 1) {
+        || $state['authenticated_at'] < 1
+        || $state['last_activity_at'] < $state['authenticated_at']) {
         return null;
     }
 
@@ -113,7 +121,33 @@ function currentInternalUserSession(): ?array
         'internal_user_id' => $state['internal_user_id'],
         'authz_version' => $state['authz_version'],
         'authenticated_at' => $state['authenticated_at'],
+        'last_activity_at' => $state['last_activity_at'],
     ];
+}
+
+/** @param array{authenticated_at: int, last_activity_at: int} $state */
+function internalSessionLifetimeFailure(array $state, ?int $now = null): ?string
+{
+    $currentTime = $now ?? time();
+    if ($state['authenticated_at'] > $currentTime + INTERNAL_SESSION_CLOCK_TOLERANCE_SECONDS
+        || $state['last_activity_at'] > $currentTime + INTERNAL_SESSION_CLOCK_TOLERANCE_SECONDS) {
+        return 'future_timestamp';
+    }
+    if (($currentTime - $state['authenticated_at']) > INTERNAL_SESSION_ABSOLUTE_LIFETIME_SECONDS) {
+        return 'absolute_timeout';
+    }
+    if (($currentTime - $state['last_activity_at']) > INTERNAL_SESSION_IDLE_TIMEOUT_SECONDS) {
+        return 'idle_timeout';
+    }
+
+    return null;
+}
+
+function refreshInternalSessionActivity(int $now): void
+{
+    if (isset($_SESSION[INTERNAL_USER_SESSION_KEY]) && is_array($_SESSION[INTERNAL_USER_SESSION_KEY])) {
+        $_SESSION[INTERNAL_USER_SESSION_KEY]['last_activity_at'] = $now;
+    }
 }
 
 /**

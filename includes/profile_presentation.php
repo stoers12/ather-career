@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/storage.php';
 
 const PROFILE_PRESENTATION_MAX_DIMENSION = 960;
+const PROFILE_PRESENTATION_QUOTA_RESERVATION_BYTES = 8388608;
 
 function profilePresentationKey(string $originalKey, int $portfolioId): ?string
 {
@@ -68,14 +69,23 @@ function generateProfilePresentationImage(string $originalKey, int $portfolioId)
     imagedestroy($source);
     if ($mime === 'image/jpeg') $presentation = orientJpegPresentation($presentation, readJpegOrientation($sourcePath));
 
-    $temporary = $destination . '.stage-' . bin2hex(random_bytes(6));
-    $written = $mime === 'image/jpeg' ? @imagejpeg($presentation, $temporary, 84) : @imagepng($presentation, $temporary, 7);
-    imagedestroy($presentation);
-    if (!$written || @getimagesize($temporary) === false || file_exists($destination) || !@rename($temporary, $destination)) {
-        if (is_file($temporary)) @unlink($temporary);
-        return null;
+    try {
+        $committed = withPortfolioQuotaReservation($portfolioId, PROFILE_PRESENTATION_QUOTA_RESERVATION_BYTES, static function () use ($destination, $mime, $presentation): bool {
+            $temporary = $destination . '.stage-' . bin2hex(random_bytes(6));
+            $written = $mime === 'image/jpeg' ? @imagejpeg($presentation, $temporary, 84) : @imagepng($presentation, $temporary, 7);
+            if (!$written || @getimagesize($temporary) === false || filesize($temporary) > PROFILE_PRESENTATION_QUOTA_RESERVATION_BYTES || file_exists($destination) || !@rename($temporary, $destination)) {
+                if (is_file($temporary)) @unlink($temporary);
+                return false;
+            }
+            @chmod($destination, 0600);
+            return true;
+        });
+    } catch (PortfolioQuotaExceededException) {
+        $committed = false;
+    } finally {
+        imagedestroy($presentation);
     }
-    @chmod($destination, 0600);
+    if (!$committed) return null;
 
     return $presentationKey;
 }

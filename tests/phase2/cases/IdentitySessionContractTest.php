@@ -32,12 +32,13 @@ final class IdentitySessionContractTest
         phase2AssertSame(101, $state['internal_user_id'], 'Internal User ID is not preserved.');
         phase2AssertSame(7, $state['authz_version'], 'Observed authz version is not preserved.');
         phase2Assert($state['authenticated_at'] > 0, 'Authentication time is missing.');
-        phase2AssertSame(['internal_user_id', 'authz_version', 'authenticated_at'], array_keys($state), 'Session identity state contains non-identity authority.');
+        phase2AssertSame($state['authenticated_at'], $state['last_activity_at'], 'Initial session activity timestamp is invalid.');
+        phase2AssertSame(['internal_user_id', 'authz_version', 'authenticated_at', 'last_activity_at'], array_keys($state), 'Session identity state contains non-identity authority.');
         phase2Assert(!isset($_SESSION['portfolio_id'], $_SESSION['slug'], $_SESSION['email']), 'Pre-authentication client values survived the authentication transition.');
 
-        $_SESSION[INTERNAL_USER_SESSION_KEY] = ['internal_user_id' => '101', 'authz_version' => 7, 'authenticated_at' => time()];
+        $_SESSION[INTERNAL_USER_SESSION_KEY] = ['internal_user_id' => '101', 'authz_version' => 7, 'authenticated_at' => time(), 'last_activity_at' => time()];
         phase2AssertSame(null, currentInternalUserSession(), 'Malformed internal User ID must fail closed.');
-        $_SESSION[INTERNAL_USER_SESSION_KEY] = ['internal_user_id' => 101, 'authz_version' => 0, 'authenticated_at' => time()];
+        $_SESSION[INTERNAL_USER_SESSION_KEY] = ['internal_user_id' => 101, 'authz_version' => 0, 'authenticated_at' => time(), 'last_activity_at' => time()];
         phase2AssertSame(null, currentInternalUserSession(), 'Missing or invalid authz version must fail closed.');
         $_SESSION[INTERNAL_USER_SESSION_KEY] = ['internal_user_id' => 101, 'authz_version' => 7];
         phase2AssertSame(null, currentInternalUserSession(), 'Incomplete identity state must fail closed.');

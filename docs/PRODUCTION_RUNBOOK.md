@@ -36,7 +36,7 @@ The web healthcheck is liveness only: `GET /health.php` returns `OK` without a D
 
 ## Backup and restore
 
-`scripts/backup-production.sh` creates timestamped `database.sql`, `uploads.tar.gz`, and `manifest.json` under ignored `backups/`. It captures MySQL and managed uploads sequentially, so avoid mutations during the short backup window. Rate-limit state, PHP sessions, and container logs are intentionally excluded.
+`scripts/backup-production.sh` creates timestamped `database.sql`, `private-storage.tar.gz`, and `manifest.json` under ignored `backups/`. The manifest binds both checksums into one recovery-pair identifier. It captures MySQL and private managed media sequentially, so avoid mutations during the short backup window. Rate-limit state, PHP sessions, and container logs are intentionally excluded.
 
 Restore is destructive and requires explicit confirmation:
 

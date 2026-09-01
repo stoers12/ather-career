@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/security_events.php';
 
 /**
  * The safe result for an invalid internal session, current User, or ownership
@@ -81,6 +82,10 @@ function requireAuthenticatedUser(PDO $database): AuthenticatedUserContext
 {
     $session = currentInternalUserSession();
     if ($session === null) {
+        if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION[INTERNAL_USER_SESSION_KEY])) {
+            reportSecurityEvent('session_invalidation', 'denied', ['reason' => 'malformed_state']);
+            destroyInternalUserSession();
+        }
         throw new AuthorizationDeniedException('Authenticated User validation failed.');
     }
 
@@ -103,8 +108,22 @@ function requireAuthenticatedUser(PDO $database): AuthenticatedUserContext
         || ($user['account_status'] ?? null) !== 'active'
         || $authzVersion === null
         || $authzVersion !== $session['authz_version']) {
+        reportSecurityEvent('session_invalidation', 'denied', [
+            'internal_user_id' => $session['internal_user_id'],
+            'reason' => !is_array($user) ? 'user_missing' : (($user['account_status'] ?? null) !== 'active' ? 'account_disabled' : 'authz_version_mismatch'),
+        ]);
+        destroyInternalUserSession();
         throw new AuthorizationDeniedException('Authenticated User validation failed.');
     }
+
+    $now = time();
+    $lifetimeFailure = internalSessionLifetimeFailure($session, $now);
+    if ($lifetimeFailure !== null) {
+        reportSecurityEvent('session_invalidation', 'denied', ['internal_user_id' => $session['internal_user_id'], 'reason' => $lifetimeFailure]);
+        destroyInternalUserSession();
+        throw new AuthorizationDeniedException('Authenticated User validation failed.');
+    }
+    refreshInternalSessionActivity($now);
 
     return AuthenticatedUserContext::fromValidatedUser($session['internal_user_id']);
 }

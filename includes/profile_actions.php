@@ -5,6 +5,8 @@ require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/validation.php';
 require_once __DIR__ . '/profile_presentation.php';
 
+const PROFILE_PIXEL_CEILING = 8000000;
+
 function isMySqlDuplicateKeyViolation(PDOException $exception): bool
 {
     $driverCode = $exception->errorInfo[1] ?? null;
@@ -38,17 +40,33 @@ function storeValidatedProfileImage(array $file, array &$errors, ?int $portfolio
         $errors[] = 'Profile photo must be at least 400 × 400 pixels.';
         return null;
     }
+    if ($dimensions[0] * $dimensions[1] > PROFILE_PIXEL_CEILING) {
+        $errors[] = 'Profile photo dimensions are too large.';
+        return null;
+    }
     if ($portfolioId === null || $portfolioId < 1) {
         $errors[] = 'Private media storage is unavailable.';
         return null;
     }
 
-    $key = storePrivateUploadedImage($file, $portfolioId, 'profile_original', 'profile', $extensions[$mime], $mime);
+    try {
+        $key = storePrivateUploadedImage($file, $portfolioId, 'profile_original', 'profile', $extensions[$mime], $mime);
+    } catch (PortfolioQuotaExceededException) {
+        reportSecurityEvent('quota_denial', 'denied', ['portfolio_id' => $portfolioId, 'resource_type' => 'profile']);
+        $errors[] = 'Portfolio storage quota exceeded.';
+        return null;
+    }
     if ($key === null) {
         $errors[] = 'The uploaded image could not be processed.';
         return null;
     }
-    if (generateProfilePresentationImage($key, $portfolioId) === null) {
+    try {
+        $presentationKey = generateProfilePresentationImage($key, $portfolioId);
+    } catch (Throwable $exception) {
+        reportApplicationError($exception, 'owner_profile.php', 'profile_presentation_storage_failure');
+        $presentationKey = null;
+    }
+    if ($presentationKey === null) {
         deletePrivateMediaFile($key, $portfolioId, 'profile_original');
         $errors[] = 'The uploaded image could not be processed.';
         return null;

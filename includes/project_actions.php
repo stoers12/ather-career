@@ -5,6 +5,7 @@ require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/validation.php';
 
 const PROJECT_ID_MAXIMUM = '4294967295';
+const PROJECT_PIXEL_CEILING = 8000000;
 
 function projectFormDefaults(): array
 {
@@ -54,12 +55,22 @@ function storeValidatedProjectImage(array $file, array &$errors, ?int $portfolio
         $errors[] = 'Only JPG, PNG, and WEBP images are allowed.';
         return null;
     }
+    if ($dimensions[0] * $dimensions[1] > PROJECT_PIXEL_CEILING) {
+        $errors[] = 'Project image dimensions are too large.';
+        return null;
+    }
     if ($portfolioId === null || $portfolioId < 1) {
         $errors[] = 'Private media storage is unavailable.';
         return null;
     }
 
-    $key = storePrivateUploadedImage($file, $portfolioId, 'projects', 'project', $extensions[$mimeType], $mimeType);
+    try {
+        $key = storePrivateUploadedImage($file, $portfolioId, 'projects', 'project', $extensions[$mimeType], $mimeType);
+    } catch (PortfolioQuotaExceededException) {
+        reportSecurityEvent('quota_denial', 'denied', ['portfolio_id' => $portfolioId, 'resource_type' => 'project']);
+        $errors[] = 'Portfolio storage quota exceeded.';
+        return null;
+    }
     if ($key === null) {
         $errors[] = 'The image could not be saved.';
     }

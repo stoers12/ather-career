@@ -37,10 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $rateLimit = consumeRateLimit('login', $rateLimitIdentity, LOGIN_RATE_LIMIT_ATTEMPTS, LOGIN_RATE_LIMIT_WINDOW_SECONDS);
     } catch (Throwable $exception) {
         reportApplicationError($exception, 'login.php', 'login_rate_limit');
-        $rateLimit = ['allowed' => true, 'retry_after' => 0];
+        $rateLimit = ['allowed' => false, 'retry_after' => LOGIN_RATE_LIMIT_WINDOW_SECONDS];
     }
 
     if (!$rateLimit['allowed']) {
+        reportSecurityEvent('rate_limit_denial', 'denied', ['scope' => 'legacy_login', 'reason' => 'threshold_or_storage_failure']);
         http_response_code(429);
         header('Retry-After: ' . $rateLimit['retry_after']);
         $loginError = 'Please try again later.';
