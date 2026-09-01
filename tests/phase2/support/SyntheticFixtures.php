@@ -12,13 +12,13 @@ final class SyntheticFixtures
     public static function all(): array
     {
         return [
-            'USER_A' => ['id' => 101, 'issuer' => 'https://issuer.test/ather-career', 'subject' => 'subject-user-a', 'account_status' => 'active'],
+            'USER_A' => ['id' => 101, 'issuer' => 'https://issuer.test/ather-career', 'subject' => 'subject-user-a', 'account_status' => 'active', 'authz_version' => 1],
             'PORTFOLIO_A' => ['id' => 1001, 'owner_user_id' => 101, 'slug' => 'portfolio-a'],
-            'USER_B' => ['id' => 102, 'issuer' => 'https://issuer.test/ather-career', 'subject' => 'subject-user-b', 'account_status' => 'active'],
+            'USER_B' => ['id' => 102, 'issuer' => 'https://issuer.test/ather-career', 'subject' => 'subject-user-b', 'account_status' => 'active', 'authz_version' => 1],
             'PORTFOLIO_B' => ['id' => 1002, 'owner_user_id' => 102, 'slug' => 'portfolio-b'],
-            'USER_NO_PORTFOLIO' => ['id' => 103, 'issuer' => 'https://issuer.test/ather-career', 'subject' => 'subject-user-no-portfolio', 'account_status' => 'active'],
-            'USER_DISABLED' => ['id' => 104, 'issuer' => 'https://issuer.test/ather-career', 'subject' => 'subject-user-disabled', 'account_status' => 'disabled'],
-            'PRESERVED_V1_OWNER' => ['id' => 105, 'issuer' => 'https://issuer.test/ather-career', 'subject' => 'subject-preserved-v1-owner', 'account_status' => 'active'],
+            'USER_NO_PORTFOLIO' => ['id' => 103, 'issuer' => 'https://issuer.test/ather-career', 'subject' => 'subject-user-no-portfolio', 'account_status' => 'active', 'authz_version' => 1],
+            'USER_DISABLED' => ['id' => 104, 'issuer' => 'https://issuer.test/ather-career', 'subject' => 'subject-user-disabled', 'account_status' => 'disabled', 'authz_version' => 1],
+            'PRESERVED_V1_OWNER' => ['id' => 105, 'issuer' => 'https://issuer.test/ather-career', 'subject' => 'subject-preserved-v1-owner', 'account_status' => 'active', 'authz_version' => 1],
             'PRESERVED_V1_PORTFOLIO' => ['id' => 1005, 'owner_user_id' => 105, 'slug' => 'preserved-v1-portfolio'],
         ];
     }

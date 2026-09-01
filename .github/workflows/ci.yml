@@ -48,6 +48,7 @@ jobs:
       - name: Migration and production security gate
         run: |
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-ownership-rehearsal.php
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-tenant-authorization-rehearsal.php
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php database/migrate.php
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php scripts/check-production-security.php
 

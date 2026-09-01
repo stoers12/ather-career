@@ -13,6 +13,7 @@ require_once __DIR__ . '/../tests/phase2/cases/FixtureContractTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/IdentitySessionContractTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OwnershipMigrationStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/StaticArchitectureGuardTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/TenantAuthorizationStaticTest.php';
 
 $environment = null;
 $failures = [];
@@ -22,6 +23,7 @@ $tests = [
     'environment safety and disposable namespace' => [EnvironmentSafetyTest::class, 'run'],
     'synthetic fixture contract and test authentication carrier' => [FixtureContractTest::class, 'run'],
     'static architecture guards' => [StaticArchitectureGuardTest::class, 'run'],
+    'tenant authorization static contract' => [TenantAuthorizationStaticTest::class, 'run'],
 ];
 
 try {

@@ -14,6 +14,8 @@ final class FixtureContractTest
         phase2AssertSame($fixtures['USER_A']['id'], $fixtures['PORTFOLIO_A']['owner_user_id'], 'Portfolio A ownership fixture is inconsistent.');
         phase2AssertSame($fixtures['USER_B']['id'], $fixtures['PORTFOLIO_B']['owner_user_id'], 'Portfolio B ownership fixture is inconsistent.');
         phase2AssertSame('disabled', $fixtures['USER_DISABLED']['account_status'], 'Disabled-user fixture is inconsistent.');
+        phase2AssertSame(1, $fixtures['USER_A']['authz_version'], 'User A authorization-version fixture is inconsistent.');
+        phase2AssertSame(1, $fixtures['USER_B']['authz_version'], 'User B authorization-version fixture is inconsistent.');
         phase2Assert(!array_key_exists('portfolio_id', $fixtures['USER_NO_PORTFOLIO']), 'No-Portfolio fixture must not select a Portfolio.');
 
         $context = TestAuthenticationContext::fromFixture('USER_A');
