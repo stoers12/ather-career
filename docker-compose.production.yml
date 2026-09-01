@@ -20,8 +20,9 @@ services:
       ADMIN_USERNAME: ${ADMIN_USERNAME}
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
       RATE_LIMIT_STATE_DIR: /var/www/app/runtime/rate-limit
+      ATHERCAR_STORAGE_ROOT: /var/lib/ather-career/storage
     volumes:
-      - portfolio_production_uploads:/var/www/app/uploads
+      - portfolio_production_storage:/var/lib/ather-career/storage
       - portfolio_production_rate_limit:/var/www/app/runtime/rate-limit
     depends_on:
       db:
@@ -62,5 +63,5 @@ services:
 
 volumes:
   portfolio_production_db_data:
-  portfolio_production_uploads:
+  portfolio_production_storage:
   portfolio_production_rate_limit:

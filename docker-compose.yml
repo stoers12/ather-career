@@ -9,6 +9,7 @@ services:
       - "127.0.0.1:8088:80"
     volumes:
       - .:/var/www/html
+      - portfolio_private_storage:/var/www/private-storage
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
@@ -18,6 +19,7 @@ services:
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE}
       ADMIN_USERNAME: ${ADMIN_USERNAME}
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
+      ATHERCAR_STORAGE_ROOT: /var/www/private-storage
     depends_on:
       db:
         condition: service_healthy
@@ -42,3 +44,4 @@ services:
 
 volumes:
   portfolio_db_data:
+  portfolio_private_storage:

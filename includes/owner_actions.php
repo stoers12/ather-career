@@ -55,17 +55,17 @@ function handleAuthorizedProfileAction(
                 return ownerProfileActionResult(['Save your personal information before uploading a photo.'], $profile);
             }
 
-            $newImagePath = storeValidatedProfileImage($files['profile_image'] ?? [], $errors);
+            $newImagePath = storeValidatedProfileImage($files['profile_image'] ?? [], $errors, $context->portfolioId);
             if ($errors !== []) {
                 return ownerProfileActionResult($errors, $profile);
             }
 
             if (!updateAuthorizedPersonalInfo($database, $context, (int) $target['id'], ['profile_image_path' => $newImagePath])) {
-                cleanProfileImage($newImagePath, 'owner_profile_update_compensation');
+                cleanProfileImage($newImagePath, 'owner_profile_update_compensation', $context->portfolioId);
                 return ownerProfileActionResult(['The profile photo could not be updated.'], $profile);
             }
 
-            cleanProfileImage($target['profile_image_path'] ?? null, 'owner_profile_update_old_image');
+            cleanProfileImage($target['profile_image_path'] ?? null, 'owner_profile_update_old_image', $context->portfolioId);
             return ownerProfileActionResult([], $profile, 'owner_profile.php?photo_updated=1');
         }
 
@@ -120,7 +120,7 @@ function handleAuthorizedProfileAction(
                 return ownerProfileActionResult(['Profile photo not found.'], $profile);
             }
 
-            cleanProfileImage($imagePath, 'owner_profile_remove_old_image');
+            cleanProfileImage($imagePath, 'owner_profile_remove_old_image', $context->portfolioId);
             return ownerProfileActionResult([], $profile, 'owner_profile.php?photo_removed=1');
         }
 
@@ -169,7 +169,7 @@ function handleAuthorizedProfileAction(
 
         reportApplicationError($exception, 'owner_profile.php', 'owner_profile_' . ($action === '' ? 'unknown' : $action));
         if (isset($newImagePath)) {
-            cleanProfileImage($newImagePath, 'owner_profile_database_compensation');
+            cleanProfileImage($newImagePath, 'owner_profile_database_compensation', $context->portfolioId);
         }
         return ownerProfileActionResult(['The requested change could not be saved.'], $profile);
     }
@@ -187,7 +187,7 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
                 return projectActionResult(['Project not found.']);
             }
 
-            cleanProjectImage($project['image_path'] ?? null, 'owner_project_delete');
+            cleanProjectImage($project['image_path'] ?? null, 'owner_project_delete', $context->portfolioId);
             setProjectSuccessFlash('Project deleted successfully.');
             return projectActionResult([], 'add', null, 'owner_projects.php');
         }
@@ -239,10 +239,10 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         $newImagePath = null;
         $hasUpload = isset($files['project_image']) && (($files['project_image']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE);
         if ($errors === [] && $hasUpload) {
-            $newImagePath = storeValidatedProjectImage($files['project_image'], $errors);
+            $newImagePath = storeValidatedProjectImage($files['project_image'], $errors, $context->portfolioId);
         }
         if ($errors !== []) {
-            cleanProjectImage($newImagePath, 'owner_project_validation_compensation');
+            cleanProjectImage($newImagePath, 'owner_project_validation_compensation', $context->portfolioId);
             return projectActionResult($errors, $formMode, $editingProject);
         }
 
@@ -256,19 +256,19 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         $oldImagePath = $existing['image_path'] ?? null;
         $imagePath = $newImagePath ?? ($removeImage ? null : $oldImagePath);
         if (!updateAuthorizedProject($database, $context, $projectId, $title, $category, $description, $githubUrl, $imagePath)) {
-            cleanProjectImage($newImagePath, 'owner_project_update_compensation');
+            cleanProjectImage($newImagePath, 'owner_project_update_compensation', $context->portfolioId);
             return projectActionResult(['Project not found.'], $formMode, $editingProject);
         }
 
         if ($newImagePath !== null || $removeImage) {
-            cleanProjectImage($oldImagePath, 'owner_project_update_old_image');
+            cleanProjectImage($oldImagePath, 'owner_project_update_old_image', $context->portfolioId);
         }
         setProjectSuccessFlash('Project updated successfully.');
         return projectActionResult([], 'add', null, 'owner_projects.php');
     } catch (PDOException $exception) {
         reportApplicationError($exception, 'owner_projects.php', 'owner_project_' . ($action === '' ? 'unknown' : $action));
         if (isset($newImagePath)) {
-            cleanProjectImage($newImagePath, 'owner_project_database_compensation');
+            cleanProjectImage($newImagePath, 'owner_project_database_compensation', $context->portfolioId);
         }
         return projectActionResult(['The project could not be saved.'], $formMode ?? 'add', $editingProject ?? null);
     }

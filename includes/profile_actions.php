@@ -14,7 +14,7 @@ function isMySqlDuplicateKeyViolation(PDOException $exception): bool
         && (int) $driverCode === 1062;
 }
 
-function storeValidatedProfileImage(array $file, array &$errors): ?string
+function storeValidatedProfileImage(array $file, array &$errors, ?int $portfolioId = null): ?string
 {
     if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || (($file['size'] ?? 0) > 8 * 1024 * 1024)) {
         $errors[] = 'Profile photo must be 8 MB or smaller.';
@@ -38,33 +38,40 @@ function storeValidatedProfileImage(array $file, array &$errors): ?string
         $errors[] = 'Profile photo must be at least 400 × 400 pixels.';
         return null;
     }
-
-    $filename = createManagedUploadFilename('profile', $extensions[$mime]);
-    $relativePath = storeManagedUpload($file, PROFILE_IMAGE_PREFIX, $filename);
-    if ($relativePath === null) {
-        $errors[] = 'The uploaded image could not be processed.';
-    } else {
-        generateProfilePresentationImage($relativePath);
+    if ($portfolioId === null || $portfolioId < 1) {
+        $errors[] = 'Private media storage is unavailable.';
+        return null;
     }
 
-    return $relativePath;
+    $key = storePrivateUploadedImage($file, $portfolioId, 'profile_original', 'profile', $extensions[$mime], $mime);
+    if ($key === null) {
+        $errors[] = 'The uploaded image could not be processed.';
+        return null;
+    }
+    if (generateProfilePresentationImage($key, $portfolioId) === null) {
+        deletePrivateMediaFile($key, $portfolioId, 'profile_original');
+        $errors[] = 'The uploaded image could not be processed.';
+        return null;
+    }
+
+    return $key;
 }
 
-function cleanProfileImage(?string $imagePath, string $action): void
+function cleanProfileImage(?string $imagePath, string $action, ?int $portfolioId = null): void
 {
     if ($imagePath === null || $imagePath === '') {
         return;
     }
 
-    if (resolveManagedStoragePath($imagePath, PROFILE_IMAGE_PREFIX) === null) {
+    if ($portfolioId === null || resolvePrivateMediaPath($imagePath, $portfolioId, 'profile_original') === null) {
         reportApplicationError(new RuntimeException('Managed profile path rejected.'), 'personal_info.php', $action . '_path_rejected');
         return;
     }
 
-    if (!deleteProfilePresentationImage($imagePath)) {
+    if (!deleteProfilePresentationImage($imagePath, $portfolioId)) {
         reportApplicationError(new RuntimeException('Profile presentation cleanup failed.'), 'personal_info.php', $action . '_presentation_cleanup_failed');
     }
-    if (!deleteManagedFile($imagePath, PROFILE_IMAGE_PREFIX)) {
+    if (!deletePrivateMediaFile($imagePath, $portfolioId, 'profile_original')) {
         reportApplicationError(new RuntimeException('Profile image cleanup failed.'), 'personal_info.php', $action . '_cleanup_failed');
     }
 }

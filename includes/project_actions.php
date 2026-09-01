@@ -4,7 +4,6 @@ require_once __DIR__ . '/error_reporting.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/validation.php';
 
-const PROJECT_IMAGE_PREFIX = 'uploads/projects/';
 const PROJECT_ID_MAXIMUM = '4294967295';
 
 function projectFormDefaults(): array
@@ -29,7 +28,7 @@ function projectActionId($value): ?int
     return (int) $value;
 }
 
-function storeValidatedProjectImage(array $file, array &$errors): ?string
+function storeValidatedProjectImage(array $file, array &$errors, ?int $portfolioId = null): ?string
 {
     if (isset($file['error']) && $file['error'] === UPLOAD_ERR_INI_SIZE) {
         $errors[] = 'The image must be 2 MB or smaller.';
@@ -50,32 +49,36 @@ function storeValidatedProjectImage(array $file, array &$errors): ?string
     $mimeType = finfo_file($fileInfo, $file['tmp_name']);
     finfo_close($fileInfo);
     $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    if (!isset($extensions[$mimeType])) {
+    $dimensions = @getimagesize($file['tmp_name']);
+    if (!isset($extensions[$mimeType]) || $dimensions === false) {
         $errors[] = 'Only JPG, PNG, and WEBP images are allowed.';
         return null;
     }
+    if ($portfolioId === null || $portfolioId < 1) {
+        $errors[] = 'Private media storage is unavailable.';
+        return null;
+    }
 
-    $filename = createManagedUploadFilename('project', $extensions[$mimeType]);
-    $relativePath = storeManagedUpload($file, PROJECT_IMAGE_PREFIX, $filename);
-    if ($relativePath === null) {
+    $key = storePrivateUploadedImage($file, $portfolioId, 'projects', 'project', $extensions[$mimeType], $mimeType);
+    if ($key === null) {
         $errors[] = 'The image could not be saved.';
     }
 
-    return $relativePath;
+    return $key;
 }
 
-function cleanProjectImage(?string $imagePath, string $action): void
+function cleanProjectImage(?string $imagePath, string $action, ?int $portfolioId = null): void
 {
     if ($imagePath === null || $imagePath === '') {
         return;
     }
 
-    if (resolveManagedStoragePath($imagePath, PROJECT_IMAGE_PREFIX) === null) {
+    if ($portfolioId === null || resolvePrivateMediaPath($imagePath, $portfolioId, 'projects') === null) {
         reportApplicationError(new RuntimeException('Managed project path rejected.'), 'projects.php', $action . '_path_rejected');
         return;
     }
 
-    if (!deleteManagedFile($imagePath, PROJECT_IMAGE_PREFIX)) {
+    if (!deletePrivateMediaFile($imagePath, $portfolioId, 'projects')) {
         reportApplicationError(new RuntimeException('Project image cleanup failed.'), 'projects.php', $action . '_cleanup_failed');
     }
 }

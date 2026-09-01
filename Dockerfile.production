@@ -2,6 +2,7 @@ FROM php:8.3-apache
 
 ARG APP_VERSION=unknown
 LABEL org.opencontainers.image.revision="${APP_VERSION}"
+ENV ATHERCAR_STORAGE_ROOT=/var/lib/ather-career/storage
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libjpeg62-turbo-dev libpng-dev \
@@ -21,11 +22,11 @@ WORKDIR /var/www/app
 
 COPY . /var/www/app/
 
-RUN mkdir -p /var/www/public/api /var/www/app/uploads/profile/derived /var/www/app/uploads/projects /var/www/app/runtime/rate-limit \
+RUN mkdir -p /var/www/public/api /var/www/app/runtime/rate-limit /var/lib/ather-career/storage \
     && cp -a /var/www/app/public/. /var/www/public/ \
     && cp /var/www/app/style.css /var/www/app/admin.css /var/www/app/script.js /var/www/app/admin.js /var/www/public/ \
     && cp /var/www/app/ChatGPT-Image-Apr-14-2025-065043-PM.png /var/www/public/ \
-    && chown -R www-data:www-data /var/www/app/uploads /var/www/app/runtime \
+    && chown -R www-data:www-data /var/www/app/runtime /var/lib/ather-career/storage \
     && chmod 755 /usr/local/bin/portfolio-production-entrypoint
 
 CMD ["/usr/local/bin/portfolio-production-entrypoint"]

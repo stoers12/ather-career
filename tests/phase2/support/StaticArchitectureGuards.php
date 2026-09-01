@@ -45,8 +45,8 @@ final class StaticArchitectureGuards
         }
 
         $vhost = self::read($repositoryRoot, 'docker/apache/production-vhost.conf', $failures);
-        if ($vhost !== null && preg_match('/Alias\s+\/(?:tenant-media|media)\/|Alias\s+\S*ATHERCAR_STORAGE_ROOT/i', $vhost)) {
-            $failures[] = 'production vhost maps a future tenant-media storage path directly.';
+        if ($vhost !== null && preg_match('/Alias\s+\/(?:uploads|tenant-media|media)\/|Alias\s+\S*ATHERCAR_STORAGE_ROOT/i', $vhost)) {
+            $failures[] = 'production vhost maps tenant media storage directly.';
         }
 
         return array_values(array_unique($failures));

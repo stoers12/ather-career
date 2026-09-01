@@ -6,6 +6,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 require_once __DIR__ . '/../includes/session.php';
+require_once __DIR__ . '/../includes/storage.php';
 
 function productionSecurityDirectiveIsEnabled(string $name): bool
 {
@@ -13,6 +14,12 @@ function productionSecurityDirectiveIsEnabled(string $name): bool
 }
 
 $failures = [];
+
+try {
+    requirePrivateStorageRoot();
+} catch (PrivateStorageConfigurationException $exception) {
+    $failures[] = 'private media storage must be configured outside the public document root.';
+}
 
 if (configuredSessionCookieIsSecure() !== true) {
     $failures[] = 'secure session cookies are required.';
@@ -49,6 +56,9 @@ if (!is_dir($publicRoot)) {
 $vhostConfiguration = @file_get_contents('/etc/apache2/sites-enabled/000-default.conf');
 if (!is_string($vhostConfiguration) || !preg_match('/^\s*DocumentRoot\s+\/var\/www\/public\s*$/mi', $vhostConfiguration)) {
     $failures[] = 'the Apache production document root is not configured.';
+}
+if (is_string($vhostConfiguration) && preg_match('/^\s*Alias\s+\/uploads\//mi', $vhostConfiguration)) {
+    $failures[] = 'direct tenant-media upload alias must be disabled.';
 }
 
 $headerConfiguration = @file_get_contents('/etc/apache2/conf-enabled/zzz-portfolio-security-headers.conf');
