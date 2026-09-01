@@ -17,6 +17,10 @@ jobs:
         run: |
           docker run --rm -v "$PWD:/app:ro" -w /app php:8.3-cli sh -lc 'find . -name "*.php" -not -path "./.git/*" -print0 | xargs -0 -n1 php -l'
 
+      - name: Phase 2 test foundation
+        run: |
+          docker run --rm -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/app:ro" -w /app php:8.3-cli php scripts/run-phase2-tests.php
+
       - name: Configure disposable environment
         run: |
           cp .env.example .env
