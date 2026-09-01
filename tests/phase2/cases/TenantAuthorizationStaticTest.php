@@ -6,8 +6,8 @@ final class TenantAuthorizationStaticTest
 {
     public static function run(TestEnvironment $environment): void
     {
-        $authorization = self::read('includes/authorization.php');
-        $scopedData = self::read('includes/portfolio_scoped_data.php');
+        $authorization = self::normalizeLineEndings(self::read('includes/authorization.php'));
+        $scopedData = self::normalizeLineEndings(self::read('includes/portfolio_scoped_data.php'));
 
         phase2Assert(str_contains($authorization, 'function requireAuthenticatedUser(PDO $database): AuthenticatedUserContext'), 'P2J-03 authenticated User helper is missing.');
         phase2Assert(str_contains($authorization, 'function requireOwnedPortfolioContext(PDO $database): AuthorizedPortfolioContext'), 'P2J-03 owned Portfolio helper is missing.');
@@ -27,7 +27,7 @@ final class TenantAuthorizationStaticTest
             'INSERT INTO projects (portfolio_id, title, category, description, github_url, image_path)',
             'INSERT INTO personal_info (',
         ] as $requiredFragment) {
-            phase2Assert(str_contains($scopedData, $requiredFragment), "P2J-03 scoped data contract is missing {$requiredFragment}.");
+            phase2Assert(str_contains($scopedData, self::normalizeLineEndings($requiredFragment)), "P2J-03 scoped data contract is missing {$requiredFragment}.");
         }
 
         phase2Assert(!str_contains($scopedData, 'storeManagedUpload') && !str_contains($scopedData, 'deleteManagedFile') && !str_contains($scopedData, 'unlink('), 'Scoped data helpers must not cause filesystem effects.');
@@ -40,5 +40,10 @@ final class TenantAuthorizationStaticTest
         phase2Assert(is_string($contents), "{$relativePath} is unreadable.");
 
         return $contents;
+    }
+
+    private static function normalizeLineEndings(string $value): string
+    {
+        return str_replace(["\r\n", "\r"], "\n", $value);
     }
 }
