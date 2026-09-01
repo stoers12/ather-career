@@ -39,6 +39,7 @@ function ownerNavigation(string $activePage): void
         'profile' => ['owner_profile.php', 'Personal info'],
         'projects' => ['owner_projects.php', 'Projects'],
         'messages' => ['owner_messages.php', 'Messages'],
+        'publication' => ['owner_publication.php', 'Publication'],
     ];
     ?>
     <a class="skip-link admin-skip-link" href="#main-content">Skip to main content</a>

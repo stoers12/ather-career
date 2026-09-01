@@ -275,7 +275,7 @@ try {
     ownershipAssertColumnNullable($database, 'skills', 'portfolio_id', 'YES');
 
     ownershipRunPhp([__DIR__ . '/../database/migrate.php', '--through=004']);
-    ownershipRunPhp([__DIR__ . '/../database/migrate.php']);
+    ownershipRunPhp([__DIR__ . '/../database/migrate.php', '--through=004']);
     ownershipAssertMigrationLedger($database, [
         '001' => 'baseline',
         '002' => 'integrity_constraints',

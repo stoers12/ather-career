@@ -22,6 +22,8 @@ const OWNERSHIP_EXPAND_MIGRATION_VERSION = '003';
 const OWNERSHIP_EXPAND_MIGRATION_NAME = 'ownership_expand';
 const OWNERSHIP_CONTRACT_MIGRATION_VERSION = '004';
 const OWNERSHIP_CONTRACT_MIGRATION_NAME = 'ownership_contract';
+const PUBLIC_LIFECYCLE_MIGRATION_VERSION = '005';
+const PUBLIC_LIFECYCLE_MIGRATION_NAME = 'public_lifecycle';
 
 function migrationFailure(string $message, ?string $version = null): never
 {
@@ -630,6 +632,41 @@ function executeOwnershipContractMigration(PDO $database): void
     ensureExpectedForeignKey($database, 'messages', 'fk_messages_recipient_portfolio', 'recipient_portfolio_id', 'portfolios', 'id');
 }
 
+function executePublicLifecycleMigration(PDO $database): void
+{
+    $slug = fetchColumnDefinition($database, 'portfolios', 'public_slug');
+    if ($slug === null) {
+        $database->exec(
+            'ALTER TABLE portfolios
+             ADD COLUMN public_slug VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL'
+        );
+    }
+    requireColumnDefinition($database, 'portfolios', 'public_slug', 'varchar(64)', 'YES');
+
+    $published = fetchColumnDefinition($database, 'portfolios', 'is_published');
+    if ($published === null) {
+        $database->exec(
+            'ALTER TABLE portfolios
+             ADD COLUMN is_published TINYINT(1) NOT NULL DEFAULT 0'
+        );
+    }
+    $published = requireColumnDefinition($database, 'portfolios', 'is_published', 'tinyint(1)', 'NO');
+    if ((string) $published['default_value'] !== '0') {
+        throw new RuntimeException('Migration 005 found an incompatible portfolios.is_published default.');
+    }
+
+    $publishedAt = fetchColumnDefinition($database, 'portfolios', 'published_at');
+    if ($publishedAt === null) {
+        $database->exec(
+            'ALTER TABLE portfolios
+             ADD COLUMN published_at TIMESTAMP NULL DEFAULT NULL'
+        );
+    }
+    requireColumnDefinition($database, 'portfolios', 'published_at', 'timestamp', 'YES');
+
+    ensureExpectedIndex($database, 'portfolios', 'uq_portfolios_public_slug', ['public_slug'], true);
+}
+
 function executeSqlMigration(PDO $database, array $migration): void
 {
     if ($migration['version'] === '002' && $migration['name'] === 'integrity_constraints') {
@@ -642,6 +679,10 @@ function executeSqlMigration(PDO $database, array $migration): void
     }
     if ($migration['version'] === OWNERSHIP_CONTRACT_MIGRATION_VERSION && $migration['name'] === OWNERSHIP_CONTRACT_MIGRATION_NAME) {
         executeOwnershipContractMigration($database);
+        return;
+    }
+    if ($migration['version'] === PUBLIC_LIFECYCLE_MIGRATION_VERSION && $migration['name'] === PUBLIC_LIFECYCLE_MIGRATION_NAME) {
+        executePublicLifecycleMigration($database);
         return;
     }
 

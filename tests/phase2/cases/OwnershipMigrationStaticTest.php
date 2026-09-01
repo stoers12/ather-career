@@ -23,7 +23,10 @@ final class OwnershipMigrationStaticTest
         phase2Assert(str_contains($backfill, 'testOnlyBackfillFailurePointAllowed'), 'Backfill test failure injection must be explicitly test-gated.');
         phase2Assert(str_contains($runner, "getenv('APP_ENV') !== 'test'"), 'Migration failure injection must fail outside the explicit test environment.');
 
-        $ownershipSources = $expand . "\n" . $contract . "\n" . $runner . "\n" . $backfill;
+        // Later additive migrations share the runner. P2J-02's schema boundary is
+        // established by its two immutable migration descriptors, not by forbidding
+        // all future migration names in the shared runner.
+        $ownershipSources = $expand . "\n" . $contract . "\n" . $backfill;
         foreach (['public_slug', 'is_published', 'published_at'] as $forbiddenColumn) {
             phase2Assert(!str_contains($ownershipSources, $forbiddenColumn), "P2J-02 must not add {$forbiddenColumn}.");
         }

@@ -49,6 +49,8 @@ jobs:
         run: |
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-ownership-rehearsal.php
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-tenant-authorization-rehearsal.php
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-owner-flow-rehearsal.php
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-public-lifecycle-rehearsal.php
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php database/migrate.php
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php scripts/check-production-security.php
 
@@ -57,7 +59,9 @@ jobs:
           curl --fail --retry 10 --retry-connrefused http://127.0.0.1:8098/health.php | grep -x OK
           curl --fail http://127.0.0.1:8098/
           curl --fail http://127.0.0.1:8098/login.php
-          curl --fail http://127.0.0.1:8098/api/projects.php
+          curl --fail http://127.0.0.1:8098/p/a-public
+          curl --fail http://127.0.0.1:8098/p/a-public/projects.json
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8098/api/projects.php)" = 404
           test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/api/projects.php)" = 405
 
       - name: Cleanup

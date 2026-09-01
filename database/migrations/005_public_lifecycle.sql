@@ -1,0 +1,3 @@
+-- Migration 005 is executed by the guarded additive public-lifecycle path in
+-- database/migrate.php. It adds draft slugs and publication state without
+-- changing Phase 2 ownership relationships or existing resource storage.
