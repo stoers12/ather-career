@@ -1,3 +1,9 @@
+FROM composer:2 AS dependencies
+
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
 FROM php:8.3-apache
 
 ARG APP_VERSION=unknown
@@ -5,9 +11,9 @@ LABEL org.opencontainers.image.revision="${APP_VERSION}"
 ENV ATHERCAR_STORAGE_ROOT=/var/lib/ather-career/storage
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libjpeg62-turbo-dev libpng-dev \
+    && apt-get install -y --no-install-recommends libjpeg62-turbo-dev libpng-dev libonig-dev \
     && docker-php-ext-configure gd --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql exif gd \
+    && docker-php-ext-install pdo pdo_mysql exif gd mbstring \
     && rm -rf /var/lib/apt/lists/* \
     && a2enmod headers rewrite
 
@@ -21,6 +27,7 @@ COPY docker/production-entrypoint.sh /usr/local/bin/portfolio-production-entrypo
 WORKDIR /var/www/app
 
 COPY . /var/www/app/
+COPY --from=dependencies /app/vendor /var/www/app/vendor
 
 RUN mkdir -p /var/www/public/api /var/www/app/runtime/rate-limit /var/lib/ather-career/storage \
     && cp -a /var/www/app/public/. /var/www/public/ \

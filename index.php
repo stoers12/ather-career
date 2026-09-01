@@ -21,7 +21,7 @@ require_once __DIR__ . '/includes/presentation.php';
             <p class="eyebrow">Portfolio Platform</p>
             <h1>Professional portfolios, published by their owners.</h1>
             <p class="hero-description">Sign in to manage your Portfolio or visit a published Portfolio at its shared public address.</p>
-            <div class="hero-actions"><a class="btn btn-primary" href="login.php">Owner sign in</a></div>
+            <div class="hero-actions"><a class="btn btn-primary" href="owner_login.php">Owner sign in</a></div>
         </div>
     </section>
 </main>

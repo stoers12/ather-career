@@ -2,6 +2,7 @@
 .gitignore
 .env
 .env.*
+/vendor/
 
 uploads/profile/*
 !uploads/profile/.gitkeep

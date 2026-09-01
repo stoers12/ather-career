@@ -16,5 +16,5 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 requireValidCsrfToken($_POST['csrf_token'] ?? null);
 destroyOwnerSession();
 
-header('Location: owner.php', true, 303);
+header('Location: owner_login.php', true, 303);
 exit;

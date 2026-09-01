@@ -30,6 +30,12 @@ jobs:
           sed -i 's/replace_with_password_hash/ci_not_a_real_password_hash/' .env
           sed -i 's/MYSQL_DATABASE=portfolio_db/MYSQL_DATABASE=ather_career_test_ci/' .env
           sed -i 's/SESSION_COOKIE_SECURE=false/SESSION_COOKIE_SECURE=true/' .env
+          cat >> .env <<'EOF'
+          EXPECTED_OIDC_ISSUER=https://ci-auth.us.auth0.com/
+          OIDC_CLIENT_ID=ci_auth0_client_id_123456
+          OIDC_CLIENT_SECRET=ci_auth0_client_secret_1234567890
+          OIDC_REDIRECT_URI=https://ci.ather-career.invalid/owner_oidc_callback.php
+          EOF
 
       - name: Build and start production-like stack
         run: docker compose -p ather-career-ci -f docker-compose.production.yml up -d --build
@@ -52,6 +58,7 @@ jobs:
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-owner-flow-rehearsal.php
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-public-lifecycle-rehearsal.php
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php database/migrate.php
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-auth0-rehearsal.php
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php scripts/check-production-security.php
 
       - name: HTTP smoke test
