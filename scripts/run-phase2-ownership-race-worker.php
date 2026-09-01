@@ -9,6 +9,7 @@ if (PHP_SAPI !== 'cli') {
 
 require_once __DIR__ . '/../tests/phase2/bootstrap.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/owner_flow.php';
 
 try {
     TestEnvironment::assertSafeEnvironment(getenv());
@@ -29,6 +30,8 @@ try {
     } elseif ($mode === 'portfolio' && $argc === 3 && ctype_digit($argv[2])) {
         $statement = $database->prepare('INSERT INTO portfolios (owner_user_id) VALUES (:user_id)');
         $statement->execute(['user_id' => (int) $argv[2]]);
+    } elseif ($mode === 'owner_portfolio' && $argc === 3 && ctype_digit($argv[2])) {
+        createOwnedPortfolio($database, AuthenticatedUserContext::fromValidatedUser((int) $argv[2]));
     } elseif ($mode === 'skill' && $argc === 4 && ctype_digit($argv[2])) {
         $statement = $database->prepare('INSERT INTO skills (portfolio_id, skill_name) VALUES (:portfolio_id, :skill_name)');
         $statement->execute(['portfolio_id' => (int) $argv[2], 'skill_name' => $argv[3]]);
