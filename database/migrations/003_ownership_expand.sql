@@ -1,0 +1,5 @@
+-- Migration 003 is deliberately executed by the guarded ownership-expansion
+-- path in database/migrate.php. MySQL DDL may auto-commit, so that path
+-- verifies any partially applied state before it adds the remaining additive
+-- schema. It creates users and owned portfolios, then adds nullable ownership
+-- columns to the legacy resource tables for the controlled backfill window.

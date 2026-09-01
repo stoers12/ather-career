@@ -1,0 +1,4 @@
+-- Migration 004 is deliberately executed by the guarded ownership-contract
+-- path in database/migrate.php. It runs only after the controlled ownership
+-- backfill verifies every legacy resource has a valid portfolio mapping.
+-- The path then applies NOT NULL, RESTRICT foreign keys, and scoped uniqueness.
