@@ -10,11 +10,13 @@ if (PHP_SAPI !== 'cli') {
 require_once __DIR__ . '/../tests/phase2/bootstrap.php';
 require_once __DIR__ . '/../tests/phase2/cases/EnvironmentSafetyTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/FixtureContractTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/IdentitySessionContractTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/StaticArchitectureGuardTest.php';
 
 $environment = null;
 $failures = [];
 $tests = [
+    'provider-independent internal-user session contract' => [IdentitySessionContractTest::class, 'run'],
     'environment safety and disposable namespace' => [EnvironmentSafetyTest::class, 'run'],
     'synthetic fixture contract and test authentication carrier' => [FixtureContractTest::class, 'run'],
     'static architecture guards' => [StaticArchitectureGuardTest::class, 'run'],
