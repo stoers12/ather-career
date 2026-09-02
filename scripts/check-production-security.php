@@ -6,6 +6,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 require_once __DIR__ . '/../includes/session.php';
+require_once __DIR__ . '/../includes/admin_session.php';
 require_once __DIR__ . '/../includes/storage.php';
 require_once __DIR__ . '/../includes/auth0_oidc.php';
 
@@ -25,6 +26,9 @@ $adminPasswordHash = getenv('ADMIN_PASSWORD_HASH');
 if (in_array($adminUsername, ['fixture', 'test', 'admin'], true)
     || (is_string($adminPasswordHash) && preg_match('/replace|fixture|password/i', $adminPasswordHash))) {
     $failures[] = 'known test or placeholder credentials are forbidden.';
+}
+if (!legacyAdminAuthorityConfigurationIsValid()) {
+    $failures[] = 'LEGACY_ADMIN_AUTH_ENABLED must be a boolean value.';
 }
 
 try {

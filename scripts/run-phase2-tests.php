@@ -18,6 +18,7 @@ require_once __DIR__ . '/../tests/phase2/cases/PublicContactStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PrivateMediaStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OperationalSecurityStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/Auth0OidcStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/LegacyAdminCutoverStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/StaticArchitectureGuardTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/TenantAuthorizationStaticTest.php';
 
@@ -32,6 +33,7 @@ $tests = [
     'private media static contract' => [PrivateMediaStaticTest::class, 'run'],
     'operational security static contract' => [OperationalSecurityStaticTest::class, 'run'],
     'Auth0 OIDC static contract' => [Auth0OidcStaticTest::class, 'run'],
+    'legacy admin cutover static contract' => [LegacyAdminCutoverStaticTest::class, 'run'],
     'environment safety and disposable namespace' => [EnvironmentSafetyTest::class, 'run'],
     'synthetic fixture contract and test authentication carrier' => [FixtureContractTest::class, 'run'],
     'static architecture guards' => [StaticArchitectureGuardTest::class, 'run'],
