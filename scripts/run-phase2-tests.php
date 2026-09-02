@@ -15,6 +15,7 @@ require_once __DIR__ . '/../tests/phase2/cases/OwnershipMigrationStaticTest.php'
 require_once __DIR__ . '/../tests/phase2/cases/OwnerFlowStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PublicLifecycleStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PublicContactStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/PortfolioPresentationStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PrivateMediaStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OperationalSecurityStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/Auth0OidcStaticTest.php';
@@ -30,6 +31,7 @@ $tests = [
     'owner flow static contract' => [OwnerFlowStaticTest::class, 'run'],
     'public lifecycle static contract' => [PublicLifecycleStaticTest::class, 'run'],
     'public contact static contract' => [PublicContactStaticTest::class, 'run'],
+    'shared Portfolio presentation contract' => [PortfolioPresentationStaticTest::class, 'run'],
     'private media static contract' => [PrivateMediaStaticTest::class, 'run'],
     'operational security static contract' => [OperationalSecurityStaticTest::class, 'run'],
     'Auth0 OIDC static contract' => [Auth0OidcStaticTest::class, 'run'],

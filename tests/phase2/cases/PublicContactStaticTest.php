@@ -9,6 +9,7 @@ final class PublicContactStaticTest
         $contact = self::read('includes/public_contact.php');
         $route = self::read('public_contact.php');
         $portfolio = self::read('public_portfolio.php');
+        $presentation = self::read('includes/portfolio_presentation.php');
         $vhost = self::read('docker/apache/production-vhost.conf');
 
         phase2Assert(str_contains($contact, 'preparePublicContactSubmission') && str_contains($contact, 'resolvePublicReadContext($database, $slug)'), 'P2J-06 must resolve the public slug for every contact submission.');
@@ -16,7 +17,8 @@ final class PublicContactStaticTest
         phase2Assert(!str_contains($contact, "['recipient_portfolio_id']") && !str_contains($contact, "['portfolio_id']") && !str_contains($contact, "['user_id']"), 'P2J-06 must not accept client recipient identifiers.');
         phase2Assert(str_contains($route, '$_SERVER[\'REQUEST_METHOD\'] !== \'POST\'') && str_contains($route, 'preparePublicContactSubmission') && str_contains($route, 'consumeRateLimit') && str_contains($route, 'true, 303'), 'P2J-06 contact route must be POST-only, re-resolve, rate-limit, and PRG.');
         phase2Assert(!str_contains($route, 'requireOwnerPortfolioContext') && !str_contains($route, '$_SESSION') && !str_contains($route, 'recipient_portfolio_id') && !str_contains($route, 'portfolio_id') && !str_contains($route, 'user_id'), 'P2J-06 public contact route must not use owner or client recipient authority.');
-        phase2Assert(str_contains($portfolio, 'action="/p/<?php echo rawurlencode($slug); ?>/contact"') && !str_contains($portfolio, 'name="recipient_portfolio_id"') && !str_contains($portfolio, 'name="portfolio_id"') && !str_contains($portfolio, 'name="user_id"'), 'P2J-06 public form must post only to the slug contact route without recipient identifiers.');
+        phase2Assert(str_contains($portfolio, "'contact_action' => \"/p/{\$encodedSlug}/contact\"") && str_contains($portfolio, 'renderPortfolioPresentation('), 'P2J-06 public form must receive only the resolved slug contact route.');
+        phase2Assert(str_contains($presentation, '<form method="post"') && str_contains($presentation, 'action="<?php echo portfolioPresentationEscape($contactAction); ?>"') && !str_contains($presentation, 'name="recipient_portfolio_id"') && !str_contains($presentation, 'name="portfolio_id"') && !str_contains($presentation, 'name="user_id"'), 'P2J-06 shared public form must not accept recipient authority.');
         phase2Assert(str_contains($vhost, '/contact/?$ /p_contact.php?slug=$1'), 'P2J-06 contact route is not wired through the production public vhost.');
     }
 
