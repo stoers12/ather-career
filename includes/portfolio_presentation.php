@@ -119,27 +119,28 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
 <body class="portfolio-page<?php echo $preview ? ' portfolio-preview-mode' : ''; ?>">
 <a class="portfolio-skip-link" href="#portfolio-main">Skip to content</a>
 
+<header class="portfolio-header">
+    <div class="portfolio-container portfolio-nav">
+        <a class="portfolio-brand" href="#top" aria-label="<?php echo portfolioPresentationEscape($name); ?>, home">
+            <span class="portfolio-brand-mark" aria-hidden="true"><?php echo portfolioPresentationEscape($initials); ?></span>
+            <span class="portfolio-brand-copy"><strong><?php echo portfolioPresentationEscape($name); ?></strong></span>
+        </a>
+        <nav class="portfolio-nav-links" aria-label="Portfolio sections">
+            <a class="is-current" href="#top" aria-current="page">Home</a>
+            <?php if ($showAbout): ?><a href="#about">About</a><?php endif; ?>
+            <?php if ($showProjects): ?><a href="#projects">Projects</a><?php endif; ?>
+            <?php if ($showSkills): ?><a href="#skills">Skills</a><?php endif; ?>
+            <a href="#contact">Contact</a>
+        </nav>
+        <a class="portfolio-header-cta" href="#contact">Let’s Connect <span aria-hidden="true">↗</span></a>
+    </div>
+</header>
+
 <?php if ($preview): ?>
     <aside class="portfolio-preview-bar" aria-label="Private preview status">
         <div class="portfolio-container portfolio-preview-bar-inner"><span><strong>Private preview</strong> · viewing does not publish this Portfolio.</span><a href="owner.php">Dashboard</a></div>
     </aside>
 <?php endif; ?>
-
-<header class="portfolio-header">
-    <div class="portfolio-container portfolio-nav">
-        <a class="portfolio-brand" href="#top" aria-label="<?php echo portfolioPresentationEscape($name); ?>, home">
-            <span class="portfolio-brand-mark" aria-hidden="true"><?php echo portfolioPresentationEscape($initials); ?></span>
-            <span class="portfolio-brand-copy"><strong><?php echo portfolioPresentationEscape($name); ?></strong><?php if ($title !== ''): ?><small><?php echo portfolioPresentationEscape($title); ?></small><?php endif; ?></span>
-        </a>
-        <nav class="portfolio-nav-links" aria-label="Portfolio sections">
-            <a href="#top">Home</a>
-            <?php if ($showAbout): ?><a href="#about">About</a><?php endif; ?>
-            <?php if ($showProjects): ?><a href="#projects">Projects</a><?php endif; ?>
-            <?php if ($showSkills): ?><a href="#skills">Skills</a><?php endif; ?>
-            <a class="portfolio-nav-contact" href="#contact">Contact <span aria-hidden="true">↗</span></a>
-        </nav>
-    </div>
-</header>
 
 <main id="portfolio-main">
     <?php if ($previewError !== ''): ?><div class="portfolio-container portfolio-alert" role="alert"><?php echo portfolioPresentationEscape($previewError); ?></div><?php endif; ?>

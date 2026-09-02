@@ -16,6 +16,8 @@ final class PortfolioPresentationStaticTest
         phase2Assert(str_contains($preview, 'requireOwnerPortfolioContext') && str_contains($preview, 'renderPortfolioPresentation(') && !str_contains($preview, 'ownerLayoutStart'), 'Private preview does not use owner authority and the shared standalone presentation.');
         phase2Assert(str_contains($presentation, '$preview = ($options[\'preview\'] ?? false) === true;'), 'Shared presentation preview mode must be caller-controlled.');
         phase2Assert(str_contains($presentation, 'portfolioPresentationEscape(') && str_contains($presentation, 'isPublicWebsiteDestination('), 'Portfolio content or external links lack presentation safety checks.');
+        phase2Assert(str_contains($presentation, '<header class="portfolio-header">') && str_contains($presentation, 'aria-current="page">Home</a>') && str_contains($presentation, 'href="#about">About</a>') && str_contains($presentation, 'href="#projects">Projects</a>') && str_contains($presentation, 'href="#skills">Skills</a>') && str_contains($presentation, 'href="#contact">Contact</a>') && str_contains($presentation, 'portfolio-header-cta'), 'S01 header navigation is incomplete or contains an unsupported route.');
+        phase2Assert(strpos($presentation, '<header class="portfolio-header">') < strpos($presentation, '<main id="portfolio-main">'), 'S01 header must be the first Portfolio content element.');
         phase2Assert(str_contains($presentation, 'count($projects)') && str_contains($presentation, 'count($skills)'), 'Portfolio metrics are not derived from current scoped data.');
         phase2Assert(str_contains($presentation, 'portfolio-project-visual--') && str_contains($presentation, 'portfolioPresentationProjectVisual(') && !str_contains($presentation, 'profileInitials($projectTitle)'), 'Image-free project cards must use deterministic decorative artwork rather than title initials.');
         phase2Assert(str_contains($presentation, 'portfolio-profile-fallback') && str_contains($presentation, 'portfolio-profile-orbit'), 'Image-free profile presentation must use the premium fallback artwork.');
@@ -25,6 +27,7 @@ final class PortfolioPresentationStaticTest
         }
 
         phase2Assert(str_contains($stylesheet, '--pf-container: 1260px') && str_contains($stylesheet, 'portfolio-hero-wave') && str_contains($stylesheet, 'portfolio-hero-grid-lines'), 'V2 enterprise background and density system is incomplete.');
+        phase2Assert(str_contains($stylesheet, 'min-height: 70px') && str_contains($stylesheet, 'position: sticky') && str_contains($stylesheet, 'portfolio-header-cta') && str_contains($stylesheet, 'a.is-current::after'), 'S01 premium sticky header, CTA, or active underline is incomplete.');
         phase2Assert(str_contains($stylesheet, ':focus-visible') && str_contains($stylesheet, 'prefers-reduced-motion'), 'Portfolio focus or reduced-motion behavior is missing.');
         foreach (['@media (max-width: 1100px)', '@media (max-width: 820px)', '@media (max-width: 620px)', '@media (max-width: 430px)'] as $breakpoint) {
             phase2Assert(str_contains($stylesheet, $breakpoint), "Portfolio responsive breakpoint is missing: {$breakpoint}");
