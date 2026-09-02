@@ -21,8 +21,10 @@ COPY docker/php/production.ini /usr/local/etc/php/conf.d/portfolio-production.in
 COPY docker/apache/access-policy.conf /etc/apache2/conf-enabled/zzz-portfolio-access-policy.conf
 COPY docker/apache/security-headers.conf /etc/apache2/conf-enabled/zzz-portfolio-security-headers.conf
 COPY docker/apache/cache-policy.conf /etc/apache2/conf-enabled/zzz-portfolio-cache-policy.conf
+COPY docker/apache/safe-access-log.conf /etc/apache2/conf-enabled/zzz-portfolio-safe-access-log.conf
 COPY docker/apache/production-vhost.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/production-entrypoint.sh /usr/local/bin/portfolio-production-entrypoint
+RUN a2disconf other-vhosts-access-log
 
 WORKDIR /var/www/app
 

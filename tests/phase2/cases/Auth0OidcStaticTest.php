@@ -11,6 +11,11 @@ final class Auth0OidcStaticTest
         $start = self::read('owner_login.php');
         $callback = self::read('owner_oidc_callback.php');
         $guard = self::read('scripts/check-production-security.php');
+        $safeAccessLog = self::read('docker/apache/safe-access-log.conf');
+        $developmentDockerfile = self::read('Dockerfile');
+        $productionDockerfile = self::read('Dockerfile.production');
+        $developmentVhost = self::read('docker/apache/development-vhost.conf');
+        $productionVhost = self::read('docker/apache/production-vhost.conf');
 
         phase2Assert(str_contains($oidc, "'code_challenge_method' => 'S256'") && str_contains($oidc, 'random_bytes(64)'), 'Auth0 PKCE S256 transaction is missing.');
         phase2Assert(str_contains($oidc, 'AUTH0_AUTH_TRANSACTION_TTL_SECONDS') && str_contains($oidc, 'unset($_SESSION[AUTH0_AUTH_TRANSACTION_KEY])'), 'Auth0 callback transaction is not bounded and one-time.');
@@ -20,6 +25,11 @@ final class Auth0OidcStaticTest
         phase2Assert(str_contains($start, "consumeRateLimit('oidc_start', rateLimitClientIp()") && !preg_match('/X-Forwarded-For|Forwarded/i', $start), 'OIDC start limiter is not REMOTE_ADDR-only.');
         phase2Assert(str_contains($callback, 'establishVerifiedInternalUserSession') && str_contains($callback, 'destroyInternalUserSession'), 'Auth0 session establishment or denial cleanup is missing.');
         phase2Assert(str_contains($guard, 'auth0ProductionConfigurationFailures'), 'Production guard does not validate Auth0 configuration.');
+        phase2Assert(str_contains($safeAccessLog, '%m %U %H') && !str_contains($safeAccessLog, '%r')
+            && str_contains($developmentDockerfile, 'a2disconf other-vhosts-access-log')
+            && str_contains($productionDockerfile, 'a2disconf other-vhosts-access-log')
+            && str_contains($developmentVhost, 'CustomLog ${APACHE_LOG_DIR}/access.log ather_safe')
+            && str_contains($productionVhost, 'CustomLog ${APACHE_LOG_DIR}/access.log ather_safe'), 'Apache callback logging can expose a request query string.');
         phase2Assert(!preg_match('/password_verify|\$_POST\[.password|localStorage|sessionStorage|refresh_token/i', $start . $callback . $oidc), 'P2J-09 introduced an unsafe browser or password auth path.');
     }
 
