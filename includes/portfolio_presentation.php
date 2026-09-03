@@ -46,6 +46,33 @@ function portfolioPresentationProjectLink(array $project): ?string
     return $url !== '' && isPublicWebsiteDestination($url) ? $url : null;
 }
 
+/** @return list<array{label: string, url: string, external: bool}> */
+function portfolioPresentationHeroSocialActions(array $profile, string $emailAction): array
+{
+    $socialByLabel = [];
+    foreach (portfolioPresentationSocialLinks($profile) as $link) {
+        $socialByLabel[$link['label']] = $link['url'];
+    }
+
+    $actions = [];
+    foreach (['LinkedIn', 'GitHub'] as $label) {
+        if (isset($socialByLabel[$label])) {
+            $actions[] = ['label' => $label, 'url' => $socialByLabel[$label], 'external' => true];
+        }
+    }
+    if ($emailAction !== '') {
+        $actions[] = ['label' => 'Email', 'url' => $emailAction, 'external' => false];
+    }
+
+    // The current public Portfolio model has no resume or profile-document
+    // destination, so a validated personal website is the truthful fallback.
+    if (isset($socialByLabel['Website'])) {
+        $actions[] = ['label' => 'Website', 'url' => $socialByLabel['Website'], 'external' => true];
+    }
+
+    return $actions;
+}
+
 function portfolioPresentationProjectVisual(string $category): string
 {
     $category = strtolower($category);
@@ -65,10 +92,18 @@ function portfolioPresentationProjectVisual(string $category): string
 function portfolioPresentationSocialIcon(string $label): string
 {
     return match ($label) {
-        'LinkedIn' => '<svg viewBox="0 0 24 24" focusable="false"><path d="M6.2 8.2v9.6M6.2 5.1v.1M10.7 17.8v-5.3a2.7 2.7 0 0 1 5.4 0v5.3M10.7 12.9c.4-1.2 1.3-2 2.8-2 1.6 0 2.6 1 2.6 3v3.9"/></svg>',
-        'GitHub' => '<svg viewBox="0 0 24 24" focusable="false"><path d="M9.2 19.4c-4.1 1.2-4.1-2.1-5.8-2.6M15 19.4v-2.2a2.1 2.1 0 0 0-.6-1.7c2.1-.2 4.3-1 4.3-4.6a3.6 3.6 0 0 0-1-2.6 3.4 3.4 0 0 0-.1-2.6s-.8-.3-2.7 1a9.2 9.2 0 0 0-4.9 0c-1.9-1.3-2.7-1-2.7-1a3.4 3.4 0 0 0-.1 2.6 3.6 3.6 0 0 0-1 2.6c0 3.6 2.2 4.4 4.3 4.6a2.1 2.1 0 0 0-.6 1.7v2.2"/></svg>',
-        'Website' => '<svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="M3.8 12h16.4M12 3.5c2.1 2.3 3.2 5.1 3.2 8.5s-1.1 6.2-3.2 8.5c-2.1-2.3-3.2-5.1-3.2-8.5S9.9 5.8 12 3.5Z"/></svg>',
-        default => '<svg viewBox="0 0 24 24" focusable="false"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8A2.5 2.5 0 0 1 17.5 17H10l-4.5 3v-3.5A2.5 2.5 0 0 1 3 14.5v-8Z"/><path d="m5 6.5 6.2 4.5L18 6.5"/></svg>',
+        'LinkedIn' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.2 8.2v9.6M6.2 5.1v.1M10.7 17.8v-5.3a2.7 2.7 0 0 1 5.4 0v5.3M10.7 12.9c.4-1.2 1.3-2 2.8-2 1.6 0 2.6 1 2.6 3v3.9"/></svg>',
+        'GitHub' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.2 19.4c-4.1 1.2-4.1-2.1-5.8-2.6M15 19.4v-2.2a2.1 2.1 0 0 0-.6-1.7c2.1-.2 4.3-1 4.3-4.6a3.6 3.6 0 0 0-1-2.6 3.4 3.4 0 0 0-.1-2.6s-.8-.3-2.7 1a9.2 9.2 0 0 0-4.9 0c-1.9-1.3-2.7-1-2.7-1a3.4 3.4 0 0 0-.1 2.6 3.6 3.6 0 0 0-1 2.6c0 3.6 2.2 4.4 4.3 4.6a2.1 2.1 0 0 0-.6 1.7v2.2"/></svg>',
+        'Website' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="M3.8 12h16.4M12 3.5c2.1 2.3 3.2 5.1 3.2 8.5s-1.1 6.2-3.2 8.5c-2.1-2.3-3.2-5.1-3.2-8.5S9.9 5.8 12 3.5Z"/></svg>',
+        default => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8A2.5 2.5 0 0 1 17.5 17H10l-4.5 3v-3.5A2.5 2.5 0 0 1 3 14.5v-8Z"/><path d="m5 6.5 6.2 4.5L18 6.5"/></svg>',
+    };
+}
+
+function portfolioPresentationActionIcon(string $action): string
+{
+    return match ($action) {
+        'arrow' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h13M13 6l6 6-6 6"/></svg>',
+        default => portfolioPresentationSocialIcon('Email'),
     };
 }
 
@@ -97,9 +132,10 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $workDescription = portfolioPresentationValue($profile, 'work_description');
     $heroSummary = $workDescription !== '' ? $workDescription : $aboutMe;
     $aboutNarrative = $aboutMe !== '' && $aboutMe !== $heroSummary ? $aboutMe : '';
-    $socialLinks = portfolioPresentationSocialLinks($profile);
     $email = portfolioPresentationValue($profile, 'email');
     $emailAction = filter_var($email, FILTER_VALIDATE_EMAIL) !== false ? 'mailto:' . $email : '';
+    $socialLinks = portfolioPresentationSocialLinks($profile);
+    $heroSocialActions = portfolioPresentationHeroSocialActions($profile, $emailAction);
     $initials = profileInitials($name) ?: 'P';
     $showProjects = $projects !== [];
     $showSkills = $skills !== [];
@@ -168,13 +204,12 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                 <h1 id="portfolio-title">Turning Data into <span>Intelligence</span></h1>
                 <?php if ($heroSummary !== ''): ?><p class="portfolio-hero-summary"><?php echo nl2br(portfolioPresentationEscape($heroSummary)); ?></p><?php endif; ?>
                 <div class="portfolio-hero-actions">
-                    <?php if ($showProjects): ?><a class="portfolio-button portfolio-button-primary" href="#projects">View My Work <span aria-hidden="true">→</span></a><?php endif; ?>
-                    <a class="portfolio-button portfolio-button-secondary" href="#contact">Contact Me <span aria-hidden="true">↗</span></a>
+                    <?php if ($showProjects): ?><a class="portfolio-button portfolio-button-primary" href="#projects"><span>View My Work</span><?php echo portfolioPresentationActionIcon('arrow'); ?></a><?php endif; ?>
+                    <a class="portfolio-button portfolio-button-secondary" href="#contact"><span>Contact Me</span><?php echo portfolioPresentationActionIcon('contact'); ?></a>
                 </div>
-                <?php if ($socialLinks !== [] || $emailAction !== ''): ?>
+                <?php if ($heroSocialActions !== []): ?>
                     <ul class="portfolio-hero-social-list" aria-label="Professional links">
-                        <?php foreach ($socialLinks as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" aria-label="<?php echo portfolioPresentationEscape($link['label']); ?>" rel="noopener noreferrer"><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?>
-                        <?php if ($emailAction !== ''): ?><li><a href="<?php echo portfolioPresentationEscape($emailAction); ?>" aria-label="Email <?php echo portfolioPresentationEscape($name); ?>"><?php echo portfolioPresentationSocialIcon('Email'); ?></a></li><?php endif; ?>
+                        <?php foreach ($heroSocialActions as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" aria-label="<?php echo portfolioPresentationEscape($link['label'] === 'Email' ? 'Email ' . $name : $link['label']); ?>"<?php if ($link['external']): ?> rel="noopener noreferrer"<?php endif; ?>><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?>
                     </ul>
                 <?php endif; ?>
             </div>

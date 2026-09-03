@@ -23,13 +23,15 @@ final class PortfolioPresentationStaticTest
         phase2Assert(str_contains($presentation, 'portfolio-hero-badge') && str_contains($presentation, 'Turning Data into <span>Intelligence</span>') && str_contains($presentation, 'portfolio-hero-reserved') && substr_count($presentation, '<h1 ') === 1, 'S02 Hero foundation is missing its truthful badge, value headline, reserved right column, or single H1.');
         phase2Assert(!str_contains($presentation, 'portfolio-metrics') && !str_contains($presentation, 'portfolio-profile-card') && !str_contains($presentation, 'portfolio-hero-wave') && !str_contains($presentation, 'portfolio-hero-grid-lines') && !str_contains($presentation, 'href="/download'), 'S02 must remove legacy Hero visual shells and avoid fake resume destinations.');
         phase2Assert(str_contains($presentation, 'portfolio-project-visual--') && str_contains($presentation, 'portfolioPresentationProjectVisual(') && !str_contains($presentation, 'profileInitials($projectTitle)'), 'Image-free project cards must use deterministic decorative artwork rather than title initials.');
-        phase2Assert(str_contains($presentation, 'portfolio-hero-social-list') && str_contains($presentation, 'portfolioPresentationSocialIcon('), 'S02 Hero social actions are missing their compact icon presentation.');
+        phase2Assert(str_contains($presentation, 'portfolio-hero-social-list') && str_contains($presentation, 'portfolioPresentationSocialIcon(') && str_contains($presentation, 'portfolioPresentationHeroSocialActions(') && str_contains($presentation, "['LinkedIn', 'GitHub']"), 'S02A Hero social actions are missing their data-driven priority order.');
+        phase2Assert(str_contains($presentation, 'portfolioPresentationActionIcon(') && str_contains($presentation, '<span>View My Work</span>') && str_contains($presentation, '<span>Contact Me</span>') && !str_contains($presentation, 'Download Resume'), 'S02A Hero CTAs do not preserve the real Projects action and truthful document fallback.');
         phase2Assert(str_contains($presentation, 'Private preview') && str_contains($presentation, 'The contact form is inactive in private preview.'), 'Private preview distinction is incomplete.');
         foreach (['Years Experience', 'Certifications', 'Happy Clients', 'Industry Awards', 'Testimonials', 'Trusted By', 'Resume download', 'Newsletter', 'Experience timeline'] as $unsupportedClaim) {
             phase2Assert(!str_contains($presentation, $unsupportedClaim), "Unsupported Portfolio claim was introduced: {$unsupportedClaim}");
         }
 
         phase2Assert(str_contains($stylesheet, '--pf-container: 1260px') && str_contains($stylesheet, '.portfolio-hero-grid') && str_contains($stylesheet, 'grid-template-columns: repeat(2, minmax(0, 1fr))') && str_contains($stylesheet, '.portfolio-hero-reserved'), 'S02 Hero master geometry or reserved right column is incomplete.');
+        phase2Assert(str_contains($stylesheet, '.portfolio-button-primary { width: 194px') && str_contains($stylesheet, '.portfolio-button-secondary { width: 214px') && str_contains($stylesheet, 'height: 50px') && str_contains($stylesheet, 'width: 42px; height: 42px') && str_contains($stylesheet, 'margin: 10px 0 0'), 'S02A Hero CTA or compact social-cluster geometry is incomplete.');
         phase2Assert(str_contains($stylesheet, '.portfolio-header-inner') && str_contains($stylesheet, 'grid-template-columns: minmax(200px, 230px) minmax(0, 1fr) minmax(152px, 160px)') && str_contains($stylesheet, 'justify-self: end') && str_contains($stylesheet, 'min-height: 66px') && str_contains($stylesheet, 'position: sticky') && str_contains($stylesheet, 'portfolio-header-cta') && str_contains($stylesheet, 'white-space: nowrap') && str_contains($stylesheet, 'a.is-current::after'), 'S01 premium sticky header, bounded shared geometry, CTA, or active underline is incomplete.');
         phase2Assert(str_contains($script, 'IntersectionObserver') && str_contains($script, 'data-portfolio-section') && str_contains($script, 'aria-current') && str_contains($script, 'const initialId = window.location.hash.slice(1)') && !str_contains($script, 'experience') && !str_contains($script, 'insights'), 'S01 scrollspy must apply only to implemented Portfolio sections and honor direct section links.');
         phase2Assert(str_contains($stylesheet, ':focus-visible') && str_contains($stylesheet, 'prefers-reduced-motion'), 'Portfolio focus or reduced-motion behavior is missing.');
@@ -46,8 +48,10 @@ final class PortfolioPresentationStaticTest
                 'professional_title' => 'Engineer',
                 'about_me' => 'Fuller safe narrative',
                 'work_description' => 'Professional summary',
+                'email' => 'owner@example.test',
+                'linkedin_url' => 'https://linkedin.example.test/profile',
                 'github_url' => 'https://example.test/profile',
-                'website_url' => 'javascript:alert(1)',
+                'website_url' => 'https://website.example.test/profile',
             ],
             [['skill_name' => '<PHP>']],
             [['id' => 7, 'title' => '<Project>', 'category' => 'Data Science', 'description' => 'Description', 'github_url' => 'https://example.test/project', 'image_path' => null]],
@@ -59,6 +63,19 @@ final class PortfolioPresentationStaticTest
         $rendered = ob_get_clean();
         phase2Assert(is_string($rendered) && str_contains($rendered, '&lt;Owner&gt;') && str_contains($rendered, '&lt;PHP&gt;') && str_contains($rendered, '&lt;Project&gt;'), 'Shared Portfolio presentation does not encode user content.');
         phase2Assert(!str_contains($rendered, 'javascript:alert') && str_contains($rendered, 'action="/p/safe/contact"') && str_contains($rendered, 'portfolio-project-visual--data-science'), 'Shared Portfolio presentation accepted an unsafe URL, lost the scoped contact action, or lost its decorative project art.');
+        phase2Assert(
+            str_contains($rendered, 'href="#projects"')
+            && str_contains($rendered, 'href="mailto:owner@example.test"')
+            && str_contains($rendered, 'aria-label="Email &lt;Owner&gt;"')
+            && !str_contains($rendered, 'Download Resume')
+            && !str_contains($rendered, 'href="/download')
+            && strpos($rendered, 'aria-label="LinkedIn"') < strpos($rendered, 'aria-label="GitHub"')
+            && strpos($rendered, 'aria-label="GitHub"') < strpos($rendered, 'aria-label="Email &lt;Owner&gt;"')
+            && strpos($rendered, 'aria-label="Email &lt;Owner&gt;"') < strpos($rendered, 'aria-label="Website"'),
+            'S02A Hero actions must retain the real Projects target, validate email, avoid fabricated resumes, and order safe icon controls correctly.'
+        );
+
+        phase2AssertSame([], portfolioPresentationHeroSocialActions(['website_url' => 'javascript:alert(1)'], ''), 'S02A Hero actions must reject unsafe URLs and omit unavailable actions.');
 
         ob_start();
         renderPortfolioPresentation(['full_name' => 'Preview Owner'], [], [], ['preview' => true]);
