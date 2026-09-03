@@ -221,6 +221,9 @@ function portfolioPresentationMetricIcon(string $metric): string
  *     project_media_url?: callable(int): string,
  *     contact_action?: string,
  *     contact_sent?: bool,
+ *     contact_values?: array{name?: string, email?: string, message?: string},
+ *     contact_field_errors?: array<string, string>,
+ *     contact_form_error?: string,
  *     experiences?: list<array<string, mixed>>
  * } $options
  */
@@ -261,6 +264,15 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $contactAction = isset($options['contact_action']) && is_string($options['contact_action'])
         ? $options['contact_action']
         : '';
+    $contactValues = isset($options['contact_values']) && is_array($options['contact_values']) ? $options['contact_values'] : [];
+    $contactFieldErrors = isset($options['contact_field_errors']) && is_array($options['contact_field_errors']) ? $options['contact_field_errors'] : [];
+    $contactFormError = isset($options['contact_form_error']) && is_string($options['contact_form_error']) ? $options['contact_form_error'] : '';
+    $contactName = isset($contactValues['name']) && is_string($contactValues['name']) ? $contactValues['name'] : '';
+    $contactEmail = isset($contactValues['email']) && is_string($contactValues['email']) ? $contactValues['email'] : '';
+    $contactMessage = isset($contactValues['message']) && is_string($contactValues['message']) ? $contactValues['message'] : '';
+    $contactNameError = isset($contactFieldErrors['name']) && is_string($contactFieldErrors['name']) ? $contactFieldErrors['name'] : '';
+    $contactEmailError = isset($contactFieldErrors['email']) && is_string($contactFieldErrors['email']) ? $contactFieldErrors['email'] : '';
+    $contactMessageError = isset($contactFieldErrors['message']) && is_string($contactFieldErrors['message']) ? $contactFieldErrors['message'] : '';
     $previewError = isset($options['preview_error']) && is_string($options['preview_error'])
         ? $options['preview_error']
         : '';
@@ -456,10 +468,11 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
         <div class="portfolio-contact-card">
             <?php if (($options['contact_sent'] ?? false) === true): ?><p class="portfolio-form-status" role="status">Message submitted successfully.</p><?php endif; ?>
             <?php if ($preview): ?><p class="portfolio-preview-note">The contact form is inactive in private preview.</p><?php endif; ?>
-            <form method="post"<?php if ($contactAction !== ''): ?> action="<?php echo portfolioPresentationEscape($contactAction); ?>"<?php endif; ?>>
-                <label for="portfolio-contact-name">Name</label><input id="portfolio-contact-name" type="text" name="name" maxlength="100" required autocomplete="name"<?php echo $preview ? ' disabled' : ''; ?>>
-                <label for="portfolio-contact-email">Email</label><input id="portfolio-contact-email" type="email" name="email" maxlength="255" required autocomplete="email"<?php echo $preview ? ' disabled' : ''; ?>>
-                <label for="portfolio-contact-message">Message</label><textarea id="portfolio-contact-message" name="message" maxlength="5000" required<?php echo $preview ? ' disabled' : ''; ?>></textarea>
+            <?php if ($contactFormError !== ''): ?><p class="portfolio-contact-form-error" role="alert"><?php echo portfolioPresentationEscape($contactFormError); ?></p><?php endif; ?>
+            <form method="post"<?php if ($contactAction !== ''): ?> action="<?php echo portfolioPresentationEscape($contactAction); ?>#contact"<?php endif; ?>>
+                <div class="portfolio-contact-field<?php echo $contactNameError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-name">Name</label><input id="portfolio-contact-name" type="text" name="name" maxlength="100" required autocomplete="name" value="<?php echo portfolioPresentationEscape($contactName); ?>"<?php echo $contactNameError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-name-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactNameError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-name-error"><?php echo portfolioPresentationEscape($contactNameError); ?></p><?php endif; ?></div>
+                <div class="portfolio-contact-field<?php echo $contactEmailError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-email">Email</label><input id="portfolio-contact-email" type="email" name="email" maxlength="255" required autocomplete="email" value="<?php echo portfolioPresentationEscape($contactEmail); ?>"<?php echo $contactEmailError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-email-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactEmailError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-email-error"><?php echo portfolioPresentationEscape($contactEmailError); ?></p><?php endif; ?></div>
+                <div class="portfolio-contact-field portfolio-contact-field--message<?php echo $contactMessageError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-message">Message</label><textarea id="portfolio-contact-message" name="message" maxlength="5000" required<?php echo $contactMessageError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-message-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php echo portfolioPresentationEscape($contactMessage); ?></textarea><?php if ($contactMessageError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-message-error"><?php echo portfolioPresentationEscape($contactMessageError); ?></p><?php endif; ?></div>
                 <button type="submit"<?php echo $preview ? ' disabled aria-disabled="true"' : ''; ?>>Send message <span aria-hidden="true">→</span></button>
             </form>
         </div>
