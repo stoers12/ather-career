@@ -314,7 +314,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                             <?php if ($hasProjectImage): ?>
                                 <img src="<?php echo portfolioPresentationEscape($projectImageUrl); ?>" alt="<?php echo portfolioPresentationEscape($projectTitle); ?> project preview" loading="lazy">
                             <?php else: ?>
-                                <span class="portfolio-project-fallback" aria-hidden="true"><?php echo portfolioPresentationProjectFallbackIcon(); ?></span><?php if ($category !== ''): ?><span class="portfolio-project-fallback-category" aria-hidden="true"><?php echo portfolioPresentationEscape($category); ?></span><?php endif; ?>
+                                <span class="portfolio-project-fallback" aria-hidden="true"><?php echo portfolioPresentationProjectFallbackIcon(); ?></span>
                             <?php endif; ?>
                         </div>
                         <div class="portfolio-project-body">
