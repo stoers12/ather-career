@@ -3,6 +3,7 @@
 require_once __DIR__ . '/error_reporting.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/validation.php';
+require_once __DIR__ . '/project_technologies.php';
 
 const PROJECT_ID_MAXIMUM = '4294967295';
 const PROJECT_PIXEL_CEILING = 8000000;
@@ -20,7 +21,7 @@ function projectImageSizeIsAllowed(mixed $size): bool
 
 function projectFormDefaults(): array
 {
-    return ['id' => '', 'title' => '', 'category' => '', 'description' => '', 'github_url' => '', 'image_path' => null];
+    return ['id' => '', 'title' => '', 'category' => '', 'description' => '', 'github_url' => '', 'technologies' => '', 'image_path' => null];
 }
 
 function projectActionId($value): ?int
@@ -167,9 +168,13 @@ function handleProjectAction(PDO $database, array $post, array $files): array
         $category = isset($post['category']) && is_string($post['category']) ? trim($post['category']) : '';
         $description = isset($post['description']) && is_string($post['description']) ? trim($post['description']) : '';
         $githubUrl = isset($post['github_url']) && is_string($post['github_url']) ? trim($post['github_url']) : '';
+        $technologiesInput = !array_key_exists('technologies', $post) || is_string($post['technologies'])
+            ? ($post['technologies'] ?? '')
+            : null;
         $formMode = $action === 'update' ? 'edit' : 'add';
-        $editingProject = ['id' => $post['id'] ?? '', 'title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'image_path' => null];
+        $editingProject = ['id' => $post['id'] ?? '', 'title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'technologies' => $technologiesInput, 'image_path' => null];
         $errors = [];
+        $technologies = normalizeProjectTechnologies($technologiesInput, $errors);
 
         foreach (['title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl] as $field => $value) {
             if ($value === '') {
@@ -195,7 +200,7 @@ function handleProjectAction(PDO $database, array $post, array $files): array
         if ($action === 'update' && $projectId === null) {
             $errors[] = 'Please provide a valid project ID.';
         } elseif ($action === 'update') {
-            $find = $database->prepare('SELECT image_path FROM projects WHERE id = :id');
+            $find = $database->prepare('SELECT image_path, technologies FROM projects WHERE id = :id');
             $find->execute(['id' => $projectId]);
             $existing = $find->fetch();
             if ($existing === false) {
@@ -217,16 +222,16 @@ function handleProjectAction(PDO $database, array $post, array $files): array
         }
 
         if ($action === 'add') {
-            $statement = $database->prepare('INSERT INTO projects (title, category, description, github_url, image_path) VALUES (:title, :category, :description, :github_url, :image_path)');
-            $statement->execute(['title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'image_path' => $newImagePath]);
+            $statement = $database->prepare('INSERT INTO projects (title, category, description, github_url, image_path, technologies) VALUES (:title, :category, :description, :github_url, :image_path, :technologies)');
+            $statement->execute(['title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'image_path' => $newImagePath, 'technologies' => projectTechnologiesToStorage($technologies ?? [])]);
             setProjectSuccessFlash('Project added successfully.');
             return projectActionResult([], 'add', null, 'projects.php');
         }
 
         $removeImage = isset($post['remove_image']) && $post['remove_image'] === '1';
         $imagePath = $newImagePath ?? ($removeImage ? null : $oldImagePath);
-        $statement = $database->prepare('UPDATE projects SET title = :title, category = :category, description = :description, github_url = :github_url, image_path = :image_path WHERE id = :id');
-        $statement->execute(['title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'image_path' => $imagePath, 'id' => $projectId]);
+        $statement = $database->prepare('UPDATE projects SET title = :title, category = :category, description = :description, github_url = :github_url, image_path = :image_path, technologies = :technologies WHERE id = :id');
+        $statement->execute(['title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'image_path' => $imagePath, 'technologies' => projectTechnologiesToStorage($technologies ?? []), 'id' => $projectId]);
         if ($statement->rowCount() === 0) {
             $verify = $database->prepare('SELECT id FROM projects WHERE id = :id');
             $verify->execute(['id' => $projectId]);

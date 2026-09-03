@@ -200,9 +200,13 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         $category = isset($post['category']) && is_string($post['category']) ? trim($post['category']) : '';
         $description = isset($post['description']) && is_string($post['description']) ? trim($post['description']) : '';
         $githubUrl = isset($post['github_url']) && is_string($post['github_url']) ? trim($post['github_url']) : '';
+        $technologiesInput = !array_key_exists('technologies', $post) || is_string($post['technologies'])
+            ? ($post['technologies'] ?? '')
+            : null;
         $formMode = $action === 'update' ? 'edit' : 'add';
-        $editingProject = ['id' => $post['id'] ?? '', 'title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'image_path' => null];
+        $editingProject = ['id' => $post['id'] ?? '', 'title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'technologies' => $technologiesInput, 'image_path' => null];
         $errors = [];
+        $technologies = normalizeProjectTechnologies($technologiesInput, $errors);
 
         foreach (['title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl] as $field => $value) {
             if ($value === '') {
@@ -247,7 +251,7 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         }
 
         if ($action === 'add') {
-            createAuthorizedProject($database, $context, $title, $category, $description, $githubUrl, $newImagePath);
+            createAuthorizedProject($database, $context, $title, $category, $description, $githubUrl, $newImagePath, $technologies ?? []);
             setProjectSuccessFlash('Project added successfully.');
             return projectActionResult([], 'add', null, 'owner_projects.php');
         }
@@ -255,7 +259,7 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         $removeImage = isset($post['remove_image']) && $post['remove_image'] === '1';
         $oldImagePath = $existing['image_path'] ?? null;
         $imagePath = $newImagePath ?? ($removeImage ? null : $oldImagePath);
-        if (!updateAuthorizedProject($database, $context, $projectId, $title, $category, $description, $githubUrl, $imagePath)) {
+        if (!updateAuthorizedProject($database, $context, $projectId, $title, $category, $description, $githubUrl, $imagePath, $technologies ?? [])) {
             cleanProjectImage($newImagePath, 'owner_project_update_compensation', $context->portfolioId);
             return projectActionResult(['Project not found.'], $formMode, $editingProject);
         }

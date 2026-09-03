@@ -42,19 +42,20 @@ try {
         if ($projectId === null) {
             $formErrors[] = 'Please provide a valid project ID.';
         } else {
-            $statement = $database->prepare('SELECT id, title, category, description, github_url, image_path FROM projects WHERE id = :id');
+            $statement = $database->prepare('SELECT id, title, category, description, github_url, image_path, technologies FROM projects WHERE id = :id');
             $statement->execute(['id' => $projectId]);
             $selectedProject = $statement->fetch();
             if ($selectedProject === false) {
                 $formErrors[] = 'Project not found.';
             } else {
                 $editingProject = $selectedProject;
+                $editingProject['technologies'] = projectTechnologiesFormValue(projectTechnologiesFromStorage($selectedProject['technologies'] ?? null));
                 $formMode = 'edit';
             }
         }
     }
 
-    $statement = $database->prepare('SELECT id, title, category, description, github_url, image_path FROM projects ORDER BY created_at ASC, id ASC');
+    $statement = $database->prepare('SELECT id, title, category, description, github_url, image_path, technologies FROM projects ORDER BY created_at ASC, id ASC');
     $statement->execute();
     $projects = $statement->fetchAll();
 } catch (PDOException | DatabaseConfigurationException $exception) {
@@ -106,6 +107,7 @@ $showProjectForm = $formMode === 'edit' || $formErrors !== [] || isset($_GET['ad
                         <label class="form-field" for="title"><span>Title</span><input type="text" id="title" name="title" value="<?php echo escapeProjectAdminHtml((string) $editingProject['title']); ?>" maxlength="<?php echo PROJECT_TITLE_MAX_LENGTH; ?>" required></label>
                         <label class="form-field" for="category"><span>Category</span><input type="text" id="category" name="category" value="<?php echo escapeProjectAdminHtml((string) $editingProject['category']); ?>" maxlength="<?php echo PROJECT_CATEGORY_MAX_LENGTH; ?>" required></label>
                         <label class="form-field form-field-full" for="description"><span>Description</span><textarea id="description" name="description" required><?php echo escapeProjectAdminHtml((string) $editingProject['description']); ?></textarea></label>
+                        <label class="form-field form-field-full" for="technologies"><span>Technologies</span><textarea id="technologies" name="technologies" aria-describedby="technologies-help"><?php echo escapeProjectAdminHtml((string) $editingProject['technologies']); ?></textarea><small id="technologies-help" class="form-hint">One technology per line · Up to <?php echo PROJECT_TECHNOLOGIES_MAXIMUM; ?></small></label>
                         <label class="form-field form-field-full" for="github_url"><span>GitHub URL</span><input type="url" id="github_url" name="github_url" value="<?php echo escapeProjectAdminHtml((string) $editingProject['github_url']); ?>" maxlength="<?php echo PROJECT_GITHUB_URL_MAX_LENGTH; ?>" required></label>
                         <div class="form-field form-field-full">
                             <span class="field-label">Project Image <em>(optional)</em></span>

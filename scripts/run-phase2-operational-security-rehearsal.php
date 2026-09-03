@@ -60,7 +60,7 @@ try {
     putenv('ATHERCAR_STORAGE_ROOT=' . $environment->storageRoot . '/private');
     mkdir($environment->storageRoot . '/private', 0700);
     $database = getDatabaseConnection();
-    phase2AssertSame('public_lifecycle', $database->query("SELECT name FROM schema_migrations WHERE version = '005'")->fetchColumn(), 'P2J-08 requires the completed Phase-2 schema.');
+    phase2AssertSame('project_technologies', $database->query("SELECT name FROM schema_migrations WHERE version = '006'")->fetchColumn(), 'P2J-08 requires the completed Phase-2 schema.');
 
     $_SERVER['REMOTE_ADDR'] = '198.51.100.41';
     $_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.9';

@@ -71,7 +71,7 @@ try {
     $environment = TestEnvironment::create();
     putenv('RATE_LIMIT_STATE_DIR=' . $environment->storageRoot . DIRECTORY_SEPARATOR . 'rate-limit');
     $database = getDatabaseConnection();
-    phase2AssertSame('public_lifecycle', $database->query("SELECT name FROM schema_migrations WHERE version = '005'")->fetchColumn(), 'P2J-06 requires the public lifecycle migration.');
+    phase2AssertSame('project_technologies', $database->query("SELECT name FROM schema_migrations WHERE version = '006'")->fetchColumn(), 'P2J-06 requires the Project technologies migration.');
 
     $userA = publicContactCreateUser($database, 'a');
     [$portfolioA, $contextA] = publicContactCreatePortfolio($database, $userA, 'contact-a', 'Contact A');

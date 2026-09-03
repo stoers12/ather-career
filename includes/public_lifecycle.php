@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/authorization.php';
 require_once __DIR__ . '/error_reporting.php';
+require_once __DIR__ . '/project_technologies.php';
 
 const PUBLIC_SLUG_MIN_LENGTH = 3;
 const PUBLIC_SLUG_MAX_LENGTH = 64;
@@ -251,12 +252,18 @@ function listPublicSkills(PDO $database, PublicReadContext $context): array
 function listPublicProjects(PDO $database, PublicReadContext $context): array
 {
     $statement = $database->prepare(
-        'SELECT id, title, category, description, github_url, image_path, created_at
+        'SELECT id, title, category, description, github_url, image_path, technologies, created_at
          FROM projects
          WHERE portfolio_id = :public_portfolio_id
          ORDER BY created_at ASC, id ASC'
     );
     $statement->execute(['public_portfolio_id' => $context->portfolioId]);
 
-    return $statement->fetchAll(PDO::FETCH_ASSOC);
+    $projects = $statement->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($projects as &$project) {
+        $project['technologies'] = projectTechnologiesFromStorage($project['technologies'] ?? null);
+    }
+    unset($project);
+
+    return $projects;
 }

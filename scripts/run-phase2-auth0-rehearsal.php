@@ -48,7 +48,7 @@ try {
     $environment = TestEnvironment::create();
     putenv('RATE_LIMIT_STATE_DIR=' . $environment->storageRoot . '/rate-limit');
     $database = getDatabaseConnection();
-    phase2AssertSame('public_lifecycle', $database->query("SELECT name FROM schema_migrations WHERE version = '005'")->fetchColumn(), 'Auth0 rehearsal requires Phase-2 migration 005.');
+    phase2AssertSame('project_technologies', $database->query("SELECT name FROM schema_migrations WHERE version = '006'")->fetchColumn(), 'Auth0 rehearsal requires Phase-2 migration 006.');
     $configuration = new Auth0OidcConfiguration('https://test-tenant.us.auth0.com/', 'test-tenant.us.auth0.com', 'test-client', 'test-secret', 'https://app.example.test/owner_oidc_callback.php');
     startOwnerSession();
 

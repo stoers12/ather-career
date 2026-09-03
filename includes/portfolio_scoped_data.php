@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/authorization.php';
+require_once __DIR__ . '/project_technologies.php';
 
 const AUTHORIZED_PERSONAL_INFO_FIELDS = [
     'full_name',
@@ -228,14 +229,20 @@ function deleteAuthorizedSkill(PDO $database, AuthorizedPortfolioContext $contex
 function listAuthorizedProjects(PDO $database, AuthorizedPortfolioContext $context): array
 {
     $statement = $database->prepare(
-        'SELECT id, title, category, description, github_url, image_path, created_at
+        'SELECT id, title, category, description, github_url, image_path, technologies, created_at
          FROM projects
          WHERE portfolio_id = :authorized_portfolio_id
          ORDER BY created_at ASC, id ASC'
     );
     $statement->execute(['authorized_portfolio_id' => $context->portfolioId]);
 
-    return $statement->fetchAll(PDO::FETCH_ASSOC);
+    $projects = $statement->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($projects as &$project) {
+        $project['technologies'] = projectTechnologiesFromStorage($project['technologies'] ?? null);
+    }
+    unset($project);
+
+    return $projects;
 }
 
 /** @return array<string, mixed>|null */
@@ -246,7 +253,7 @@ function findAuthorizedProject(PDO $database, AuthorizedPortfolioContext $contex
     }
 
     $statement = $database->prepare(
-        'SELECT id, title, category, description, github_url, image_path, created_at
+        'SELECT id, title, category, description, github_url, image_path, technologies, created_at
          FROM projects
          WHERE id = :resource_id
            AND portfolio_id = :authorized_portfolio_id
@@ -258,7 +265,13 @@ function findAuthorizedProject(PDO $database, AuthorizedPortfolioContext $contex
     ]);
     $project = $statement->fetch(PDO::FETCH_ASSOC);
 
-    return $project === false ? null : $project;
+    if ($project === false) {
+        return null;
+    }
+
+    $project['technologies'] = projectTechnologiesFromStorage($project['technologies'] ?? null);
+
+    return $project;
 }
 
 function createAuthorizedProject(
@@ -269,10 +282,11 @@ function createAuthorizedProject(
     string $description,
     string $githubUrl,
     ?string $imagePath,
+    array $technologies,
 ): int {
     $statement = $database->prepare(
-        'INSERT INTO projects (portfolio_id, title, category, description, github_url, image_path)
-         VALUES (:authorized_portfolio_id, :title, :category, :description, :github_url, :image_path)'
+        'INSERT INTO projects (portfolio_id, title, category, description, github_url, image_path, technologies)
+         VALUES (:authorized_portfolio_id, :title, :category, :description, :github_url, :image_path, :technologies)'
     );
     $statement->execute([
         'authorized_portfolio_id' => $context->portfolioId,
@@ -281,6 +295,7 @@ function createAuthorizedProject(
         'description' => $description,
         'github_url' => $githubUrl,
         'image_path' => $imagePath,
+        'technologies' => projectTechnologiesToStorage($technologies),
     ]);
 
     return (int) $database->lastInsertId();
@@ -295,6 +310,7 @@ function updateAuthorizedProject(
     string $description,
     string $githubUrl,
     ?string $imagePath,
+    array $technologies,
 ): bool {
     if ($projectId < 1) {
         return false;
@@ -303,7 +319,7 @@ function updateAuthorizedProject(
     $statement = $database->prepare(
         'UPDATE projects
          SET title = :title, category = :category, description = :description,
-             github_url = :github_url, image_path = :image_path
+             github_url = :github_url, image_path = :image_path, technologies = :technologies
          WHERE id = :resource_id
            AND portfolio_id = :authorized_portfolio_id'
     );
@@ -313,6 +329,7 @@ function updateAuthorizedProject(
         'description' => $description,
         'github_url' => $githubUrl,
         'image_path' => $imagePath,
+        'technologies' => projectTechnologiesToStorage($technologies),
         'resource_id' => $projectId,
         'authorized_portfolio_id' => $context->portfolioId,
     ]);

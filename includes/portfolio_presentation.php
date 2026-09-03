@@ -305,6 +305,9 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                     $projectImageUrl = (string) $projectMediaUrl($projectId);
                     $hasProjectImage = isset($project['image_path']) && trim((string) $project['image_path']) !== '' && $projectImageUrl !== '';
                     $projectLink = portfolioPresentationProjectLink($project);
+                    $projectTechnologies = isset($project['technologies']) && is_array($project['technologies'])
+                        ? array_slice($project['technologies'], 0, 4)
+                        : [];
                     ?>
                     <article class="portfolio-project-card">
                         <div class="portfolio-project-visual">
@@ -318,6 +321,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                             <?php if ($category !== ''): ?><p class="portfolio-project-category"><?php echo portfolioPresentationEscape($category); ?></p><?php endif; ?>
                             <h3><?php echo portfolioPresentationEscape($projectTitle); ?></h3>
                             <?php if (isset($project['description']) && trim((string) $project['description']) !== ''): ?><p class="portfolio-project-description"><?php echo nl2br(portfolioPresentationEscape($project['description'])); ?></p><?php endif; ?>
+                            <?php if ($projectTechnologies !== []): ?><ul class="portfolio-project-technologies" aria-label="Technologies used"><?php foreach ($projectTechnologies as $technology): ?><li><?php echo portfolioPresentationEscape($technology); ?></li><?php endforeach; ?></ul><?php endif; ?>
                             <?php if ($projectLink !== null): ?><a class="portfolio-project-link" href="<?php echo portfolioPresentationEscape($projectLink); ?>" rel="noopener noreferrer" aria-label="View <?php echo portfolioPresentationEscape($projectTitle); ?> on GitHub">View on GitHub <span aria-hidden="true">↗</span></a><?php endif; ?>
                         </div>
                     </article>
