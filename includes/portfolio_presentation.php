@@ -217,7 +217,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                 </div>
             </div>
             <div class="portfolio-hero-reserved">
-                <article class="portfolio-hero-profile-card" aria-label="Profile summary">
+                <article class="portfolio-hero-profile-card portfolio-hero-profile-card--<?php echo $profileMediaUrl !== '' ? 'image' : 'fallback'; ?>" aria-label="Profile summary">
                     <div class="portfolio-hero-profile-visual">
                         <?php if ($profileMediaUrl !== ''): ?>
                             <img src="<?php echo portfolioPresentationEscape($profileMediaUrl); ?>" alt="<?php echo portfolioPresentationEscape($name); ?> portrait">
