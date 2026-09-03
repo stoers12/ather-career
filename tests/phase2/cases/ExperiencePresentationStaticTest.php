@@ -24,7 +24,8 @@ final class ExperiencePresentationStaticTest
         foreach (['.portfolio-experience-list', '.portfolio-experience-item::before', '.portfolio-experience-content', '.portfolio-experience-meta'] as $required) {
             phase2Assert(str_contains($stylesheet, $required), "Experience styling is missing {$required}.");
         }
-        phase2Assert(!str_contains($presentation, 'href="#experience"'), 'Experience navigation must remain disabled until visual acceptance.');
+        phase2Assert(str_contains($presentation, 'href="#experience" data-portfolio-section="experience">Experience</a>'), 'Experience navigation must use the generic implemented-section anchor contract.');
+        phase2Assert(!str_contains($presentation, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>'), 'Experience navigation must no longer be disabled after acceptance.');
 
         require_once PHASE2_REPOSITORY_ROOT . '/includes/portfolio_presentation.php';
 

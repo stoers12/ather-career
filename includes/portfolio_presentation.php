@@ -291,7 +291,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
             <a class="is-current" href="#top" data-portfolio-section="top" aria-current="page">Home</a>
             <?php if ($showAbout): ?><a href="#about" data-portfolio-section="about">About</a><?php endif; ?>
             <?php if ($showProjects): ?><a href="#projects" data-portfolio-section="projects">Projects</a><?php endif; ?>
-            <span class="portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>
+            <a href="#experience" data-portfolio-section="experience">Experience</a>
             <?php if ($showSkills): ?><a href="#skills" data-portfolio-section="skills">Skills</a><?php endif; ?>
             <span class="portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Insights</span>
             <a href="#contact" data-portfolio-section="contact">Contact</a>
