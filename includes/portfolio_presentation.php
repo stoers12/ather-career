@@ -103,6 +103,7 @@ function portfolioPresentationActionIcon(string $action): string
 {
     return match ($action) {
         'arrow' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h13M13 6l6 6-6 6"/></svg>',
+        'download' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v10M8 10l4 4 4-4M5 19h14"/></svg>',
         default => portfolioPresentationSocialIcon('Email'),
     };
 }
@@ -205,7 +206,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                 <?php if ($heroSummary !== ''): ?><p class="portfolio-hero-summary"><?php echo nl2br(portfolioPresentationEscape($heroSummary)); ?></p><?php endif; ?>
                 <div class="portfolio-hero-actions">
                     <?php if ($showProjects): ?><a class="portfolio-button portfolio-button-primary" href="#projects"><span>View My Work</span><?php echo portfolioPresentationActionIcon('arrow'); ?></a><?php endif; ?>
-                    <a class="portfolio-button portfolio-button-secondary" href="#contact"><span>Contact Me</span><?php echo portfolioPresentationActionIcon('contact'); ?></a>
+                    <button class="portfolio-button portfolio-button-secondary" type="button" disabled aria-label="Download Resume (unavailable)"><span>Download Resume</span><?php echo portfolioPresentationActionIcon('download'); ?></button>
                 </div>
                 <?php if ($heroSocialActions !== []): ?>
                     <ul class="portfolio-hero-social-list" aria-label="Professional links">
