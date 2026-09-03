@@ -20,7 +20,7 @@ final class PortfolioPresentationStaticTest
         phase2Assert(str_contains($presentation, '<header class="portfolio-header">') && str_contains($presentation, '<div class="portfolio-header-inner">') && str_contains($presentation, 'data-portfolio-section="top" aria-current="page">Home</a>') && str_contains($presentation, 'href="#about" data-portfolio-section="about">About</a>') && str_contains($presentation, 'href="#projects" data-portfolio-section="projects">Projects</a>') && str_contains($presentation, 'href="#skills" data-portfolio-section="skills">Skills</a>') && str_contains($presentation, 'href="#contact" data-portfolio-section="contact">Contact</a>') && str_contains($presentation, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>') && str_contains($presentation, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Insights</span>') && str_contains($presentation, 'portfolio-header-cta') && str_contains($presentation, '<svg viewBox="0 0 24 24"'), 'S01 header navigation, disabled future entries, or contact CTA is incomplete.');
         phase2Assert(!str_contains($presentation, 'href="#experience"') && !str_contains($presentation, 'href="#insights"'), 'S01 must not create false navigation targets for unfinished sections.');
         phase2Assert(strpos($presentation, '<header class="portfolio-header">') < strpos($presentation, '<main id="portfolio-main">'), 'S01 header must be the first Portfolio content element.');
-        phase2Assert(str_contains($presentation, 'portfolio-hero-badge') && str_contains($presentation, 'Turning Data into <span>Intelligence</span>') && str_contains($presentation, 'portfolio-hero-reserved') && substr_count($presentation, '<h1 ') === 1, 'S02 Hero foundation is missing its truthful badge, value headline, reserved right column, or single H1.');
+        phase2Assert(str_contains($presentation, 'portfolio-hero-badge') && str_contains($presentation, 'Turning Data into <span>Intelligence</span>') && str_contains($presentation, 'portfolio-hero-reserved') && str_contains($presentation, 'portfolio-hero-profile-card') && !str_contains($presentation, 'PROFILE / 01') && !str_contains($presentation, 'portfolio-profile-orbit') && substr_count($presentation, '<h1 ') === 1, 'S03 Hero foundation is missing its truthful badge, value headline, profile card, or single H1.');
         phase2Assert(!str_contains($presentation, 'portfolio-metrics') && !str_contains($presentation, 'portfolio-profile-card') && !str_contains($presentation, 'portfolio-hero-wave') && !str_contains($presentation, 'portfolio-hero-grid-lines') && !str_contains($presentation, 'href="/download'), 'S02 must remove legacy Hero visual shells and avoid fake resume destinations.');
         phase2Assert(str_contains($presentation, 'portfolio-project-visual--') && str_contains($presentation, 'portfolioPresentationProjectVisual(') && !str_contains($presentation, 'profileInitials($projectTitle)'), 'Image-free project cards must use deterministic decorative artwork rather than title initials.');
         phase2Assert(str_contains($presentation, 'portfolio-hero-actions-cluster') && str_contains($presentation, 'portfolio-hero-social-list') && str_contains($presentation, 'portfolioPresentationSocialIcon(') && str_contains($presentation, 'portfolioPresentationHeroSocialActions(') && str_contains($presentation, "['LinkedIn', 'GitHub']"), 'S02C Hero social actions are missing their explicit cluster or data-driven priority order.');
@@ -31,6 +31,7 @@ final class PortfolioPresentationStaticTest
         }
 
         phase2Assert(str_contains($stylesheet, '--pf-container: 1260px') && str_contains($stylesheet, '.portfolio-hero-grid') && str_contains($stylesheet, 'grid-template-columns: repeat(2, minmax(0, 1fr))') && str_contains($stylesheet, '.portfolio-hero-reserved'), 'S02 Hero master geometry or reserved right column is incomplete.');
+        phase2Assert(str_contains($stylesheet, '.portfolio-hero-profile-card { display: grid') && str_contains($stylesheet, 'grid-template-columns: minmax(0, .48fr) minmax(0, .52fr)') && str_contains($stylesheet, 'min-height: 318px') && str_contains($stylesheet, '.portfolio-hero-profile-visual img { width: 100%; height: 100%; object-fit: cover;'), 'S03 Hero profile-card proportions or safe image treatment is incomplete.');
         phase2Assert(str_contains($stylesheet, '.portfolio-hero-actions-cluster { display: flex; flex-direction: column; align-items: flex-start; gap: 18px') && str_contains($stylesheet, '.portfolio-button-primary { width: 194px') && str_contains($stylesheet, '.portfolio-button-secondary { width: 214px') && str_contains($stylesheet, 'height: 50px') && str_contains($stylesheet, 'width: 42px; height: 42px') && str_contains($stylesheet, '.portfolio-hero-social-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 0'), 'S02C Hero CTA or explicit social-cluster gap contract is incomplete.');
         phase2Assert(str_contains($stylesheet, '.portfolio-header-inner') && str_contains($stylesheet, 'grid-template-columns: minmax(200px, 230px) minmax(0, 1fr) minmax(152px, 160px)') && str_contains($stylesheet, 'justify-self: end') && str_contains($stylesheet, 'min-height: 66px') && str_contains($stylesheet, 'position: sticky') && str_contains($stylesheet, 'portfolio-header-cta') && str_contains($stylesheet, 'white-space: nowrap') && str_contains($stylesheet, 'a.is-current::after'), 'S01 premium sticky header, bounded shared geometry, CTA, or active underline is incomplete.');
         phase2Assert(str_contains($script, 'IntersectionObserver') && str_contains($script, 'data-portfolio-section') && str_contains($script, 'aria-current') && str_contains($script, 'const initialId = window.location.hash.slice(1)') && !str_contains($script, 'experience') && !str_contains($script, 'insights'), 'S01 scrollspy must apply only to implemented Portfolio sections and honor direct section links.');
@@ -48,6 +49,7 @@ final class PortfolioPresentationStaticTest
                 'professional_title' => 'Engineer',
                 'about_me' => 'Fuller safe narrative',
                 'work_description' => 'Professional summary',
+                'location' => '<Amman>',
                 'email' => 'owner@example.test',
                 'linkedin_url' => 'https://linkedin.example.test/profile',
                 'github_url' => 'https://example.test/profile',
@@ -56,12 +58,14 @@ final class PortfolioPresentationStaticTest
             [['skill_name' => '<PHP>']],
             [['id' => 7, 'title' => '<Project>', 'category' => 'Data Science', 'description' => 'Description', 'github_url' => 'https://example.test/project', 'image_path' => null]],
             [
+                'profile_media_url' => '/p/safe/media/profile',
                 'project_media_url' => static fn (int $projectId): string => "/media/{$projectId}",
                 'contact_action' => '/p/safe/contact',
             ],
         );
         $rendered = ob_get_clean();
         phase2Assert(is_string($rendered) && str_contains($rendered, '&lt;Owner&gt;') && str_contains($rendered, '&lt;PHP&gt;') && str_contains($rendered, '&lt;Project&gt;'), 'Shared Portfolio presentation does not encode user content.');
+        phase2Assert(str_contains($rendered, 'portfolio-hero-profile-card') && str_contains($rendered, 'src="/p/safe/media/profile"') && str_contains($rendered, 'alt="&lt;Owner&gt; portrait"') && str_contains($rendered, '&lt;Amman&gt;') && !str_contains($rendered, 'Years Experience'), 'S03 Hero profile card does not render escaped real data or introduced fabricated experience.');
         phase2Assert(!str_contains($rendered, 'javascript:alert') && str_contains($rendered, 'action="/p/safe/contact"') && str_contains($rendered, 'portfolio-project-visual--data-science'), 'Shared Portfolio presentation accepted an unsafe URL, lost the scoped contact action, or lost its decorative project art.');
         phase2Assert(
             str_contains($rendered, 'href="#projects"')
@@ -81,7 +85,7 @@ final class PortfolioPresentationStaticTest
         ob_start();
         renderPortfolioPresentation(['full_name' => 'Preview Owner'], [], [], ['preview' => true]);
         $previewRendered = ob_get_clean();
-        phase2Assert(is_string($previewRendered) && str_contains($previewRendered, 'Private preview') && str_contains($previewRendered, 'disabled aria-disabled="true"'), 'Private preview rendering is not visibly distinct and inert.');
+        phase2Assert(is_string($previewRendered) && str_contains($previewRendered, 'Private preview') && str_contains($previewRendered, 'disabled aria-disabled="true"') && str_contains($previewRendered, 'portfolio-hero-profile-fallback') && !str_contains($previewRendered, 'portfolio-hero-profile-location'), 'S03 fallback profile visual or optional location handling is incomplete.');
     }
 
     private static function read(string $relativePath): string

@@ -216,7 +216,22 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                     <?php endif; ?>
                 </div>
             </div>
-            <div class="portfolio-hero-reserved" aria-hidden="true"></div>
+            <div class="portfolio-hero-reserved">
+                <article class="portfolio-hero-profile-card" aria-label="Profile summary">
+                    <div class="portfolio-hero-profile-visual">
+                        <?php if ($profileMediaUrl !== ''): ?>
+                            <img src="<?php echo portfolioPresentationEscape($profileMediaUrl); ?>" alt="<?php echo portfolioPresentationEscape($name); ?> portrait">
+                        <?php else: ?>
+                            <span class="portfolio-hero-profile-fallback" aria-hidden="true"><?php echo portfolioPresentationEscape($initials); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="portfolio-hero-profile-details">
+                        <h2><?php echo portfolioPresentationEscape($name); ?></h2>
+                        <?php if ($title !== ''): ?><p class="portfolio-hero-profile-role"><?php echo portfolioPresentationEscape($title); ?></p><?php endif; ?>
+                        <?php if ($location !== ''): ?><p class="portfolio-hero-profile-location"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20s6-5.1 6-11a6 6 0 1 0-12 0c0 5.9 6 11 6 11Z"/><circle cx="12" cy="9" r="2"/></svg><?php echo portfolioPresentationEscape($location); ?></p><?php endif; ?>
+                    </div>
+                </article>
+            </div>
         </div>
     </section>
 
