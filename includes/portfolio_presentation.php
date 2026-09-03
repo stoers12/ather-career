@@ -204,15 +204,17 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                 <p class="portfolio-hero-badge"><span aria-hidden="true"></span><?php echo portfolioPresentationEscape($title !== '' ? $title : 'Professional'); ?></p>
                 <h1 id="portfolio-title">Turning Data into <span>Intelligence</span></h1>
                 <?php if ($heroSummary !== ''): ?><p class="portfolio-hero-summary"><?php echo nl2br(portfolioPresentationEscape($heroSummary)); ?></p><?php endif; ?>
-                <div class="portfolio-hero-actions">
-                    <?php if ($showProjects): ?><a class="portfolio-button portfolio-button-primary" href="#projects"><span>View My Work</span><?php echo portfolioPresentationActionIcon('arrow'); ?></a><?php endif; ?>
-                    <button class="portfolio-button portfolio-button-secondary" type="button" disabled aria-label="Download Resume (unavailable)"><span>Download Resume</span><?php echo portfolioPresentationActionIcon('download'); ?></button>
+                <div class="portfolio-hero-actions-cluster">
+                    <div class="portfolio-hero-actions">
+                        <?php if ($showProjects): ?><a class="portfolio-button portfolio-button-primary" href="#projects"><span>View My Work</span><?php echo portfolioPresentationActionIcon('arrow'); ?></a><?php endif; ?>
+                        <button class="portfolio-button portfolio-button-secondary" type="button" disabled aria-label="Download Resume (unavailable)"><span>Download Resume</span><?php echo portfolioPresentationActionIcon('download'); ?></button>
+                    </div>
+                    <?php if ($heroSocialActions !== []): ?>
+                        <ul class="portfolio-hero-social-list" aria-label="Professional links">
+                            <?php foreach ($heroSocialActions as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" aria-label="<?php echo portfolioPresentationEscape($link['label'] === 'Email' ? 'Email ' . $name : $link['label']); ?>"<?php if ($link['external']): ?> rel="noopener noreferrer"<?php endif; ?>><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
                 </div>
-                <?php if ($heroSocialActions !== []): ?>
-                    <ul class="portfolio-hero-social-list" aria-label="Professional links">
-                        <?php foreach ($heroSocialActions as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" aria-label="<?php echo portfolioPresentationEscape($link['label'] === 'Email' ? 'Email ' . $name : $link['label']); ?>"<?php if ($link['external']): ?> rel="noopener noreferrer"<?php endif; ?>><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?>
-                    </ul>
-                <?php endif; ?>
             </div>
             <div class="portfolio-hero-reserved" aria-hidden="true"></div>
         </div>
