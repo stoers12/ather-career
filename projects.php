@@ -109,9 +109,9 @@ $showProjectForm = $formMode === 'edit' || $formErrors !== [] || isset($_GET['ad
                         <label class="form-field form-field-full" for="github_url"><span>GitHub URL</span><input type="url" id="github_url" name="github_url" value="<?php echo escapeProjectAdminHtml((string) $editingProject['github_url']); ?>" maxlength="<?php echo PROJECT_GITHUB_URL_MAX_LENGTH; ?>" required></label>
                         <div class="form-field form-field-full">
                             <span class="field-label">Project Image <em>(optional)</em></span>
-                            <input class="visually-hidden" type="file" id="project_image" name="project_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-project-image-input aria-describedby="project-image-help project-image-status">
+                            <input class="visually-hidden" type="file" id="project_image" name="project_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-project-image-input data-project-image-max-bytes="<?php echo PROJECT_IMAGE_MAX_BYTES; ?>" aria-describedby="project-image-help project-image-status">
                             <button class="button-secondary file-picker" type="button" data-file-trigger="project_image">Choose Image</button>
-                            <span id="project-image-help" class="form-hint">JPG, PNG or WEBP · Maximum 2 MB</span>
+                            <span id="project-image-help" class="form-hint">Recommended: 1200 × 675 px (16:9)<br>JPG, PNG or WebP · Max <?php echo projectImageMaximumMegabytes(); ?> MB</span>
                             <span id="project-image-status" class="file-selection-status" aria-live="polite"></span>
                         </div>
                         <?php if ($formMode === 'edit' && $editingProject['image_path'] !== null): ?>

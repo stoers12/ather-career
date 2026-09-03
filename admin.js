@@ -188,16 +188,18 @@
     var projectImageInput = document.querySelector('[data-project-image-input]');
     if (projectImageInput) {
         var projectImageStatus = document.getElementById('project-image-status');
+        var projectImageMaxBytes = Number(projectImageInput.dataset.projectImageMaxBytes);
+        var projectImageMaxMegabytes = projectImageMaxBytes / (1024 * 1024);
         projectImageInput.addEventListener('change', function () {
             var file = projectImageInput.files && projectImageInput.files[0];
             if (!file) {
                 if (projectImageStatus) projectImageStatus.textContent = '';
                 return;
             }
-            if (!file.type.match(/^image\/(jpeg|png|webp)$/) || file.size > 2 * 1024 * 1024) {
+            if (!file.type.match(/^image\/(jpeg|png|webp)$/) || !Number.isFinite(projectImageMaxBytes) || file.size > projectImageMaxBytes) {
                 projectImageInput.value = '';
                 if (projectImageStatus) projectImageStatus.textContent = '';
-                showToast('Choose a JPG, PNG, or WEBP image up to 2 MB.', 'error');
+                showToast('Choose a JPG, PNG, or WEBP image up to ' + projectImageMaxMegabytes + ' MB.', 'error');
                 return;
             }
             if (projectImageStatus) projectImageStatus.textContent = 'Selected: ' + file.name;

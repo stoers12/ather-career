@@ -6,6 +6,17 @@ require_once __DIR__ . '/validation.php';
 
 const PROJECT_ID_MAXIMUM = '4294967295';
 const PROJECT_PIXEL_CEILING = 8000000;
+const PROJECT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+
+function projectImageMaximumMegabytes(): int
+{
+    return (int) (PROJECT_IMAGE_MAX_BYTES / (1024 * 1024));
+}
+
+function projectImageSizeIsAllowed(mixed $size): bool
+{
+    return is_int($size) && $size >= 0 && $size <= PROJECT_IMAGE_MAX_BYTES;
+}
 
 function projectFormDefaults(): array
 {
@@ -32,7 +43,7 @@ function projectActionId($value): ?int
 function storeValidatedProjectImage(array $file, array &$errors, ?int $portfolioId = null): ?string
 {
     if (isset($file['error']) && $file['error'] === UPLOAD_ERR_INI_SIZE) {
-        $errors[] = 'The image must be 2 MB or smaller.';
+        $errors[] = 'The image must be ' . projectImageMaximumMegabytes() . ' MB or smaller.';
         return null;
     }
 
@@ -41,8 +52,8 @@ function storeValidatedProjectImage(array $file, array &$errors, ?int $portfolio
         return null;
     }
 
-    if ($file['size'] > 2 * 1024 * 1024) {
-        $errors[] = 'The image must be 2 MB or smaller.';
+    if (!projectImageSizeIsAllowed($file['size'])) {
+        $errors[] = 'The image must be ' . projectImageMaximumMegabytes() . ' MB or smaller.';
         return null;
     }
 

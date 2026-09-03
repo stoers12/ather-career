@@ -11,6 +11,10 @@ final class PrivateMediaStaticTest
         $ownerRoute = self::read('owner_media.php');
         $publicRoute = self::read('public_media.php');
         $ownerActions = self::read('includes/owner_actions.php');
+        $projectActions = self::read('includes/project_actions.php');
+        $ownerProjects = self::read('owner_projects.php');
+        $legacyProjects = self::read('projects.php');
+        $adminScript = self::read('admin.js');
         $vhost = self::read('docker/apache/production-vhost.conf');
         $accessPolicy = self::read('docker/apache/access-policy.conf');
         $compose = self::read('docker-compose.production.yml');
@@ -22,8 +26,14 @@ final class PrivateMediaStaticTest
         phase2Assert(!str_contains($ownerRoute, 'portfolio_id') && !str_contains($ownerRoute, 'user_id') && !str_contains($ownerRoute, 'key') && str_contains($ownerRoute, 'requireOwnerPortfolioContext'), 'P2J-07 owner handler accepts forbidden authority.');
         phase2Assert(!str_contains($publicRoute, 'requireOwnerPortfolioContext') && !str_contains($publicRoute, 'key') && str_contains($publicRoute, 'resolvePublicReadContext'), 'P2J-07 public handler does not use public authority exclusively.');
         phase2Assert(str_contains($ownerActions, 'storeValidatedProfileImage($files[\'profile_image\'] ?? [], $errors, $context->portfolioId)') && str_contains($ownerActions, 'storeValidatedProjectImage($files[\'project_image\'], $errors, $context->portfolioId)'), 'P2J-07 uploads are not Portfolio scoped.');
+        phase2Assert(str_contains($projectActions, 'PROJECT_IMAGE_MAX_BYTES = 5 * 1024 * 1024') && str_contains($projectActions, "projectImageSizeIsAllowed(\$file['size'])") && str_contains($projectActions, 'finfo_open(FILEINFO_MIME_TYPE)') && str_contains($projectActions, '@getimagesize($file[\'tmp_name\'])') && str_contains($projectActions, "'image/jpeg' => 'jpg'") && str_contains($projectActions, "'image/png' => 'png'") && str_contains($projectActions, "'image/webp' => 'webp'") && !str_contains($projectActions, "'image/svg+xml'"), 'S05A project covers must use the 5 MB shared server limit while retaining MIME, image-content, and no-SVG validation.');
+        phase2Assert(str_contains($ownerProjects, 'Recommended: 1200 × 675 px (16:9)') && str_contains($ownerProjects, 'JPG, PNG or WebP · Max <?php echo projectImageMaximumMegabytes(); ?> MB') && str_contains($legacyProjects, 'data-project-image-max-bytes="<?php echo PROJECT_IMAGE_MAX_BYTES; ?>"') && str_contains($adminScript, 'projectImageInput.dataset.projectImageMaxBytes') && !str_contains($adminScript, '2 * 1024 * 1024'), 'S05A project cover guidance and client feedback must derive from the 5 MB server contract.');
+        phase2Assert(str_contains($ownerActions, "\$removeImage = isset(\$post['remove_image'])") && str_contains($ownerActions, "cleanProjectImage(\$oldImagePath, 'owner_project_update_old_image'") && str_contains($ownerActions, "cleanProjectImage(\$project['image_path'] ?? null, 'owner_project_delete'"), 'S05A project cover replacement and removal cleanup must remain intact.');
         phase2Assert(!preg_match('/^\s*Alias\s+\/uploads\//mi', $vhost) && str_contains($accessPolicy, '^/uploads(?:/|$)'), 'P2J-07 direct upload access was not retired.');
         phase2Assert(str_contains($compose, 'ATHERCAR_STORAGE_ROOT: /var/lib/ather-career/storage') && str_contains($compose, 'portfolio_production_storage:/var/lib/ather-career/storage'), 'P2J-07 production private storage configuration is incomplete.');
+
+        require_once PHASE2_REPOSITORY_ROOT . '/includes/project_actions.php';
+        phase2Assert(projectImageSizeIsAllowed(PROJECT_IMAGE_MAX_BYTES) && projectImageSizeIsAllowed(0) && !projectImageSizeIsAllowed(PROJECT_IMAGE_MAX_BYTES + 1), 'S05A project cover size validation must accept up to 5 MB and reject larger uploads.');
     }
 
     private static function read(string $relativePath): string
