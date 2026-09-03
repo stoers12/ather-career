@@ -89,6 +89,38 @@ function portfolioPresentationProjectVisual(string $category): string
     return 'general';
 }
 
+/** @return list<array{key: string, value: int, label: string}> */
+function portfolioPresentationMetrics(array $projects, array $skills): array
+{
+    $skillCount = 0;
+    foreach ($skills as $skill) {
+        if (isset($skill['skill_name']) && trim((string) $skill['skill_name']) !== '') {
+            ++$skillCount;
+        }
+    }
+
+    $categories = [];
+    foreach ($projects as $project) {
+        $category = isset($project['category']) ? trim((string) $project['category']) : '';
+        if ($category !== '') {
+            $categories[strtolower($category)] = true;
+        }
+    }
+
+    $metrics = [];
+    if ($projects !== []) {
+        $metrics[] = ['key' => 'projects', 'value' => count($projects), 'label' => 'Projects Featured'];
+    }
+    if ($skillCount > 0) {
+        $metrics[] = ['key' => 'skills', 'value' => $skillCount, 'label' => 'Core Skills'];
+    }
+    if ($categories !== []) {
+        $metrics[] = ['key' => 'categories', 'value' => count($categories), 'label' => 'Project Categories'];
+    }
+
+    return $metrics;
+}
+
 function portfolioPresentationSocialIcon(string $label): string
 {
     return match ($label) {
@@ -105,6 +137,15 @@ function portfolioPresentationActionIcon(string $action): string
         'arrow' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h13M13 6l6 6-6 6"/></svg>',
         'download' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v10M8 10l4 4 4-4M5 19h14"/></svg>',
         default => portfolioPresentationSocialIcon('Email'),
+    };
+}
+
+function portfolioPresentationMetricIcon(string $metric): string
+{
+    return match ($metric) {
+        'projects' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 7.5h14v10H5zM8 4.5h8M8 11.5h8M8 15.5h5"/></svg>',
+        'skills' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/></svg>',
+        default => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 6.5h14v11H5zM8 6.5V4.5h8v2M8.5 11h7M8.5 14.5h4"/></svg>',
     };
 }
 
@@ -137,6 +178,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $emailAction = filter_var($email, FILTER_VALIDATE_EMAIL) !== false ? 'mailto:' . $email : '';
     $socialLinks = portfolioPresentationSocialLinks($profile);
     $heroSocialActions = portfolioPresentationHeroSocialActions($profile, $emailAction);
+    $metrics = portfolioPresentationMetrics($projects, $skills);
     $initials = profileInitials($name) ?: 'P';
     $showProjects = $projects !== [];
     $showSkills = $skills !== [];
@@ -234,6 +276,18 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
             </div>
         </div>
     </section>
+
+    <?php if ($metrics !== []): ?>
+        <section class="portfolio-metrics" aria-label="Portfolio metrics">
+            <div class="portfolio-container">
+                <ul class="portfolio-metrics-strip" style="--portfolio-metric-count: <?php echo count($metrics); ?>">
+                    <?php foreach ($metrics as $metric): ?>
+                        <li class="portfolio-metric"><span class="portfolio-metric-icon"><?php echo portfolioPresentationMetricIcon($metric['key']); ?></span><span><strong><?php echo $metric['value']; ?></strong><small><?php echo portfolioPresentationEscape($metric['label']); ?></small></span></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <?php if ($showAbout): ?>
         <section class="portfolio-section portfolio-about" id="about" aria-labelledby="about-title"><div class="portfolio-container"><div class="portfolio-about-card">
