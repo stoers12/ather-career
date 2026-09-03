@@ -14,6 +14,7 @@ startOwnerSession();
 $profile = null;
 $skills = [];
 $projects = [];
+$experiences = [];
 $previewError = '';
 try {
     $database = getDatabaseConnection();
@@ -21,6 +22,7 @@ try {
     $profile = loadAuthorizedPersonalInfo($database, $context);
     $skills = listAuthorizedSkills($database, $context);
     $projects = listAuthorizedProjects($database, $context);
+    $experiences = listAuthorizedExperiences($database, $context);
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'owner_preview.php', 'owner_preview_load');
     http_response_code(503);
@@ -32,4 +34,5 @@ renderPortfolioPresentation(is_array($profile) ? $profile : [], $skills, $projec
     'preview_error' => $previewError,
     'profile_media_url' => is_array($profile) && (string) ($profile['profile_image_path'] ?? '') !== '' ? '/owner_media.php?type=profile' : '',
     'project_media_url' => static fn (int $projectId): string => "/owner_media.php?type=project&id={$projectId}",
+    'experiences' => $experiences,
 ]);

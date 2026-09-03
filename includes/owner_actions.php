@@ -6,6 +6,7 @@ require_once __DIR__ . '/portfolio_scoped_data.php';
 require_once __DIR__ . '/error_reporting.php';
 require_once __DIR__ . '/profile_actions.php';
 require_once __DIR__ . '/project_actions.php';
+require_once __DIR__ . '/experience_actions.php';
 
 function ownerActionId(mixed $value): ?int
 {
@@ -275,5 +276,62 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
             cleanProjectImage($newImagePath, 'owner_project_database_compensation', $context->portfolioId);
         }
         return projectActionResult(['The project could not be saved.'], $formMode ?? 'add', $editingProject ?? null);
+    }
+}
+
+/** @return array{errors: list<string>, form_mode: string, editing_experience: array<string, mixed>, redirect: string|null} */
+function handleAuthorizedExperienceAction(PDO $database, AuthorizedPortfolioContext $context, array $post): array
+{
+    $action = isset($post['action']) && is_string($post['action']) ? $post['action'] : '';
+
+    try {
+        if ($action === 'delete') {
+            $experienceId = experienceActionId($post['id'] ?? null);
+            $experience = $experienceId === null ? null : findAuthorizedExperience($database, $context, $experienceId);
+            if ($experience === null || !deleteAuthorizedExperience($database, $context, $experienceId)) {
+                return experienceActionResult(['Experience record not found.']);
+            }
+
+            setExperienceSuccessFlash('Experience record deleted successfully.');
+            return experienceActionResult([], 'add', null, 'owner_experiences.php');
+        }
+
+        if ($action !== 'add' && $action !== 'update') {
+            return experienceActionResult();
+        }
+
+        $formMode = $action === 'update' ? 'edit' : 'add';
+        $editingExperience = experienceFormValues($post);
+        $errors = validateExperienceValues($editingExperience);
+        $experienceId = $action === 'update' ? experienceActionId($post['id'] ?? null) : null;
+        if ($action === 'update' && $experienceId === null) {
+            $errors[] = 'Please provide a valid experience record ID.';
+        } elseif ($action === 'update' && findAuthorizedExperience($database, $context, $experienceId) === null) {
+            $errors[] = 'Experience record not found.';
+        }
+
+        if ($errors !== []) {
+            if (experienceIsCurrent($editingExperience['is_current'] ?? false)) {
+                $editingExperience['end_month'] = '';
+            }
+            return experienceActionResult($errors, $formMode, $editingExperience);
+        }
+
+        if ($action === 'add') {
+            createAuthorizedExperience($database, $context, $editingExperience);
+            setExperienceSuccessFlash('Experience record added successfully.');
+            return experienceActionResult([], 'add', null, 'owner_experiences.php');
+        }
+
+        if (!updateAuthorizedExperience($database, $context, $experienceId, $editingExperience)) {
+            return experienceActionResult(['Experience record not found.'], $formMode, $editingExperience);
+        }
+
+        setExperienceSuccessFlash('Experience record updated successfully.');
+        return experienceActionResult([], 'add', null, 'owner_experiences.php');
+    } catch (PDOException $exception) {
+        reportApplicationError($exception, 'owner_experiences.php', 'owner_experience_' . ($action === '' ? 'unknown' : $action));
+
+        return experienceActionResult(['The experience record could not be saved.'], $formMode ?? 'add', $editingExperience ?? null);
     }
 }

@@ -38,6 +38,7 @@ function ownerNavigation(string $activePage): void
         'dashboard' => ['owner.php', 'Dashboard'],
         'profile' => ['owner_profile.php', 'Personal info'],
         'projects' => ['owner_projects.php', 'Projects'],
+        'experiences' => ['owner_experiences.php', 'Experience'],
         'messages' => ['owner_messages.php', 'Messages'],
         'publication' => ['owner_publication.php', 'Publication'],
     ];

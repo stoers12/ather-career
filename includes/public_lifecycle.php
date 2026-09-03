@@ -267,3 +267,32 @@ function listPublicProjects(PDO $database, PublicReadContext $context): array
 
     return $projects;
 }
+
+/** @return list<array{experience_type: string, role_title: string, organization: string, location: string|null, start_month: string, end_month: string|null, is_current: bool, description: string|null}> */
+function listPublicExperiences(PDO $database, PublicReadContext $context): array
+{
+    $statement = $database->prepare(
+        'SELECT experience_type, role_title, organization, location, start_month, end_month, is_current, description
+         FROM experiences
+         WHERE portfolio_id = :public_portfolio_id
+         ORDER BY is_current DESC, start_month DESC, id DESC'
+    );
+    $statement->execute(['public_portfolio_id' => $context->portfolioId]);
+
+    $records = $statement->fetchAll(PDO::FETCH_ASSOC);
+    $experiences = [];
+    foreach ($records as $record) {
+        $experiences[] = [
+            'experience_type' => (string) $record['experience_type'],
+            'role_title' => (string) $record['role_title'],
+            'organization' => (string) $record['organization'],
+            'location' => isset($record['location']) && is_string($record['location']) ? $record['location'] : null,
+            'start_month' => (string) $record['start_month'],
+            'end_month' => isset($record['end_month']) && is_string($record['end_month']) ? $record['end_month'] : null,
+            'is_current' => (int) $record['is_current'] === 1,
+            'description' => isset($record['description']) && is_string($record['description']) ? $record['description'] : null,
+        ];
+    }
+
+    return $experiences;
+}

@@ -86,6 +86,30 @@ function portfolioPresentationProjectFallbackIcon(): string
     return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 7.5h14v10H5zM8 4.5h8M8 11.5h8M8 15.5h5"/></svg>';
 }
 
+/** @return list<array{experience_type: string, role_title: string, organization: string, location: string|null, start_month: string, end_month: string|null, is_current: bool, description: string|null}> */
+function portfolioPresentationExperiences(array $experiences): array
+{
+    $presentationExperiences = [];
+    foreach ($experiences as $experience) {
+        if (!is_array($experience)) {
+            continue;
+        }
+
+        $presentationExperiences[] = [
+            'experience_type' => isset($experience['experience_type']) ? trim((string) $experience['experience_type']) : '',
+            'role_title' => isset($experience['role_title']) ? trim((string) $experience['role_title']) : '',
+            'organization' => isset($experience['organization']) ? trim((string) $experience['organization']) : '',
+            'location' => isset($experience['location']) && trim((string) $experience['location']) !== '' ? trim((string) $experience['location']) : null,
+            'start_month' => isset($experience['start_month']) ? trim((string) $experience['start_month']) : '',
+            'end_month' => isset($experience['end_month']) && trim((string) $experience['end_month']) !== '' ? trim((string) $experience['end_month']) : null,
+            'is_current' => ($experience['is_current'] ?? false) === true || ($experience['is_current'] ?? false) === 1 || ($experience['is_current'] ?? false) === '1',
+            'description' => isset($experience['description']) && trim((string) $experience['description']) !== '' ? trim((string) $experience['description']) : null,
+        ];
+    }
+
+    return $presentationExperiences;
+}
+
 /** @return list<array{key: string, value: int, label: string}> */
 function portfolioPresentationMetrics(array $projects, array $skills): array
 {
@@ -155,7 +179,8 @@ function portfolioPresentationMetricIcon(string $metric): string
  *     profile_media_url?: string,
  *     project_media_url?: callable(int): string,
  *     contact_action?: string,
- *     contact_sent?: bool
+ *     contact_sent?: bool,
+ *     experiences?: list<array<string, mixed>>
  * } $options
  */
 function renderPortfolioPresentation(array $profile, array $skills, array $projects, array $options = []): void
@@ -177,6 +202,11 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $heroSocialActions = portfolioPresentationHeroSocialActions($profile, $emailAction);
     $metrics = portfolioPresentationMetrics($projects, $skills);
     $featuredProjects = portfolioPresentationFeaturedProjects($projects);
+    // S07 has no public section yet. Preserve only a safe, presentation-ready
+    // shape here so the future renderer does not need a second public query.
+    $presentationExperiences = portfolioPresentationExperiences(
+        isset($options['experiences']) && is_array($options['experiences']) ? $options['experiences'] : [],
+    );
     $initials = profileInitials($name) ?: 'P';
     $showProjects = $projects !== [];
     $showSkills = $skills !== [];

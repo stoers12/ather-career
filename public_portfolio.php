@@ -33,6 +33,7 @@ try {
     }
     $skills = listPublicSkills($database, $context);
     $projects = listPublicProjects($database, $context);
+    $experiences = listPublicExperiences($database, $context);
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'public_portfolio.php', 'public_portfolio_load');
     http_response_code(503);
@@ -46,4 +47,5 @@ renderPortfolioPresentation($profile, $skills, $projects, [
     'project_media_url' => static fn (int $projectId): string => "/p/{$encodedSlug}/media/project/{$projectId}",
     'contact_action' => "/p/{$encodedSlug}/contact",
     'contact_sent' => ($_GET['contact'] ?? null) === 'sent',
+    'experiences' => $experiences,
 ]);
