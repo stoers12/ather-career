@@ -105,6 +105,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
         ? $options['preview_error']
         : '';
     $stylesheet = '/' . versionedAssetUrl('portfolio.css');
+    $script = '/' . versionedAssetUrl('portfolio.js');
     ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -115,6 +116,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     <meta name="color-scheme" content="dark">
     <title><?php echo portfolioPresentationEscape($name); ?> — Portfolio</title>
     <link rel="stylesheet" href="<?php echo portfolioPresentationEscape($stylesheet); ?>">
+    <script src="<?php echo portfolioPresentationEscape($script); ?>" defer></script>
 </head>
 <body class="portfolio-page<?php echo $preview ? ' portfolio-preview-mode' : ''; ?>">
 <a class="portfolio-skip-link" href="#portfolio-main">Skip to content</a>
@@ -126,13 +128,15 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
             <span class="portfolio-brand-copy"><strong><?php echo portfolioPresentationEscape($name); ?></strong></span>
         </a>
         <nav class="portfolio-nav-links" aria-label="Portfolio sections">
-            <a class="is-current" href="#top" aria-current="page">Home</a>
-            <?php if ($showAbout): ?><a href="#about">About</a><?php endif; ?>
-            <?php if ($showProjects): ?><a href="#projects">Projects</a><?php endif; ?>
-            <?php if ($showSkills): ?><a href="#skills">Skills</a><?php endif; ?>
-            <a href="#contact">Contact</a>
+            <a class="is-current" href="#top" data-portfolio-section="top" aria-current="page">Home</a>
+            <?php if ($showAbout): ?><a href="#about" data-portfolio-section="about">About</a><?php endif; ?>
+            <?php if ($showProjects): ?><a href="#projects" data-portfolio-section="projects">Projects</a><?php endif; ?>
+            <span class="portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>
+            <?php if ($showSkills): ?><a href="#skills" data-portfolio-section="skills">Skills</a><?php endif; ?>
+            <span class="portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Insights</span>
+            <a href="#contact" data-portfolio-section="contact">Contact</a>
         </nav>
-        <a class="portfolio-header-cta" href="#contact">Let’s Connect <span aria-hidden="true">↗</span></a>
+        <a class="portfolio-header-cta" href="#contact"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.5A2.5 2.5 0 0 1 6 4h12a2.5 2.5 0 0 1 2.5 2.5v11A2.5 2.5 0 0 1 18 20H6a2.5 2.5 0 0 1-2.5-2.5v-11Z"/><path d="m4.5 6 6.07 5.06a2.23 2.23 0 0 0 2.86 0L19.5 6"/></svg><span>Let’s Connect</span></a>
     </div>
 </header>
 

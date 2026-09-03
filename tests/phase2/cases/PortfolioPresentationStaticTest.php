@@ -10,13 +10,15 @@ final class PortfolioPresentationStaticTest
         $preview = self::read('owner_preview.php');
         $presentation = self::read('includes/portfolio_presentation.php');
         $stylesheet = self::read('portfolio.css');
+        $script = self::read('portfolio.js');
         $dockerfile = self::read('Dockerfile.production');
 
         phase2Assert(str_contains($public, 'resolvePublicReadContext') && str_contains($public, 'renderPortfolioPresentation('), 'Public Portfolio does not resolve publication authority before the shared presentation.');
         phase2Assert(str_contains($preview, 'requireOwnerPortfolioContext') && str_contains($preview, 'renderPortfolioPresentation(') && !str_contains($preview, 'ownerLayoutStart'), 'Private preview does not use owner authority and the shared standalone presentation.');
         phase2Assert(str_contains($presentation, '$preview = ($options[\'preview\'] ?? false) === true;'), 'Shared presentation preview mode must be caller-controlled.');
         phase2Assert(str_contains($presentation, 'portfolioPresentationEscape(') && str_contains($presentation, 'isPublicWebsiteDestination('), 'Portfolio content or external links lack presentation safety checks.');
-        phase2Assert(str_contains($presentation, '<header class="portfolio-header">') && str_contains($presentation, 'aria-current="page">Home</a>') && str_contains($presentation, 'href="#about">About</a>') && str_contains($presentation, 'href="#projects">Projects</a>') && str_contains($presentation, 'href="#skills">Skills</a>') && str_contains($presentation, 'href="#contact">Contact</a>') && str_contains($presentation, 'portfolio-header-cta'), 'S01 header navigation is incomplete or contains an unsupported route.');
+        phase2Assert(str_contains($presentation, '<header class="portfolio-header">') && str_contains($presentation, 'data-portfolio-section="top" aria-current="page">Home</a>') && str_contains($presentation, 'href="#about" data-portfolio-section="about">About</a>') && str_contains($presentation, 'href="#projects" data-portfolio-section="projects">Projects</a>') && str_contains($presentation, 'href="#skills" data-portfolio-section="skills">Skills</a>') && str_contains($presentation, 'href="#contact" data-portfolio-section="contact">Contact</a>') && str_contains($presentation, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>') && str_contains($presentation, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Insights</span>') && str_contains($presentation, 'portfolio-header-cta') && str_contains($presentation, '<svg viewBox="0 0 24 24"'), 'S01 header navigation, disabled future entries, or contact CTA is incomplete.');
+        phase2Assert(!str_contains($presentation, 'href="#experience"') && !str_contains($presentation, 'href="#insights"'), 'S01 must not create false navigation targets for unfinished sections.');
         phase2Assert(strpos($presentation, '<header class="portfolio-header">') < strpos($presentation, '<main id="portfolio-main">'), 'S01 header must be the first Portfolio content element.');
         phase2Assert(str_contains($presentation, 'count($projects)') && str_contains($presentation, 'count($skills)'), 'Portfolio metrics are not derived from current scoped data.');
         phase2Assert(str_contains($presentation, 'portfolio-project-visual--') && str_contains($presentation, 'portfolioPresentationProjectVisual(') && !str_contains($presentation, 'profileInitials($projectTitle)'), 'Image-free project cards must use deterministic decorative artwork rather than title initials.');
@@ -27,12 +29,13 @@ final class PortfolioPresentationStaticTest
         }
 
         phase2Assert(str_contains($stylesheet, '--pf-container: 1260px') && str_contains($stylesheet, 'portfolio-hero-wave') && str_contains($stylesheet, 'portfolio-hero-grid-lines'), 'V2 enterprise background and density system is incomplete.');
-        phase2Assert(str_contains($stylesheet, 'min-height: 70px') && str_contains($stylesheet, 'position: sticky') && str_contains($stylesheet, 'portfolio-header-cta') && str_contains($stylesheet, 'a.is-current::after'), 'S01 premium sticky header, CTA, or active underline is incomplete.');
+        phase2Assert(str_contains($stylesheet, 'min-height: 66px') && str_contains($stylesheet, 'position: sticky') && str_contains($stylesheet, 'portfolio-header-cta') && str_contains($stylesheet, 'a.is-current::after'), 'S01 premium sticky header, CTA, or active underline is incomplete.');
+        phase2Assert(str_contains($script, 'IntersectionObserver') && str_contains($script, 'data-portfolio-section') && str_contains($script, 'aria-current') && str_contains($script, 'const initialId = window.location.hash.slice(1)') && !str_contains($script, 'experience') && !str_contains($script, 'insights'), 'S01 scrollspy must apply only to implemented Portfolio sections and honor direct section links.');
         phase2Assert(str_contains($stylesheet, ':focus-visible') && str_contains($stylesheet, 'prefers-reduced-motion'), 'Portfolio focus or reduced-motion behavior is missing.');
         foreach (['@media (max-width: 1100px)', '@media (max-width: 820px)', '@media (max-width: 620px)', '@media (max-width: 430px)'] as $breakpoint) {
             phase2Assert(str_contains($stylesheet, $breakpoint), "Portfolio responsive breakpoint is missing: {$breakpoint}");
         }
-        phase2Assert(str_contains($dockerfile, '/var/www/app/portfolio.css'), 'Production image does not publish the Portfolio stylesheet.');
+        phase2Assert(str_contains($dockerfile, '/var/www/app/portfolio.css') && str_contains($dockerfile, '/var/www/app/portfolio.js'), 'Production image does not publish the Portfolio presentation assets.');
 
         require_once PHASE2_REPOSITORY_ROOT . '/includes/portfolio_presentation.php';
         ob_start();
