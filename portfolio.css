@@ -112,6 +112,7 @@ body.portfolio-page :where(a, button, input, textarea):focus-visible { outline: 
 }
 @media (max-width: 820px) {
     .portfolio-container { width: min(var(--pf-container), calc(100% - 36px)); }.portfolio-header-inner { width: min(var(--pf-container), calc(100% - 36px)); min-height: 0; grid-template-columns: minmax(0, 1fr) auto; row-gap: 0; padding-top: 9px; }.portfolio-nav-links { width: 100%; grid-column: 1 / -1; overflow-x: auto; justify-content: flex-start; gap: 7px; padding-bottom: 2px; scrollbar-width: none; }.portfolio-nav-links::-webkit-scrollbar { display: none; }.portfolio-nav-links :is(a, .portfolio-nav-placeholder) { flex: 0 0 auto; min-height: 38px; padding: 10px 8px 12px; }.portfolio-nav-links a::after { bottom: 5px; }.portfolio-header-cta { width: 136px; min-width: 136px; height: 40px; }.portfolio-hero-grid { min-height: 0; grid-template-columns: 1fr; row-gap: 36px; padding-block: 42px 48px; }.portfolio-hero-copy { max-width: 600px; }.portfolio-hero-reserved { justify-content: flex-start; }.portfolio-hero-profile-card { width: min(100%, 600px); }.portfolio-about-card { gap: 30px; }.portfolio-contact-shell { grid-template-columns: 1fr; }.portfolio-contact-copy > p:not(.portfolio-section-kicker) { max-width: 510px; }
+    .portfolio-section, .portfolio-projects, .portfolio-skills-region { scroll-margin-top: 100px; }
     .portfolio-footer-main { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 38px; }.portfolio-footer-identity { grid-column: 1 / -1; }.portfolio-footer-summary { max-width: 520px; }
 }
 @media (max-width: 620px) {
