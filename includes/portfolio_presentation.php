@@ -110,6 +110,47 @@ function portfolioPresentationExperiences(array $experiences): array
     return $presentationExperiences;
 }
 
+function portfolioPresentationExperienceTypeLabel(mixed $type): string
+{
+    return match ($type) {
+        'employment' => 'Employment',
+        'training' => 'Training',
+        'internship' => 'Internship',
+        'volunteer' => 'Volunteer',
+        'leadership' => 'Leadership',
+        default => 'Experience',
+    };
+}
+
+function portfolioPresentationExperienceMonth(mixed $value): ?string
+{
+    if (!is_string($value) || preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $value, $matches) !== 1) {
+        return null;
+    }
+
+    $months = [
+        1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun',
+        7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec',
+    ];
+
+    return $months[(int) $matches[2]] . ' ' . $matches[1];
+}
+
+function portfolioPresentationExperienceDateRange(array $experience): string
+{
+    $start = portfolioPresentationExperienceMonth($experience['start_month'] ?? null);
+    if ($start === null) {
+        return '';
+    }
+
+    if (($experience['is_current'] ?? false) === true) {
+        return $start . ' — Present';
+    }
+
+    $end = portfolioPresentationExperienceMonth($experience['end_month'] ?? null);
+    return $end === null ? $start : $start . ' — ' . $end;
+}
+
 /** @return list<array{key: string, value: int, label: string}> */
 function portfolioPresentationMetrics(array $projects, array $skills): array
 {
@@ -202,8 +243,8 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $heroSocialActions = portfolioPresentationHeroSocialActions($profile, $emailAction);
     $metrics = portfolioPresentationMetrics($projects, $skills);
     $featuredProjects = portfolioPresentationFeaturedProjects($projects);
-    // S07 has no public section yet. Preserve only a safe, presentation-ready
-    // shape here so the future renderer does not need a second public query.
+    // Keep the public Experience data in a safe, presentation-ready shape so
+    // the renderer does not need a second public query.
     $presentationExperiences = portfolioPresentationExperiences(
         isset($options['experiences']) && is_array($options['experiences']) ? $options['experiences'] : [],
     );
@@ -371,6 +412,41 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                 </div>
             <?php endif; ?>
         </div></div>
+    <?php endif; ?>
+
+    <?php if ($presentationExperiences !== []): ?>
+        <section class="portfolio-section portfolio-experience" id="experience" aria-labelledby="experience-title">
+            <div class="portfolio-container">
+                <header class="portfolio-section-heading"><h2 id="experience-title">Experience</h2></header>
+                <ol class="portfolio-experience-list">
+                    <?php foreach ($presentationExperiences as $experience):
+                        $experienceType = portfolioPresentationExperienceTypeLabel($experience['experience_type']);
+                        $experienceRole = $experience['role_title'];
+                        $experienceOrganization = $experience['organization'];
+                        $experienceLocation = $experience['location'] ?? null;
+                        $experienceDateRange = portfolioPresentationExperienceDateRange($experience);
+                        $experienceIsCurrent = $experience['is_current'] === true;
+                        $experienceDescription = $experience['description'] ?? null;
+                        ?>
+                        <li class="portfolio-experience-item<?php echo $experienceIsCurrent ? ' portfolio-experience-item--current' : ''; ?>">
+                            <article class="portfolio-experience-content">
+                                <p class="portfolio-experience-type"><?php echo portfolioPresentationEscape($experienceType); ?></p>
+                                <?php if ($experienceRole !== ''): ?><h3><?php echo portfolioPresentationEscape($experienceRole); ?></h3><?php endif; ?>
+                                <?php if ($experienceOrganization !== ''): ?><p class="portfolio-experience-organization"><?php echo portfolioPresentationEscape($experienceOrganization); ?></p><?php endif; ?>
+                                <?php if ($experienceDateRange !== '' || $experienceLocation !== null): ?>
+                                    <p class="portfolio-experience-meta">
+                                        <?php if ($experienceDateRange !== ''): ?><span><?php echo portfolioPresentationEscape($experienceDateRange); ?></span><?php endif; ?>
+                                        <?php if ($experienceDateRange !== '' && $experienceLocation !== null): ?><span aria-hidden="true">·</span><?php endif; ?>
+                                        <?php if ($experienceLocation !== null): ?><span><?php echo portfolioPresentationEscape($experienceLocation); ?></span><?php endif; ?>
+                                    </p>
+                                <?php endif; ?>
+                                <?php if ($experienceDescription !== null): ?><p class="portfolio-experience-description"><?php echo nl2br(portfolioPresentationEscape($experienceDescription)); ?></p><?php endif; ?>
+                            </article>
+                        </li>
+                    <?php endforeach; ?>
+                </ol>
+            </div>
+        </section>
     <?php endif; ?>
 
     <section class="portfolio-section portfolio-contact" id="contact" aria-labelledby="contact-title"><div class="portfolio-container"><div class="portfolio-contact-shell">
