@@ -333,10 +333,12 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
             <?php endif; ?>
 
             <?php if ($showSkills): ?>
-                <aside class="portfolio-skills-panel" id="skills" aria-labelledby="skills-title">
-                    <header class="portfolio-section-heading portfolio-skills-heading"><h2 id="skills-title">Skills &amp; Technologies</h2></header>
-                    <ul class="portfolio-skills-list" aria-labelledby="skills-title"><?php foreach ($skills as $skill): $skillName = isset($skill['skill_name']) ? trim((string) $skill['skill_name']) : ''; ?><?php if ($skillName !== ''): ?><li><button class="portfolio-skill-control" type="button" aria-pressed="false"><?php echo portfolioPresentationEscape($skillName); ?></button></li><?php endif; ?><?php endforeach; ?></ul>
-                </aside>
+                <div class="portfolio-skills-region" id="skills">
+                    <header class="portfolio-section-heading portfolio-skills-heading"><h2 id="portfolio-skills-heading">Skills &amp; Technologies</h2></header>
+                    <aside class="portfolio-skills-panel" aria-labelledby="portfolio-skills-heading">
+                        <ul class="portfolio-skills-list"><?php foreach ($skills as $skill): $skillName = isset($skill['skill_name']) ? trim((string) $skill['skill_name']) : ''; ?><?php if ($skillName !== ''): ?><li><button class="portfolio-skill-control" type="button" aria-pressed="false"><?php echo portfolioPresentationEscape($skillName); ?></button></li><?php endif; ?><?php endforeach; ?></ul>
+                    </aside>
+                </div>
             <?php endif; ?>
         </div></div>
     <?php endif; ?>
