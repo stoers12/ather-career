@@ -73,20 +73,17 @@ function portfolioPresentationHeroSocialActions(array $profile, string $emailAct
     return $actions;
 }
 
-function portfolioPresentationProjectVisual(string $category): string
+/** @return list<array<string, mixed>> */
+function portfolioPresentationFeaturedProjects(array $projects): array
 {
-    $category = strtolower($category);
-    if (str_contains($category, 'machine') || str_contains($category, 'ai')) {
-        return 'machine-learning';
-    }
-    if (str_contains($category, 'analytic') || str_contains($category, 'business')) {
-        return 'analytics';
-    }
-    if (str_contains($category, 'data') || str_contains($category, 'science')) {
-        return 'data-science';
-    }
+    // Public projects already arrive in the product's deterministic display
+    // order (created_at ASC, id ASC). There is no separate featured field.
+    return array_slice($projects, 0, 3);
+}
 
-    return 'general';
+function portfolioPresentationProjectFallbackIcon(): string
+{
+    return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 7.5h14v10H5zM8 4.5h8M8 11.5h8M8 15.5h5"/></svg>';
 }
 
 /** @return list<array{key: string, value: int, label: string}> */
@@ -179,6 +176,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $socialLinks = portfolioPresentationSocialLinks($profile);
     $heroSocialActions = portfolioPresentationHeroSocialActions($profile, $emailAction);
     $metrics = portfolioPresentationMetrics($projects, $skills);
+    $featuredProjects = portfolioPresentationFeaturedProjects($projects);
     $initials = profileInitials($name) ?: 'P';
     $showProjects = $projects !== [];
     $showSkills = $skills !== [];
@@ -298,31 +296,29 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
 
     <?php if ($showProjects): ?>
         <section class="portfolio-section portfolio-projects" id="projects" aria-labelledby="projects-title"><div class="portfolio-container">
-            <div class="portfolio-section-heading"><div><p class="portfolio-section-kicker">SELECTED WORK / 03</p><h2 id="projects-title">Selected projects.</h2></div><p>Projects represented in this Portfolio.</p></div>
+            <div class="portfolio-section-heading"><div><h2 id="projects-title">Featured Projects</h2></div></div>
             <div class="portfolio-project-grid">
-                <?php foreach ($projects as $index => $project):
+                <?php foreach ($featuredProjects as $project):
                     $projectId = isset($project['id']) ? (int) $project['id'] : 0;
                     $projectTitle = isset($project['title']) ? trim((string) $project['title']) : 'Project';
                     $category = isset($project['category']) ? trim((string) $project['category']) : '';
                     $projectImageUrl = (string) $projectMediaUrl($projectId);
                     $hasProjectImage = isset($project['image_path']) && trim((string) $project['image_path']) !== '' && $projectImageUrl !== '';
-                    $visual = portfolioPresentationProjectVisual($category);
                     $projectLink = portfolioPresentationProjectLink($project);
                     ?>
                     <article class="portfolio-project-card">
-                        <div class="portfolio-project-visual portfolio-project-visual--<?php echo portfolioPresentationEscape($visual); ?>">
-                            <span class="portfolio-project-index" aria-hidden="true">0<?php echo (int) $index + 1; ?></span>
+                        <div class="portfolio-project-visual">
                             <?php if ($hasProjectImage): ?>
                                 <img src="<?php echo portfolioPresentationEscape($projectImageUrl); ?>" alt="<?php echo portfolioPresentationEscape($projectTitle); ?> project preview" loading="lazy">
                             <?php else: ?>
-                                <span class="portfolio-project-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+                                <span class="portfolio-project-fallback" aria-hidden="true"><?php echo portfolioPresentationProjectFallbackIcon(); ?></span>
                             <?php endif; ?>
                         </div>
                         <div class="portfolio-project-body">
                             <?php if ($category !== ''): ?><p class="portfolio-project-category"><?php echo portfolioPresentationEscape($category); ?></p><?php endif; ?>
                             <h3><?php echo portfolioPresentationEscape($projectTitle); ?></h3>
                             <?php if (isset($project['description']) && trim((string) $project['description']) !== ''): ?><p class="portfolio-project-description"><?php echo nl2br(portfolioPresentationEscape($project['description'])); ?></p><?php endif; ?>
-                            <?php if ($projectLink !== null): ?><a class="portfolio-project-link" href="<?php echo portfolioPresentationEscape($projectLink); ?>" rel="noopener noreferrer">Open project <span aria-hidden="true">↗</span></a><?php endif; ?>
+                            <?php if ($projectLink !== null): ?><a class="portfolio-project-link" href="<?php echo portfolioPresentationEscape($projectLink); ?>" rel="noopener noreferrer" aria-label="View <?php echo portfolioPresentationEscape($projectTitle); ?> on GitHub">View on GitHub <span aria-hidden="true">↗</span></a><?php endif; ?>
                         </div>
                     </article>
                 <?php endforeach; ?>
