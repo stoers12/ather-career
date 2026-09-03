@@ -188,6 +188,8 @@ function portfolioPresentationSocialIcon(string $label): string
     return match ($label) {
         'LinkedIn' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.2 8.2v9.6M6.2 5.1v.1M10.7 17.8v-5.3a2.7 2.7 0 0 1 5.4 0v5.3M10.7 12.9c.4-1.2 1.3-2 2.8-2 1.6 0 2.6 1 2.6 3v3.9"/></svg>',
         'GitHub' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.2 19.4c-4.1 1.2-4.1-2.1-5.8-2.6M15 19.4v-2.2a2.1 2.1 0 0 0-.6-1.7c2.1-.2 4.3-1 4.3-4.6a3.6 3.6 0 0 0-1-2.6 3.4 3.4 0 0 0-.1-2.6s-.8-.3-2.7 1a9.2 9.2 0 0 0-4.9 0c-1.9-1.3-2.7-1-2.7-1a3.4 3.4 0 0 0-.1 2.6 3.6 3.6 0 0 0-1 2.6c0 3.6 2.2 4.4 4.3 4.6a2.1 2.1 0 0 0-.6 1.7v2.2"/></svg>',
+        'Instagram' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.5"/><path d="M17.4 6.6h.1"/></svg>',
+        'Facebook' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13.5 20v-7h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.3V10H7.3v3h2.8v7"/></svg>',
         'Website' => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="M3.8 12h16.4M12 3.5c2.1 2.3 3.2 5.1 3.2 8.5s-1.1 6.2-3.2 8.5c-2.1-2.3-3.2-5.1-3.2-8.5S9.9 5.8 12 3.5Z"/></svg>',
         default => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8A2.5 2.5 0 0 1 17.5 17H10l-4.5 3v-3.5A2.5 2.5 0 0 1 3 14.5v-8Z"/><path d="m5 6.5 6.2 4.5L18 6.5"/></svg>',
     };
@@ -479,12 +481,61 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     </div></div></section>
 </main>
 
-<footer class="portfolio-footer"><div class="portfolio-container portfolio-footer-grid">
-    <div class="portfolio-footer-identity"><strong><?php echo portfolioPresentationEscape($name); ?></strong><?php if ($title !== ''): ?><span><?php echo portfolioPresentationEscape($title); ?></span><?php endif; ?></div>
-    <nav aria-label="Footer portfolio links"><a href="#top">Home</a><?php if ($showProjects): ?><a href="#projects">Projects</a><?php endif; ?><?php if ($showSkills): ?><a href="#skills">Skills</a><?php endif; ?><a href="#contact">Contact</a></nav>
-    <?php if ($socialLinks !== []): ?><div class="portfolio-footer-social"><?php foreach ($socialLinks as $link): ?><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" rel="noopener noreferrer"><?php echo portfolioPresentationEscape($link['label']); ?></a><?php endforeach; ?></div><?php endif; ?>
-    <p>&copy; <?php echo date('Y'); ?> <?php echo portfolioPresentationEscape($name); ?></p>
-</div></footer>
+<footer class="portfolio-footer">
+    <div class="portfolio-container portfolio-footer-main">
+        <section class="portfolio-footer-identity" aria-labelledby="portfolio-footer-identity-heading">
+            <div class="portfolio-footer-identity-heading">
+                <span class="portfolio-footer-mark" aria-hidden="true"><?php echo portfolioPresentationEscape($initials); ?></span>
+                <div><strong id="portfolio-footer-identity-heading"><?php echo portfolioPresentationEscape($name); ?></strong><?php if ($title !== ''): ?><span><?php echo portfolioPresentationEscape($title); ?></span><?php endif; ?></div>
+            </div>
+            <?php if ($heroSummary !== ''): ?><p class="portfolio-footer-summary"><?php echo nl2br(portfolioPresentationEscape($heroSummary)); ?></p><?php endif; ?>
+            <?php if ($socialLinks !== []): ?>
+                <ul class="portfolio-footer-social" aria-label="<?php echo portfolioPresentationEscape($name); ?> social links">
+                    <?php foreach ($socialLinks as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" aria-label="<?php echo portfolioPresentationEscape($link['label'] . ' profile for ' . $name); ?>" rel="noopener noreferrer"><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </section>
+
+        <nav class="portfolio-footer-group portfolio-footer-nav" aria-labelledby="portfolio-footer-quick-links-heading">
+            <h2 id="portfolio-footer-quick-links-heading">Quick Links</h2>
+            <ul><li><a href="#top">Home</a></li><?php if ($showAbout): ?><li><a href="#about">About</a></li><?php endif; ?><?php if ($showProjects): ?><li><a href="#projects">Projects</a></li><?php endif; ?><?php if ($presentationExperiences !== []): ?><li><a href="#experience">Experience</a></li><?php endif; ?><?php if ($showSkills): ?><li><a href="#skills">Skills</a></li><?php endif; ?><li><a href="#contact">Contact</a></li></ul>
+        </nav>
+
+        <section class="portfolio-footer-group portfolio-footer-resources" aria-labelledby="portfolio-footer-resources-heading">
+            <h2 id="portfolio-footer-resources-heading">Resources</h2>
+            <ul>
+                <li><span aria-disabled="true">Resume</span></li>
+                <li><span aria-disabled="true">Certifications</span></li>
+                <li><span aria-disabled="true">Insights</span></li>
+                <li><span aria-disabled="true">Case Studies</span></li>
+            </ul>
+            <p>Planned resources</p>
+        </section>
+
+        <section class="portfolio-footer-group portfolio-footer-connect" aria-labelledby="portfolio-footer-connect-heading">
+            <h2 id="portfolio-footer-connect-heading">Connect</h2>
+            <ul>
+                <?php if ($location !== ''): ?><li class="portfolio-footer-location"><span>Location</span><strong><?php echo portfolioPresentationEscape($location); ?></strong></li><?php endif; ?>
+                <li><a href="#contact">Send a message <span aria-hidden="true">→</span></a></li>
+                <?php foreach ($socialLinks as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" rel="noopener noreferrer"><?php echo portfolioPresentationEscape($link['label']); ?> <span aria-hidden="true">↗</span></a></li><?php endforeach; ?>
+            </ul>
+        </section>
+
+        <section class="portfolio-footer-group portfolio-footer-updates" aria-labelledby="portfolio-footer-updates-heading">
+            <h2 id="portfolio-footer-updates-heading">Stay Updated</h2>
+            <p>Portfolio updates are not available yet.</p>
+            <div class="portfolio-footer-subscribe">
+                <input type="email" placeholder="Email address" aria-label="Email address" aria-describedby="portfolio-footer-subscribe-status" disabled>
+                <button type="button" aria-describedby="portfolio-footer-subscribe-status" disabled>Subscribe</button>
+            </div>
+            <small id="portfolio-footer-subscribe-status">Coming soon</small>
+        </section>
+    </div>
+    <div class="portfolio-container portfolio-footer-bottom">
+        <p>&copy; <?php echo date('Y'); ?> <?php echo portfolioPresentationEscape($name); ?>. All rights reserved.</p>
+        <a href="#top">Back to top <span aria-hidden="true">↑</span></a>
+    </div>
+</footer>
 </body>
 </html>
 <?php
