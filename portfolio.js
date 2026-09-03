@@ -3,9 +3,9 @@
 
     const initializePortfolioScrollspy = () => {
         const header = document.querySelector('.portfolio-header');
-        const links = Array.from(document.querySelectorAll('.portfolio-nav-links a[data-portfolio-section]'));
-        const sections = links
-            .map((link) => ({ id: link.dataset.portfolioSection, link, element: document.getElementById(link.dataset.portfolioSection) }))
+        const links = Array.from(document.querySelectorAll('[data-portfolio-section]'));
+        const sections = Array.from(new Set(links.map((link) => link.dataset.portfolioSection)))
+            .map((id) => ({ id, element: document.getElementById(id) }))
             .filter((entry) => entry.element instanceof HTMLElement);
 
         if (links.length === 0 || sections.length === 0) {
@@ -94,9 +94,94 @@
         });
     };
 
+    const initializePortfolioMobileNavigation = () => {
+        const toggle = document.querySelector('.portfolio-menu-toggle');
+        const layer = document.querySelector('.portfolio-mobile-nav-layer');
+        const close = document.querySelector('.portfolio-mobile-nav-close');
+        const backdrop = document.querySelector('.portfolio-mobile-nav-backdrop');
+        const navigation = document.querySelector('.portfolio-mobile-nav-links');
+
+        if (!(toggle instanceof HTMLButtonElement)
+            || !(layer instanceof HTMLElement)
+            || !(close instanceof HTMLButtonElement)
+            || !(backdrop instanceof HTMLButtonElement)
+            || !(navigation instanceof HTMLElement)) {
+            return;
+        }
+
+        const isOpen = () => layer.classList.contains('is-open');
+        const closeNavigation = (restoreFocus = false) => {
+            layer.classList.remove('is-open');
+            layer.setAttribute('aria-hidden', 'true');
+            layer.setAttribute('inert', '');
+            toggle.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('portfolio-mobile-nav-open');
+            if (restoreFocus) {
+                toggle.focus();
+            }
+        };
+        const openNavigation = () => {
+            layer.classList.add('is-open');
+            layer.setAttribute('aria-hidden', 'false');
+            layer.removeAttribute('inert');
+            toggle.setAttribute('aria-expanded', 'true');
+            document.body.classList.add('portfolio-mobile-nav-open');
+            close.focus();
+        };
+
+        toggle.addEventListener('click', () => {
+            if (isOpen()) {
+                closeNavigation(true);
+            } else {
+                openNavigation();
+            }
+        });
+        close.addEventListener('click', () => closeNavigation(true));
+        backdrop.addEventListener('click', () => closeNavigation(true));
+        navigation.addEventListener('click', (event) => {
+            const link = event.target instanceof Element ? event.target.closest('a[data-portfolio-section]') : null;
+            if (link instanceof HTMLAnchorElement && navigation.contains(link)) {
+                closeNavigation();
+            }
+        });
+        document.addEventListener('keydown', (event) => {
+            if (!isOpen()) {
+                return;
+            }
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeNavigation(true);
+                return;
+            }
+            if (event.key !== 'Tab') {
+                return;
+            }
+            const focusable = Array.from(layer.querySelectorAll('a[href], button:not([disabled])')).filter((element) => element instanceof HTMLElement && element.tabIndex >= 0);
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (!(first instanceof HTMLElement) || !(last instanceof HTMLElement)) {
+                return;
+            }
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        });
+        const narrowLayout = window.matchMedia('(max-width: 820px)');
+        narrowLayout.addEventListener('change', (event) => {
+            if (!event.matches && isOpen()) {
+                closeNavigation();
+            }
+        });
+    };
+
     const initializePortfolio = () => {
         initializePortfolioScrollspy();
         initializePortfolioSkills();
+        initializePortfolioMobileNavigation();
     };
 
     if (document.readyState === 'loading') {

@@ -310,9 +310,28 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
             <span class="portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Insights</span>
             <a href="#contact" data-portfolio-section="contact">Contact</a>
         </nav>
-        <a class="portfolio-header-cta" href="#contact"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.5A2.5 2.5 0 0 1 6 4h12a2.5 2.5 0 0 1 2.5 2.5v11A2.5 2.5 0 0 1 18 20H6a2.5 2.5 0 0 1-2.5-2.5v-11Z"/><path d="m4.5 6 6.07 5.06a2.23 2.23 0 0 0 2.86 0L19.5 6"/></svg><span>Let’s Connect</span></a>
+        <div class="portfolio-header-actions">
+            <a class="portfolio-header-cta" href="#contact"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.5A2.5 2.5 0 0 1 6 4h12a2.5 2.5 0 0 1 2.5 2.5v11A2.5 2.5 0 0 1 18 20H6a2.5 2.5 0 0 1-2.5-2.5v-11Z"/><path d="m4.5 6 6.07 5.06a2.23 2.23 0 0 0 2.86 0L19.5 6"/></svg><span>Let’s Connect</span></a>
+            <button class="portfolio-menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="portfolio-mobile-nav"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+        </div>
     </div>
 </header>
+
+<div class="portfolio-mobile-nav-layer" aria-hidden="true" inert>
+    <button class="portfolio-mobile-nav-backdrop" type="button" aria-label="Close navigation" tabindex="-1"></button>
+    <aside class="portfolio-mobile-nav-panel" aria-label="Portfolio mobile navigation">
+        <div class="portfolio-mobile-nav-panel-heading"><span>Navigation</span><button class="portfolio-mobile-nav-close" type="button" aria-label="Close navigation"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+        <nav class="portfolio-mobile-nav-links" id="portfolio-mobile-nav" aria-label="Portfolio mobile sections">
+            <a class="is-current" href="#top" data-portfolio-section="top" aria-current="page">Home</a>
+            <?php if ($showAbout): ?><a href="#about" data-portfolio-section="about">About</a><?php endif; ?>
+            <?php if ($showProjects): ?><a href="#projects" data-portfolio-section="projects">Projects</a><?php endif; ?>
+            <a href="#experience" data-portfolio-section="experience">Experience</a>
+            <?php if ($showSkills): ?><a href="#skills" data-portfolio-section="skills">Skills</a><?php endif; ?>
+            <span class="portfolio-mobile-nav-placeholder" aria-disabled="true">Insights <small>Coming soon</small></span>
+            <a href="#contact" data-portfolio-section="contact">Contact</a>
+        </nav>
+    </aside>
+</div>
 
 <?php if ($preview): ?>
     <aside class="portfolio-preview-bar" aria-label="Private preview status">
