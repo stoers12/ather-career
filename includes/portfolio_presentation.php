@@ -294,47 +294,51 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
         </div></div></section>
     <?php endif; ?>
 
-    <?php if ($showProjects): ?>
-        <section class="portfolio-section portfolio-projects" id="projects" aria-labelledby="projects-title"><div class="portfolio-container">
-            <div class="portfolio-section-heading"><div><h2 id="projects-title">Featured Projects</h2></div></div>
-            <div class="portfolio-project-grid">
-                <?php foreach ($featuredProjects as $project):
-                    $projectId = isset($project['id']) ? (int) $project['id'] : 0;
-                    $projectTitle = isset($project['title']) ? trim((string) $project['title']) : 'Project';
-                    $category = isset($project['category']) ? trim((string) $project['category']) : '';
-                    $projectImageUrl = (string) $projectMediaUrl($projectId);
-                    $hasProjectImage = isset($project['image_path']) && trim((string) $project['image_path']) !== '' && $projectImageUrl !== '';
-                    $projectLink = portfolioPresentationProjectLink($project);
-                    $projectTechnologies = isset($project['technologies']) && is_array($project['technologies'])
-                        ? array_slice($project['technologies'], 0, 4)
-                        : [];
-                    ?>
-                    <article class="portfolio-project-card portfolio-project-card--<?php echo $hasProjectImage ? 'image' : 'fallback'; ?>">
-                        <div class="portfolio-project-visual">
-                            <?php if ($hasProjectImage): ?>
-                                <img src="<?php echo portfolioPresentationEscape($projectImageUrl); ?>" alt="<?php echo portfolioPresentationEscape($projectTitle); ?> project preview" loading="lazy">
-                            <?php else: ?>
-                                <span class="portfolio-project-fallback" aria-hidden="true"><?php echo portfolioPresentationProjectFallbackIcon(); ?></span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="portfolio-project-body">
-                            <?php if ($category !== ''): ?><p class="portfolio-project-category"><?php echo portfolioPresentationEscape($category); ?></p><?php endif; ?>
-                            <h3><?php echo portfolioPresentationEscape($projectTitle); ?></h3>
-                            <?php if (isset($project['description']) && trim((string) $project['description']) !== ''): ?><p class="portfolio-project-description"><?php echo nl2br(portfolioPresentationEscape($project['description'])); ?></p><?php endif; ?>
-                            <?php if ($projectTechnologies !== []): ?><ul class="portfolio-project-technologies" aria-label="Technologies used"><?php foreach ($projectTechnologies as $technology): ?><li><?php echo portfolioPresentationEscape($technology); ?></li><?php endforeach; ?></ul><?php endif; ?>
-                            <?php if ($projectLink !== null): ?><a class="portfolio-project-link" href="<?php echo portfolioPresentationEscape($projectLink); ?>" rel="noopener noreferrer" aria-label="View <?php echo portfolioPresentationEscape($projectTitle); ?> on GitHub">View on GitHub <span aria-hidden="true">↗</span></a><?php endif; ?>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
-            </div>
-        </div></section>
-    <?php endif; ?>
+    <?php if ($showProjects || $showSkills): ?>
+        <div class="portfolio-section portfolio-work"><div class="portfolio-container portfolio-work-grid portfolio-work-grid--<?php echo $showProjects && $showSkills ? 'split' : 'single'; ?>">
+            <?php if ($showProjects): ?>
+                <section class="portfolio-projects" id="projects" aria-labelledby="projects-title">
+                    <header class="portfolio-section-heading"><h2 id="projects-title">Featured Projects</h2></header>
+                    <div class="portfolio-project-grid">
+                        <?php foreach ($featuredProjects as $project):
+                            $projectId = isset($project['id']) ? (int) $project['id'] : 0;
+                            $projectTitle = isset($project['title']) ? trim((string) $project['title']) : 'Project';
+                            $category = isset($project['category']) ? trim((string) $project['category']) : '';
+                            $projectImageUrl = (string) $projectMediaUrl($projectId);
+                            $hasProjectImage = isset($project['image_path']) && trim((string) $project['image_path']) !== '' && $projectImageUrl !== '';
+                            $projectLink = portfolioPresentationProjectLink($project);
+                            $projectTechnologies = isset($project['technologies']) && is_array($project['technologies'])
+                                ? array_slice($project['technologies'], 0, 4)
+                                : [];
+                            ?>
+                            <article class="portfolio-project-card portfolio-project-card--<?php echo $hasProjectImage ? 'image' : 'fallback'; ?>">
+                                <div class="portfolio-project-visual">
+                                    <?php if ($hasProjectImage): ?>
+                                        <img src="<?php echo portfolioPresentationEscape($projectImageUrl); ?>" alt="<?php echo portfolioPresentationEscape($projectTitle); ?> project preview" loading="lazy">
+                                    <?php else: ?>
+                                        <span class="portfolio-project-fallback" aria-hidden="true"><?php echo portfolioPresentationProjectFallbackIcon(); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="portfolio-project-body">
+                                    <?php if ($category !== ''): ?><p class="portfolio-project-category"><?php echo portfolioPresentationEscape($category); ?></p><?php endif; ?>
+                                    <h3><?php echo portfolioPresentationEscape($projectTitle); ?></h3>
+                                    <?php if (isset($project['description']) && trim((string) $project['description']) !== ''): ?><p class="portfolio-project-description"><?php echo nl2br(portfolioPresentationEscape($project['description'])); ?></p><?php endif; ?>
+                                    <?php if ($projectTechnologies !== []): ?><ul class="portfolio-project-technologies" aria-label="Technologies used"><?php foreach ($projectTechnologies as $technology): ?><li><?php echo portfolioPresentationEscape($technology); ?></li><?php endforeach; ?></ul><?php endif; ?>
+                                    <?php if ($projectLink !== null): ?><a class="portfolio-project-link" href="<?php echo portfolioPresentationEscape($projectLink); ?>" rel="noopener noreferrer" aria-label="View <?php echo portfolioPresentationEscape($projectTitle); ?> on GitHub">View on GitHub <span aria-hidden="true">↗</span></a><?php endif; ?>
+                                </div>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+            <?php endif; ?>
 
-    <?php if ($showSkills): ?>
-        <section class="portfolio-section portfolio-skills" id="skills" aria-labelledby="skills-title"><div class="portfolio-container"><div class="portfolio-skills-shell">
-            <div class="portfolio-skills-intro"><p class="portfolio-section-kicker">TOOLKIT / 04</p><h2 id="skills-title">Skills &amp; technologies.</h2><p>Tools and disciplines represented in this Portfolio.</p></div>
-            <ul class="portfolio-skill-list"><?php foreach ($skills as $skill): $skillName = isset($skill['skill_name']) ? trim((string) $skill['skill_name']) : ''; ?><?php if ($skillName !== ''): ?><li><?php echo portfolioPresentationEscape($skillName); ?></li><?php endif; ?><?php endforeach; ?></ul>
-        </div></div></section>
+            <?php if ($showSkills): ?>
+                <aside class="portfolio-skills-panel" id="skills" aria-labelledby="skills-title">
+                    <header class="portfolio-section-heading portfolio-skills-heading"><h2 id="skills-title">Skills &amp; Technologies</h2></header>
+                    <ul class="portfolio-skills-list" aria-labelledby="skills-title"><?php foreach ($skills as $skill): $skillName = isset($skill['skill_name']) ? trim((string) $skill['skill_name']) : ''; ?><?php if ($skillName !== ''): ?><li><button class="portfolio-skill-control" type="button" aria-pressed="false"><?php echo portfolioPresentationEscape($skillName); ?></button></li><?php endif; ?><?php endforeach; ?></ul>
+                </aside>
+            <?php endif; ?>
+        </div></div>
     <?php endif; ?>
 
     <section class="portfolio-section portfolio-contact" id="contact" aria-labelledby="contact-title"><div class="portfolio-container"><div class="portfolio-contact-shell">

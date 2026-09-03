@@ -72,9 +72,36 @@
         });
     };
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializePortfolioScrollspy, { once: true });
-    } else {
+    const initializePortfolioSkills = () => {
+        const list = document.querySelector('.portfolio-skills-list');
+        if (!(list instanceof HTMLElement)) {
+            return;
+        }
+
+        list.addEventListener('click', (event) => {
+            const button = event.target instanceof Element ? event.target.closest('.portfolio-skill-control') : null;
+            if (!(button instanceof HTMLButtonElement) || !list.contains(button)) {
+                return;
+            }
+
+            const wasSelected = button.getAttribute('aria-pressed') === 'true';
+            list.querySelectorAll('.portfolio-skill-control[aria-pressed="true"]').forEach((selected) => {
+                selected.setAttribute('aria-pressed', 'false');
+            });
+            if (!wasSelected) {
+                button.setAttribute('aria-pressed', 'true');
+            }
+        });
+    };
+
+    const initializePortfolio = () => {
         initializePortfolioScrollspy();
+        initializePortfolioSkills();
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePortfolio, { once: true });
+    } else {
+        initializePortfolio();
     }
 })();
