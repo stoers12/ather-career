@@ -62,6 +62,16 @@ function portfolioPresentationProjectVisual(string $category): string
     return 'general';
 }
 
+function portfolioPresentationSocialIcon(string $label): string
+{
+    return match ($label) {
+        'LinkedIn' => '<svg viewBox="0 0 24 24" focusable="false"><path d="M6.2 8.2v9.6M6.2 5.1v.1M10.7 17.8v-5.3a2.7 2.7 0 0 1 5.4 0v5.3M10.7 12.9c.4-1.2 1.3-2 2.8-2 1.6 0 2.6 1 2.6 3v3.9"/></svg>',
+        'GitHub' => '<svg viewBox="0 0 24 24" focusable="false"><path d="M9.2 19.4c-4.1 1.2-4.1-2.1-5.8-2.6M15 19.4v-2.2a2.1 2.1 0 0 0-.6-1.7c2.1-.2 4.3-1 4.3-4.6a3.6 3.6 0 0 0-1-2.6 3.4 3.4 0 0 0-.1-2.6s-.8-.3-2.7 1a9.2 9.2 0 0 0-4.9 0c-1.9-1.3-2.7-1-2.7-1a3.4 3.4 0 0 0-.1 2.6 3.6 3.6 0 0 0-1 2.6c0 3.6 2.2 4.4 4.3 4.6a2.1 2.1 0 0 0-.6 1.7v2.2"/></svg>',
+        'Website' => '<svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="M3.8 12h16.4M12 3.5c2.1 2.3 3.2 5.1 3.2 8.5s-1.1 6.2-3.2 8.5c-2.1-2.3-3.2-5.1-3.2-8.5S9.9 5.8 12 3.5Z"/></svg>',
+        default => '<svg viewBox="0 0 24 24" focusable="false"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8A2.5 2.5 0 0 1 17.5 17H10l-4.5 3v-3.5A2.5 2.5 0 0 1 3 14.5v-8Z"/><path d="m5 6.5 6.2 4.5L18 6.5"/></svg>',
+    };
+}
+
 /**
  * @param list<array<string, mixed>> $skills
  * @param list<array<string, mixed>> $projects
@@ -88,6 +98,8 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $heroSummary = $workDescription !== '' ? $workDescription : $aboutMe;
     $aboutNarrative = $aboutMe !== '' && $aboutMe !== $heroSummary ? $aboutMe : '';
     $socialLinks = portfolioPresentationSocialLinks($profile);
+    $email = portfolioPresentationValue($profile, 'email');
+    $emailAction = filter_var($email, FILTER_VALIDATE_EMAIL) !== false ? 'mailto:' . $email : '';
     $initials = profileInitials($name) ?: 'P';
     $showProjects = $projects !== [];
     $showSkills = $skills !== [];
@@ -150,50 +162,25 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     <?php if ($previewError !== ''): ?><div class="portfolio-container portfolio-alert" role="alert"><?php echo portfolioPresentationEscape($previewError); ?></div><?php endif; ?>
 
     <section class="portfolio-hero" id="top" aria-labelledby="portfolio-title">
-        <div class="portfolio-hero-grid-lines" aria-hidden="true"></div>
-        <div class="portfolio-hero-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
         <div class="portfolio-container portfolio-hero-grid">
             <div class="portfolio-hero-copy">
-                <p class="portfolio-eyebrow"><span></span> Professional Portfolio</p>
-                <h1 id="portfolio-title"><?php echo portfolioPresentationEscape($name); ?></h1>
-                <?php if ($title !== ''): ?><p class="portfolio-role"><?php echo portfolioPresentationEscape($title); ?></p><?php endif; ?>
+                <p class="portfolio-hero-badge"><span aria-hidden="true"></span><?php echo portfolioPresentationEscape($title !== '' ? $title : 'Professional'); ?></p>
+                <h1 id="portfolio-title">Turning Data into <span>Intelligence</span></h1>
                 <?php if ($heroSummary !== ''): ?><p class="portfolio-hero-summary"><?php echo nl2br(portfolioPresentationEscape($heroSummary)); ?></p><?php endif; ?>
                 <div class="portfolio-hero-actions">
-                    <?php if ($showProjects): ?><a class="portfolio-button portfolio-button-primary" href="#projects">View my work <span aria-hidden="true">→</span></a><?php endif; ?>
-                    <a class="portfolio-button portfolio-button-secondary" href="#contact">Let’s connect</a>
+                    <?php if ($showProjects): ?><a class="portfolio-button portfolio-button-primary" href="#projects">View My Work <span aria-hidden="true">→</span></a><?php endif; ?>
+                    <a class="portfolio-button portfolio-button-secondary" href="#contact">Contact Me <span aria-hidden="true">↗</span></a>
                 </div>
-                <?php if ($socialLinks !== []): ?>
-                    <ul class="portfolio-social-list" aria-label="Professional links">
-                        <?php foreach ($socialLinks as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" rel="noopener noreferrer"><?php echo portfolioPresentationEscape($link['label']); ?><span aria-hidden="true">↗</span></a></li><?php endforeach; ?>
+                <?php if ($socialLinks !== [] || $emailAction !== ''): ?>
+                    <ul class="portfolio-hero-social-list" aria-label="Professional links">
+                        <?php foreach ($socialLinks as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" aria-label="<?php echo portfolioPresentationEscape($link['label']); ?>" rel="noopener noreferrer"><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?>
+                        <?php if ($emailAction !== ''): ?><li><a href="<?php echo portfolioPresentationEscape($emailAction); ?>" aria-label="Email <?php echo portfolioPresentationEscape($name); ?>"><?php echo portfolioPresentationSocialIcon('Email'); ?></a></li><?php endif; ?>
                     </ul>
                 <?php endif; ?>
             </div>
-
-            <aside class="portfolio-profile-card" aria-label="Professional profile">
-                <div class="portfolio-profile-card-top"><span>PROFILE / 01</span><i aria-hidden="true"></i></div>
-                <div class="portfolio-profile-visual">
-                    <?php if ($profileMediaUrl !== ''): ?>
-                        <img src="<?php echo portfolioPresentationEscape($profileMediaUrl); ?>" alt="Portrait of <?php echo portfolioPresentationEscape($name); ?>">
-                    <?php else: ?>
-                        <div class="portfolio-profile-fallback" aria-label="<?php echo portfolioPresentationEscape($name); ?> initials">
-                            <span class="portfolio-profile-orbit orbit-one"></span><span class="portfolio-profile-orbit orbit-two"></span><span class="portfolio-profile-grid"></span><strong><?php echo portfolioPresentationEscape($initials); ?></strong>
-                        </div>
-                    <?php endif; ?>
-                </div>
-                <div class="portfolio-profile-meta">
-                    <div><span>Role</span><strong><?php echo portfolioPresentationEscape($title !== '' ? $title : 'Professional Portfolio'); ?></strong></div>
-                    <?php if ($location !== ''): ?><div><span>Location</span><strong><?php echo portfolioPresentationEscape($location); ?></strong></div><?php endif; ?>
-                </div>
-            </aside>
+            <div class="portfolio-hero-reserved" aria-hidden="true"></div>
         </div>
     </section>
-
-    <?php if ($showProjects || $showSkills): ?>
-        <section class="portfolio-metrics" aria-label="Portfolio metrics"><div class="portfolio-container"><div class="portfolio-metrics-card">
-            <?php if ($showProjects): ?><div><span>SELECTED WORK</span><strong><?php echo count($projects); ?></strong><small><?php echo count($projects) === 1 ? 'Project' : 'Projects'; ?></small></div><?php endif; ?>
-            <?php if ($showSkills): ?><div><span>CORE SKILLS</span><strong><?php echo count($skills); ?></strong><small><?php echo count($skills) === 1 ? 'Skill' : 'Skills'; ?></small></div><?php endif; ?>
-        </div></div></section>
-    <?php endif; ?>
 
     <?php if ($showAbout): ?>
         <section class="portfolio-section portfolio-about" id="about" aria-labelledby="about-title"><div class="portfolio-container"><div class="portfolio-about-card">
