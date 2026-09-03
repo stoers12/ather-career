@@ -309,12 +309,12 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                         ? array_slice($project['technologies'], 0, 4)
                         : [];
                     ?>
-                    <article class="portfolio-project-card">
+                    <article class="portfolio-project-card portfolio-project-card--<?php echo $hasProjectImage ? 'image' : 'fallback'; ?>">
                         <div class="portfolio-project-visual">
                             <?php if ($hasProjectImage): ?>
                                 <img src="<?php echo portfolioPresentationEscape($projectImageUrl); ?>" alt="<?php echo portfolioPresentationEscape($projectTitle); ?> project preview" loading="lazy">
                             <?php else: ?>
-                                <span class="portfolio-project-fallback" aria-hidden="true"><?php echo portfolioPresentationProjectFallbackIcon(); ?></span>
+                                <span class="portfolio-project-fallback" aria-hidden="true"><?php echo portfolioPresentationProjectFallbackIcon(); ?></span><?php if ($category !== ''): ?><span class="portfolio-project-fallback-category" aria-hidden="true"><?php echo portfolioPresentationEscape($category); ?></span><?php endif; ?>
                             <?php endif; ?>
                         </div>
                         <div class="portfolio-project-body">
