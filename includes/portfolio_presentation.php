@@ -122,7 +122,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
 <a class="portfolio-skip-link" href="#portfolio-main">Skip to content</a>
 
 <header class="portfolio-header">
-    <div class="portfolio-container portfolio-nav">
+    <div class="portfolio-header-inner">
         <a class="portfolio-brand" href="#top" aria-label="<?php echo portfolioPresentationEscape($name); ?>, home">
             <span class="portfolio-brand-mark" aria-hidden="true"><?php echo portfolioPresentationEscape($initials); ?></span>
             <span class="portfolio-brand-copy"><strong><?php echo portfolioPresentationEscape($name); ?></strong></span>
