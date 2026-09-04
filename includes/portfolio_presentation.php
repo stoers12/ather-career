@@ -310,9 +310,8 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
 
 <header class="portfolio-header">
     <div class="portfolio-header-inner">
-        <a class="portfolio-brand" href="#top" aria-label="<?php echo portfolioPresentationEscape($name); ?>, home">
-            <span class="portfolio-brand-mark" aria-hidden="true"><?php echo portfolioPresentationEscape($initials); ?></span>
-            <span class="portfolio-brand-copy"><strong><?php echo portfolioPresentationEscape($name); ?></strong></span>
+        <a class="portfolio-brand" href="#top" aria-label="ATHER, home">
+            <img class="portfolio-brand-logo" src="/assets/images/ather-navbar-logo.png" width="880" height="155" alt="">
         </a>
         <nav class="portfolio-nav-links" aria-label="Portfolio sections">
             <a class="is-current" href="#top" data-portfolio-section="top" aria-current="page">Home</a>
@@ -358,7 +357,6 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     <section class="portfolio-hero" id="top" aria-labelledby="portfolio-title">
         <div class="portfolio-container portfolio-hero-grid">
             <div class="portfolio-hero-copy">
-                <p class="portfolio-hero-badge"><span aria-hidden="true"></span><?php echo portfolioPresentationEscape($title !== '' ? $title : 'Professional'); ?></p>
                 <h1 id="portfolio-title"><?php echo portfolioPresentationEscape($heroHeadline); ?></h1>
                 <?php if ($heroSummary !== ''): ?><p class="portfolio-hero-summary"><?php echo nl2br(portfolioPresentationEscape($heroSummary)); ?></p><?php endif; ?>
                 <div class="portfolio-hero-actions-cluster">
@@ -384,7 +382,6 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                     </div>
                     <div class="portfolio-hero-profile-details">
                         <h2><?php echo portfolioPresentationEscape($name); ?></h2>
-                        <?php if ($title !== ''): ?><p class="portfolio-hero-profile-role"><?php echo portfolioPresentationEscape($title); ?></p><?php endif; ?>
                         <?php if ($location !== ''): ?><p class="portfolio-hero-profile-location"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20s6-5.1 6-11a6 6 0 1 0-12 0c0 5.9 6 11 6 11Z"/><circle cx="12" cy="9" r="2"/></svg><?php echo portfolioPresentationEscape($location); ?></p><?php endif; ?>
                     </div>
                 </article>
