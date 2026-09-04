@@ -6,6 +6,17 @@ require_once __DIR__ . '/validation.php';
 require_once __DIR__ . '/profile_presentation.php';
 
 const PROFILE_PIXEL_CEILING = 8000000;
+const PROFILE_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+
+function profileImageMaximumMegabytes(): int
+{
+    return (int) (PROFILE_IMAGE_MAX_BYTES / (1024 * 1024));
+}
+
+function profileImageSizeIsAllowed(mixed $size): bool
+{
+    return is_int($size) && $size >= 0 && $size <= PROFILE_IMAGE_MAX_BYTES;
+}
 
 function isMySqlDuplicateKeyViolation(PDOException $exception): bool
 {
@@ -18,8 +29,8 @@ function isMySqlDuplicateKeyViolation(PDOException $exception): bool
 
 function storeValidatedProfileImage(array $file, array &$errors, ?int $portfolioId = null): ?string
 {
-    if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || (($file['size'] ?? 0) > 8 * 1024 * 1024)) {
-        $errors[] = 'Profile photo must be 8 MB or smaller.';
+    if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || !profileImageSizeIsAllowed($file['size'] ?? null)) {
+        $errors[] = 'Profile photo must be ' . profileImageMaximumMegabytes() . ' MB or smaller.';
         return null;
     }
     if (($file['error'] ?? null) !== UPLOAD_ERR_OK || !isset($file['tmp_name'])) {

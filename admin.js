@@ -93,6 +93,8 @@
     document.querySelectorAll('[data-image-preview]').forEach(function (input) {
         var photoSubmit = document.querySelector('[data-photo-submit]');
         var selectionStatus = document.getElementById('photo-selection-status');
+        var profileImageMaxBytes = Number(input.dataset.profileImageMaxBytes);
+        var profileImageMaxMegabytes = profileImageMaxBytes / (1024 * 1024);
         input.addEventListener('change', function () {
             var preview = document.querySelector(input.getAttribute('data-image-preview'));
             var file = input.files && input.files[0];
@@ -116,9 +118,9 @@
                 resetSelection('');
                 return;
             }
-            if (!file.type.match(/^image\/(jpeg|png)$/) || file.size > 8 * 1024 * 1024) {
+            if (!file.type.match(/^image\/(jpeg|png)$/) || !Number.isFinite(profileImageMaxBytes) || file.size > profileImageMaxBytes) {
                 resetSelection('');
-                showToast('Choose a JPG or PNG image up to 8 MB.', 'error');
+                showToast('Choose a JPG or PNG image up to ' + profileImageMaxMegabytes + ' MB.', 'error');
                 return;
             }
             var reader = new FileReader();
