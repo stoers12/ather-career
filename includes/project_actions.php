@@ -102,7 +102,8 @@ function storeValidatedProjectImage(array $file, array &$errors, ?int $portfolio
         return null;
     }
     if ($key === null) {
-        $errors[] = 'The image could not be saved.';
+        reportPortfolioMediaEvent('media_upload_rejected', 'project', 'storage', 'private_staging_failed');
+        $errors[] = 'The image could not be saved. Please try again.';
         return null;
     }
     $presentation = generateProjectPresentationResult($key, $portfolioId);

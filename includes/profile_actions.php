@@ -91,7 +91,8 @@ function storeValidatedProfileImage(array $file, array &$errors, ?int $portfolio
         return null;
     }
     if ($key === null) {
-        $errors[] = 'The uploaded image could not be processed.';
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'storage', 'private_staging_failed');
+        $errors[] = 'The image could not be saved. Please try again.';
         return null;
     }
     try {

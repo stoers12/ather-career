@@ -45,6 +45,8 @@ final class MediaNormalizationTest
             phase2Assert(getimagesize((string) resolvePrivateMediaPath($profileOriginal, 901, 'profile_original'))[0] === 4032, 'Profile original was changed during normalization.');
             phase2Assert(getimagesize((string) resolvePrivateMediaPath($projectOriginal, 901, 'projects'))[0] === 4032, 'Project original was changed during normalization.');
 
+            self::assertStorageFailureContract($standard, $storageRoot);
+
             self::assertBusinessLimit($standard, PROFILE_IMAGE_MAX_BYTES, 'Profile', 'validateProfileImageUpload');
             self::assertBusinessLimit($standard, PROJECT_IMAGE_MAX_BYTES, 'Project', 'validateProjectImageUpload');
 
@@ -131,5 +133,34 @@ final class MediaNormalizationTest
         self::padTo($above, $limit + 1);
         phase2Assert(is_array($validator(self::upload($below))), "{$label} rejected a valid image immediately below its business limit.");
         phase2Assert(is_string($validator(self::upload($above))), "{$label} accepted an image above its business limit.");
+    }
+
+    private static function assertStorageFailureContract(string $source, string $storageRoot): void
+    {
+        $log = $storageRoot . DIRECTORY_SEPARATOR . 'storage-failure.log';
+        $priorLogErrors = ini_get('log_errors');
+        $priorErrorLog = ini_get('error_log');
+        ini_set('log_errors', '1');
+        ini_set('error_log', $log);
+
+        try {
+            $profileErrors = [];
+            $projectErrors = [];
+            phase2Assert(storeValidatedProfileImage(self::upload($source), $profileErrors, 902) === null, 'A non-uploaded Profile fixture unexpectedly reached storage.');
+            phase2Assert(storeValidatedProjectImage(self::upload($source), $projectErrors, 902) === null, 'A non-uploaded Project fixture unexpectedly reached storage.');
+            phase2AssertSame(['The image could not be saved. Please try again.'], $profileErrors, 'Profile storage failure message is inaccurate.');
+            phase2AssertSame(['The image could not be saved. Please try again.'], $projectErrors, 'Project storage failure message is inaccurate.');
+            phase2Assert(!file_exists($storageRoot . DIRECTORY_SEPARATOR . 'portfolios' . DIRECTORY_SEPARATOR . '902'), 'A rejected storage attempt left private media behind.');
+
+            $events = is_file($log) ? (string) file_get_contents($log) : '';
+            phase2Assert(substr_count($events, '"event":"media_upload_rejected"') === 2, 'Storage failures did not emit both rejection events.');
+            phase2Assert(substr_count($events, '"stage":"storage"') === 2 && substr_count($events, '"reason":"private_staging_failed"') === 2, 'Storage rejection telemetry lacks its stable stage or reason.');
+            foreach (['tmp_name', $source, 'filename', 'email', 'exif', 'gps'] as $privateValue) {
+                phase2Assert(!str_contains(strtolower($events), strtolower($privateValue)), 'Storage rejection telemetry leaked private upload data.');
+            }
+        } finally {
+            ini_set('log_errors', (string) $priorLogErrors);
+            ini_set('error_log', (string) $priorErrorLog);
+        }
     }
 }

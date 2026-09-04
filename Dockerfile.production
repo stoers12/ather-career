@@ -9,6 +9,7 @@ FROM php:8.3-apache
 ARG APP_VERSION=unknown
 LABEL org.opencontainers.image.revision="${APP_VERSION}"
 ENV ATHERCAR_STORAGE_ROOT=/var/lib/ather-career/storage \
+    PORTFOLIO_PRODUCTION_SECURITY_CHECK=1 \
     VIPS_CONCURRENCY=1 \
     VIPS_BLOCK_UNTRUSTED=1
 
@@ -41,4 +42,5 @@ RUN mkdir -p /var/www/public/api /var/www/public/assets/images /var/www/app/runt
     && chown -R www-data:www-data /var/www/app/runtime /var/lib/ather-career/storage \
     && chmod 755 /usr/local/bin/portfolio-production-entrypoint
 
-CMD ["/usr/local/bin/portfolio-production-entrypoint"]
+ENTRYPOINT ["/usr/local/bin/portfolio-production-entrypoint"]
+CMD ["apache2-foreground"]

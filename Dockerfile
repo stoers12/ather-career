@@ -11,8 +11,14 @@ ENV VIPS_CONCURRENCY=1 \
 COPY docker/apache/access-policy.conf /etc/apache2/conf-enabled/zzz-portfolio-access-policy.conf
 COPY docker/apache/safe-access-log.conf /etc/apache2/conf-enabled/zzz-portfolio-safe-access-log.conf
 COPY docker/apache/development-vhost.conf /etc/apache2/sites-available/000-default.conf
+COPY docker/production-entrypoint.sh /usr/local/bin/portfolio-runtime-entrypoint
 RUN a2disconf other-vhosts-access-log
 
 WORKDIR /var/www/html
 
 COPY . /var/www/html/
+
+RUN chmod 755 /usr/local/bin/portfolio-runtime-entrypoint
+
+ENTRYPOINT ["/usr/local/bin/portfolio-runtime-entrypoint"]
+CMD ["apache2-foreground"]

@@ -26,6 +26,7 @@ final class PrivateMediaStaticTest
         $compose = self::read('docker-compose.production.yml');
         $developmentDockerfile = self::read('Dockerfile');
         $productionDockerfile = self::read('Dockerfile.production');
+        $runtimeEntrypoint = self::read('docker/production-entrypoint.sh');
         $productionIni = self::read('docker/php/production.ini');
 
         phase2Assert(str_contains($storage, "getenv('ATHERCAR_STORAGE_ROOT')") && str_contains($storage, 'isAbsoluteFilesystemPath') && str_contains($storage, 'outside the public document root'), 'P2J-07 private root contract is incomplete.');
@@ -46,6 +47,9 @@ final class PrivateMediaStaticTest
         phase2Assert(str_contains($ownerActions, "\$removeImage = isset(\$post['remove_image'])") && str_contains($ownerActions, "cleanProjectImage(\$oldImagePath, 'owner_project_update_old_image'") && str_contains($ownerActions, "cleanProjectImage(\$project['image_path'] ?? null, 'owner_project_delete'"), 'S05A project cover replacement and removal cleanup must remain intact.');
         phase2Assert(!preg_match('/^\s*Alias\s+\/uploads\//mi', $vhost) && str_contains($accessPolicy, '^/uploads(?:/|$)'), 'P2J-07 direct upload access was not retired.');
         phase2Assert(str_contains($compose, 'ATHERCAR_STORAGE_ROOT: /var/lib/ather-career/storage') && str_contains($compose, 'portfolio_production_storage:/var/lib/ather-career/storage'), 'P2J-07 production private storage configuration is incomplete.');
+        phase2Assert(str_contains($developmentDockerfile, 'portfolio-runtime-entrypoint') && str_contains($productionDockerfile, 'portfolio-production-entrypoint'), 'Both images must run the private-media initializer before Apache.');
+        phase2Assert(str_contains($runtimeEntrypoint, '/var/www/private-storage|/var/lib/ather-career/storage') && str_contains($runtimeEntrypoint, 'find "$storage_root" -xdev -type d') && str_contains($runtimeEntrypoint, 'chown www-data:www-data') && str_contains($runtimeEntrypoint, 'chmod 0700') && str_contains($runtimeEntrypoint, 'chmod 0600') && !str_contains($runtimeEntrypoint, '0777'), 'Runtime private-media ownership initialization must be scoped, restrictive, and compatible with reused volumes.');
+        phase2Assert(str_contains($profileActions, "'profile', 'storage', 'private_staging_failed'") && str_contains($projectActions, "'project', 'storage', 'private_staging_failed'") && substr_count($profileActions . $projectActions, 'The image could not be saved. Please try again.') >= 2, 'Profile and Project storage failures need privacy-safe telemetry and accurate user errors.');
 
         require_once PHASE2_REPOSITORY_ROOT . '/includes/project_actions.php';
         require_once PHASE2_REPOSITORY_ROOT . '/includes/profile_actions.php';
