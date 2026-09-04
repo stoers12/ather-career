@@ -16,6 +16,7 @@ require_once __DIR__ . '/../tests/phase2/cases/OwnerFlowStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PublicLifecycleStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PublicContactStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PortfolioPresentationStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/HeroPersonalInfoCapabilityTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/ProjectTechnologiesStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/ExperienceCapabilityTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/ExperiencePresentationStaticTest.php';
@@ -36,6 +37,7 @@ $tests = [
     'public lifecycle static contract' => [PublicLifecycleStaticTest::class, 'run'],
     'public contact static contract' => [PublicContactStaticTest::class, 'run'],
     'shared Portfolio presentation contract' => [PortfolioPresentationStaticTest::class, 'run'],
+    'Hero Personal Info capability contract' => [HeroPersonalInfoCapabilityTest::class, 'run'],
     'project technologies static contract' => [ProjectTechnologiesStaticTest::class, 'run'],
     'Experience capability static contract' => [ExperienceCapabilityTest::class, 'run'],
     'Experience presentation static contract' => [ExperiencePresentationStaticTest::class, 'run'],

@@ -8,6 +8,7 @@ const SKILL_NAME_MAX_LENGTH = 100;
 const PERSONAL_INFO_FIELD_MAX_LENGTHS = [
     'full_name' => 150,
     'professional_title' => 150,
+    'hero_headline' => 180,
     'email' => 150,
     'phone_primary' => 30,
     'phone_secondary' => 30,
@@ -17,6 +18,7 @@ const PERSONAL_INFO_FIELD_MAX_LENGTHS = [
     'instagram_url' => 255,
     'facebook_url' => 255,
     'website_url' => 255,
+    'work_description' => 1200,
 ];
 
 function isSafeHttpUrl(string $url): bool

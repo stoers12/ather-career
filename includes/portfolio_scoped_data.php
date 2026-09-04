@@ -9,6 +9,7 @@ require_once __DIR__ . '/experience.php';
 const AUTHORIZED_PERSONAL_INFO_FIELDS = [
     'full_name',
     'professional_title',
+    'hero_headline',
     'email',
     'phone_primary',
     'phone_secondary',
@@ -53,7 +54,7 @@ function findAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext $c
     }
 
     $statement = $database->prepare(
-        'SELECT id, full_name, professional_title, email, phone_primary, phone_secondary,
+        'SELECT id, full_name, professional_title, hero_headline, email, phone_primary, phone_secondary,
                 location, about_me, work_description, linkedin_url, github_url,
                 instagram_url, facebook_url, website_url, profile_image_path, updated_at
          FROM personal_info
@@ -74,7 +75,7 @@ function findAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext $c
 function loadAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext $context): ?array
 {
     $statement = $database->prepare(
-        'SELECT id, full_name, professional_title, email, phone_primary, phone_secondary,
+        'SELECT id, full_name, professional_title, hero_headline, email, phone_primary, phone_secondary,
                 location, about_me, work_description, linkedin_url, github_url,
                 instagram_url, facebook_url, website_url, profile_image_path, updated_at
          FROM personal_info

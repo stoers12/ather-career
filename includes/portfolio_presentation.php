@@ -17,6 +17,18 @@ function portfolioPresentationValue(array $profile, string $field): string
     return is_string($value) ? trim($value) : '';
 }
 
+function portfolioPresentationHeroHeadline(array $profile): string
+{
+    foreach (['hero_headline', 'professional_title', 'full_name'] as $field) {
+        $value = portfolioPresentationValue($profile, $field);
+        if ($value !== '') {
+            return $value;
+        }
+    }
+
+    return 'Portfolio';
+}
+
 /** @return list<array{label: string, url: string}> */
 function portfolioPresentationSocialLinks(array $profile): array
 {
@@ -237,11 +249,12 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
         $name = $preview ? 'Your Portfolio' : 'Portfolio';
     }
     $title = portfolioPresentationValue($profile, 'professional_title');
+    $heroHeadline = portfolioPresentationHeroHeadline($profile);
     $location = portfolioPresentationValue($profile, 'location');
     $aboutMe = portfolioPresentationValue($profile, 'about_me');
     $workDescription = portfolioPresentationValue($profile, 'work_description');
-    $heroSummary = $workDescription !== '' ? $workDescription : $aboutMe;
-    $aboutNarrative = $aboutMe !== '' && $aboutMe !== $heroSummary ? $aboutMe : '';
+    $heroSummary = $workDescription;
+    $aboutNarrative = $aboutMe;
     $email = portfolioPresentationValue($profile, 'email');
     $emailAction = filter_var($email, FILTER_VALIDATE_EMAIL) !== false ? 'mailto:' . $email : '';
     $socialLinks = portfolioPresentationSocialLinks($profile);
@@ -346,7 +359,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
         <div class="portfolio-container portfolio-hero-grid">
             <div class="portfolio-hero-copy">
                 <p class="portfolio-hero-badge"><span aria-hidden="true"></span><?php echo portfolioPresentationEscape($title !== '' ? $title : 'Professional'); ?></p>
-                <h1 id="portfolio-title">Turning Data into <span>Intelligence</span></h1>
+                <h1 id="portfolio-title"><?php echo portfolioPresentationEscape($heroHeadline); ?></h1>
                 <?php if ($heroSummary !== ''): ?><p class="portfolio-hero-summary"><?php echo nl2br(portfolioPresentationEscape($heroSummary)); ?></p><?php endif; ?>
                 <div class="portfolio-hero-actions-cluster">
                     <div class="portfolio-hero-actions">

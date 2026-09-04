@@ -145,7 +145,12 @@ function handleProfileAction(PDO $database, array $post, array $files, $current,
                 $errors[] = 'Full name is required.';
             }
             foreach (PERSONAL_INFO_FIELD_MAX_LENGTHS as $field => $maximum) {
-                $error = utf8FieldLengthError($profile[$field], $maximum, ucwords(str_replace('_', ' ', $field)));
+                $label = match ($field) {
+                    'hero_headline' => 'Hero headline',
+                    'work_description' => 'Professional summary',
+                    default => ucwords(str_replace('_', ' ', $field)),
+                };
+                $error = utf8FieldLengthError($profile[$field], $maximum, $label);
                 if ($error !== null) {
                     $errors[] = $error;
                 }

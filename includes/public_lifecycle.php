@@ -222,7 +222,7 @@ function resolvePublicReadContext(PDO $database, mixed $candidate): ?PublicReadC
 function loadPublicPersonalInfo(PDO $database, PublicReadContext $context): ?array
 {
     $statement = $database->prepare(
-        'SELECT full_name, professional_title, location, about_me, work_description,
+        'SELECT full_name, professional_title, hero_headline, location, about_me, work_description,
                 linkedin_url, github_url, instagram_url, facebook_url, website_url, profile_image_path
          FROM personal_info
          WHERE portfolio_id = :public_portfolio_id

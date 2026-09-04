@@ -15,7 +15,7 @@ require_once __DIR__ . '/includes/operational_security.php';
 startOwnerSession();
 
 $fields = [
-    'full_name', 'professional_title', 'email', 'phone_primary', 'phone_secondary',
+    'full_name', 'professional_title', 'hero_headline', 'email', 'phone_primary', 'phone_secondary',
     'location', 'about_me', 'work_description', 'linkedin_url', 'github_url',
     'instagram_url', 'facebook_url', 'website_url',
 ];
@@ -108,12 +108,16 @@ ownerLayoutStart('Personal Info', 'profile');
     <input type="hidden" name="action" value="save_profile"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><?php if ($profileId !== null): ?><input type="hidden" name="profile_id" value="<?php echo $profileId; ?>"><?php endif; ?>
     <div class="form-grid">
         <h2 class="form-section-title">Basic Information</h2>
-        <?php foreach (['full_name' => 'Full Name', 'professional_title' => 'Professional Title', 'email' => 'Email', 'phone_primary' => 'Primary Phone', 'phone_secondary' => 'Secondary Phone', 'location' => 'Location'] as $field => $label): ?>
+        <?php foreach (['full_name' => 'Full Name', 'professional_title' => 'Professional Title'] as $field => $label): ?>
             <label class="form-field" for="<?php echo $field; ?>"><span><?php echo $label; ?></span><input type="<?php echo $field === 'email' ? 'email' : 'text'; ?>" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo ownerEscapeHtml((string) $profile[$field]); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS[$field]; ?>"<?php echo $field === 'full_name' ? ' required' : ''; ?>></label>
+        <?php endforeach; ?>
+        <label class="form-field form-field-full" for="hero_headline"><span>Hero headline <em>(optional)</em></span><input type="text" id="hero_headline" name="hero_headline" value="<?php echo ownerEscapeHtml((string) $profile['hero_headline']); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS['hero_headline']; ?>" aria-describedby="hero-headline-help"><small id="hero-headline-help" class="form-hint">Describe what you build, solve, or contribute in one concise professional statement.</small></label>
+        <?php foreach (['email' => 'Email', 'phone_primary' => 'Primary Phone', 'phone_secondary' => 'Secondary Phone', 'location' => 'Location'] as $field => $label): ?>
+            <label class="form-field" for="<?php echo $field; ?>"><span><?php echo $label; ?></span><input type="<?php echo $field === 'email' ? 'email' : 'text'; ?>" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo ownerEscapeHtml((string) $profile[$field]); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS[$field]; ?>"></label>
         <?php endforeach; ?>
         <h2 class="form-section-title">About Me</h2>
         <label class="form-field form-field-full" for="about_me"><span>About Me</span><textarea id="about_me" name="about_me"><?php echo ownerEscapeHtml((string) $profile['about_me']); ?></textarea></label>
-        <label class="form-field form-field-full" for="work_description"><span>Work / Professional Description</span><textarea id="work_description" name="work_description"><?php echo ownerEscapeHtml((string) $profile['work_description']); ?></textarea></label>
+        <label class="form-field form-field-full" for="work_description"><span>Professional summary <em>(optional)</em></span><textarea id="work_description" name="work_description" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS['work_description']; ?>" aria-describedby="professional-summary-help"><?php echo ownerEscapeHtml((string) $profile['work_description']); ?></textarea><small id="professional-summary-help" class="form-hint">Add supporting context for your public Hero.</small></label>
         <h2 class="form-section-title">Social Accounts</h2>
         <?php foreach (['linkedin_url' => 'LinkedIn URL', 'github_url' => 'GitHub URL', 'instagram_url' => 'Instagram URL', 'facebook_url' => 'Facebook URL', 'website_url' => 'Personal Website URL'] as $field => $label): ?>
             <label class="form-field" for="<?php echo $field; ?>"><span><?php echo $label; ?></span><input type="url" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo ownerEscapeHtml((string) $profile[$field]); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS[$field]; ?>"></label>
