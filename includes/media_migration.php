@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/profile_presentation.php';
+require_once __DIR__ . '/project_presentation.php';
 require_once __DIR__ . '/storage.php';
 
 function legacyMediaSource(string $sourceRoot, mixed $relativePath, string $prefix): ?string
@@ -58,12 +59,17 @@ function migrateLegacyMedia(PDO $database, string $sourceRoot): array
         $extension = match ($mime) { 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', default => null };
         if ($extension === null || @getimagesize($source) === false) throw new RuntimeException('Legacy project media is invalid.');
         $newKey = copyFileToPrivateMedia($source, $portfolioId, 'projects', createManagedUploadFilename('project', $extension));
-        if ($newKey === null) throw new RuntimeException('Legacy project media could not be staged.');
+        $presentationKey = $newKey === null ? null : generateProjectPresentationImage($newKey, $portfolioId);
+        if ($newKey === null || $presentationKey === null) {
+            if ($newKey !== null) deletePrivateMediaFile($newKey, $portfolioId, 'projects');
+            throw new RuntimeException('Legacy project media could not be staged.');
+        }
         try {
             $update = $database->prepare('UPDATE projects SET image_path = :new_key WHERE id = :id AND portfolio_id = :portfolio_id AND image_path = :old_key');
             $update->execute(['new_key' => $newKey, 'id' => $project['id'], 'portfolio_id' => $portfolioId, 'old_key' => $oldKey]);
             if ($update->rowCount() !== 1) throw new RuntimeException('Legacy project database reference changed during migration.');
         } catch (Throwable $exception) {
+            deleteProjectPresentationImage($newKey, $portfolioId);
             deletePrivateMediaFile($newKey, $portfolioId, 'projects');
             throw $exception;
         }

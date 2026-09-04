@@ -1,11 +1,11 @@
 <?php
 
 require_once __DIR__ . '/error_reporting.php';
+require_once __DIR__ . '/media_image_policy.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/validation.php';
 require_once __DIR__ . '/profile_presentation.php';
 
-const PROFILE_PIXEL_CEILING = 8000000;
 const PROFILE_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
 
 function profileImageMaximumMegabytes(): int
@@ -16,6 +16,43 @@ function profileImageMaximumMegabytes(): int
 function profileImageSizeIsAllowed(mixed $size): bool
 {
     return is_int($size) && $size >= 0 && $size <= PROFILE_IMAGE_MAX_BYTES;
+}
+
+/** @return array{extension: string, mime: string}|string */
+function validateProfileImageUpload(array $file): array|string
+{
+    if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || !profileImageSizeIsAllowed($file['size'] ?? null)) {
+        return 'Profile photo must be ' . profileImageMaximumMegabytes() . ' MB or smaller.';
+    }
+    if (($file['error'] ?? null) !== UPLOAD_ERR_OK || !isset($file['tmp_name']) || !is_string($file['tmp_name'])) {
+        return 'The uploaded image could not be processed.';
+    }
+
+    $actualSize = @filesize($file['tmp_name']);
+    if (!profileImageSizeIsAllowed($actualSize)) {
+        return 'Profile photo must be ' . profileImageMaximumMegabytes() . ' MB or smaller.';
+    }
+    $info = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = $info === false ? false : finfo_file($info, $file['tmp_name']);
+    if ($info !== false) {
+        finfo_close($info);
+    }
+    $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png'];
+    if (!is_string($mime) || !isset($extensions[$mime])) {
+        return 'Please upload a JPG or PNG image.';
+    }
+    $dimensions = @getimagesize($file['tmp_name']);
+    if ($dimensions === false) {
+        return 'The uploaded profile photo could not be decoded.';
+    }
+    if ($dimensions[0] < 400 || $dimensions[1] < 400) {
+        return 'Profile photo must be at least 400 × 400 pixels.';
+    }
+    if (!profileImageDimensionsAreSafe($dimensions)) {
+        return 'Profile photo dimensions are too large.';
+    }
+
+    return ['extension' => $extensions[$mime], 'mime' => $mime];
 }
 
 function isMySqlDuplicateKeyViolation(PDOException $exception): bool
@@ -29,30 +66,9 @@ function isMySqlDuplicateKeyViolation(PDOException $exception): bool
 
 function storeValidatedProfileImage(array $file, array &$errors, ?int $portfolioId = null): ?string
 {
-    if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || !profileImageSizeIsAllowed($file['size'] ?? null)) {
-        $errors[] = 'Profile photo must be ' . profileImageMaximumMegabytes() . ' MB or smaller.';
-        return null;
-    }
-    if (($file['error'] ?? null) !== UPLOAD_ERR_OK || !isset($file['tmp_name'])) {
-        $errors[] = 'The uploaded image could not be processed.';
-        return null;
-    }
-
-    $info = finfo_open(FILEINFO_MIME_TYPE);
-    $mime = finfo_file($info, $file['tmp_name']);
-    finfo_close($info);
-    $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png'];
-    $dimensions = @getimagesize($file['tmp_name']);
-    if (!isset($extensions[$mime])) {
-        $errors[] = 'Please upload a JPG or PNG image.';
-        return null;
-    }
-    if ($dimensions === false || $dimensions[0] < 400 || $dimensions[1] < 400) {
-        $errors[] = 'Profile photo must be at least 400 × 400 pixels.';
-        return null;
-    }
-    if ($dimensions[0] * $dimensions[1] > PROFILE_PIXEL_CEILING) {
-        $errors[] = 'Profile photo dimensions are too large.';
+    $validation = validateProfileImageUpload($file);
+    if (is_string($validation)) {
+        $errors[] = $validation;
         return null;
     }
     if ($portfolioId === null || $portfolioId < 1) {
@@ -61,7 +77,7 @@ function storeValidatedProfileImage(array $file, array &$errors, ?int $portfolio
     }
 
     try {
-        $key = storePrivateUploadedImage($file, $portfolioId, 'profile_original', 'profile', $extensions[$mime], $mime);
+        $key = storePrivateUploadedImage($file, $portfolioId, 'profile_original', 'profile', $validation['extension'], $validation['mime']);
     } catch (PortfolioQuotaExceededException) {
         reportSecurityEvent('quota_denial', 'denied', ['portfolio_id' => $portfolioId, 'resource_type' => 'profile']);
         $errors[] = 'Portfolio storage quota exceeded.';

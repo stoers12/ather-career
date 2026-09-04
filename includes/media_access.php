@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/portfolio_scoped_data.php';
 require_once __DIR__ . '/public_lifecycle.php';
 require_once __DIR__ . '/profile_presentation.php';
+require_once __DIR__ . '/project_presentation.php';
 require_once __DIR__ . '/storage.php';
 
 function ownerMediaDescriptor(PDO $database, AuthorizedPortfolioContext $context, mixed $type, mixed $resourceId): ?array
@@ -21,8 +22,10 @@ function ownerMediaDescriptor(PDO $database, AuthorizedPortfolioContext $context
     }
     $projectId = authorizationPositiveInteger($resourceId);
     $project = $projectId === null ? null : findAuthorizedProject($database, $context, $projectId);
+    $originalKey = is_array($project) && is_string($project['image_path'] ?? null) ? $project['image_path'] : null;
+    $presentationKey = $originalKey === null ? null : generateProjectPresentationImage($originalKey, $context->portfolioId);
 
-    return $project === null ? null : privateMediaDescriptor($project['image_path'] ?? null, $context->portfolioId, 'projects');
+    return $presentationKey === null ? null : privateMediaDescriptor($presentationKey, $context->portfolioId, 'project_presentation');
 }
 
 function publicMediaDescriptor(PDO $database, PublicReadContext $context, mixed $type, mixed $resourceId): ?array
@@ -50,6 +53,7 @@ function publicMediaDescriptor(PDO $database, PublicReadContext $context, mixed 
     );
     $statement->execute(['resource_id' => $projectId, 'public_portfolio_id' => $context->portfolioId]);
     $key = $statement->fetchColumn();
+    $presentationKey = is_string($key) ? generateProjectPresentationImage($key, $context->portfolioId) : null;
 
-    return $key === false ? null : privateMediaDescriptor($key, $context->portfolioId, 'projects');
+    return $presentationKey === null ? null : privateMediaDescriptor($presentationKey, $context->portfolioId, 'project_presentation');
 }

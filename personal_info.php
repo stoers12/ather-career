@@ -111,7 +111,7 @@ try {
                         <span data-profile-initials><?php echo escapePersonalInfoHtml($photoInitials); ?></span><img id="profile-photo-preview" alt="" hidden>
                     <?php endif; ?>
                 </div>
-                <div class="profile-photo-controls"><h2>Profile Photo</h2><p class="photo-intro">Update the photo shown on your public portfolio.</p><p class="photo-requirements">JPG or PNG<br>Minimum 400 × 400 px<br>Maximum <?php echo profileImageMaximumMegabytes(); ?> MB</p>
+                <div class="profile-photo-controls"><h2>Profile Photo</h2><p class="photo-intro">Update the photo shown on your public portfolio.</p><p class="photo-requirements">JPG or PNG<br>Minimum 400 × 400 px<br>Maximum <?php echo profileImageMaximumMegabytes(); ?> MB<br>High-resolution images are optimized automatically.</p>
                     <form id="profile-photo-form" class="profile-photo-form" method="POST" action="personal_info.php" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="upload_profile_image">
                         <input type="hidden" name="csrf_token" value="<?php echo escapePersonalInfoHtml(getCsrfToken()); ?>">

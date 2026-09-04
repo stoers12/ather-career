@@ -22,7 +22,8 @@ final class OperationalSecurityStaticTest
         phase2Assert(str_contains($contact, 'PUBLIC_CONTACT_RATE_LIMIT_ATTEMPTS = 3') && str_contains($contact, 'PUBLIC_CONTACT_RATE_LIMIT_WINDOW_SECONDS = 900'), 'P2J-08 changed the contact limiter policy.');
         phase2Assert(str_contains($login, 'LOGIN_RATE_LIMIT_ATTEMPTS = 5') && str_contains($login, 'LOGIN_RATE_LIMIT_WINDOW_SECONDS = 300'), 'P2J-08 changed the legacy login limiter policy.');
         phase2Assert(str_contains($storage, 'PORTFOLIO_STORAGE_QUOTA_BYTES = 104857600') && str_contains($storage, 'LOCK_EX'), 'P2J-08 quota policy/locking is incomplete.');
-        phase2Assert(str_contains(self::read('includes/profile_actions.php'), 'PROFILE_PIXEL_CEILING = 8000000') && str_contains(self::read('includes/project_actions.php'), 'PROJECT_PIXEL_CEILING = 8000000'), 'P2J-08 calibrated image ceilings are missing.');
+        $mediaPolicy = self::read('includes/media_image_policy.php');
+        phase2Assert(str_contains($mediaPolicy, 'PROFILE_INGESTION_PIXEL_CEILING = 14000000') && str_contains($mediaPolicy, 'PROJECT_INGESTION_PIXEL_CEILING = 14000000') && str_contains($mediaPolicy, 'intdiv('), 'Calibrated decoded-image ingestion ceilings or overflow-safe validation are missing.');
         phase2Assert(str_contains($account, 'authz_version = authz_version + 1') && !preg_match('/DELETE\s+FROM\s+(?:users|portfolios)/i', $all), 'P2J-08 account transition is not versioned or introduced hard delete.');
         phase2Assert(str_contains($logging, 'JSON_THROW_ON_ERROR') && !preg_match('/session.?id|cookie|password|token|message.?body|authorization/i', $logging), 'P2J-08 security logger includes sensitive fields.');
         phase2Assert(str_contains($backup, 'private-storage.tar.gz') && str_contains($backup, 'recovery_pair_id') && str_contains($restore, 'Recovery-pair manifest mismatch'), 'P2J-08 paired recovery contract is incomplete.');

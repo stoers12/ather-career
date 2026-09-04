@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/media_image_policy.php';
 require_once __DIR__ . '/storage.php';
 
 const PROFILE_PRESENTATION_MAX_DIMENSION = 960;
@@ -44,6 +45,8 @@ function generateProfilePresentationImage(string $originalKey, int $portfolioId)
     $sourcePath = resolvePrivateMediaPath($originalKey, $portfolioId, 'profile_original');
     $presentationKey = profilePresentationKey($originalKey, $portfolioId);
     if ($sourcePath === null || !is_file($sourcePath) || $presentationKey === null) return null;
+    $sourceDimensions = @getimagesize($sourcePath);
+    if (!profileImageDimensionsAreSafe($sourceDimensions)) return null;
     $existing = resolvePrivateMediaPath($presentationKey, $portfolioId, 'profile_presentation');
     if ($existing !== null && @getimagesize($existing) !== false) return $presentationKey;
     $directory = ensurePrivateMediaDirectory($portfolioId, 'profile_presentation');

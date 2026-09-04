@@ -124,6 +124,8 @@ try {
     phase2AssertSame(null, privateMediaDescriptor($projectRowB['image_path'], $portfolioA, 'projects'), 'Foreign managed key exposed B media under A.');
     $originalA = resolvePrivateMediaPath($rowA['profile_image_path'], $portfolioA, 'profile_original');
     phase2Assert($originalA !== null && $ownerAProfile['path'] !== $originalA && str_contains(str_replace('\\', '/', $ownerAProfile['path']), '/profile/presentation/'), 'Profile handler exposed the private original or failed to use its derivative.');
+    $projectOriginalA = resolvePrivateMediaPath($projectRowA['image_path'], $portfolioA, 'projects');
+    phase2Assert($projectOriginalA !== null && $ownerAProject['path'] !== $projectOriginalA && str_contains(str_replace('\\', '/', $ownerAProject['path']), '/project/presentation/'), 'Project handler exposed the private original or failed to use its derivative.');
     $bBefore = privateMediaFilesystemSnapshot($storageRoot, $portfolioB);
     cleanProjectImage($projectRowB['image_path'], 'denied_foreign_cleanup', $portfolioA);
     phase2AssertSame($bBefore, privateMediaFilesystemSnapshot($storageRoot, $portfolioB), 'Denied A-to-B mutation changed B filesystem.');
@@ -157,14 +159,16 @@ try {
 
     $oldAKey = (string) $projectRowA['image_path'];
     $replacementKey = copyFileToPrivateMedia($sourceRoot . '/uploads/projects/b-project.png', $portfolioA, 'projects', 'replacement.png');
-    phase2Assert($replacementKey !== null && updateAuthorizedProject($database, $contextA, $projectA, 'Media A Project', 'Media', 'Private media test', 'https://example.test/media', $replacementKey, []), 'Replacement DB update failed.');
+    phase2Assert($replacementKey !== null && generateProjectPresentationImage($replacementKey, $portfolioA) !== null && updateAuthorizedProject($database, $contextA, $projectA, 'Media A Project', 'Media', 'Private media test', 'https://example.test/media', $replacementKey, []), 'Replacement DB update failed.');
     phase2Assert(is_file(resolvePrivateMediaPath($oldAKey, $portfolioA, 'projects')), 'Old media disappeared before replacement committed.');
-    phase2Assert(deletePrivateMediaFile($oldAKey, $portfolioA, 'projects'), 'Committed replacement could not retire old media.');
+    cleanProjectImage($oldAKey, 'test_committed_replacement', $portfolioA);
+    phase2Assert(!is_file(resolvePrivateMediaPath($oldAKey, $portfolioA, 'projects')), 'Committed replacement could not retire old media.');
 
     $failedKey = copyFileToPrivateMedia($collisionSource, $portfolioA, 'projects', 'db-failure.png');
-    phase2Assert($failedKey !== null, 'DB failure compensation fixture could not be staged.');
+    phase2Assert($failedKey !== null && generateProjectPresentationImage($failedKey, $portfolioA) !== null, 'DB failure compensation fixture could not be staged.');
     phase2AssertSame(false, updateAuthorizedProject($database, $contextA, $projectB, 'No', 'No', 'No', 'https://example.test/no', $failedKey, []), 'Foreign DB reference update unexpectedly succeeded.');
-    phase2Assert(deletePrivateMediaFile($failedKey, $portfolioA, 'projects'), 'Failed DB update left staged media behind.');
+    cleanProjectImage($failedKey, 'test_failed_replacement', $portfolioA);
+    phase2Assert(!is_file(resolvePrivateMediaPath($failedKey, $portfolioA, 'projects')), 'Failed DB update left staged media behind.');
     phase2AssertSame($bBefore, privateMediaFilesystemSnapshot($storageRoot, $portfolioB), 'Failed DB update changed B filesystem.');
     $passed[] = 'T-MEDIA-REPLACEMENT-FAILURES';
 

@@ -1,12 +1,13 @@
 <?php
 
 require_once __DIR__ . '/error_reporting.php';
+require_once __DIR__ . '/media_image_policy.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/validation.php';
 require_once __DIR__ . '/project_technologies.php';
+require_once __DIR__ . '/project_presentation.php';
 
 const PROJECT_ID_MAXIMUM = '4294967295';
-const PROJECT_PIXEL_CEILING = 8000000;
 const PROJECT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 
 function projectImageMaximumMegabytes(): int
@@ -17,6 +18,40 @@ function projectImageMaximumMegabytes(): int
 function projectImageSizeIsAllowed(mixed $size): bool
 {
     return is_int($size) && $size >= 0 && $size <= PROJECT_IMAGE_MAX_BYTES;
+}
+
+/** @return array{extension: string, mime: string}|string */
+function validateProjectImageUpload(array $file): array|string
+{
+    if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || !projectImageSizeIsAllowed($file['size'] ?? null)) {
+        return 'The image must be ' . projectImageMaximumMegabytes() . ' MB or smaller.';
+    }
+    if (($file['error'] ?? null) !== UPLOAD_ERR_OK || !isset($file['tmp_name']) || !is_string($file['tmp_name'])) {
+        return 'The image upload failed.';
+    }
+
+    $actualSize = @filesize($file['tmp_name']);
+    if (!projectImageSizeIsAllowed($actualSize)) {
+        return 'The image must be ' . projectImageMaximumMegabytes() . ' MB or smaller.';
+    }
+    $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = $fileInfo === false ? false : finfo_file($fileInfo, $file['tmp_name']);
+    if ($fileInfo !== false) {
+        finfo_close($fileInfo);
+    }
+    $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    if (!is_string($mimeType) || !isset($extensions[$mimeType])) {
+        return 'Only JPG, PNG, and WEBP images are allowed.';
+    }
+    $dimensions = @getimagesize($file['tmp_name']);
+    if ($dimensions === false) {
+        return 'The uploaded project image could not be decoded.';
+    }
+    if (!projectImageDimensionsAreSafe($dimensions)) {
+        return 'Project image dimensions are too large.';
+    }
+
+    return ['extension' => $extensions[$mimeType], 'mime' => $mimeType];
 }
 
 function projectFormDefaults(): array
@@ -43,32 +78,9 @@ function projectActionId($value): ?int
 
 function storeValidatedProjectImage(array $file, array &$errors, ?int $portfolioId = null): ?string
 {
-    if (isset($file['error']) && $file['error'] === UPLOAD_ERR_INI_SIZE) {
-        $errors[] = 'The image must be ' . projectImageMaximumMegabytes() . ' MB or smaller.';
-        return null;
-    }
-
-    if (!isset($file['error'], $file['tmp_name'], $file['size']) || $file['error'] !== UPLOAD_ERR_OK) {
-        $errors[] = 'The image upload failed.';
-        return null;
-    }
-
-    if (!projectImageSizeIsAllowed($file['size'])) {
-        $errors[] = 'The image must be ' . projectImageMaximumMegabytes() . ' MB or smaller.';
-        return null;
-    }
-
-    $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mimeType = finfo_file($fileInfo, $file['tmp_name']);
-    finfo_close($fileInfo);
-    $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    $dimensions = @getimagesize($file['tmp_name']);
-    if (!isset($extensions[$mimeType]) || $dimensions === false) {
-        $errors[] = 'Only JPG, PNG, and WEBP images are allowed.';
-        return null;
-    }
-    if ($dimensions[0] * $dimensions[1] > PROJECT_PIXEL_CEILING) {
-        $errors[] = 'Project image dimensions are too large.';
+    $validation = validateProjectImageUpload($file);
+    if (is_string($validation)) {
+        $errors[] = $validation;
         return null;
     }
     if ($portfolioId === null || $portfolioId < 1) {
@@ -77,7 +89,7 @@ function storeValidatedProjectImage(array $file, array &$errors, ?int $portfolio
     }
 
     try {
-        $key = storePrivateUploadedImage($file, $portfolioId, 'projects', 'project', $extensions[$mimeType], $mimeType);
+        $key = storePrivateUploadedImage($file, $portfolioId, 'projects', 'project', $validation['extension'], $validation['mime']);
     } catch (PortfolioQuotaExceededException) {
         reportSecurityEvent('quota_denial', 'denied', ['portfolio_id' => $portfolioId, 'resource_type' => 'project']);
         $errors[] = 'Portfolio storage quota exceeded.';
@@ -85,6 +97,12 @@ function storeValidatedProjectImage(array $file, array &$errors, ?int $portfolio
     }
     if ($key === null) {
         $errors[] = 'The image could not be saved.';
+        return null;
+    }
+    if (generateProjectPresentationImage($key, $portfolioId) === null) {
+        deletePrivateMediaFile($key, $portfolioId, 'projects');
+        $errors[] = 'The uploaded project image could not be normalized.';
+        return null;
     }
 
     return $key;
@@ -101,6 +119,9 @@ function cleanProjectImage(?string $imagePath, string $action, ?int $portfolioId
         return;
     }
 
+    if (!deleteProjectPresentationImage($imagePath, $portfolioId)) {
+        reportApplicationError(new RuntimeException('Project presentation cleanup failed.'), 'projects.php', $action . '_presentation_cleanup_failed');
+    }
     if (!deletePrivateMediaFile($imagePath, $portfolioId, 'projects')) {
         reportApplicationError(new RuntimeException('Project image cleanup failed.'), 'projects.php', $action . '_cleanup_failed');
     }
