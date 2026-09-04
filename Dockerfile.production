@@ -8,10 +8,12 @@ FROM php:8.3-apache
 
 ARG APP_VERSION=unknown
 LABEL org.opencontainers.image.revision="${APP_VERSION}"
-ENV ATHERCAR_STORAGE_ROOT=/var/lib/ather-career/storage
+ENV ATHERCAR_STORAGE_ROOT=/var/lib/ather-career/storage \
+    VIPS_CONCURRENCY=1 \
+    VIPS_BLOCK_UNTRUSTED=1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libjpeg62-turbo-dev libpng-dev libwebp-dev libonig-dev \
+    && apt-get install -y --no-install-recommends libjpeg62-turbo-dev libpng-dev libwebp-dev libonig-dev libvips-tools \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install pdo pdo_mysql exif gd mbstring \
     && rm -rf /var/lib/apt/lists/* \

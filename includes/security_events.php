@@ -10,7 +10,10 @@ function reportSecurityEvent(string $event, string $outcome, array $context = []
         'event' => preg_replace('/[^a-z0-9_.-]/', '_', strtolower($event)) ?: 'unknown',
         'outcome' => preg_replace('/[^a-z0-9_.-]/', '_', strtolower($outcome)) ?: 'unknown',
     ];
-    $allowed = ['internal_user_id', 'portfolio_id', 'resource_type', 'reason', 'scope'];
+    $allowed = [
+        'internal_user_id', 'portfolio_id', 'resource_type', 'reason', 'scope',
+        'media_kind', 'stage', 'mime', 'bytes', 'width', 'height', 'pixels', 'processor', 'duration_ms',
+    ];
     foreach ($allowed as $field) {
         if (!array_key_exists($field, $context)) continue;
         $value = $context[$field];

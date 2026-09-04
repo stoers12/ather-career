@@ -22,14 +22,17 @@ function profileImageSizeIsAllowed(mixed $size): bool
 function validateProfileImageUpload(array $file): array|string
 {
     if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || !profileImageSizeIsAllowed($file['size'] ?? null)) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'encoded_size', 'FILE_TOO_LARGE', null, is_int($file['size'] ?? null) ? $file['size'] : null);
         return 'Profile photo must be ' . profileImageMaximumMegabytes() . ' MB or smaller.';
     }
     if (($file['error'] ?? null) !== UPLOAD_ERR_OK || !isset($file['tmp_name']) || !is_string($file['tmp_name'])) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'multipart', 'IMAGE_MALFORMED');
         return 'The uploaded image could not be processed.';
     }
 
     $actualSize = @filesize($file['tmp_name']);
     if (!profileImageSizeIsAllowed($actualSize)) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'actual_size', 'FILE_TOO_LARGE', null, is_int($actualSize) ? $actualSize : null);
         return 'Profile photo must be ' . profileImageMaximumMegabytes() . ' MB or smaller.';
     }
     $info = finfo_open(FILEINFO_MIME_TYPE);
@@ -39,16 +42,20 @@ function validateProfileImageUpload(array $file): array|string
     }
     $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png'];
     if (!is_string($mime) || !isset($extensions[$mime])) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'mime', 'UNSUPPORTED_TYPE', is_string($mime) ? $mime : null, is_int($actualSize) ? $actualSize : null);
         return 'Please upload a JPG or PNG image.';
     }
     $dimensions = @getimagesize($file['tmp_name']);
     if ($dimensions === false) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'image_metadata', 'IMAGE_MALFORMED', $mime, is_int($actualSize) ? $actualSize : null);
         return 'The uploaded profile photo could not be decoded.';
     }
     if ($dimensions[0] < 400 || $dimensions[1] < 400) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'minimum_dimensions', 'IMAGE_TOO_SMALL', $mime, is_int($actualSize) ? $actualSize : null, $dimensions);
         return 'Profile photo must be at least 400 × 400 pixels.';
     }
-    if (!profileImageDimensionsAreSafe($dimensions)) {
+    if (!profileImageDimensionsAreSafe($dimensions, $mime, $file['tmp_name'])) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'ingestion_dimensions', 'IMAGE_UNSAFE_DIMENSIONS', $mime, is_int($actualSize) ? $actualSize : null, $dimensions);
         return 'Profile photo dimensions are too large.';
     }
 
@@ -88,14 +95,15 @@ function storeValidatedProfileImage(array $file, array &$errors, ?int $portfolio
         return null;
     }
     try {
-        $presentationKey = generateProfilePresentationImage($key, $portfolioId);
+        $presentation = generateProfilePresentationResult($key, $portfolioId);
     } catch (Throwable $exception) {
         reportApplicationError($exception, 'owner_profile.php', 'profile_presentation_storage_failure');
-        $presentationKey = null;
+        $presentation = ['key' => null, 'reason' => 'NORMALIZATION_FAILED'];
     }
-    if ($presentationKey === null) {
+    if ($presentation['key'] === null) {
         deletePrivateMediaFile($key, $portfolioId, 'profile_original');
-        $errors[] = 'The uploaded image could not be processed.';
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'normalization', $presentation['reason']);
+        $errors[] = portfolioImageFailureMessage($presentation['reason']);
         return null;
     }
 

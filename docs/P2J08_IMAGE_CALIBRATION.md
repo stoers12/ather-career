@@ -10,9 +10,14 @@ Disposable production-image calibration used PHP 8.3.33, bundled GD 2.1-compatib
 | 4000×3500 PNG | 14,000,000 | 100,720,640 bytes | 120,420 KiB |
 | 4000×4000 PNG | 16,000,000 | 115,109,888 bytes | 134,368 KiB |
 
-JPEG measurements were lower; PNG is the limiting measured format. A 20-megapixel decode exhausted the 128 MiB PHP limit, and 16 megapixels left inadequate worker headroom. Fourteen megapixels supports common 4032×3024 phone photography while retaining approximately 32 MiB of PHP headroom in the worst measured PNG path. The ingestion policy therefore enforces:
+JPEG measurements were lower; PNG is the limiting measured format. A 20-megapixel GD decode exhausted the 128 MiB PHP limit, and 16 megapixels left inadequate worker headroom. The old GD policy therefore enforced 14 MP, but this was an implementation ceiling rather than a product safety policy.
 
-- `PROFILE_INGESTION_PIXEL_CEILING = 14000000`
-- `PROJECT_INGESTION_PIXEL_CEILING = 14000000`
+The libvips thumbnail spike used `VIPS_CONCURRENCY=1` inside a 256 MiB disposable container. It normalized the real 25.96 MP JPEG source to 960 px at 47 MiB RSS and 1600 px at 61 MiB RSS. A 64 MP alpha PNG reached 190 MiB RSS; progressive JPEG and WebP loaders had materially different behavior. The source preflight policy is therefore format-specific:
 
-These are decoded-image safety limits, not presentation dimensions. Valid sources within the ceilings are normalized to a maximum 960-pixel Profile derivative or 1600-pixel Project derivative without upscaling or cropping; private originals remain preserved. Inputs above the decoded-pixel ceiling are rejected before GD decoding.
+- baseline JPEG: 64 MP
+- progressive JPEG: 26 MP
+- PNG: 64 MP
+- WebP: 32 MP
+- every supported format: maximum 12,000 pixels on either edge
+
+These are decoded-image safety limits, not presentation dimensions. Valid sources are normalized through a bounded libvips thumbnail process to a maximum 960-pixel Profile derivative or 1600-pixel Project derivative without upscaling or cropping; private originals remain preserved. Inputs above the relevant ceiling are rejected before libvips execution.

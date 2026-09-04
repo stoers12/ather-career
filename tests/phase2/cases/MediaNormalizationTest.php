@@ -30,7 +30,7 @@ final class MediaNormalizationTest
             phase2Assert(is_array(validateProjectImageUpload(self::upload($standard))), 'A standard Project image was rejected.');
             phase2Assert(is_array(validateProfileImageUpload(self::upload($phone))), 'A 2.3 MB 4032×3024 Profile image was rejected.');
             phase2Assert(is_array(validateProjectImageUpload(self::upload($phone))), 'A 2.3 MB 4032×3024 Project image was rejected.');
-            phase2Assert(profileImageDimensionsAreSafe([4032, 3024]) && projectImageDimensionsAreSafe([4032, 3024]), 'Common 12.2 MP phone dimensions must be inside the ingestion ceiling.');
+            phase2Assert(profileImageDimensionsAreSafe([4032, 3024], 'image/jpeg', $phone) && projectImageDimensionsAreSafe([4032, 3024], 'image/jpeg', $phone), 'Common 12.2 MP phone dimensions must be inside the ingestion ceiling.');
 
             $profileOriginal = copyFileToPrivateMedia($phone, 901, 'profile_original', 'phone.jpg');
             $projectOriginal = copyFileToPrivateMedia($phone, 901, 'projects', 'phone.jpg');
@@ -51,9 +51,9 @@ final class MediaNormalizationTest
             $small = $environment->storageRoot . DIRECTORY_SEPARATOR . 'small.jpg';
             self::createJpeg($small, 399, 399);
             phase2Assert(validateProfileImageUpload(self::upload($small)) === 'Profile photo must be at least 400 × 400 pixels.', 'Profile minimum dimensions were weakened.');
-            phase2Assert(profileImageDimensionsAreSafe([4000, 3500]) && projectImageDimensionsAreSafe([4000, 3500]), 'The calibrated 14 MP ingestion boundary must be accepted.');
+            phase2Assert(profileImageDimensionsAreSafe([4000, 3500], 'image/jpeg', $phone) && projectImageDimensionsAreSafe([4000, 3500], 'image/jpeg', $phone), 'The supported JPEG ingestion envelope must include 14 MP sources.');
             $pathological = $environment->storageRoot . DIRECTORY_SEPARATOR . 'pathological.png';
-            self::createPngHeader($pathological, 5000, 3000);
+            self::createPngHeader($pathological, 13000, 5000);
             phase2Assert(validateProfileImageUpload(self::upload($pathological)) === 'Profile photo dimensions are too large.', 'Profile pathological dimensions were not rejected before decoding.');
             phase2Assert(validateProjectImageUpload(self::upload($pathological)) === 'Project image dimensions are too large.', 'Project pathological dimensions were not rejected before decoding.');
 

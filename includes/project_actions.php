@@ -24,14 +24,17 @@ function projectImageSizeIsAllowed(mixed $size): bool
 function validateProjectImageUpload(array $file): array|string
 {
     if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || !projectImageSizeIsAllowed($file['size'] ?? null)) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'project', 'encoded_size', 'FILE_TOO_LARGE', null, is_int($file['size'] ?? null) ? $file['size'] : null);
         return 'The image must be ' . projectImageMaximumMegabytes() . ' MB or smaller.';
     }
     if (($file['error'] ?? null) !== UPLOAD_ERR_OK || !isset($file['tmp_name']) || !is_string($file['tmp_name'])) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'project', 'multipart', 'IMAGE_MALFORMED');
         return 'The image upload failed.';
     }
 
     $actualSize = @filesize($file['tmp_name']);
     if (!projectImageSizeIsAllowed($actualSize)) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'project', 'actual_size', 'FILE_TOO_LARGE', null, is_int($actualSize) ? $actualSize : null);
         return 'The image must be ' . projectImageMaximumMegabytes() . ' MB or smaller.';
     }
     $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -41,13 +44,16 @@ function validateProjectImageUpload(array $file): array|string
     }
     $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
     if (!is_string($mimeType) || !isset($extensions[$mimeType])) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'project', 'mime', 'UNSUPPORTED_TYPE', is_string($mimeType) ? $mimeType : null, is_int($actualSize) ? $actualSize : null);
         return 'Only JPG, PNG, and WEBP images are allowed.';
     }
     $dimensions = @getimagesize($file['tmp_name']);
     if ($dimensions === false) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'project', 'image_metadata', 'IMAGE_MALFORMED', $mimeType, is_int($actualSize) ? $actualSize : null);
         return 'The uploaded project image could not be decoded.';
     }
-    if (!projectImageDimensionsAreSafe($dimensions)) {
+    if (!projectImageDimensionsAreSafe($dimensions, $mimeType, $file['tmp_name'])) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'project', 'ingestion_dimensions', 'IMAGE_UNSAFE_DIMENSIONS', $mimeType, is_int($actualSize) ? $actualSize : null, $dimensions);
         return 'Project image dimensions are too large.';
     }
 
@@ -99,9 +105,11 @@ function storeValidatedProjectImage(array $file, array &$errors, ?int $portfolio
         $errors[] = 'The image could not be saved.';
         return null;
     }
-    if (generateProjectPresentationImage($key, $portfolioId) === null) {
+    $presentation = generateProjectPresentationResult($key, $portfolioId);
+    if ($presentation['key'] === null) {
         deletePrivateMediaFile($key, $portfolioId, 'projects');
-        $errors[] = 'The uploaded project image could not be normalized.';
+        reportPortfolioMediaEvent('media_upload_rejected', 'project', 'normalization', $presentation['reason']);
+        $errors[] = portfolioImageFailureMessage($presentation['reason']);
         return null;
     }
 

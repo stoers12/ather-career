@@ -23,6 +23,7 @@ require_once __DIR__ . '/../tests/phase2/cases/ExperiencePresentationStaticTest.
 require_once __DIR__ . '/../tests/phase2/cases/FooterPresentationStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PrivateMediaStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/MediaNormalizationTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/LibvipsImageProcessorTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OperationalSecurityStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/Auth0OidcStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/LegacyAdminCutoverStaticTest.php';
@@ -45,6 +46,7 @@ $tests = [
     'Footer presentation static contract' => [FooterPresentationStaticTest::class, 'run'],
     'private media static contract' => [PrivateMediaStaticTest::class, 'run'],
     'media dimension normalization contract' => [MediaNormalizationTest::class, 'run'],
+    'bounded libvips image processor contract' => [LibvipsImageProcessorTest::class, 'run'],
     'operational security static contract' => [OperationalSecurityStaticTest::class, 'run'],
     'Auth0 OIDC static contract' => [Auth0OidcStaticTest::class, 'run'],
     'legacy admin cutover static contract' => [LegacyAdminCutoverStaticTest::class, 'run'],
