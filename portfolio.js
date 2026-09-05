@@ -27,6 +27,23 @@
         const selectDominantSection = () => {
             const headerHeight = header instanceof HTMLElement ? header.offsetHeight : 0;
             const focusLine = headerHeight + ((window.innerHeight - headerHeight) * 0.28);
+            const hashId = window.location.hash.slice(1);
+            const hashSection = (hashId === 'experience' || hashId === 'contact')
+                ? sections.find((entry) => entry.id === hashId) || null
+                : null;
+            const sharedClosingSection = hashSection === null
+                ? null
+                : sections.find((entry) => entry.id === (hashId === 'experience' ? 'contact' : 'experience')) || null;
+
+            if (hashSection !== null && sharedClosingSection !== null) {
+                const hashBounds = hashSection.element.getBoundingClientRect();
+                const siblingBounds = sharedClosingSection.element.getBoundingClientRect();
+                if (Math.abs(hashBounds.top - siblingBounds.top) < 2 && hashBounds.bottom > headerHeight && siblingBounds.bottom > headerHeight) {
+                    setActive(hashId);
+                    return;
+                }
+            }
+
             let selected = sections[0];
             let closestDistance = Number.POSITIVE_INFINITY;
 

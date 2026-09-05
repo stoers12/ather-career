@@ -478,9 +478,9 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
         </div></div>
     <?php endif; ?>
 
-    <?php if ($presentationExperiences !== []): ?>
-        <section class="portfolio-section portfolio-experience" id="experience" aria-labelledby="experience-title">
-            <div class="portfolio-container">
+    <div class="portfolio-closing-region"><div class="portfolio-container portfolio-closing-layout<?php echo $presentationExperiences === [] ? ' portfolio-closing-layout--contact-only' : ''; ?>">
+        <?php if ($presentationExperiences !== []): ?>
+            <section class="portfolio-section portfolio-closing-panel portfolio-experience" id="experience" aria-labelledby="experience-title">
                 <header class="portfolio-section-heading"><h2 id="experience-title">Experience</h2></header>
                 <ol class="portfolio-experience-list">
                     <?php foreach ($presentationExperiences as $experience):
@@ -494,41 +494,35 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                         ?>
                         <li class="portfolio-experience-item<?php echo $experienceIsCurrent ? ' portfolio-experience-item--current' : ''; ?>">
                             <article class="portfolio-experience-content">
-                                <p class="portfolio-experience-type"><?php echo portfolioPresentationEscape($experienceType); ?></p>
+                                <div class="portfolio-experience-topline"><p class="portfolio-experience-type"><?php echo portfolioPresentationEscape($experienceType); ?></p><?php if ($experienceDateRange !== ''): ?><p class="portfolio-experience-date"><?php echo portfolioPresentationEscape($experienceDateRange); ?></p><?php endif; ?></div>
                                 <?php if ($experienceRole !== ''): ?><h3><?php echo portfolioPresentationEscape($experienceRole); ?></h3><?php endif; ?>
-                                <?php if ($experienceOrganization !== ''): ?><p class="portfolio-experience-organization"><?php echo portfolioPresentationEscape($experienceOrganization); ?></p><?php endif; ?>
-                                <?php if ($experienceDateRange !== '' || $experienceLocation !== null): ?>
-                                    <p class="portfolio-experience-meta">
-                                        <?php if ($experienceDateRange !== ''): ?><span><?php echo portfolioPresentationEscape($experienceDateRange); ?></span><?php endif; ?>
-                                        <?php if ($experienceDateRange !== '' && $experienceLocation !== null): ?><span aria-hidden="true">·</span><?php endif; ?>
-                                        <?php if ($experienceLocation !== null): ?><span><?php echo portfolioPresentationEscape($experienceLocation); ?></span><?php endif; ?>
-                                    </p>
-                                <?php endif; ?>
+                                <?php if ($experienceOrganization !== '' || $experienceLocation !== null): ?><p class="portfolio-experience-organization"><?php if ($experienceOrganization !== ''): ?><span class="portfolio-experience-organization-name"><?php echo portfolioPresentationEscape($experienceOrganization); ?><?php if ($experienceLocation !== null): ?><span aria-hidden="true">&nbsp;·</span><?php endif; ?></span><?php endif; ?><?php if ($experienceLocation !== null): ?><span><?php echo portfolioPresentationEscape($experienceLocation); ?></span><?php endif; ?></p><?php endif; ?>
                                 <?php if ($experienceDescription !== null): ?><p class="portfolio-experience-description"><?php echo nl2br(portfolioPresentationEscape($experienceDescription)); ?></p><?php endif; ?>
                             </article>
                         </li>
                     <?php endforeach; ?>
                 </ol>
+            </section>
+        <?php endif; ?>
+
+        <section class="portfolio-section portfolio-closing-panel portfolio-contact" id="contact" aria-labelledby="contact-title">
+            <div class="portfolio-contact-copy"><p class="portfolio-section-kicker">CONTACT</p><h2 id="contact-title">Let’s start a conversation.</h2><p>Have a project, role, or collaboration opportunity in mind? Send a message through this Portfolio.</p>
+                <?php if ($socialLinks !== []): ?><div class="portfolio-contact-social"><p class="portfolio-contact-social-label">Connect</p><ul class="portfolio-social-list" aria-label="Connect with <?php echo portfolioPresentationEscape($name); ?>"><?php foreach ($socialLinks as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" aria-label="<?php echo portfolioPresentationEscape($link['label'] . ' for ' . $name); ?>" rel="noopener noreferrer"><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?></ul></div><?php endif; ?>
+            </div>
+            <div class="portfolio-contact-card">
+                <h3 id="portfolio-contact-form-title">Send a message</h3>
+                <?php if (($options['contact_sent'] ?? false) === true): ?><p class="portfolio-form-status" role="status">Message submitted successfully.</p><?php endif; ?>
+                <?php if ($preview): ?><p class="portfolio-preview-note portfolio-preview-note--contact" role="status"><?php echo portfolioPresentationSocialIcon('Email'); ?><span>The contact form is inactive in private preview.</span></p><?php endif; ?>
+                <?php if ($contactFormError !== ''): ?><p class="portfolio-contact-form-error" role="alert"><?php echo portfolioPresentationEscape($contactFormError); ?></p><?php endif; ?>
+                <form method="post"<?php if ($contactAction !== ''): ?> action="<?php echo portfolioPresentationEscape($contactAction); ?>#contact"<?php endif; ?>>
+                    <div class="portfolio-contact-field<?php echo $contactNameError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-name">Name</label><input id="portfolio-contact-name" type="text" name="name" maxlength="100" required autocomplete="name" value="<?php echo portfolioPresentationEscape($contactName); ?>"<?php echo $contactNameError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-name-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactNameError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-name-error"><?php echo portfolioPresentationEscape($contactNameError); ?></p><?php endif; ?></div>
+                    <div class="portfolio-contact-field<?php echo $contactEmailError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-email">Email</label><input id="portfolio-contact-email" type="email" name="email" maxlength="255" required autocomplete="email" value="<?php echo portfolioPresentationEscape($contactEmail); ?>"<?php echo $contactEmailError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-email-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactEmailError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-email-error"><?php echo portfolioPresentationEscape($contactEmailError); ?></p><?php endif; ?></div>
+                    <div class="portfolio-contact-field portfolio-contact-field--message<?php echo $contactMessageError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-message">Message</label><textarea id="portfolio-contact-message" name="message" maxlength="5000" required<?php echo $contactMessageError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-message-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php echo portfolioPresentationEscape($contactMessage); ?></textarea><?php if ($contactMessageError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-message-error"><?php echo portfolioPresentationEscape($contactMessageError); ?></p><?php endif; ?></div>
+                    <button type="submit"<?php echo $preview ? ' disabled aria-disabled="true"' : ''; ?>><span>Send message</span><?php echo portfolioPresentationSocialIcon('Email'); ?></button>
+                </form>
             </div>
         </section>
-    <?php endif; ?>
-
-    <section class="portfolio-section portfolio-contact" id="contact" aria-labelledby="contact-title"><div class="portfolio-container"><div class="portfolio-contact-shell">
-        <div class="portfolio-contact-copy"><p class="portfolio-section-kicker">CONTACT / 05</p><h2 id="contact-title">Let’s build something useful.</h2><p>Have a project or professional opportunity in mind? Send a message through this Portfolio.</p>
-            <?php if ($socialLinks !== []): ?><ul class="portfolio-social-list portfolio-contact-social" aria-label="More ways to connect"><?php foreach ($socialLinks as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" rel="noopener noreferrer"><?php echo portfolioPresentationEscape($link['label']); ?><span aria-hidden="true">↗</span></a></li><?php endforeach; ?></ul><?php endif; ?>
-        </div>
-        <div class="portfolio-contact-card">
-            <?php if (($options['contact_sent'] ?? false) === true): ?><p class="portfolio-form-status" role="status">Message submitted successfully.</p><?php endif; ?>
-            <?php if ($preview): ?><p class="portfolio-preview-note">The contact form is inactive in private preview.</p><?php endif; ?>
-            <?php if ($contactFormError !== ''): ?><p class="portfolio-contact-form-error" role="alert"><?php echo portfolioPresentationEscape($contactFormError); ?></p><?php endif; ?>
-            <form method="post"<?php if ($contactAction !== ''): ?> action="<?php echo portfolioPresentationEscape($contactAction); ?>#contact"<?php endif; ?>>
-                <div class="portfolio-contact-field<?php echo $contactNameError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-name">Name</label><input id="portfolio-contact-name" type="text" name="name" maxlength="100" required autocomplete="name" value="<?php echo portfolioPresentationEscape($contactName); ?>"<?php echo $contactNameError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-name-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactNameError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-name-error"><?php echo portfolioPresentationEscape($contactNameError); ?></p><?php endif; ?></div>
-                <div class="portfolio-contact-field<?php echo $contactEmailError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-email">Email</label><input id="portfolio-contact-email" type="email" name="email" maxlength="255" required autocomplete="email" value="<?php echo portfolioPresentationEscape($contactEmail); ?>"<?php echo $contactEmailError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-email-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactEmailError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-email-error"><?php echo portfolioPresentationEscape($contactEmailError); ?></p><?php endif; ?></div>
-                <div class="portfolio-contact-field portfolio-contact-field--message<?php echo $contactMessageError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-message">Message</label><textarea id="portfolio-contact-message" name="message" maxlength="5000" required<?php echo $contactMessageError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-message-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php echo portfolioPresentationEscape($contactMessage); ?></textarea><?php if ($contactMessageError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-message-error"><?php echo portfolioPresentationEscape($contactMessageError); ?></p><?php endif; ?></div>
-                <button type="submit"<?php echo $preview ? ' disabled aria-disabled="true"' : ''; ?>>Send message <span aria-hidden="true">→</span></button>
-            </form>
-        </div>
-    </div></div></section>
+    </div></div>
 </main>
 
 <footer class="portfolio-footer">
