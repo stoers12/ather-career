@@ -8,6 +8,7 @@ final class ExperiencePresentationStaticTest
     {
         $presentation = self::read('includes/portfolio_presentation.php');
         $stylesheet = self::read('portfolio.css');
+        $script = self::read('portfolio.js');
 
         foreach ([
             'portfolioPresentationExperienceTypeLabel',
@@ -18,16 +19,23 @@ final class ExperiencePresentationStaticTest
             'portfolio-closing-layout',
             'portfolio-experience-topline',
             'portfolio-experience-date',
-            '<ol class="portfolio-experience-list">',
+            '<ol class="portfolio-experience-list"',
             'portfolio-experience-item--current',
             'portfolio-experience-description',
+            'PORTFOLIO_EXPERIENCE_PAGE_SIZE = 5',
+            'data-experience-page-size',
+            'data-experience-pagination',
+            'aria-live="polite"',
+            'Older experiences',
+            'Newer experiences',
         ] as $required) {
             phase2Assert(str_contains($presentation, $required), "Experience presentation is missing {$required}.");
         }
-        foreach (['.portfolio-closing-layout', '.portfolio-experience-list', '.portfolio-experience-item::before', '.portfolio-experience-item:not(:last-child)::after', '.portfolio-experience-content', '.portfolio-experience-topline', '.portfolio-experience-date'] as $required) {
+        foreach (['.portfolio-closing-layout', 'align-items: stretch', 'height: 100%', '.portfolio-experience-list', '.portfolio-experience-item::before', '.portfolio-experience-item:not(.portfolio-experience-item--visible-last)::after', '.portfolio-experience-content', '.portfolio-experience-topline', '.portfolio-experience-date', '.portfolio-experience-pagination', '.portfolio-experience-pagination[hidden] { display: none; }', 'margin-top: auto'] as $required) {
             phase2Assert(str_contains($stylesheet, $required), "Experience styling is missing {$required}.");
         }
         phase2Assert(!str_contains($stylesheet, '.portfolio-experience-list::before'), 'Experience must not use a list-wide connector that extends below the final marker.');
+        phase2Assert(str_contains($script, 'initializeExperiencePagination') && str_contains($script, 'items.length <= pageSize') && str_contains($script, 'item.hidden = !visible') && str_contains($script, 'portfolio-experience-item--visible-last') && str_contains($script, 'Showing ${start + 1}–${end} of ${items.length}') && str_contains($script, 'pagination.addEventListener(\'click\''), 'Experience pagination must be a progressive, delegated enhancement with an accurate live range.');
         phase2Assert(str_contains($presentation, 'href="#experience" data-portfolio-section="experience">Experience</a>'), 'Experience navigation must use the generic implemented-section anchor contract.');
         phase2Assert(!str_contains($presentation, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>'), 'Experience navigation must no longer be disabled after acceptance.');
 
@@ -89,14 +97,30 @@ final class ExperiencePresentationStaticTest
         phase2Assert(!str_contains($rendered, 'months') && !str_contains($rendered, 'years'), 'Experience presentation must not calculate duration.');
         phase2Assert(preg_match('/portfolio-experience-topline.*?Employment.*?Sep 2025 — Present/s', $rendered) === 1 && preg_match('/Northstar Analytics<span aria-hidden="true">&nbsp;·<\/span><\/span>\s*<span>Amman, Jordan<\/span>/', $rendered) === 1 && preg_match('/Vertex Labs<\/span>\s*<\/p>/', $rendered) === 1, 'Experience date placement or optional organization/location separators are incorrect.');
         phase2Assert(substr_count($rendered, 'Present') === 1, 'Present must render only for an explicitly current Experience.');
-        phase2Assert(str_contains($rendered, 'aria-labelledby="experience-title"') && str_contains($rendered, '<ol class="portfolio-experience-list">'), 'Experience section must preserve semantic heading/list structure.');
+        phase2Assert(str_contains($rendered, 'aria-labelledby="experience-title"') && str_contains($rendered, '<ol class="portfolio-experience-list" id="portfolio-experience-list" data-experience-page-size="5">') && !str_contains($rendered, 'data-experience-pagination'), 'Experience section must preserve semantic heading/list structure without pagination for five or fewer records.');
         $experienceSection = preg_match('/<section class="portfolio-section portfolio-closing-panel portfolio-experience".*?<\/section>/s', $rendered, $sectionMatch) === 1 ? $sectionMatch[0] : '';
         phase2Assert(!str_contains($experienceSection, '<a ') && !str_contains($experienceSection, '<img '), 'Experience presentation must not invent links or logos.');
 
         ob_start();
         renderPortfolioPresentation(['full_name' => 'One Experience'], [], [], ['experiences' => [$experiences[0]]]);
         $singleRendered = ob_get_clean();
-        phase2Assert(is_string($singleRendered) && substr_count($singleRendered, 'portfolio-experience-item') >= 1 && str_contains($stylesheet, '.portfolio-experience-item:not(:last-child)::after'), 'A single Experience must render without requiring a connector beyond its only marker.');
+        phase2Assert(is_string($singleRendered) && substr_count($singleRendered, 'portfolio-experience-item') >= 1 && str_contains($stylesheet, '.portfolio-experience-item:not(.portfolio-experience-item--visible-last)::after'), 'A single Experience must render without requiring a connector beyond its only marker.');
+
+        $paginationExperiences = [];
+        for ($index = 1; $index <= 11; ++$index) {
+            $paginationExperiences[] = [...$experiences[0], 'role_title' => "Role {$index}", 'start_month' => '2025-09'];
+        }
+        foreach ([5, 6, 10, 11] as $count) {
+            ob_start();
+            renderPortfolioPresentation(['full_name' => 'Pagination Owner'], [], [], ['experiences' => array_slice($paginationExperiences, 0, $count)]);
+            $paginationRendered = ob_get_clean();
+            phase2Assert(is_string($paginationRendered) && substr_count($paginationRendered, 'portfolio-experience-content') === $count, "All {$count} Experience records must remain in the no-JavaScript fallback.");
+            if ($count <= 5) {
+                phase2Assert(!str_contains($paginationRendered, 'data-experience-pagination'), "Experience pagination controls must be omitted for {$count} records.");
+            } else {
+                phase2Assert(str_contains($paginationRendered, 'data-experience-pagination hidden') && str_contains($paginationRendered, 'aria-controls="portfolio-experience-list"') && !preg_match('/<li[^>]+hidden/', $paginationRendered), "Experience pagination controls must enhance, not replace, the {$count}-record fallback.");
+            }
+        }
 
         ob_start();
         renderPortfolioPresentation(['full_name' => 'No Experience'], [], [], ['experiences' => []]);

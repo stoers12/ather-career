@@ -24,6 +24,21 @@ $experiences = [
 ];
 $options = ['experiences' => $experiences, 'contact_action' => '/p/jordan/contact'];
 
+$paginationExperiences = $experiences;
+for ($index = 4; $index <= 11; ++$index) {
+    $paginationExperiences[] = [
+        'experience_type' => $index % 2 === 0 ? 'employment' : 'training',
+        'role_title' => "Experience {$index}",
+        'organization' => "Organization {$index}",
+        'location' => $index % 2 === 0 ? 'Amman, Jordan' : '',
+        'start_month' => sprintf('202%d-%02d', 6 - intdiv($index, 7), 13 - $index),
+        'end_month' => sprintf('202%d-%02d', 6 - intdiv($index, 7), 13 - $index),
+        'is_current' => false,
+        'description' => "Experience {$index} description remains visible through the progressive fallback.",
+    ];
+}
+usort($paginationExperiences, static fn (array $left, array $right): int => $right['start_month'] <=> $left['start_month']);
+
 switch ($variant) {
     case 'three-public':
         break;
@@ -43,6 +58,12 @@ switch ($variant) {
         break;
     case 'one-current':
         $options['experiences'] = [$experiences[2]];
+        break;
+    case 'pagination-six':
+        $options['experiences'] = array_slice($paginationExperiences, 0, 6);
+        break;
+    case 'pagination-eleven':
+        $options['experiences'] = $paginationExperiences;
         break;
     case 'no-experience':
         $options['experiences'] = [];

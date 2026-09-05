@@ -374,7 +374,7 @@ function listAuthorizedExperiences(PDO $database, AuthorizedPortfolioContext $co
                 is_current, description, created_at, updated_at
          FROM experiences
          WHERE portfolio_id = :authorized_portfolio_id
-         ORDER BY is_current DESC, start_month DESC, id DESC'
+         ORDER BY start_month DESC, id DESC'
     );
     $statement->execute(['authorized_portfolio_id' => $context->portfolioId]);
 

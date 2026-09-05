@@ -16,10 +16,23 @@ const variants = {
     'no-descriptions': { experiences: 3, social: 3, preview: false, errors: false },
     'long-content': { experiences: 3, social: 3, preview: false, errors: false },
     'one-current': { experiences: 1, social: 3, preview: false, errors: false },
+    'pagination-six': { experiences: 6, social: 3, preview: false, errors: false, paginated: true },
+    'pagination-eleven': { experiences: 11, social: 3, preview: false, errors: false, paginated: true },
     'no-experience': { experiences: 0, social: 3, preview: false, errors: false },
     'validation-errors': { experiences: 3, social: 3, preview: false, errors: true },
     preview: { experiences: 3, social: 3, preview: true, errors: false },
     'social-minimal': { experiences: 3, social: 1, preview: false, errors: false },
+};
+
+const installRoutes = async (page, html) => {
+    await page.route('http://work.test/**', route => {
+        const url = new URL(route.request().url());
+        if (url.pathname === '/') return route.fulfill({ contentType: 'text/html', body: html });
+        if (url.pathname === '/portfolio.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'portfolio.css')) });
+        if (url.pathname === '/portfolio.js') return route.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'portfolio.js')) });
+        if (url.pathname === '/assets/images/ather-navbar-logo.png') return route.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'assets/images/ather-navbar-logo.png')) });
+        return route.fulfill({ status: 204, body: '' });
+    });
 };
 
 (async () => {
@@ -31,14 +44,7 @@ const variants = {
                 const errors = [];
                 page.on('pageerror', error => errors.push(error));
                 const html = execFileSync('php', [path.join(__dirname, 'experience-contact-visual.php'), variant], { encoding: 'utf8' });
-                await page.route('http://work.test/**', route => {
-                    const url = new URL(route.request().url());
-                    if (url.pathname === '/') return route.fulfill({ contentType: 'text/html', body: html });
-                    if (url.pathname === '/portfolio.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'portfolio.css')) });
-                    if (url.pathname === '/portfolio.js') return route.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'portfolio.js')) });
-                    if (url.pathname === '/assets/images/ather-navbar-logo.png') return route.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'assets/images/ather-navbar-logo.png')) });
-                    return route.fulfill({ status: 204, body: '' });
-                });
+                await installRoutes(page, html);
                 await page.goto('http://work.test/');
 
                 const experience = page.locator('#experience');
@@ -49,6 +55,7 @@ const variants = {
                 assert.equal(await experience.count(), expected.experiences > 0 ? 1 : 0, `${width}/${variant}: Experience visibility`);
                 assert.equal(await contact.count(), 1, `${width}/${variant}: Contact visibility`);
                 assert.equal(await items.count(), expected.experiences, `${width}/${variant}: Experience item count`);
+                assert.equal(await page.locator('.portfolio-experience-item:visible').count(), expected.paginated ? 5 : expected.experiences, `${width}/${variant}: initially visible Experience count`);
                 assert.equal(await social.count(), expected.social, `${width}/${variant}: validated social control count`);
                 assert.equal(await social.locator('svg[aria-hidden="true"]').count(), expected.social, `${width}/${variant}: social icon count`);
                 assert.equal(await social.evaluateAll(links => links.some(link => link.textContent.includes('↗'))), false, `${width}/${variant}: social arrows`);
@@ -59,7 +66,7 @@ const variants = {
                 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${width}/${variant}: page overflow`);
 
                 if (expected.experiences > 0) {
-                    assert.equal(await page.locator('.portfolio-experience-item:last-child').evaluate(node => getComputedStyle(node, '::after').content), 'none', `${width}/${variant}: final connector tail`);
+                    assert.equal(await page.locator('.portfolio-experience-item:visible').last().evaluate(node => getComputedStyle(node, '::after').content), 'none', `${width}/${variant}: final connector tail`);
                     if (expected.experiences === 1) {
                         assert.equal(await items.first().evaluate(node => getComputedStyle(node, '::after').content), 'none', `${width}/${variant}: single Experience connector`);
                     } else {
@@ -67,6 +74,38 @@ const variants = {
                     }
                 } else {
                     assert.equal(await page.locator('.portfolio-closing-layout--contact-only').count(), 1, `${width}/${variant}: full-width Contact layout`);
+                }
+
+                if (expected.paginated) {
+                    const pagination = page.locator('[data-experience-pagination]');
+                    const range = page.locator('.portfolio-experience-range');
+                    const newer = page.locator('[data-experience-page="newer"]');
+                    const older = page.locator('[data-experience-page="older"]');
+                    assert.equal(await pagination.isVisible(), true, `${width}/${variant}: pagination visible after enhancement`);
+                    assert.equal(await range.textContent(), `Showing 1–5 of ${expected.experiences}`, `${width}/${variant}: initial range`);
+                    assert.equal(await newer.isDisabled(), true, `${width}/${variant}: newer boundary`);
+                    assert.equal(await older.isDisabled(), false, `${width}/${variant}: older control`);
+                    assert.equal(await older.getAttribute('aria-controls'), 'portfolio-experience-list', `${width}/${variant}: accessible older control`);
+                    await older.click();
+                    const finalStart = expected.experiences > 10 ? 6 : 6;
+                    const finalEnd = expected.experiences > 10 ? 10 : expected.experiences;
+                    assert.equal(await range.textContent(), `Showing ${finalStart}–${finalEnd} of ${expected.experiences}`, `${width}/${variant}: older range`);
+                    assert.equal(await page.locator('.portfolio-experience-item:visible').count(), finalEnd - finalStart + 1, `${width}/${variant}: older visible count`);
+                    assert.equal(await page.locator('.portfolio-experience-item:visible').last().evaluate(node => getComputedStyle(node, '::after').content), 'none', `${width}/${variant}: older final connector`);
+                    await newer.press('Enter');
+                    assert.equal(await range.textContent(), `Showing 1–5 of ${expected.experiences}`, `${width}/${variant}: Enter newer navigation`);
+                    await older.press('Space');
+                    assert.equal(await range.textContent(), `Showing ${finalStart}–${finalEnd} of ${expected.experiences}`, `${width}/${variant}: Space older navigation`);
+                    if (expected.experiences === 11) {
+                        await older.click();
+                        assert.equal(await range.textContent(), 'Showing 11–11 of 11', `${width}/${variant}: final partial range`);
+                        assert.equal(await page.locator('.portfolio-experience-item:visible').count(), 1, `${width}/${variant}: final partial page`);
+                        assert.equal(await older.isDisabled(), true, `${width}/${variant}: final older boundary`);
+                    }
+                    while (!await newer.isDisabled()) {
+                        await newer.click();
+                    }
+                    assert.equal(await range.textContent(), `Showing 1–5 of ${expected.experiences}`, `${width}/${variant}: restored initial range`);
                 }
 
                 if (expected.preview) {
@@ -88,6 +127,8 @@ const variants = {
                     const contactBox = await contact.evaluate(node => node.getBoundingClientRect());
                     assert(Math.abs(experienceBox.width - contactBox.width) < 1, `${width}/${variant}: equal columns`);
                     assert(Math.abs(experienceBox.top - contactBox.top) < 1, `${width}/${variant}: aligned panels`);
+                    assert(Math.abs(experienceBox.height - contactBox.height) < 1, `${width}/${variant}: equal panel heights`);
+                    assert.notEqual(await experience.evaluate(node => getComputedStyle(node).overflowY), 'auto', `${width}/${variant}: no internal Experience scroll`);
                 }
                 if (width <= 1100 && expected.experiences > 0) {
                     const experienceBox = await experience.evaluate(node => node.getBoundingClientRect());
@@ -123,6 +164,14 @@ const variants = {
                 await page.close();
             }
         }
+        const noJsPage = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 1440, height: 1000 } });
+        const noJsHtml = execFileSync('php', [path.join(__dirname, 'experience-contact-visual.php'), 'pagination-six'], { encoding: 'utf8' });
+        await installRoutes(noJsPage, noJsHtml);
+        await noJsPage.goto('http://work.test/');
+        assert.equal(await noJsPage.locator('.portfolio-experience-item:visible').count(), 6, 'no-JavaScript pagination fallback must retain all Experience records');
+        assert.equal(await noJsPage.locator('[data-experience-pagination]').isVisible(), false, 'no-JavaScript pagination controls must remain hidden');
+        console.log('PASS experience/contact no-js-pagination-fallback');
+        await noJsPage.close();
     } finally {
         await browser.close();
     }

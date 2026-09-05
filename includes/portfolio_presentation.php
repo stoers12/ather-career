@@ -109,6 +109,8 @@ function portfolioPresentationProjectFallbackIcon(): string
 }
 
 /** @return list<array{experience_type: string, role_title: string, organization: string, location: string|null, start_month: string, end_month: string|null, is_current: bool, description: string|null}> */
+const PORTFOLIO_EXPERIENCE_PAGE_SIZE = 5;
+
 function portfolioPresentationExperiences(array $experiences): array
 {
     $presentationExperiences = [];
@@ -278,6 +280,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $presentationExperiences = portfolioPresentationExperiences(
         isset($options['experiences']) && is_array($options['experiences']) ? $options['experiences'] : [],
     );
+    $experiencePaginationEnabled = count($presentationExperiences) > PORTFOLIO_EXPERIENCE_PAGE_SIZE;
     $initials = profileInitials($name) ?: 'P';
     $showProjects = $projects !== [];
     $showSkills = $skills !== [];
@@ -482,8 +485,8 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
         <?php if ($presentationExperiences !== []): ?>
             <section class="portfolio-section portfolio-closing-panel portfolio-experience" id="experience" aria-labelledby="experience-title">
                 <header class="portfolio-section-heading"><h2 id="experience-title">Experience</h2></header>
-                <ol class="portfolio-experience-list">
-                    <?php foreach ($presentationExperiences as $experience):
+                <ol class="portfolio-experience-list" id="portfolio-experience-list" data-experience-page-size="<?php echo PORTFOLIO_EXPERIENCE_PAGE_SIZE; ?>">
+                    <?php foreach ($presentationExperiences as $experienceIndex => $experience):
                         $experienceType = portfolioPresentationExperienceTypeLabel($experience['experience_type']);
                         $experienceRole = $experience['role_title'];
                         $experienceOrganization = $experience['organization'];
@@ -492,7 +495,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                         $experienceIsCurrent = $experience['is_current'] === true;
                         $experienceDescription = $experience['description'] ?? null;
                         ?>
-                        <li class="portfolio-experience-item<?php echo $experienceIsCurrent ? ' portfolio-experience-item--current' : ''; ?>">
+                        <li class="portfolio-experience-item<?php echo $experienceIsCurrent ? ' portfolio-experience-item--current' : ''; ?><?php echo $experienceIndex === array_key_last($presentationExperiences) ? ' portfolio-experience-item--visible-last' : ''; ?>">
                             <article class="portfolio-experience-content">
                                 <div class="portfolio-experience-topline"><p class="portfolio-experience-type"><?php echo portfolioPresentationEscape($experienceType); ?></p><?php if ($experienceDateRange !== ''): ?><p class="portfolio-experience-date"><?php echo portfolioPresentationEscape($experienceDateRange); ?></p><?php endif; ?></div>
                                 <?php if ($experienceRole !== ''): ?><h3><?php echo portfolioPresentationEscape($experienceRole); ?></h3><?php endif; ?>
@@ -502,6 +505,15 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                         </li>
                     <?php endforeach; ?>
                 </ol>
+                <?php if ($experiencePaginationEnabled): ?>
+                    <div class="portfolio-experience-pagination" data-experience-pagination hidden>
+                        <p class="portfolio-experience-range" id="portfolio-experience-range" role="status" aria-live="polite"></p>
+                        <div class="portfolio-experience-pagination-actions">
+                            <button class="portfolio-experience-page-button" type="button" data-experience-page="newer" aria-controls="portfolio-experience-list">Newer experiences</button>
+                            <button class="portfolio-experience-page-button" type="button" data-experience-page="older" aria-controls="portfolio-experience-list">Older experiences</button>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </section>
         <?php endif; ?>
 

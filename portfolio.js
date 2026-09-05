@@ -112,6 +112,61 @@
         });
     };
 
+    const initializeExperiencePagination = () => {
+        document.querySelectorAll('.portfolio-experience-list[data-experience-page-size]').forEach((list) => {
+            if (!(list instanceof HTMLOListElement)) {
+                return;
+            }
+
+            const pageSize = Number.parseInt(list.dataset.experiencePageSize || '', 10);
+            const pagination = list.parentElement?.querySelector('[data-experience-pagination]');
+            const range = pagination?.querySelector('.portfolio-experience-range');
+            const newer = pagination?.querySelector('[data-experience-page="newer"]');
+            const older = pagination?.querySelector('[data-experience-page="older"]');
+            const items = Array.from(list.querySelectorAll(':scope > .portfolio-experience-item'));
+
+            if (!Number.isInteger(pageSize) || pageSize < 1
+                || !(pagination instanceof HTMLElement)
+                || !(range instanceof HTMLElement)
+                || !(newer instanceof HTMLButtonElement)
+                || !(older instanceof HTMLButtonElement)
+                || items.length <= pageSize) {
+                return;
+            }
+
+            let page = 0;
+            const pageCount = Math.ceil(items.length / pageSize);
+            const renderPage = () => {
+                const start = page * pageSize;
+                const end = Math.min(start + pageSize, items.length);
+                items.forEach((item, index) => {
+                    const visible = index >= start && index < end;
+                    item.hidden = !visible;
+                    item.classList.toggle('portfolio-experience-item--visible-last', visible && index === end - 1);
+                });
+                range.textContent = `Showing ${start + 1}–${end} of ${items.length}`;
+                newer.disabled = page === 0;
+                older.disabled = page === pageCount - 1;
+            };
+
+            renderPage();
+            pagination.addEventListener('click', (event) => {
+                const button = event.target instanceof Element ? event.target.closest('[data-experience-page]') : null;
+                if (!(button instanceof HTMLButtonElement) || !pagination.contains(button) || button.disabled) {
+                    return;
+                }
+
+                const nextPage = button.dataset.experiencePage === 'older' ? page + 1 : page - 1;
+                if (nextPage < 0 || nextPage >= pageCount) {
+                    return;
+                }
+                page = nextPage;
+                renderPage();
+            });
+            pagination.hidden = false;
+        });
+    };
+
     const initializePortfolioMobileNavigation = () => {
         const toggle = document.querySelector('.portfolio-menu-toggle');
         const layer = document.querySelector('.portfolio-mobile-nav-layer');
@@ -199,6 +254,7 @@
     const initializePortfolio = () => {
         initializePortfolioScrollspy();
         initializePortfolioSkills();
+        initializeExperiencePagination();
         initializePortfolioMobileNavigation();
     };
 

@@ -43,10 +43,14 @@ final class ExperienceCapabilityTest
         foreach ([
             "const EXPERIENCE_TYPE_VALUES = ['employment', 'training', 'internship', 'volunteer', 'leadership']",
             'function normalizeExperienceMonth',
+            'function experienceValidationReferenceMonth',
             'function validateExperienceValues',
             'function authorizedExperienceValues',
             'checkdate',
             'End month cannot be earlier than start month.',
+            'Start month cannot be later than the current month.',
+            'End month cannot be later than the current month.',
+            'End month must be empty for a current role.',
             'EXPERIENCE_DESCRIPTION_MAX_LENGTH = 1200',
             'utf8FieldLengthError',
         ] as $required) {
@@ -63,15 +67,16 @@ final class ExperienceCapabilityTest
             'WHERE portfolio_id = :authorized_portfolio_id',
             'WHERE id = :resource_id',
             'AND portfolio_id = :authorized_portfolio_id',
-            'ORDER BY is_current DESC, start_month DESC, id DESC',
+            'ORDER BY start_month DESC, id DESC',
         ] as $required) {
             phase2Assert(str_contains($scopedData, $required), "Experience scoped data access is missing {$required}.");
         }
         phase2Assert(str_contains($ownerActions, 'handleAuthorizedExperienceAction') && str_contains($ownerActions, 'findAuthorizedExperience($database, $context, $experienceId)') && str_contains($ownerActions, 'deleteAuthorizedExperience($database, $context, $experienceId)'), 'Experience owner mutations must scope records through the owner Portfolio.');
+        phase2Assert(!str_contains($ownerActions, '$editingExperience[\'end_month\'] = \'\''), 'Experience validation errors must preserve an entered end month for correction.');
         phase2Assert(str_contains($ownerRoute, 'requireOwnerPortfolioContext($database)') && str_contains($ownerRoute, 'requireValidCsrfToken') && str_contains($ownerRoute, 'type="month"') && str_contains($ownerRoute, 'name="is_current"'), 'Experience owner route is missing owner authority, CSRF, month controls, or current state.');
         phase2Assert(!str_contains($ownerRoute, 'sort_order') && !str_contains($ownerRoute, 'years of experience'), 'Experience owner route added unsupported controls.');
 
-        phase2Assert(str_contains($publicLifecycle, 'function listPublicExperiences(PDO $database, PublicReadContext $context): array') && str_contains($publicLifecycle, 'WHERE portfolio_id = :public_portfolio_id') && str_contains($publicLifecycle, 'ORDER BY is_current DESC, start_month DESC, id DESC'), 'Experience public read path is not safely Portfolio-scoped and deterministic.');
+        phase2Assert(str_contains($publicLifecycle, 'function listPublicExperiences(PDO $database, PublicReadContext $context): array') && str_contains($publicLifecycle, 'WHERE portfolio_id = :public_portfolio_id') && str_contains($publicLifecycle, 'ORDER BY start_month DESC, id DESC') && !str_contains($publicLifecycle, 'ORDER BY is_current DESC'), 'Experience public read path is not safely Portfolio-scoped and deterministic.');
         phase2Assert(str_contains($publicRoute, 'listPublicExperiences($database, $context)') && str_contains($publicRoute, "'experiences' => \$experiences"), 'Public Portfolio route does not pass the structured Experience collection to presentation.');
         phase2Assert(str_contains($presentation, 'function portfolioPresentationExperiences(array $experiences): array') && str_contains($presentation, '$presentationExperiences = portfolioPresentationExperiences('), 'Presentation-ready Experience mapping is missing.');
         phase2Assert(str_contains($presentation, 'href="#experience" data-portfolio-section="experience">Experience</a>') && !str_contains($header, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>'), 'Experience navigation must use the implemented section anchor contract.');
@@ -81,6 +86,7 @@ final class ExperienceCapabilityTest
         require_once PHASE2_REPOSITORY_ROOT . '/includes/portfolio_presentation.php';
 
         phase2AssertSame('2025-06', normalizeExperienceMonth(' 2025-06 '), 'A valid calendar month was rejected.');
+        phase2AssertSame('2026-09', experienceValidationReferenceMonth('2026-09'), 'The deterministic Experience validation reference month was not preserved.');
         foreach (['2025-00', '2025-13', '2025-6', '2025-06-01', 'not-a-month'] as $invalidMonth) {
             phase2AssertSame(null, normalizeExperienceMonth($invalidMonth), "Invalid month was accepted: {$invalidMonth}.");
         }
@@ -95,16 +101,21 @@ final class ExperienceCapabilityTest
             'is_current' => false,
             'description' => 'Plain text only.',
         ];
-        phase2AssertSame([], validateExperienceValues($valid), 'A valid Experience record did not validate.');
+        phase2AssertSame([], validateExperienceValues($valid, '2026-09'), 'A valid Experience record did not validate.');
         phase2AssertSame('2025-09', authorizedExperienceValues($valid)['end_month'], 'Validated Experience end month was not preserved.');
-        phase2Assert(validateExperienceValues([...$valid, 'experience_type' => 'contractor']) !== [], 'Unsupported Experience type was accepted.');
-        phase2Assert(validateExperienceValues([...$valid, 'start_month' => '2025-15']) !== [], 'Invalid start month was accepted.');
-        phase2Assert(validateExperienceValues([...$valid, 'end_month' => '2025-05']) !== [], 'End month before start month was accepted.');
-        phase2Assert(validateExperienceValues([...$valid, 'end_month' => '', 'is_current' => false]) !== [], 'Ended Experience without an end month was accepted.');
-        $currentValues = authorizedExperienceValues([...$valid, 'is_current' => true, 'end_month' => '2025-12']);
-        phase2AssertSame(null, $currentValues['end_month'], 'Current Experience did not normalize its stale end month to null.');
+        phase2Assert(validateExperienceValues([...$valid, 'experience_type' => 'contractor'], '2026-09') !== [], 'Unsupported Experience type was accepted.');
+        phase2Assert(validateExperienceValues([...$valid, 'start_month' => '2025-15'], '2026-09') !== [], 'Invalid start month was accepted.');
+        phase2Assert(validateExperienceValues([...$valid, 'end_month' => '2025-05'], '2026-09') !== [], 'End month before start month was accepted.');
+        phase2Assert(validateExperienceValues([...$valid, 'end_month' => '', 'is_current' => false], '2026-09') !== [], 'Ended Experience without an end month was accepted.');
+        phase2AssertSame([], validateExperienceValues([...$valid, 'start_month' => '2026-09', 'end_month' => '2026-09'], '2026-09'), 'Current-month completed Experience was rejected.');
+        phase2AssertSame([], validateExperienceValues([...$valid, 'start_month' => '2026-09', 'end_month' => '', 'is_current' => true], '2026-09'), 'Current-month current Experience was rejected.');
+        phase2Assert(str_contains(implode(' ', validateExperienceValues([...$valid, 'start_month' => '2026-10'], '2026-09')), 'Start month cannot be later'), 'Future start month was accepted.');
+        phase2Assert(str_contains(implode(' ', validateExperienceValues([...$valid, 'end_month' => '2026-10'], '2026-09')), 'End month cannot be later'), 'Future completed end month was accepted.');
+        phase2Assert(str_contains(implode(' ', validateExperienceValues([...$valid, 'is_current' => true, 'end_month' => '2026-09'], '2026-09')), 'End month must be empty'), 'Current Experience accepted a supplied end month.');
+        $currentValues = authorizedExperienceValues([...$valid, 'is_current' => true, 'end_month' => '']);
+        phase2AssertSame(null, $currentValues['end_month'], 'Current Experience did not normalize an empty end month to null.');
         phase2AssertSame(1, $currentValues['is_current'], 'Current Experience flag was not normalized.');
-        phase2Assert(validateExperienceValues([...$valid, 'role_title' => str_repeat('م', EXPERIENCE_ROLE_TITLE_MAX_LENGTH + 1)]) !== [], 'Multibyte role title over the bound was accepted.');
+        phase2Assert(validateExperienceValues([...$valid, 'role_title' => str_repeat('م', EXPERIENCE_ROLE_TITLE_MAX_LENGTH + 1)], '2026-09') !== [], 'Multibyte role title over the bound was accepted.');
 
         $mapped = portfolioPresentationExperiences([[
             'id' => 77,

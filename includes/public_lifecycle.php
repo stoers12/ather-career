@@ -277,7 +277,7 @@ function listPublicExperiences(PDO $database, PublicReadContext $context): array
         'SELECT experience_type, role_title, organization, location, start_month, end_month, is_current, description
          FROM experiences
          WHERE portfolio_id = :public_portfolio_id
-         ORDER BY is_current DESC, start_month DESC, id DESC'
+         ORDER BY start_month DESC, id DESC'
     );
     $statement->execute(['public_portfolio_id' => $context->portfolioId]);
 

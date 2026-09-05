@@ -321,9 +321,6 @@ function handleAuthorizedExperienceAction(PDO $database, AuthorizedPortfolioCont
         }
 
         if ($errors !== []) {
-            if (experienceIsCurrent($editingExperience['is_current'] ?? false)) {
-                $editingExperience['end_month'] = '';
-            }
             return experienceActionResult($errors, $formMode, $editingExperience);
         }
 

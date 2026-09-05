@@ -75,6 +75,20 @@ function normalizeExperienceMonth(mixed $value): ?string
     return checkdate((int) $matches[2], 1, (int) $matches[1]) ? $month : null;
 }
 
+function experienceValidationReferenceMonth(?string $referenceMonth = null): string
+{
+    if ($referenceMonth === null) {
+        return gmdate('Y-m');
+    }
+
+    $normalizedMonth = normalizeExperienceMonth($referenceMonth);
+    if ($normalizedMonth === null) {
+        throw new InvalidArgumentException('Experience validation reference month is invalid.');
+    }
+
+    return $normalizedMonth;
+}
+
 /** @return array<string, mixed> */
 function experienceFormValues(array $post): array
 {
@@ -96,7 +110,7 @@ function experienceFormValues(array $post): array
 }
 
 /** @param array<string, mixed> $values */
-function validateExperienceValues(array $values): array
+function validateExperienceValues(array $values, ?string $referenceMonth = null): array
 {
     $errors = [];
     $type = isset($values['experience_type']) && is_string($values['experience_type']) ? $values['experience_type'] : '';
@@ -107,6 +121,7 @@ function validateExperienceValues(array $values): array
     $endMonth = isset($values['end_month']) && is_string($values['end_month']) ? $values['end_month'] : '';
     $isCurrent = experienceIsCurrent($values['is_current'] ?? false);
     $description = isset($values['description']) && is_string($values['description']) ? $values['description'] : '';
+    $currentMonth = experienceValidationReferenceMonth($referenceMonth);
 
     if (!in_array($type, EXPERIENCE_TYPE_VALUES, true)) {
         $errors[] = 'Please choose a valid experience type.';
@@ -135,15 +150,23 @@ function validateExperienceValues(array $values): array
         $errors[] = 'Start month is required.';
     } elseif ($normalizedStartMonth === null) {
         $errors[] = 'Start month must be a valid month.';
+    } elseif ($normalizedStartMonth > $currentMonth) {
+        $errors[] = 'Start month cannot be later than the current month.';
     }
 
     $normalizedEndMonth = null;
-    if (!$isCurrent) {
+    if ($isCurrent) {
+        if ($endMonth !== '') {
+            $errors[] = 'End month must be empty for a current role.';
+        }
+    } else {
         $normalizedEndMonth = normalizeExperienceMonth($endMonth);
         if ($endMonth === '') {
             $errors[] = 'End month is required unless this is your current role.';
         } elseif ($normalizedEndMonth === null) {
             $errors[] = 'End month must be a valid month.';
+        } elseif ($normalizedEndMonth > $currentMonth) {
+            $errors[] = 'End month cannot be later than the current month.';
         }
     }
     if ($normalizedStartMonth !== null && $normalizedEndMonth !== null && $normalizedEndMonth < $normalizedStartMonth) {
@@ -168,13 +191,13 @@ function authorizedExperienceValues(array $values): array
         'is_current' => experienceIsCurrent($values['is_current'] ?? false),
         'description' => isset($values['description']) && is_string($values['description']) ? trim($values['description']) : '',
     ];
-    if ($normalized['is_current']) {
-        $normalized['end_month'] = '';
-    }
-
     $errors = validateExperienceValues($normalized);
     if ($errors !== []) {
         throw new InvalidArgumentException('Experience values are invalid.');
+    }
+
+    if ($normalized['is_current']) {
+        $normalized['end_month'] = '';
     }
 
     $startMonth = normalizeExperienceMonth($normalized['start_month']);
