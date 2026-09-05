@@ -193,13 +193,13 @@ function portfolioPresentationMetrics(array $projects, array $skills): array
 
     $metrics = [];
     if ($projects !== []) {
-        $metrics[] = ['key' => 'projects', 'value' => count($projects), 'label' => 'Projects Featured'];
+        $metrics[] = ['key' => 'projects', 'value' => count($projects), 'label' => 'Projects'];
     }
     if ($skillCount > 0) {
         $metrics[] = ['key' => 'skills', 'value' => $skillCount, 'label' => 'Core Skills'];
     }
     if ($categories !== []) {
-        $metrics[] = ['key' => 'categories', 'value' => count($categories), 'label' => 'Project Categories'];
+        $metrics[] = ['key' => 'categories', 'value' => count($categories), 'label' => 'Focus Areas'];
     }
 
     return $metrics;
@@ -415,7 +415,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     <?php if ($metrics !== []): ?>
         <section class="portfolio-metrics" aria-label="Portfolio metrics">
             <div class="portfolio-container">
-                <ul class="portfolio-metrics-strip" style="--portfolio-metric-count: <?php echo count($metrics); ?>">
+                <ul class="portfolio-metrics-strip" style="--portfolio-metric-count: <?php echo count($metrics); ?>; --portfolio-metric-compact-count: <?php echo min(2, count($metrics)); ?>">
                     <?php foreach ($metrics as $metric): ?>
                         <li class="portfolio-metric"><span class="portfolio-metric-icon"><?php echo portfolioPresentationMetricIcon($metric['key']); ?></span><span><strong><?php echo $metric['value']; ?></strong><small><?php echo portfolioPresentationEscape($metric['label']); ?></small></span></li>
                     <?php endforeach; ?>
@@ -426,8 +426,8 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
 
     <?php if ($showAbout): ?>
         <section class="portfolio-section portfolio-about" id="about" aria-labelledby="about-title"><div class="portfolio-container"><div class="portfolio-about-card">
-            <div class="portfolio-about-heading"><p class="portfolio-section-kicker">ABOUT / 02</p><h2 id="about-title">A closer look at my work.</h2></div>
-            <div class="portfolio-about-copy"><p><?php echo nl2br(portfolioPresentationEscape($aboutNarrative)); ?></p><?php if ($location !== ''): ?><span class="portfolio-location-pill">Based in <?php echo portfolioPresentationEscape($location); ?></span><?php endif; ?></div>
+            <div class="portfolio-about-heading"><p class="portfolio-section-kicker">ABOUT</p><h2 id="about-title">Professional Overview</h2></div>
+            <div class="portfolio-about-copy"><p><?php echo nl2br(portfolioPresentationEscape($aboutNarrative)); ?></p><?php if ($location !== ''): ?><p class="portfolio-about-location"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20s6-5.1 6-11a6 6 0 1 0-12 0c0 5.9 6 11 6 11Z"/><circle cx="12" cy="9" r="2"/></svg><span>Based in <?php echo portfolioPresentationEscape($location); ?></span></p><?php endif; ?></div>
         </div></div></section>
     <?php endif; ?>
 

@@ -24,7 +24,7 @@ final class PortfolioPresentationStaticTest
         phase2Assert(!str_contains($presentation, 'href="#insights"') && !str_contains($presentation, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>'), 'S01 must not retain disabled Experience navigation or create a false Insights target.');
         phase2Assert(strpos($presentation, '<header class="portfolio-header">') < strpos($presentation, '<main id="portfolio-main">'), 'S01 header must be the first Portfolio content element.');
         phase2Assert(str_contains($presentation, 'portfolioPresentationHeroHeadline(') && str_contains($presentation, 'portfolio-hero-reserved') && str_contains($presentation, 'portfolio-hero-profile-card') && !str_contains($presentation, 'portfolio-hero-badge') && !str_contains($presentation, 'portfolio-hero-profile-role') && !str_contains($presentation, 'Turning Data into') && !str_contains($presentation, 'PROFILE / 01') && !str_contains($presentation, 'portfolio-profile-orbit') && substr_count($presentation, '<h1 ') === 1, 'S13 Hero must use the owner headline and a non-redundant Personal ID card without a title badge.');
-        phase2Assert(str_contains($presentation, '<section class="portfolio-metrics"') && str_contains($presentation, 'portfolioPresentationMetrics(') && !str_contains($presentation, 'portfolio-profile-card') && !str_contains($presentation, 'portfolio-hero-wave') && !str_contains($presentation, 'portfolio-hero-grid-lines') && !str_contains($presentation, 'href="/download'), 'S04 must render only the truthful metrics strip and avoid legacy Hero visual shells or fake resume destinations.');
+        phase2Assert(str_contains($presentation, '<section class="portfolio-metrics"') && str_contains($presentation, 'portfolioPresentationMetrics(') && str_contains($presentation, 'Professional Overview') && str_contains($presentation, 'portfolio-about-location') && !str_contains($presentation, 'Projects Featured') && !str_contains($presentation, 'Project Categories') && !str_contains($presentation, 'ABOUT / 02') && !str_contains($presentation, 'A closer look at my work.') && !str_contains($presentation, 'portfolio-profile-card') && !str_contains($presentation, 'portfolio-hero-wave') && !str_contains($presentation, 'portfolio-hero-grid-lines') && !str_contains($presentation, 'href="/download'), 'S04 must render the truthful professional overview without legacy metric labels, template copy, Hero visual shells, or fake resume destinations.');
         phase2Assert(str_contains($presentation, 'portfolioPresentationFeaturedProjects(') && str_contains($presentation, 'array_slice($projects, 0, 3)') && str_contains($presentation, 'portfolioPresentationProjectFallbackIcon(') && str_contains($presentation, 'loading="lazy"') && !str_contains($presentation, 'profileInitials($projectTitle)'), 'S05 featured Projects must use the existing deterministic order, cap the presentation at three cards, and provide a non-initial fallback.');
         phase2Assert(str_contains($lifecycle, 'ORDER BY created_at ASC, id ASC'), 'S05 featured Projects must derive their capped row from the existing deterministic public Project order.');
         phase2Assert(str_contains($presentation, 'portfolio-hero-actions-cluster') && str_contains($presentation, 'portfolio-hero-social-list') && str_contains($presentation, 'portfolioPresentationSocialIcon(') && str_contains($presentation, 'portfolioPresentationHeroSocialActions(') && str_contains($presentation, "['LinkedIn', 'GitHub']"), 'S02C Hero social actions are missing their explicit cluster or data-driven priority order.');
@@ -38,7 +38,7 @@ final class PortfolioPresentationStaticTest
         phase2Assert(str_contains($presentation, "portfolio-hero-profile-card--<?php echo \$profileMediaUrl !== '' ? 'image' : 'fallback'; ?>") && str_contains($stylesheet, '.portfolio-hero-profile-card--image') && str_contains($stylesheet, '.portfolio-hero-profile-card--fallback') && str_contains($stylesheet, 'aspect-ratio:') && str_contains($stylesheet, '.portfolio-hero-profile-visual img { width: 100%; height: 100%; object-fit: cover;'), 'S03A Hero profile card must adapt its visual region to the available image data.');
         phase2Assert(str_contains($stylesheet, '.portfolio-hero-actions-cluster { display: flex; flex-direction: column; align-items: flex-start; gap: 16px') && str_contains($stylesheet, '.portfolio-button-primary { width: 194px') && str_contains($stylesheet, '.portfolio-button-secondary { width: 214px') && str_contains($stylesheet, 'height: 50px') && str_contains($stylesheet, 'width: 42px; height: 42px') && str_contains($stylesheet, '.portfolio-hero-social-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 2px'), 'S13 Hero CTA or intentional accessible social-cluster contract is incomplete.');
         phase2Assert(str_contains($stylesheet, '.portfolio-contact-copy { align-self: center; }') && str_contains($stylesheet, '.portfolio-contact-copy { align-self: auto; }'), 'S13 Contact copy must center only in the two-column composition and return to natural flow when stacked.');
-        phase2Assert(str_contains($stylesheet, '.portfolio-metrics-strip { display: grid') && str_contains($stylesheet, 'repeat(var(--portfolio-metric-count), minmax(0, 1fr))') && str_contains($stylesheet, '.portfolio-metric + .portfolio-metric { border-inline-start'), 'S04 metrics strip does not use an adaptive shared shell with subtle dividers.');
+        phase2Assert(str_contains($stylesheet, '.portfolio-metrics-strip { display: grid') && str_contains($stylesheet, 'repeat(var(--portfolio-metric-count), minmax(0, 1fr))') && str_contains($stylesheet, '--portfolio-metric-compact-count') && str_contains($stylesheet, '.portfolio-metric-icon { display: grid; width: 34px') && str_contains($stylesheet, 'grid-template-columns: minmax(220px, 35fr) minmax(0, 65fr)') && str_contains($stylesheet, '.portfolio-about-location'), 'S04 metrics and About must retain an adaptive, compact Professional Overview composition.');
         phase2Assert(str_contains($stylesheet, '.portfolio-project-card--image .portfolio-project-visual { aspect-ratio: 16 / 9; }') && str_contains($stylesheet, '.portfolio-project-card--fallback .portfolio-project-visual { gap: 9px; padding: 18px; }') && str_contains($stylesheet, '.portfolio-project-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start;') && str_contains($stylesheet, '.portfolio-projects .portfolio-section-heading h2 { font-size: clamp(1.65rem, 2.4vw, 2.1rem); }') && str_contains($stylesheet, '.portfolio-project-visual img { width: 100%; height: 100%; object-fit: cover;') && str_contains($stylesheet, '.portfolio-project-fallback') && str_contains($stylesheet, '-webkit-line-clamp: 3') && str_contains($stylesheet, '.portfolio-project-technologies { display: flex; flex-wrap: wrap;'), 'S05E Project cards must retain 16:9 real-image media while using an intrinsic fallback visual, natural mixed-state rows, a subordinate section heading, and compact truthful content.');
         phase2Assert(str_contains($presentation, '<div class="portfolio-skills-region" id="skills">') && str_contains($presentation, '<header class="portfolio-section-heading portfolio-skills-heading"><h2 id="portfolio-skills-heading">Skills &amp; Technologies</h2></header>') && str_contains($presentation, '<aside class="portfolio-skills-panel" aria-labelledby="portfolio-skills-heading">') && str_contains($presentation, '<ul class="portfolio-skills-list">') && str_contains($presentation, '<button class="portfolio-skill-control" type="button" aria-pressed="false">') && !preg_match('/skill_(?:category|group|level|proficiency|years)|portfolio-skill-(?:category|group|level|proficiency|years)/i', $presentation), 'S06B Skills must use an external peer heading and an associated panel containing only escaped native toggle controls.');
         phase2Assert(str_contains($stylesheet, '.portfolio-work-grid--split { grid-template-columns: minmax(0, 3fr) minmax(320px, 1fr); }') && str_contains($stylesheet, '.portfolio-work-grid--split .portfolio-project-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }') && str_contains($stylesheet, '@media (max-width: 1320px)') && str_contains($stylesheet, '.portfolio-work-grid--split .portfolio-project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }') && str_contains($stylesheet, '.portfolio-projects .portfolio-section-heading h2 { font-size: clamp(1.65rem, 2.4vw, 2.1rem); }') && str_contains($stylesheet, '.portfolio-skills-heading h2 { font-size: clamp(1.65rem, 2.4vw, 2.1rem); }') && !str_contains($stylesheet, '.portfolio-work-grid--split .portfolio-projects { padding-top: 26px; }') && !str_contains($stylesheet, '.portfolio-skills-heading { margin-bottom: 20px; }') && str_contains($stylesheet, '.portfolio-skills-panel') && str_contains($stylesheet, '.portfolio-skills-list { display: flex; flex-wrap: wrap;') && str_contains($stylesheet, '.portfolio-skill-control[aria-pressed="true"]') && str_contains($stylesheet, '.portfolio-skill-control:focus-visible'), 'S06B Projects and Skills must use peer headings in normal flow while retaining the balanced outer composition and existing Skill controls.');
@@ -94,7 +94,7 @@ final class PortfolioPresentationStaticTest
         phase2Assert($renderedHeader !== '' && str_contains($renderedHeader, 'aria-label="ATHER, home"') && !str_contains($renderedHeader, '&lt;Owner&gt;'), 'Header must identify the ATHER platform without repeating owner identity.');
         phase2Assert($renderedProfileCard !== '' && str_contains($renderedProfileCard, '&lt;Owner&gt;') && str_contains($renderedProfileCard, '&lt;Amman&gt;') && !str_contains($renderedProfileCard, '>Engineer<'), 'Hero Personal ID must retain owner name/location without repeating the professional title.');
         phase2Assert(str_contains($rendered, 'portfolio-hero-profile-card--image') && str_contains($rendered, 'src="/p/safe/media/profile"') && str_contains($rendered, 'alt="&lt;Owner&gt; portrait"') && str_contains($rendered, '&lt;Amman&gt;') && !str_contains($rendered, 'Years Experience'), 'S03 Hero profile card does not render escaped real data or introduced fabricated experience.');
-        phase2Assert(str_contains($rendered, 'portfolio-metrics-strip') && str_contains($rendered, '>3</strong>') && str_contains($rendered, 'Projects Featured') && str_contains($rendered, 'Core Skills') && str_contains($rendered, 'Project Categories') && !str_contains($rendered, '25+') && !str_contains($rendered, 'Happy Clients') && !str_contains($rendered, 'Industry Awards'), 'S04 metrics must use only truthful rendered Portfolio counts.');
+        phase2Assert(str_contains($rendered, 'portfolio-metrics-strip') && str_contains($rendered, '>3</strong>') && str_contains($rendered, 'Projects') && str_contains($rendered, 'Core Skills') && str_contains($rendered, 'Focus Areas') && !str_contains($rendered, 'Projects Featured') && !str_contains($rendered, 'Project Categories') && !str_contains($rendered, '25+') && !str_contains($rendered, 'Happy Clients') && !str_contains($rendered, 'Industry Awards'), 'S04 metrics must use only truthful rendered Portfolio counts and professional labels.');
         phase2Assert(!str_contains($rendered, 'javascript:alert') && str_contains($rendered, 'portfolio-project-card--fallback') && str_contains($rendered, 'portfolio-project-card--image') && !str_contains($rendered, 'portfolio-project-fallback-category') && substr_count($rendered, 'Data Science') === 1 && str_contains($rendered, 'action="/p/safe/contact#contact"') && str_contains($rendered, 'portfolio-project-fallback') && str_contains($rendered, 'src="/media/8"') && str_contains($rendered, 'alt="Image Project project preview" loading="lazy"') && str_contains($rendered, 'View on GitHub') && str_contains($rendered, 'aria-label="View &lt;Project&gt; on GitHub"'), 'S05 shared presentation accepted an unsafe URL, lost explicit image/fallback card states, rendered duplicate fallback metadata, the scoped contact action, real cover, or safe GitHub action.');
         phase2Assert(str_contains($rendered, 'portfolio-project-technologies') && str_contains($rendered, 'Python') && str_contains($rendered, 'Pandas') && str_contains($rendered, 'Scikit-learn') && str_contains($rendered, '&lt;script&gt;alert(1)&lt;/script&gt;') && !str_contains($rendered, 'XGBoost') && substr_count($rendered, 'portfolio-project-technologies') === 1, 'S05C Project card technologies must render only the first four escaped stored labels and omit absent rows.');
         $skillsPanel = preg_match('/<aside class="portfolio-skills-panel".*?<\/aside>/s', $rendered, $skillsMatch) === 1 ? $skillsMatch[0] : '';
@@ -118,9 +118,9 @@ final class PortfolioPresentationStaticTest
 
         phase2AssertSame([], portfolioPresentationHeroSocialActions(['website_url' => 'javascript:alert(1)'], ''), 'S02A Hero actions must reject unsafe URLs and omit unavailable actions.');
         phase2AssertSame([
-            ['key' => 'projects', 'value' => 3, 'label' => 'Projects Featured'],
+            ['key' => 'projects', 'value' => 3, 'label' => 'Projects'],
             ['key' => 'skills', 'value' => 2, 'label' => 'Core Skills'],
-            ['key' => 'categories', 'value' => 2, 'label' => 'Project Categories'],
+            ['key' => 'categories', 'value' => 2, 'label' => 'Focus Areas'],
         ], portfolioPresentationMetrics([
             ['category' => 'Data'],
             ['category' => ' data '],
@@ -130,12 +130,53 @@ final class PortfolioPresentationStaticTest
             ['skill_name' => ''],
             ['skill_name' => ' SQL '],
         ]), 'S04 metrics must count only actual projects, non-empty skills, and distinct project categories.');
+        phase2AssertSame([
+            ['key' => 'skills', 'value' => 1, 'label' => 'Core Skills'],
+        ], portfolioPresentationMetrics([], [
+            ['skill_name' => 'PHP'],
+        ]), 'S04 metrics must render the available single metric without fabricated values.');
+        phase2AssertSame([
+            ['key' => 'projects', 'value' => 2, 'label' => 'Projects'],
+            ['key' => 'categories', 'value' => 2, 'label' => 'Focus Areas'],
+        ], portfolioPresentationMetrics([
+            ['category' => 'Data'],
+            ['category' => 'Design'],
+        ], []), 'S04 metrics must render the available two metrics without an empty Skills metric.');
+        phase2AssertSame([
+            ['key' => 'projects', 'value' => 4, 'label' => 'Projects'],
+            ['key' => 'skills', 'value' => 1, 'label' => 'Core Skills'],
+            ['key' => 'categories', 'value' => 2, 'label' => 'Focus Areas'],
+        ], portfolioPresentationMetrics([
+            ['category' => 'Data'],
+            ['category' => 'Design'],
+            ['category' => 'Data'],
+            ['category' => 'Data'],
+        ], [
+            ['skill_name' => 'PHP'],
+        ]), 'S04 metrics must retain the truthful project count beyond the three displayed project cards.');
         phase2AssertSame([11, 12, 13], array_column(portfolioPresentationFeaturedProjects([
             ['id' => 11],
             ['id' => 12],
             ['id' => 13],
             ['id' => 14],
         ]), 'id'), 'S05 featured Projects must preserve the public display order and cap the row at three entries.');
+
+        ob_start();
+        renderPortfolioPresentation([
+            'full_name' => 'Overview Owner',
+            'about_me' => "First &lt;line&gt;\nSecond line",
+            'location' => '<Amman>',
+        ], [], [], ['preview' => true]);
+        $overviewRendered = ob_get_clean();
+        phase2Assert(is_string($overviewRendered) && str_contains($overviewRendered, 'Private preview') && str_contains($overviewRendered, '<h2 id="about-title">Professional Overview</h2>') && str_contains($overviewRendered, 'First &amp;lt;line&amp;gt;<br />') && str_contains($overviewRendered, 'Second line') && str_contains($overviewRendered, '<p class="portfolio-about-location">') && str_contains($overviewRendered, 'Based in &lt;Amman&gt;') && strpos($overviewRendered, 'Professional Overview') < strpos($overviewRendered, 'First &amp;lt;line&amp;gt;') && strpos($overviewRendered, 'First &amp;lt;line&amp;gt;') < strpos($overviewRendered, 'Based in &lt;Amman&gt;'), 'S04 About must preserve escaped line breaks, its controlled heading hierarchy, and dynamic secondary location metadata in the shared preview renderer.');
+        ob_start();
+        renderPortfolioPresentation(['full_name' => 'No Location', 'about_me' => 'Narrative', 'location' => ' '], [], []);
+        $noLocationRendered = ob_get_clean();
+        phase2Assert(is_string($noLocationRendered) && str_contains($noLocationRendered, 'Professional Overview') && !str_contains($noLocationRendered, 'portfolio-metrics') && !str_contains($noLocationRendered, 'portfolio-about-location') && !str_contains($noLocationRendered, 'Private preview'), 'S04 public rendering must omit empty metrics and location metadata while retaining the shared About section.');
+        ob_start();
+        renderPortfolioPresentation(['full_name' => 'No About', 'about_me' => " \n "], [], []);
+        $noAboutRendered = ob_get_clean();
+        phase2Assert(is_string($noAboutRendered) && !str_contains($noAboutRendered, '<section class="portfolio-section portfolio-about"'), 'S04 empty About content must omit the About section entirely.');
 
         ob_start();
         renderPortfolioPresentation(['full_name' => 'Preview Owner'], [], [], ['preview' => true]);
