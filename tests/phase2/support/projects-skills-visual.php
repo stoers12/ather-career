@@ -20,6 +20,11 @@ $projects = [
     ['id' => 2, 'title' => 'Research Platform', 'category' => 'Data Systems', 'description' => 'A reliable platform for collecting, reviewing, and sharing research findings across distributed stakeholders.', 'github_url' => '', 'image_path' => null, 'technologies' => ['Python', 'Pandas', 'PostgreSQL', 'Airflow']],
     ['id' => 3, 'title' => 'Client Portal', 'category' => 'Product Engineering', 'description' => 'A secure self-service experience that makes account work clear, approachable, and dependable for clients.', 'github_url' => '', 'image_path' => null, 'technologies' => ['Laravel', 'TypeScript', 'Tailwind CSS', 'REST APIs']],
 ];
+$additionalProjects = [
+    ['id' => 4, 'title' => 'Service Operations Hub', 'category' => 'Operations', 'description' => 'A dependable workflow for coordinating operational handoffs, shared service context, and accountable follow-through.', 'github_url' => 'https://github.example.test/service-operations', 'image_path' => null, 'technologies' => ['PHP', 'Redis', 'Docker', 'Monitoring']],
+    ['id' => 5, 'title' => 'Planning Workspace', 'category' => 'Product Engineering', 'description' => 'A clear planning workspace that connects priorities, delivery evidence, and practical decisions for teams.', 'github_url' => '', 'image_path' => null, 'technologies' => ['TypeScript', 'PostgreSQL', 'REST APIs', 'Accessibility']],
+    ['id' => 6, 'title' => 'Knowledge Library', 'category' => 'Data Systems', 'description' => 'A structured knowledge library that helps distributed teams find reliable, current operational guidance.', 'github_url' => '', 'image_path' => null, 'technologies' => ['Python', 'Search', 'Docker', 'Data Quality']],
+];
 $skills = [
     ['skill_name' => 'PHP'], ['skill_name' => 'Laravel'], ['skill_name' => 'TypeScript'], ['skill_name' => 'Product Design'],
     ['skill_name' => 'Data Analysis'], ['skill_name' => 'PostgreSQL'], ['skill_name' => 'Docker'], ['skill_name' => 'Accessibility'],
@@ -50,6 +55,14 @@ switch ($variant) {
         break;
     case 'two-projects':
         $projects = array_slice($projects, 0, 2);
+        break;
+    case 'four-projects':
+        $projects = [...$projects, $additionalProjects[0]];
+        $withImages([1, 4]);
+        break;
+    case 'six-projects':
+        $projects = [...$projects, ...$additionalProjects];
+        $withImages([1, 4, 6]);
         break;
     case 'projects-only':
         $skills = [];

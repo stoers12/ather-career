@@ -96,11 +96,11 @@ function portfolioPresentationHeroSocialActions(array $profile, string $emailAct
 }
 
 /** @return list<array<string, mixed>> */
-function portfolioPresentationFeaturedProjects(array $projects): array
+function portfolioPresentationProjects(array $projects): array
 {
-    // Public projects already arrive in the product's deterministic display
-    // order (created_at ASC, id ASC). There is no separate featured field.
-    return array_slice($projects, 0, 3);
+    // Scoped reads establish the deterministic display order. The navigator
+    // chooses a client-side window only after JavaScript is available.
+    return $projects;
 }
 
 function portfolioPresentationProjectFallbackIcon(): string
@@ -274,7 +274,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $socialLinks = portfolioPresentationSocialLinks($profile);
     $heroSocialActions = portfolioPresentationHeroSocialActions($profile, $emailAction);
     $metrics = portfolioPresentationMetrics($projects, $skills);
-    $featuredProjects = portfolioPresentationFeaturedProjects($projects);
+    $presentationProjects = portfolioPresentationProjects($projects);
     // Keep the public Experience data in a safe, presentation-ready shape so
     // the renderer does not need a second public query.
     $presentationExperiences = portfolioPresentationExperiences(
@@ -282,7 +282,8 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     );
     $experiencePaginationEnabled = count($presentationExperiences) > PORTFOLIO_EXPERIENCE_PAGE_SIZE;
     $initials = profileInitials($name) ?: 'P';
-    $showProjects = $projects !== [];
+    $showProjects = $presentationProjects !== [];
+    $projectNavigationAvailable = count($presentationProjects) > 1;
     $showSkills = $skills !== [];
     $showAbout = $aboutNarrative !== '';
     $profileMediaUrl = isset($options['profile_media_url']) && is_string($options['profile_media_url'])
@@ -439,8 +440,10 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
             <?php if ($showProjects): ?>
                 <section class="portfolio-projects" id="projects" aria-labelledby="projects-title">
                     <header class="portfolio-section-heading"><h2 id="projects-title">Featured Projects</h2></header>
-                    <div class="portfolio-project-grid">
-                        <?php foreach ($featuredProjects as $project):
+                    <div class="portfolio-project-navigator" data-project-navigator>
+                        <?php if ($projectNavigationAvailable): ?><button class="portfolio-project-navigation portfolio-project-navigation--previous" type="button" data-project-direction="previous" aria-label="Show previous projects" aria-controls="portfolio-project-list" hidden><?php echo portfolioPresentationActionIcon('arrow'); ?></button><?php endif; ?>
+                        <div class="portfolio-project-grid" id="portfolio-project-list">
+                        <?php foreach ($presentationProjects as $project):
                             $projectId = isset($project['id']) ? (int) $project['id'] : 0;
                             $projectTitle = isset($project['title']) ? trim((string) $project['title']) : 'Project';
                             $category = isset($project['category']) ? trim((string) $project['category']) : '';
@@ -466,6 +469,8 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                                 </div>
                             </article>
                         <?php endforeach; ?>
+                        </div>
+                        <?php if ($projectNavigationAvailable): ?><button class="portfolio-project-navigation portfolio-project-navigation--next" type="button" data-project-direction="next" aria-label="Show next projects" aria-controls="portfolio-project-list" hidden><?php echo portfolioPresentationActionIcon('arrow'); ?></button><?php endif; ?>
                     </div>
                 </section>
             <?php endif; ?>

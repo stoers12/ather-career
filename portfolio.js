@@ -112,6 +112,78 @@
         });
     };
 
+    const initializeProjectNavigator = () => {
+        document.querySelectorAll('[data-project-navigator]').forEach((navigator) => {
+            if (!(navigator instanceof HTMLElement)) {
+                return;
+            }
+
+            const list = navigator.querySelector('.portfolio-project-grid');
+            const previous = navigator.querySelector('[data-project-direction="previous"]');
+            const next = navigator.querySelector('[data-project-direction="next"]');
+            const cards = list instanceof HTMLElement
+                ? Array.from(list.querySelectorAll(':scope > .portfolio-project-card'))
+                : [];
+
+            if (!(list instanceof HTMLElement)
+                || !(previous instanceof HTMLButtonElement)
+                || !(next instanceof HTMLButtonElement)
+                || cards.length < 2) {
+                return;
+            }
+
+            let start = 0;
+            const visibleCount = () => {
+                if (window.matchMedia('(max-width: 620px)').matches) {
+                    return 1;
+                }
+                return window.matchMedia('(max-width: 1100px)').matches ? 2 : 3;
+            };
+            const renderWindow = () => {
+                const count = visibleCount();
+                const maximumStart = Math.max(0, cards.length - count);
+                start = Math.min(start, maximumStart);
+
+                if (cards.length <= count) {
+                    cards.forEach((card) => {
+                        card.hidden = false;
+                    });
+                    navigator.classList.remove('portfolio-project-navigator--active');
+                    list.style.removeProperty('--portfolio-project-visible-count');
+                    previous.hidden = true;
+                    next.hidden = true;
+                    return;
+                }
+
+                const end = start + count;
+                cards.forEach((card, index) => {
+                    card.hidden = index < start || index >= end;
+                });
+                list.style.setProperty('--portfolio-project-visible-count', String(count));
+                navigator.classList.add('portfolio-project-navigator--active');
+                previous.hidden = start === 0;
+                next.hidden = start === maximumStart;
+            };
+
+            navigator.addEventListener('click', (event) => {
+                const button = event.target instanceof Element ? event.target.closest('[data-project-direction]') : null;
+                if (!(button instanceof HTMLButtonElement) || !navigator.contains(button)) {
+                    return;
+                }
+
+                const maximumStart = Math.max(0, cards.length - visibleCount());
+                const nextStart = button.dataset.projectDirection === 'next' ? start + 1 : start - 1;
+                if (nextStart < 0 || nextStart > maximumStart) {
+                    return;
+                }
+                start = nextStart;
+                renderWindow();
+            });
+            renderWindow();
+            window.addEventListener('resize', renderWindow);
+        });
+    };
+
     const initializeExperiencePagination = () => {
         document.querySelectorAll('.portfolio-experience-list[data-experience-page-size]').forEach((list) => {
             if (!(list instanceof HTMLOListElement)) {
@@ -254,6 +326,7 @@
     const initializePortfolio = () => {
         initializePortfolioScrollspy();
         initializePortfolioSkills();
+        initializeProjectNavigator();
         initializeExperiencePagination();
         initializePortfolioMobileNavigation();
     };

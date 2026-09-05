@@ -242,7 +242,7 @@ function listAuthorizedProjects(PDO $database, AuthorizedPortfolioContext $conte
         'SELECT id, title, category, description, github_url, image_path, technologies, created_at
          FROM projects
          WHERE portfolio_id = :authorized_portfolio_id
-         ORDER BY created_at ASC, id ASC'
+         ORDER BY created_at DESC, id DESC'
     );
     $statement->execute(['authorized_portfolio_id' => $context->portfolioId]);
 
