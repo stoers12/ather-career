@@ -223,7 +223,9 @@ function loadPublicPersonalInfo(PDO $database, PublicReadContext $context): ?arr
 {
     $statement = $database->prepare(
         'SELECT full_name, professional_title, hero_headline, location, about_me, work_description,
-                linkedin_url, github_url, instagram_url, facebook_url, website_url, profile_image_path
+                linkedin_url, github_url, instagram_url, facebook_url, website_url, profile_image_path,
+                CASE WHEN public_contact_visible = 1 THEN email ELSE NULL END AS email,
+                CASE WHEN public_contact_visible = 1 THEN phone_primary ELSE NULL END AS phone_primary
          FROM personal_info
          WHERE portfolio_id = :public_portfolio_id
          LIMIT 1'

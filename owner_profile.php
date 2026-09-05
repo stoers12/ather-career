@@ -21,6 +21,7 @@ $fields = [
 ];
 $profile = array_fill_keys($fields, '');
 $profile['profile_image_path'] = null;
+$profile['public_contact_visible'] = false;
 $skills = [];
 $errors = [];
 $message = '';
@@ -115,6 +116,10 @@ ownerLayoutStart('Personal Info', 'profile');
         <?php foreach (['email' => 'Email', 'phone_primary' => 'Primary Phone', 'phone_secondary' => 'Secondary Phone', 'location' => 'Location'] as $field => $label): ?>
             <label class="form-field" for="<?php echo $field; ?>"><span><?php echo $label; ?></span><input type="<?php echo $field === 'email' ? 'email' : 'text'; ?>" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo ownerEscapeHtml((string) $profile[$field]); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS[$field]; ?>"></label>
         <?php endforeach; ?>
+        <div class="form-field-full">
+            <label class="checkbox-field" for="public_contact_visible"><input type="checkbox" id="public_contact_visible" name="public_contact_visible" value="1" aria-describedby="public-contact-help"<?php echo !empty($profile['public_contact_visible']) ? ' checked' : ''; ?>>Show my phone and email on my public Portfolio.</label>
+            <p class="form-hint" id="public-contact-help">When enabled, visitors can see your primary phone and profile email. Private Preview always shows your saved contact details.</p>
+        </div>
         <h2 class="form-section-title">About Me</h2>
         <label class="form-field form-field-full" for="about_me"><span>About Me</span><textarea id="about_me" name="about_me"><?php echo ownerEscapeHtml((string) $profile['about_me']); ?></textarea></label>
         <label class="form-field form-field-full" for="work_description"><span>Professional summary <em>(optional)</em></span><textarea id="work_description" name="work_description" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS['work_description']; ?>" aria-describedby="professional-summary-help"><?php echo ownerEscapeHtml((string) $profile['work_description']); ?></textarea><small id="professional-summary-help" class="form-hint">Add supporting context for your public Hero.</small></label>

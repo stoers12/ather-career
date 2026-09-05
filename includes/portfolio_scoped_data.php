@@ -22,6 +22,7 @@ const AUTHORIZED_PERSONAL_INFO_FIELDS = [
     'facebook_url',
     'website_url',
     'profile_image_path',
+    'public_contact_visible',
 ];
 
 /** @return array<string, mixed> */
@@ -37,6 +38,13 @@ function authorizedPersonalInfoValues(array $values): array
 
     $normalized = [];
     foreach ($values as $field => $value) {
+        if ($field === 'public_contact_visible') {
+            if (!in_array($value, [true, false, 0, 1], true)) {
+                throw new InvalidArgumentException('Contact visibility must be a boolean.');
+            }
+            $normalized[$field] = (int) $value;
+            continue;
+        }
         if (!is_string($value) && $value !== null) {
             throw new InvalidArgumentException("Personal information field {$field} is invalid.");
         }
@@ -56,7 +64,7 @@ function findAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext $c
     $statement = $database->prepare(
         'SELECT id, full_name, professional_title, hero_headline, email, phone_primary, phone_secondary,
                 location, about_me, work_description, linkedin_url, github_url,
-                instagram_url, facebook_url, website_url, profile_image_path, updated_at
+                instagram_url, facebook_url, website_url, profile_image_path, public_contact_visible, updated_at
          FROM personal_info
          WHERE id = :resource_id
            AND portfolio_id = :authorized_portfolio_id
@@ -77,7 +85,7 @@ function loadAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext $c
     $statement = $database->prepare(
         'SELECT id, full_name, professional_title, hero_headline, email, phone_primary, phone_secondary,
                 location, about_me, work_description, linkedin_url, github_url,
-                instagram_url, facebook_url, website_url, profile_image_path, updated_at
+                instagram_url, facebook_url, website_url, profile_image_path, public_contact_visible, updated_at
          FROM personal_info
          WHERE portfolio_id = :authorized_portfolio_id
          LIMIT 1'

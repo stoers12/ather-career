@@ -29,6 +29,16 @@ function portfolioPresentationHeroHeadline(array $profile): string
     return 'Portfolio';
 }
 
+function portfolioPresentationPhoneAction(string $phone): string
+{
+    // Only conventional numeric formatting is dialable; keep other input as text.
+    if (preg_match('/^\+?(?:[0-9]+|\([0-9]+\))(?:[ .-]?(?:[0-9]+|\([0-9]+\)))*$/D', $phone) !== 1) {
+        return '';
+    }
+    $number = str_replace([' ', '.', '-', '(', ')'], '', $phone);
+    return preg_match('/^\+?[0-9]{7,15}$/D', $number) === 1 ? 'tel:' . $number : '';
+}
+
 /** @return list<array{label: string, url: string}> */
 function portfolioPresentationSocialLinks(array $profile): array
 {
@@ -256,7 +266,9 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $heroSummary = $workDescription;
     $aboutNarrative = $aboutMe;
     $email = portfolioPresentationValue($profile, 'email');
-    $emailAction = filter_var($email, FILTER_VALIDATE_EMAIL) !== false ? 'mailto:' . $email : '';
+    $emailAction = filter_var($email, FILTER_VALIDATE_EMAIL) !== false ? 'mailto:' . str_replace('%40', '@', rawurlencode($email)) : '';
+    $phone = portfolioPresentationValue($profile, 'phone_primary');
+    $phoneAction = portfolioPresentationPhoneAction($phone);
     $socialLinks = portfolioPresentationSocialLinks($profile);
     $heroSocialActions = portfolioPresentationHeroSocialActions($profile, $emailAction);
     $metrics = portfolioPresentationMetrics($projects, $skills);
@@ -383,6 +395,17 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                     <div class="portfolio-hero-profile-details">
                         <h2><?php echo portfolioPresentationEscape($name); ?></h2>
                         <?php if ($location !== ''): ?><p class="portfolio-hero-profile-location"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20s6-5.1 6-11a6 6 0 1 0-12 0c0 5.9 6 11 6 11Z"/><circle cx="12" cy="9" r="2"/></svg><?php echo portfolioPresentationEscape($location); ?></p><?php endif; ?>
+                        <?php if ($phone !== '' || $email !== ''): ?>
+                            <div class="portfolio-hero-profile-contact">
+                                <?php foreach ([['Phone', $phone, $phoneAction], ['Email', $email, $emailAction]] as [$label, $value, $action]): ?>
+                                    <?php if ($value === '') continue; ?>
+                                    <div class="portfolio-hero-profile-contact-row">
+                                        <?php if ($label === 'Email'): ?><?php echo portfolioPresentationSocialIcon('Email'); ?><?php else: ?><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2C10 21 3 14 3 5a2 2 0 0 1 2-2Z"/></svg><?php endif; ?>
+                                        <div><small><?php echo $label; ?></small><?php if ($action !== ''): ?><a dir="ltr" href="<?php echo portfolioPresentationEscape($action); ?>" aria-label="<?php echo portfolioPresentationEscape($label . ': ' . $value); ?>"><?php echo portfolioPresentationEscape($value); ?></a><?php else: ?><span dir="ltr"><?php echo portfolioPresentationEscape($value); ?></span><?php endif; ?></div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </article>
             </div>

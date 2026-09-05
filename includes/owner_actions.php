@@ -71,6 +71,10 @@ function handleAuthorizedProfileAction(
         }
 
         if ($action === 'save_profile') {
+            $profile['public_contact_visible'] = ($post['public_contact_visible'] ?? null) === '1';
+            if (isset($post['public_contact_visible']) && $post['public_contact_visible'] !== '1') {
+                $errors[] = 'Please select a valid contact visibility option.';
+            }
             foreach ($fields as $field) {
                 $profile[$field] = isset($post[$field]) && is_string($post[$field]) ? trim($post[$field]) : '';
             }
@@ -106,6 +110,7 @@ function handleAuthorizedProfileAction(
                 $values[$field] = $profile[$field];
             }
             $values['profile_image_path'] = $target['profile_image_path'] ?? null;
+            $values['public_contact_visible'] = $profile['public_contact_visible'];
 
             if ($target === null) {
                 createAuthorizedPersonalInfo($database, $context, $values);
