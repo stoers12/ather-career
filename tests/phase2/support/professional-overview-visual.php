@@ -40,9 +40,6 @@ switch ($variant) {
         $profile['about_me'] = "I help multidisciplinary teams make consequential decisions with evidence, care, and a practical understanding of how people use technology in complex environments.\nThe work brings together product strategy, accessible interface design, dependable engineering practices, and continuous learning from customers across long-running programmes.";
         $profile['location'] = 'Amman, Jordan — serving distributed teams across the Middle East and Europe';
         break;
-    case 'no-location':
-        $profile['location'] = '';
-        break;
     case 'no-about':
         $profile['about_me'] = '';
         break;

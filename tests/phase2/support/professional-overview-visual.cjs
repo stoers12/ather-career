@@ -12,12 +12,11 @@ if (!output) throw new Error('A screenshot output directory is required.');
 fs.mkdirSync(output, { recursive: true });
 
 const expectations = {
-    full: { metrics: 3, about: true, location: true },
-    one: { metrics: 1, about: true, location: true },
-    two: { metrics: 2, about: true, location: true },
-    long: { metrics: 3, about: true, location: true },
-    'no-location': { metrics: 3, about: true, location: false },
-    'no-about': { metrics: 3, about: false, location: false },
+    full: { metrics: 3, about: true },
+    one: { metrics: 1, about: true },
+    two: { metrics: 2, about: true },
+    long: { metrics: 3, about: true },
+    'no-about': { metrics: 3, about: false },
 };
 
 (async () => {
@@ -40,7 +39,8 @@ const expectations = {
                 const about = page.locator('.portfolio-about');
                 assert.equal(await metrics.count(), expected.metrics, `${width}/${variant}: metric count`);
                 assert.equal(await about.count(), expected.about ? 1 : 0, `${width}/${variant}: About visibility`);
-                assert.equal(await page.locator('.portfolio-about-location').count(), expected.location ? 1 : 0, `${width}/${variant}: location visibility`);
+                assert.equal(await page.locator('.portfolio-about-location').count(), 0, `${width}/${variant}: duplicate About location`);
+                assert.equal(await page.locator('.portfolio-hero-profile-location').count(), 1, `${width}/${variant}: Hero location visibility`);
                 assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${width}/${variant}: page overflow`);
 
                 if (expected.metrics > 0) {
@@ -59,6 +59,7 @@ const expectations = {
                 if (expected.about) {
                     const heading = page.locator('.portfolio-about-heading');
                     const copy = page.locator('.portfolio-about-copy');
+                    assert(!(await about.textContent()).includes('Based in '), `${width}/${variant}: duplicate About location text`);
                     const headingBox = await heading.evaluate(node => node.getBoundingClientRect());
                     const copyBox = await copy.evaluate(node => node.getBoundingClientRect());
                     if (width >= 768) {
