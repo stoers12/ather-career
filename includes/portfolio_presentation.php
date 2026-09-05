@@ -459,7 +459,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                                     <h3><?php echo portfolioPresentationEscape($projectTitle); ?></h3>
                                     <?php if (isset($project['description']) && trim((string) $project['description']) !== ''): ?><p class="portfolio-project-description"><?php echo nl2br(portfolioPresentationEscape($project['description'])); ?></p><?php endif; ?>
                                     <?php if ($projectTechnologies !== []): ?><ul class="portfolio-project-technologies" aria-label="Technologies used"><?php foreach ($projectTechnologies as $technology): ?><li><?php echo portfolioPresentationEscape($technology); ?></li><?php endforeach; ?></ul><?php endif; ?>
-                                    <?php if ($projectLink !== null): ?><a class="portfolio-project-link" href="<?php echo portfolioPresentationEscape($projectLink); ?>" rel="noopener noreferrer" aria-label="View <?php echo portfolioPresentationEscape($projectTitle); ?> on GitHub">View on GitHub <span aria-hidden="true">↗</span></a><?php endif; ?>
+                                    <?php if ($projectLink !== null): ?><a class="portfolio-project-link" href="<?php echo portfolioPresentationEscape($projectLink); ?>" rel="noopener noreferrer" aria-label="View <?php echo portfolioPresentationEscape($projectTitle); ?> on GitHub">View on GitHub <?php echo portfolioPresentationSocialIcon('GitHub'); ?></a><?php endif; ?>
                                 </div>
                             </article>
                         <?php endforeach; ?>
@@ -471,7 +471,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                 <section class="portfolio-skills-region" id="skills" aria-labelledby="portfolio-skills-heading">
                     <header class="portfolio-section-heading portfolio-skills-heading"><h2 id="portfolio-skills-heading">Skills &amp; Technologies</h2></header>
                     <div class="portfolio-skills-panel">
-                        <ul class="portfolio-skills-list"><?php foreach ($skills as $skill): $skillName = isset($skill['skill_name']) ? trim((string) $skill['skill_name']) : ''; ?><?php if ($skillName !== ''): ?><li><span class="portfolio-skill-tag"><?php echo portfolioPresentationEscape($skillName); ?></span></li><?php endif; ?><?php endforeach; ?></ul>
+                        <ul class="portfolio-skills-list"><?php foreach ($skills as $skill): $skillName = isset($skill['skill_name']) ? trim((string) $skill['skill_name']) : ''; ?><?php if ($skillName !== ''): ?><li><button class="portfolio-skill-control" type="button" aria-pressed="false"><?php echo portfolioPresentationEscape($skillName); ?></button></li><?php endif; ?><?php endforeach; ?></ul>
                     </div>
                 </section>
             <?php endif; ?>

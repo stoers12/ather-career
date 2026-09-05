@@ -10,6 +10,7 @@ const root = path.resolve(__dirname, '../../..');
 const output = process.argv[2];
 if (!output) throw new Error('A screenshot output directory is required.');
 fs.mkdirSync(output, { recursive: true });
+const portfolioScript = fs.readFileSync(path.join(root, 'portfolio.js'), 'utf8');
 
 const expectations = {
     'fallback-many': { projects: 3, images: 0, skills: 12, links: 1 },
@@ -28,9 +29,30 @@ const projectSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height=
 (async () => {
     const browser = await chromium.launch({ headless: true });
     try {
+        const multiplePanelsPage = await browser.newPage();
+        const multiplePanelsErrors = [];
+        multiplePanelsPage.on('pageerror', error => multiplePanelsErrors.push(error));
+        await multiplePanelsPage.setContent(`
+            <ul class="portfolio-skills-list"><li><button class="portfolio-skill-control" type="button" aria-pressed="false">First panel</button></li></ul>
+            <ul class="portfolio-skills-list"><li><button class="portfolio-skill-control" type="button" aria-pressed="false">Second panel</button></li></ul>
+            <script>${portfolioScript}</script>
+        `);
+        const firstPanelSkill = multiplePanelsPage.locator('.portfolio-skills-list').nth(0).locator('.portfolio-skill-control');
+        const secondPanelSkill = multiplePanelsPage.locator('.portfolio-skills-list').nth(1).locator('.portfolio-skill-control');
+        await firstPanelSkill.click();
+        assert.equal(await firstPanelSkill.getAttribute('aria-pressed'), 'true', 'multiple panels: first panel selection');
+        assert.equal(await secondPanelSkill.getAttribute('aria-pressed'), 'false', 'multiple panels: selection must stay scoped');
+        await secondPanelSkill.click();
+        assert.equal(await firstPanelSkill.getAttribute('aria-pressed'), 'true', 'multiple panels: first panel selection remains independent');
+        assert.equal(await secondPanelSkill.getAttribute('aria-pressed'), 'true', 'multiple panels: second panel selection');
+        assert.deepEqual(multiplePanelsErrors, [], 'multiple panels: JavaScript errors');
+        await multiplePanelsPage.close();
+
         for (const width of [1440, 768, 360]) {
             for (const [variant, expected] of Object.entries(expectations)) {
                 const page = await browser.newPage({ viewport: { width, height: 1000 } });
+                const pageErrors = [];
+                page.on('pageerror', error => pageErrors.push(error));
                 const html = execFileSync('php', [path.join(__dirname, 'projects-skills-visual.php'), variant], { encoding: 'utf8' });
                 await page.route('http://work.test/**', route => {
                     const url = new URL(route.request().url());
@@ -44,7 +66,7 @@ const projectSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height=
                 await page.goto('http://work.test/');
 
                 const cards = page.locator('.portfolio-project-card');
-                const skills = page.locator('.portfolio-skill-tag');
+                const skills = page.locator('.portfolio-skill-control');
                 const projectGrid = page.locator('.portfolio-project-grid');
                 const skillsPanel = page.locator('.portfolio-skills-panel');
                 assert.equal(await cards.count(), expected.projects, `${width}/${variant}: project count`);
@@ -52,9 +74,12 @@ const projectSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height=
                 assert.equal(await page.locator('.portfolio-project-card--fallback').count(), expected.projects - expected.images, `${width}/${variant}: fallback count`);
                 assert.equal(await page.locator('.portfolio-project-card--fallback .portfolio-project-visual').count(), 0, `${width}/${variant}: fallback visual band`);
                 assert.equal(await skills.count(), expected.skills, `${width}/${variant}: skill count`);
-                assert.equal(await page.locator('.portfolio-skill-control, .portfolio-skills-list button').count(), 0, `${width}/${variant}: fake skill interaction`);
+                assert.equal(await page.locator('.portfolio-skill-control[type="button"][aria-pressed="false"]').count(), expected.skills, `${width}/${variant}: initial skill button semantics`);
                 assert.equal(await page.locator('.portfolio-project-link').count(), expected.links, `${width}/${variant}: validated GitHub actions`);
                 assert.equal(await page.locator('a[href^="javascript:"]').count(), 0, `${width}/${variant}: unsafe link`);
+                assert.equal(await page.locator('.portfolio-project-link svg[aria-hidden="true"]').count(), expected.links, `${width}/${variant}: GitHub icon`);
+                assert.equal(await page.locator('.portfolio-project-link').evaluateAll(links => links.some(link => link.textContent.includes('↗'))), false, `${width}/${variant}: obsolete project-link arrow`);
+                assert.equal(await page.locator('.portfolio-project-technologies button').count(), 0, `${width}/${variant}: interactive project technology tags`);
                 assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${width}/${variant}: page overflow`);
 
                 if (expected.projects > 0) {
@@ -100,6 +125,37 @@ const projectSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height=
                 const workBox = await work.evaluate(node => node.getBoundingClientRect());
                 await page.setViewportSize({ width, height: Math.max(1000, Math.ceil(workBox.bottom) + 12) });
                 await work.screenshot({ path: path.join(output, `${width}-${variant}.png`) });
+
+                if (expected.skills > 0) {
+                    const firstSkill = skills.first();
+                    await firstSkill.click();
+                    assert.equal(await firstSkill.getAttribute('aria-pressed'), 'true', `${width}/${variant}: first skill selection`);
+                    if (expected.skills > 1) {
+                        const secondSkill = skills.nth(1);
+                        await secondSkill.click();
+                        assert.equal(await firstSkill.getAttribute('aria-pressed'), 'false', `${width}/${variant}: previous skill reset`);
+                        assert.equal(await secondSkill.getAttribute('aria-pressed'), 'true', `${width}/${variant}: next skill selection`);
+                        await secondSkill.click();
+                        assert.equal(await secondSkill.getAttribute('aria-pressed'), 'false', `${width}/${variant}: active skill deselection`);
+                    }
+                    await firstSkill.focus();
+                    await page.keyboard.press('Enter');
+                    assert.equal(await firstSkill.getAttribute('aria-pressed'), 'true', `${width}/${variant}: Enter selection`);
+                    await page.keyboard.press('Space');
+                    assert.equal(await firstSkill.getAttribute('aria-pressed'), 'false', `${width}/${variant}: Space deselection`);
+                    if (width === 1440 && variant === 'fallback-many') {
+                        await firstSkill.click();
+                        await firstSkill.evaluate(node => node.blur());
+                        await work.screenshot({ path: path.join(output, '1440-fallback-many-selected.png') });
+                    }
+                    if (width === 360 && variant === 'long') {
+                        const longSkill = skills.last();
+                        await longSkill.click();
+                        await longSkill.evaluate(node => node.blur());
+                        await work.screenshot({ path: path.join(output, '360-long-selected.png') });
+                    }
+                }
+                assert.deepEqual(pageErrors, [], `${width}/${variant}: JavaScript errors`);
                 console.log(`PASS projects and skills ${width}/${variant}`);
                 await page.close();
             }
