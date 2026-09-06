@@ -14,6 +14,7 @@ require_once __DIR__ . '/../tests/phase2/cases/IdentitySessionContractTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OwnershipMigrationStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OwnerFlowStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PublicLifecycleStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/PublicUrlConfigurationTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PublicContactStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PortfolioPresentationStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/HeroPersonalInfoCapabilityTest.php';
@@ -38,6 +39,7 @@ $tests = [
     'ownership migration static contract' => [OwnershipMigrationStaticTest::class, 'run'],
     'owner flow static contract' => [OwnerFlowStaticTest::class, 'run'],
     'public lifecycle static contract' => [PublicLifecycleStaticTest::class, 'run'],
+    'public URL configuration and publication presentation contract' => [PublicUrlConfigurationTest::class, 'run'],
     'public contact static contract' => [PublicContactStaticTest::class, 'run'],
     'shared Portfolio presentation contract' => [PortfolioPresentationStaticTest::class, 'run'],
     'Hero Personal Info capability contract' => [HeroPersonalInfoCapabilityTest::class, 'run'],

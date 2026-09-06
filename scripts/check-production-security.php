@@ -9,6 +9,7 @@ require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/admin_session.php';
 require_once __DIR__ . '/../includes/storage.php';
 require_once __DIR__ . '/../includes/auth0_oidc.php';
+require_once __DIR__ . '/../includes/public_url.php';
 
 function productionSecurityDirectiveIsEnabled(string $name): bool
 {
@@ -17,6 +18,12 @@ function productionSecurityDirectiveIsEnabled(string $name): bool
 
 $failures = [];
 $failures = array_merge($failures, auth0ProductionConfigurationFailures());
+
+try {
+    publicBaseUrl();
+} catch (PublicUrlConfigurationException) {
+    $failures[] = 'PUBLIC_BASE_URL must be configured as a valid HTTPS origin.';
+}
 
 if (getenv('APP_ENV') === 'test' || getenv('ATHERCAR_TEST_MODE') === '1') {
     $failures[] = 'test-mode configuration is forbidden in production.';

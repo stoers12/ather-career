@@ -228,6 +228,24 @@
         showToast(message.textContent.trim(), message.classList.contains('error') ? 'error' : 'success');
     });
 
+    document.querySelectorAll('[data-copy-public-url]').forEach(function (button) {
+        var publicUrl = document.getElementById(button.getAttribute('data-copy-public-url'));
+        var feedback = document.getElementById('publication-copy-feedback');
+        if (!publicUrl || !feedback || !navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+            return;
+        }
+        button.hidden = false;
+        button.addEventListener('click', function () {
+            navigator.clipboard.writeText(publicUrl.textContent.trim()).then(function () {
+                feedback.textContent = 'Portfolio link copied.';
+                feedback.classList.remove('error');
+            }).catch(function () {
+                feedback.textContent = 'Copying the Portfolio link failed. Select and copy the link manually.';
+                feedback.classList.add('error');
+            });
+        });
+    });
+
     var projectSearch = document.querySelector('[data-project-search]');
     if (projectSearch) {
         projectSearch.addEventListener('input', function () {
