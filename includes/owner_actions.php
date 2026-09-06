@@ -290,7 +290,7 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
 }
 
 /** @return array{errors: list<string>, form_mode: string, editing_experience: array<string, mixed>, redirect: string|null} */
-function handleAuthorizedExperienceAction(PDO $database, AuthorizedPortfolioContext $context, array $post): array
+function handleAuthorizedExperienceAction(PDO $database, AuthorizedPortfolioContext $context, array $post, ?string $referenceMonth = null): array
 {
     $action = isset($post['action']) && is_string($post['action']) ? $post['action'] : '';
 
@@ -312,7 +312,7 @@ function handleAuthorizedExperienceAction(PDO $database, AuthorizedPortfolioCont
 
         $formMode = $action === 'update' ? 'edit' : 'add';
         $editingExperience = experienceFormValues($post);
-        $errors = validateExperienceValues($editingExperience);
+        $errors = validateExperienceValues($editingExperience, $referenceMonth);
         $experienceId = $action === 'update' ? experienceActionId($post['id'] ?? null) : null;
         if ($action === 'update' && $experienceId === null) {
             $errors[] = 'Please provide a valid experience record ID.';
@@ -325,12 +325,12 @@ function handleAuthorizedExperienceAction(PDO $database, AuthorizedPortfolioCont
         }
 
         if ($action === 'add') {
-            createAuthorizedExperience($database, $context, $editingExperience);
+            createAuthorizedExperience($database, $context, $editingExperience, $referenceMonth);
             setExperienceSuccessFlash('Experience record added successfully.');
             return experienceActionResult([], 'add', null, 'owner_experiences.php');
         }
 
-        if (!updateAuthorizedExperience($database, $context, $experienceId, $editingExperience)) {
+        if (!updateAuthorizedExperience($database, $context, $experienceId, $editingExperience, $referenceMonth)) {
             return experienceActionResult(['Experience record not found.'], $formMode, $editingExperience);
         }
 

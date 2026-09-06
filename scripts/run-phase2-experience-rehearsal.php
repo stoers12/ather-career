@@ -15,6 +15,7 @@ require_once __DIR__ . '/../includes/portfolio_scoped_data.php';
 require_once __DIR__ . '/../includes/public_lifecycle.php';
 
 const EXPERIENCE_REHEARSAL_ISSUER = 'https://issuer.test/ather-career';
+const EXPERIENCE_REHEARSAL_REFERENCE_MONTH = '2026-09';
 
 function experienceRehearsalRunPhp(array $arguments): void
 {
@@ -85,7 +86,7 @@ function experienceRehearsalValues(string $roleTitle, bool $isCurrent, string $s
 /** @param array<string, mixed> $post */
 function experienceRehearsalAction(PDO $database, AuthorizedPortfolioContext $context, array $post): array
 {
-    return handleAuthorizedExperienceAction($database, $context, $post);
+    return handleAuthorizedExperienceAction($database, $context, $post, EXPERIENCE_REHEARSAL_REFERENCE_MONTH);
 }
 
 $environment = null;
@@ -155,9 +156,20 @@ try {
     phase2Assert($invalidRange['errors'] !== [], 'Earlier Experience end month was accepted by the owner action.');
     $missingEnd = experienceRehearsalAction($database, $contextA, ['action' => 'add', ...experienceRehearsalValues('Missing End', false, '2025-06')]);
     phase2Assert($missingEnd['errors'] !== [], 'Ended Experience without an end month was accepted by the owner action.');
+    $futureStart = experienceRehearsalAction($database, $contextA, ['action' => 'add', ...experienceRehearsalValues('Future Start', false, '2026-10', '2026-10')]);
+    phase2Assert($futureStart['errors'] !== [], 'Future Experience start month was accepted by direct POST.');
+    $futureEnd = experienceRehearsalAction($database, $contextA, ['action' => 'add', ...experienceRehearsalValues('Future End', false, '2026-08', '2026-10')]);
+    phase2Assert($futureEnd['errors'] !== [], 'Future Experience end month was accepted by direct POST.');
+    $malformedStart = experienceRehearsalAction($database, $contextA, ['action' => 'add', ...experienceRehearsalValues('Malformed Start', false, '2026/08', '2026-09')]);
+    phase2Assert($malformedStart['errors'] !== [], 'Malformed Experience start month was accepted by direct POST.');
+    $malformedEnd = experienceRehearsalAction($database, $contextA, ['action' => 'add', ...experienceRehearsalValues('Malformed End', false, '2026-08', '2026/09')]);
+    phase2Assert($malformedEnd['errors'] !== [], 'Malformed Experience end month was accepted by direct POST.');
+    $contradictoryCurrent = experienceRehearsalAction($database, $contextA, ['action' => 'add', ...experienceRehearsalValues('Contradictory Current', true, '2025-06', '2026-01')]);
+    phase2Assert($contradictoryCurrent['errors'] !== [], 'Current Experience with an end month was accepted by direct POST.');
+    phase2AssertSame(0, count(listAuthorizedExperiences($database, $contextA)), 'Invalid Experience creates wrote database rows.');
     $passed[] = 'T-EXPERIENCE-VALIDATION';
 
-    $createCurrent = experienceRehearsalAction($database, $contextA, ['action' => 'add', ...experienceRehearsalValues('A Current', true, '2025-06', '2028-01')]);
+    $createCurrent = experienceRehearsalAction($database, $contextA, ['action' => 'add', ...experienceRehearsalValues('A Current', true, '2025-06')]);
     phase2AssertSame('owner_experiences.php', $createCurrent['redirect'], 'Current Experience creation did not PRG.');
     $currentRows = listAuthorizedExperiences($database, $contextA);
     phase2AssertSame(1, count($currentRows), 'Owned Experience record did not persist.');
@@ -172,20 +184,36 @@ try {
     ]);
     phase2AssertSame('owner_experiences.php', $endCurrent['redirect'], 'Ending an Experience did not PRG.');
     phase2AssertSame('2026-01', findAuthorizedExperience($database, $contextA, $currentId)['end_month'] ?? null, 'Ending an Experience did not persist its end month.');
+    $beforeInvalidUpdate = findAuthorizedExperience($database, $contextA, $currentId);
+    $invalidUpdate = experienceRehearsalAction($database, $contextA, [
+        'action' => 'update',
+        'id' => (string) $currentId,
+        ...experienceRehearsalValues('Changed by invalid update', true, '2025-06', '2027-01'),
+    ]);
+    phase2Assert($invalidUpdate['errors'] !== [], 'Contradictory current Experience update was accepted.');
+    phase2AssertSame($beforeInvalidUpdate, findAuthorizedExperience($database, $contextA, $currentId), 'Invalid Experience update changed the persisted row.');
     $restoreCurrent = experienceRehearsalAction($database, $contextA, [
         'action' => 'update',
         'id' => (string) $currentId,
-        ...experienceRehearsalValues('A Current', true, '2025-06', '2027-01'),
+        ...experienceRehearsalValues('A Current', true, '2025-06'),
     ]);
     phase2AssertSame('owner_experiences.php', $restoreCurrent['redirect'], 'Restoring a current Experience did not PRG.');
-    phase2AssertSame(null, findAuthorizedExperience($database, $contextA, $currentId)['end_month'] ?? null, 'Current-state transition left a hidden stale end month.');
+    phase2AssertSame(null, findAuthorizedExperience($database, $contextA, $currentId)['end_month'] ?? null, 'Current-state transition left a stale end month.');
 
     $createEnded = experienceRehearsalAction($database, $contextA, ['action' => 'add', ...experienceRehearsalValues('A Ended', false, '2026-01', '2026-02')]);
     phase2AssertSame('owner_experiences.php', $createEnded['redirect'], 'Ended Experience creation did not PRG.');
     $endedRows = array_values(array_filter(listAuthorizedExperiences($database, $contextA), static fn (array $record): bool => $record['role_title'] === 'A Ended'));
     phase2AssertSame(1, count($endedRows), 'Ended Experience record did not persist.');
+    $tieOlderId = createAuthorizedExperience($database, $contextA, experienceRehearsalValues('A Tie Older ID', false, '2024-08', '2024-09'), EXPERIENCE_REHEARSAL_REFERENCE_MONTH);
+    $tieNewerId = createAuthorizedExperience($database, $contextA, experienceRehearsalValues('A Tie Newer ID', false, '2024-08', '2024-10'), EXPERIENCE_REHEARSAL_REFERENCE_MONTH);
+    phase2Assert($tieNewerId > $tieOlderId, 'Experience tie-break fixture IDs were not monotonic.');
+    phase2AssertSame(
+        ['A Ended', 'A Current', 'A Tie Newer ID', 'A Tie Older ID'],
+        array_column(listAuthorizedExperiences($database, $contextA), 'role_title'),
+        'Owner Experience ordering is not start-month descending with an ID-descending tie-breaker.',
+    );
 
-    $experienceB = createAuthorizedExperience($database, $contextB, experienceRehearsalValues('B Private', false, '2024-01', '2024-06'));
+    $experienceB = createAuthorizedExperience($database, $contextB, experienceRehearsalValues('B Private', false, '2024-01', '2024-06'), EXPERIENCE_REHEARSAL_REFERENCE_MONTH);
     $foreignUpdate = experienceRehearsalAction($database, $contextA, [
         'action' => 'update',
         'id' => (string) $experienceB,
@@ -196,10 +224,16 @@ try {
     phase2Assert($foreignDelete['errors'] !== [], 'Cross-Portfolio Experience deletion was accepted.');
     phase2AssertSame('B Private', findAuthorizedExperience($database, $contextB, $experienceB)['role_title'] ?? null, 'Cross-Portfolio Experience mutation changed B data.');
 
-    $deleteId = createAuthorizedExperience($database, $contextA, experienceRehearsalValues('A Delete', false, '2023-01', '2023-02'));
+    $deleteId = createAuthorizedExperience($database, $contextA, experienceRehearsalValues('A Delete', false, '2023-01', '2023-02'), EXPERIENCE_REHEARSAL_REFERENCE_MONTH);
     $deleteOwn = experienceRehearsalAction($database, $contextA, ['action' => 'delete', 'id' => (string) $deleteId]);
     phase2AssertSame('owner_experiences.php', $deleteOwn['redirect'], 'Owned Experience deletion did not PRG.');
     phase2AssertSame(null, findAuthorizedExperience($database, $contextA, $deleteId), 'Owned Experience deletion did not remove the record.');
+    try {
+        createAuthorizedExperience($database, $contextA, experienceRehearsalValues('Repository Bypass', false, '2026-10', '2026-10'), EXPERIENCE_REHEARSAL_REFERENCE_MONTH);
+        phase2Assert(false, 'Repository boundary accepted a future Experience create.');
+    } catch (InvalidArgumentException) {
+    }
+    phase2AssertSame(4, count(listAuthorizedExperiences($database, $contextA)), 'Rejected repository create changed Experience row count.');
     $passed[] = 'T-EXPERIENCE-OWNER-CRUD-AUTHORIZATION';
 
     $slugSuffix = bin2hex(random_bytes(5));
@@ -211,7 +245,9 @@ try {
     $publicB = resolvePublicReadContext($database, 'experience-b-' . $slugSuffix);
     phase2Assert($publicA instanceof PublicReadContext && $publicB instanceof PublicReadContext, 'Published Experience fixture Portfolios did not resolve publicly.');
     $publicARecords = listPublicExperiences($database, $publicA);
-    phase2AssertSame(['A Current', 'A Ended'], array_column($publicARecords, 'role_title'), 'Public Experience ordering or Portfolio scoping is incorrect.');
+    phase2AssertSame(['A Ended', 'A Current', 'A Tie Newer ID', 'A Tie Older ID'], array_column($publicARecords, 'role_title'), 'Public Experience ordering or Portfolio scoping is incorrect.');
+    phase2AssertSame(array_column(listAuthorizedExperiences($database, $contextA), 'role_title'), array_column($publicARecords, 'role_title'), 'Owner Preview and Public Experience ordering diverged.');
+    phase2AssertSame(array_column($publicARecords, 'role_title'), array_column(listPublicExperiences($database, $publicA), 'role_title'), 'Repeated Public Experience reads were not deterministic.');
     phase2AssertSame(['B Private'], array_column(listPublicExperiences($database, $publicB), 'role_title'), 'Public Experience query leaked A rows to B.');
     phase2AssertSame(['experience_type', 'role_title', 'organization', 'location', 'start_month', 'end_month', 'is_current', 'description'], array_keys($publicARecords[0]), 'Public Experience shape exposed storage metadata.');
     $userEmpty = experienceRehearsalCreateUser($database, 'empty');

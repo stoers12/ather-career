@@ -67,12 +67,11 @@ function normalizeExperienceMonth(mixed $value): ?string
         return null;
     }
 
-    $month = trim($value);
-    if (preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $month, $matches) !== 1) {
+    if (preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $value, $matches) !== 1) {
         return null;
     }
 
-    return checkdate((int) $matches[2], 1, (int) $matches[1]) ? $month : null;
+    return checkdate((int) $matches[2], 1, (int) $matches[1]) ? $value : null;
 }
 
 function experienceValidationReferenceMonth(?string $referenceMonth = null): string
@@ -102,8 +101,11 @@ function experienceFormValues(array $post): array
         'role_title' => $value('role_title'),
         'organization' => $value('organization'),
         'location' => $value('location'),
-        'start_month' => $value('start_month'),
-        'end_month' => $value('end_month'),
+        // Dates are canonical protocol values, not free-form prose. Preserve
+        // them exactly so the validator can reject ambiguous whitespace rather
+        // than silently rewriting a direct POST.
+        'start_month' => isset($post['start_month']) && is_string($post['start_month']) ? $post['start_month'] : '',
+        'end_month' => isset($post['end_month']) && is_string($post['end_month']) ? $post['end_month'] : '',
         'is_current' => ($post['is_current'] ?? null) === '1',
         'description' => $value('description'),
     ];
@@ -179,19 +181,19 @@ function validateExperienceValues(array $values, ?string $referenceMonth = null)
 /** @param array<string, mixed> $values
  *  @return array{experience_type: string, role_title: string, organization: string, location: string|null, start_month: string, end_month: string|null, is_current: int, description: string|null}
  */
-function authorizedExperienceValues(array $values): array
+function authorizedExperienceValues(array $values, ?string $referenceMonth = null): array
 {
     $normalized = [
         'experience_type' => isset($values['experience_type']) && is_string($values['experience_type']) ? trim($values['experience_type']) : '',
         'role_title' => isset($values['role_title']) && is_string($values['role_title']) ? trim($values['role_title']) : '',
         'organization' => isset($values['organization']) && is_string($values['organization']) ? trim($values['organization']) : '',
         'location' => isset($values['location']) && is_string($values['location']) ? trim($values['location']) : '',
-        'start_month' => isset($values['start_month']) && is_string($values['start_month']) ? trim($values['start_month']) : '',
-        'end_month' => isset($values['end_month']) && is_string($values['end_month']) ? trim($values['end_month']) : '',
+        'start_month' => isset($values['start_month']) && is_string($values['start_month']) ? $values['start_month'] : '',
+        'end_month' => isset($values['end_month']) && is_string($values['end_month']) ? $values['end_month'] : '',
         'is_current' => experienceIsCurrent($values['is_current'] ?? false),
         'description' => isset($values['description']) && is_string($values['description']) ? trim($values['description']) : '',
     ];
-    $errors = validateExperienceValues($normalized);
+    $errors = validateExperienceValues($normalized, $referenceMonth);
     if ($errors !== []) {
         throw new InvalidArgumentException('Experience values are invalid.');
     }

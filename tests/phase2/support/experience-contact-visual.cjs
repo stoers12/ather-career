@@ -82,30 +82,33 @@ const installRoutes = async (page, html) => {
                     const newer = page.locator('[data-experience-page="newer"]');
                     const older = page.locator('[data-experience-page="older"]');
                     assert.equal(await pagination.isVisible(), true, `${width}/${variant}: pagination visible after enhancement`);
-                    assert.equal(await range.textContent(), `Showing 1–5 of ${expected.experiences}`, `${width}/${variant}: initial range`);
+                    assert.equal(await range.textContent(), `Showing experiences 1–5 of ${expected.experiences}`, `${width}/${variant}: initial range`);
                     assert.equal(await newer.isDisabled(), true, `${width}/${variant}: newer boundary`);
                     assert.equal(await older.isDisabled(), false, `${width}/${variant}: older control`);
                     assert.equal(await older.getAttribute('aria-controls'), 'portfolio-experience-list', `${width}/${variant}: accessible older control`);
                     await older.click();
                     const finalStart = expected.experiences > 10 ? 6 : 6;
                     const finalEnd = expected.experiences > 10 ? 10 : expected.experiences;
-                    assert.equal(await range.textContent(), `Showing ${finalStart}–${finalEnd} of ${expected.experiences}`, `${width}/${variant}: older range`);
+                    const finalRange = finalStart === finalEnd
+                        ? `Showing experience ${finalEnd} of ${expected.experiences}`
+                        : `Showing experiences ${finalStart}–${finalEnd} of ${expected.experiences}`;
+                    assert.equal(await range.textContent(), finalRange, `${width}/${variant}: older range`);
                     assert.equal(await page.locator('.portfolio-experience-item:visible').count(), finalEnd - finalStart + 1, `${width}/${variant}: older visible count`);
                     assert.equal(await page.locator('.portfolio-experience-item:visible').last().evaluate(node => getComputedStyle(node, '::after').content), 'none', `${width}/${variant}: older final connector`);
                     await newer.press('Enter');
-                    assert.equal(await range.textContent(), `Showing 1–5 of ${expected.experiences}`, `${width}/${variant}: Enter newer navigation`);
+                    assert.equal(await range.textContent(), `Showing experiences 1–5 of ${expected.experiences}`, `${width}/${variant}: Enter newer navigation`);
                     await older.press('Space');
-                    assert.equal(await range.textContent(), `Showing ${finalStart}–${finalEnd} of ${expected.experiences}`, `${width}/${variant}: Space older navigation`);
+                    assert.equal(await range.textContent(), finalRange, `${width}/${variant}: Space older navigation`);
                     if (expected.experiences === 11) {
                         await older.click();
-                        assert.equal(await range.textContent(), 'Showing 11–11 of 11', `${width}/${variant}: final partial range`);
+                        assert.equal(await range.textContent(), 'Showing experience 11 of 11', `${width}/${variant}: final partial range`);
                         assert.equal(await page.locator('.portfolio-experience-item:visible').count(), 1, `${width}/${variant}: final partial page`);
                         assert.equal(await older.isDisabled(), true, `${width}/${variant}: final older boundary`);
                     }
                     while (!await newer.isDisabled()) {
                         await newer.click();
                     }
-                    assert.equal(await range.textContent(), `Showing 1–5 of ${expected.experiences}`, `${width}/${variant}: restored initial range`);
+                    assert.equal(await range.textContent(), `Showing experiences 1–5 of ${expected.experiences}`, `${width}/${variant}: restored initial range`);
                 }
 
                 if (expected.preview) {

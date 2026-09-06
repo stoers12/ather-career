@@ -35,7 +35,7 @@ final class ExperiencePresentationStaticTest
             phase2Assert(str_contains($stylesheet, $required), "Experience styling is missing {$required}.");
         }
         phase2Assert(!str_contains($stylesheet, '.portfolio-experience-list::before'), 'Experience must not use a list-wide connector that extends below the final marker.');
-        phase2Assert(str_contains($script, 'initializeExperiencePagination') && str_contains($script, 'items.length <= pageSize') && str_contains($script, 'item.hidden = !visible') && str_contains($script, 'portfolio-experience-item--visible-last') && str_contains($script, 'Showing ${start + 1}–${end} of ${items.length}') && str_contains($script, 'pagination.addEventListener(\'click\''), 'Experience pagination must be a progressive, delegated enhancement with an accurate live range.');
+        phase2Assert(str_contains($script, 'initializeExperiencePagination') && str_contains($script, 'items.length <= pageSize') && str_contains($script, 'item.hidden = !visible') && str_contains($script, 'portfolio-experience-item--visible-last') && str_contains($script, 'Showing experience ${end} of ${items.length}') && str_contains($script, 'Showing experiences ${start + 1}–${end} of ${items.length}') && str_contains($script, 'pagination.addEventListener(\'click\''), 'Experience pagination must be a progressive, delegated enhancement with an accurate live range.');
         phase2Assert(str_contains($presentation, 'href="#experience" data-portfolio-section="experience">Experience</a>'), 'Experience navigation must use the generic implemented-section anchor contract.');
         phase2Assert(!str_contains($presentation, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>'), 'Experience navigation must no longer be disabled after acceptance.');
 
@@ -110,15 +110,17 @@ final class ExperiencePresentationStaticTest
         for ($index = 1; $index <= 11; ++$index) {
             $paginationExperiences[] = [...$experiences[0], 'role_title' => "Role {$index}", 'start_month' => '2025-09'];
         }
-        foreach ([5, 6, 10, 11] as $count) {
+        foreach ([0, 1, 4, 5, 6, 10, 11] as $count) {
             ob_start();
             renderPortfolioPresentation(['full_name' => 'Pagination Owner'], [], [], ['experiences' => array_slice($paginationExperiences, 0, $count)]);
             $paginationRendered = ob_get_clean();
             phase2Assert(is_string($paginationRendered) && substr_count($paginationRendered, 'portfolio-experience-content') === $count, "All {$count} Experience records must remain in the no-JavaScript fallback.");
-            if ($count <= 5) {
+            if ($count === 0) {
+                phase2Assert(!str_contains($paginationRendered, 'id="experience"'), 'An empty Experience collection must omit its panel.');
+            } elseif ($count <= 5) {
                 phase2Assert(!str_contains($paginationRendered, 'data-experience-pagination'), "Experience pagination controls must be omitted for {$count} records.");
             } else {
-                phase2Assert(str_contains($paginationRendered, 'data-experience-pagination hidden') && str_contains($paginationRendered, 'aria-controls="portfolio-experience-list"') && !preg_match('/<li[^>]+hidden/', $paginationRendered), "Experience pagination controls must enhance, not replace, the {$count}-record fallback.");
+                phase2Assert(str_contains($paginationRendered, 'data-experience-pagination hidden') && str_contains($paginationRendered, 'role="status" aria-live="polite"') && substr_count($paginationRendered, 'type="button" data-experience-page=') === 2 && substr_count($paginationRendered, 'aria-controls="portfolio-experience-list"') === 2 && !preg_match('/<li[^>]+hidden/', $paginationRendered), "Experience pagination controls must use accessible native buttons and enhance, not replace, the {$count}-record fallback.");
             }
         }
 

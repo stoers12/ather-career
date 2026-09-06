@@ -216,7 +216,9 @@
                     item.hidden = !visible;
                     item.classList.toggle('portfolio-experience-item--visible-last', visible && index === end - 1);
                 });
-                range.textContent = `Showing ${start + 1}–${end} of ${items.length}`;
+                range.textContent = start + 1 === end
+                    ? `Showing experience ${end} of ${items.length}`
+                    : `Showing experiences ${start + 1}–${end} of ${items.length}`;
                 newer.disabled = page === 0;
                 older.disabled = page === pageCount - 1;
             };

@@ -406,9 +406,9 @@ function findAuthorizedExperience(PDO $database, AuthorizedPortfolioContext $con
 }
 
 /** @param array<string, mixed> $values */
-function createAuthorizedExperience(PDO $database, AuthorizedPortfolioContext $context, array $values): int
+function createAuthorizedExperience(PDO $database, AuthorizedPortfolioContext $context, array $values, ?string $referenceMonth = null): int
 {
-    $values = authorizedExperienceValues($values);
+    $values = authorizedExperienceValues($values, $referenceMonth);
     $statement = $database->prepare(
         'INSERT INTO experiences (
             portfolio_id, experience_type, role_title, organization, location,
@@ -427,13 +427,13 @@ function createAuthorizedExperience(PDO $database, AuthorizedPortfolioContext $c
 }
 
 /** @param array<string, mixed> $values */
-function updateAuthorizedExperience(PDO $database, AuthorizedPortfolioContext $context, int $experienceId, array $values): bool
+function updateAuthorizedExperience(PDO $database, AuthorizedPortfolioContext $context, int $experienceId, array $values, ?string $referenceMonth = null): bool
 {
     if ($experienceId < 1) {
         return false;
     }
 
-    $values = authorizedExperienceValues($values);
+    $values = authorizedExperienceValues($values, $referenceMonth);
     $statement = $database->prepare(
         'UPDATE experiences
          SET experience_type = :experience_type,
