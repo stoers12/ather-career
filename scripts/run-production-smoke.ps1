@@ -324,15 +324,12 @@ function Test-ImageContract([string]$Image, [string]$Head) {
     Assert-Smoke ($label -eq $Head) 'The image revision label does not match the tested Git commit.'
     $contract = Invoke-Native 'docker' @(
         'run', '--rm', '--entrypoint', 'sh', $Image, '-lc',
-        'set -eu; check() { "$@" || { echo "image-contract-failed:$*" >&2; exit 1; }; }; check test -f /var/www/app/vendor/autoload.php; check test -f /var/www/app/vendor/composer/autoload_static.php; check test ! -d /var/www/app/vendor/phpunit; check test -f /var/www/app/database/production-ownership-bootstrap.php; check test -f /var/www/app/database/wait-for-production-bootstrap.php; check test -f /usr/local/etc/php/conf.d/portfolio-production.ini; check grep -q "^display_errors[[:space:]]*=[[:space:]]*Off" /usr/local/etc/php/conf.d/portfolio-production.ini; check grep -q "^[[:space:]]*DocumentRoot[[:space:]]*/var/www/public" /etc/apache2/sites-available/000-default.conf; check sh -c "apache2ctl -M | grep -q rewrite_module"; check test -f /etc/apache2/conf-enabled/zzz-portfolio-security-headers.conf; vips --version; check test -d /var/www/public; check test ! -e /var/www/public/.env; check test ! -e /var/www/public/includes; check test ! -e /var/www/public/database'
+        'set -eu; check() { "$@" || { echo "image-contract-failed:$*" >&2; exit 1; }; }; check test -f /var/www/app/vendor/autoload.php; check test -f /var/www/app/vendor/composer/autoload_static.php; check test ! -d /var/www/app/vendor/phpunit; check test -f /var/www/app/database/production-ownership-bootstrap.php; check test -f /var/www/app/database/wait-for-production-bootstrap.php; check test -f /var/www/app/ready.php; check test -f /var/www/public/ready.php; check test -f /usr/local/etc/php/conf.d/portfolio-production.ini; check grep -q "^display_errors[[:space:]]*=[[:space:]]*Off" /usr/local/etc/php/conf.d/portfolio-production.ini; check grep -q "^[[:space:]]*DocumentRoot[[:space:]]*/var/www/public" /etc/apache2/sites-available/000-default.conf; check sh -c "apache2ctl -M | grep -q rewrite_module"; check test -f /etc/apache2/conf-enabled/zzz-portfolio-security-headers.conf; vips --version; check test -d /var/www/public; check test ! -e /var/www/public/.env; check test ! -e /var/www/public/includes; check test ! -e /var/www/public/database'
     )
     Assert-Smoke ($contract -match '(?m)^vips-') 'The Production image does not contain a working libvips runtime.'
 }
 
 function Set-SmokeEnvironment([string]$Project, [string]$Port, [string]$Image, [string]$Head) {
-    $adminSecret = Get-RandomHex 24
-    $adminHash = (Invoke-Native 'docker' @('run', '--rm', '--env', "SMOKE_ADMIN_SECRET=$adminSecret", 'php:8.3-cli', 'php', '-r', 'echo password_hash(getenv("SMOKE_ADMIN_SECRET"), PASSWORD_BCRYPT);')).Trim()
-    Assert-Smoke ($adminHash -match '^\$2[aby]\$') 'A synthetic Production admin credential could not be generated.'
     $dbSecret = Get-RandomHex 24
     $oidcSecret = Get-RandomHex 24
     $settings = @{
@@ -350,8 +347,6 @@ function Set-SmokeEnvironment([string]$Project, [string]$Port, [string]$Image, [
         MYSQL_ROOT_PASSWORD = (Get-RandomHex 24)
         PUBLIC_BASE_URL = 'https://portfolio-smoke.invalid'
         SESSION_COOKIE_SECURE = 'true'
-        ADMIN_USERNAME = 'smoke-owner'
-        ADMIN_PASSWORD_HASH = $adminHash
         LEGACY_ADMIN_AUTH_ENABLED = 'false'
         EXPECTED_OIDC_ISSUER = 'https://oidc-smoke.invalid/'
         PRESERVED_V1_OIDC_SUBJECT = ('smoke-owner-' + $Project.Substring('ather_production_smoke_'.Length))
@@ -613,6 +608,9 @@ function Invoke-ProductionSmokeRun([int]$Number, [string]$Head) {
         $health = Invoke-SmokeHttp -Url "$baseUrl/health.php"
         Assert-HttpStatus $health @(200) 'health.php'
         Assert-Smoke ([System.Text.Encoding]::UTF8.GetString($health.Bytes) -eq "OK`n") 'health.php did not return the exact healthy body.'
+        $readiness = Invoke-SmokeHttp -Url "$baseUrl/ready.php"
+        Assert-HttpStatus $readiness @(200) 'ready.php'
+        Assert-Smoke ([System.Text.Encoding]::UTF8.GetString($readiness.Bytes) -eq "READY`n") 'ready.php did not confirm database readiness.'
         Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/") @(200) 'root route'
 
         $schema = Invoke-SmokeFixture $web $project 'assert-schema' $slug

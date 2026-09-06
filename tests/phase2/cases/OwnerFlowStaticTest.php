@@ -18,7 +18,7 @@ final class OwnerFlowStaticTest
         phase2Assert(str_contains($onboarding, 'requireOwnerAuthenticatedUser($database)') && str_contains($onboarding, 'createOwnedPortfolio($database, $user)'), 'P2J-04 onboarding does not validate the current User before server-owned creation.');
         phase2Assert(str_contains($onboarding, "header('Location: owner.php', true, 303)"), 'P2J-04 onboarding must PRG after Portfolio creation.');
 
-        foreach (['owner.php', 'owner_profile.php', 'owner_projects.php', 'owner_messages.php', 'owner_preview.php'] as $route) {
+        foreach (['owner.php', 'owner_profile.php', 'owner_projects.php', 'owner_experiences.php', 'owner_messages.php', 'owner_preview.php', 'owner_publication.php'] as $route) {
             $contents = self::read($route);
             phase2Assert(str_contains($contents, 'startOwnerSession();'), "{$route} does not start the owner session.");
             phase2Assert(str_contains($contents, 'requireOwnerPortfolioContext($database)'), "{$route} does not require a server-derived Portfolio context.");
@@ -40,6 +40,15 @@ final class OwnerFlowStaticTest
 
         phase2Assert(str_contains($ownerActions, 'findAuthorizedProject($database, $context, $projectId)') && str_contains($ownerActions, 'storeValidatedProjectImage'), 'P2J-04 must scope a project before a project upload can be stored.');
         phase2Assert(!str_contains($ownerActions, 'WHERE id = :id'), 'P2J-04 owner actions must not use unscoped ID mutations.');
+
+        $profileRoute = self::read('owner_profile.php');
+        $adminScript = self::read('admin.js');
+        phase2Assert(str_contains($profileRoute, 'id="profile-form"')
+            && str_contains($adminScript, "getElementById('profile-form')")
+            && str_contains($adminScript, 'formState(profileForm)'), 'Owner profile unsaved-change protection is not wired end to end.');
+        foreach (['owner_profile.php', 'owner_projects.php', 'owner_experiences.php', 'includes/owner_publication_presentation.php'] as $route) {
+            phase2Assert(str_contains(self::read($route), 'data-confirm='), "{$route} bypasses the shared confirmation dialog for a material action.");
+        }
     }
 
     private static function read(string $relativePath): string

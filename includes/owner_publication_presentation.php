@@ -69,7 +69,7 @@ function renderOwnerPublicationPresentation(array $state, ?string $publicUrl): v
                 </div>
                 <p class="publication-copy-feedback" id="publication-copy-feedback" role="status" aria-live="polite"></p>
             <?php endif; ?>
-            <form class="publication-destructive-action" method="POST" action="owner_publication.php"><input type="hidden" name="action" value="unpublish"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><button class="button-danger" type="submit">Unpublish</button></form>
+            <form class="publication-destructive-action" method="POST" action="owner_publication.php" data-confirm="Take this Portfolio offline? Visitors will no longer be able to open its public link until you publish it again." data-confirm-title="Unpublish Portfolio?" data-confirm-action="Unpublish"><input type="hidden" name="action" value="unpublish"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><button class="button-danger" type="submit">Unpublish</button></form>
         <?php elseif ($viewState === 'offline'): ?>
             <div class="publication-status publication-status--offline" role="status"><div><p class="admin-eyebrow">Offline</p><h2 id="publication-status-title">Your public link is offline</h2><p>Your permanent public address is preserved. Publish again to make the Portfolio public.</p></div></div>
             <?php ownerPublicationUrlDisplay($publicUrl); ?>

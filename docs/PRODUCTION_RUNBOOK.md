@@ -5,7 +5,7 @@ This runbook is for the current single-host Docker Compose deployment. It does n
 ## Prerequisites and configuration
 
 - Docker Engine with Compose v2 and host access restricted to operators.
-- Copy `.env.example` to a host-only `.env`; set unique database credentials, admin credentials, and `SESSION_COOKIE_SECURE=true`.
+- Copy `.env.example` to a host-only `.env`; set unique database credentials, the Auth0 configuration, `LEGACY_ADMIN_AUTH_ENABLED=false`, and `SESSION_COOKIE_SECURE=true`.
 - Keep `.env` and `backups/` outside Git and outside the public document root.
 - Use a short read-only/maintenance window for backup, migration, and restore operations.
 
@@ -24,11 +24,11 @@ docker compose -f docker-compose.production.yml run --rm --no-deps web php datab
 docker compose -f docker-compose.production.yml exec -T db sh -lc 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -h 127.0.0.1 -uroot "$MYSQL_DATABASE" -e "SELECT version, name, applied_at FROM schema_migrations ORDER BY version"'
 docker compose -f docker-compose.production.yml up -d --force-recreate web
 curl -fsS http://127.0.0.1:8098/health.php
-curl -fsS http://127.0.0.1:8098/api/projects.php
+curl -fsS http://127.0.0.1:8098/ready.php
 docker compose -f docker-compose.production.yml logs --tail 100 web db
 ```
 
-The web healthcheck is liveness only: `GET /health.php` returns `OK` without a DB query. Use `GET /api/projects.php` as the DB-backed readiness signal: `200` is ready and `503` means the DB dependency is unavailable.
+The web healthcheck is liveness only: `GET /health.php` returns `OK` without a DB query. `GET /ready.php` returns `READY` only when the application can query MySQL; otherwise it returns `503` without exposing the database error. Legacy V1 admin routes and the retired unscoped `/api/projects.php` endpoint must return `404` in production.
 
 ## First deployment / empty volumes
 
@@ -44,7 +44,7 @@ Restore is destructive and requires explicit confirmation:
 ./scripts/restore-production.sh --backup-dir backups/20260101T000000Z --confirm-restore
 ```
 
-It stops web, replaces the selected MySQL database and managed uploads, then starts web. Validate the migration ledger, `/health.php`, `/api/projects.php`, and referenced uploads before reopening mutations. Backup artifacts contain user data and require host-level access control.
+It stops web, replaces the selected MySQL database and managed uploads, then starts web. Validate the migration ledger, `/health.php`, database connectivity, and referenced uploads before reopening mutations. Backup artifacts contain user data and require host-level access control.
 
 ## Failure and rollback
 
@@ -52,4 +52,4 @@ It stops web, replaces the selected MySQL database and managed uploads, then sta
 - If migration succeeds but new web fails, start the previous application image/commit. Migration `002` is additive and backward-compatible with pre-Stage-5 application SQL.
 - `docker compose stop`/`start` and normal container recreation preserve named volumes. **`docker compose down -v` deletes DB, upload, and rate-limit volumes and is destructive.**
 
-Admin sessions are container-local and may be lost when web is recreated. Minimum operating checks are web liveness, API readiness, `docker compose ps`, host disk capacity, Docker log growth, and successful backup completion.
+Owner PHP sessions are container-local and may be lost when web is recreated. Minimum operating checks are web liveness, database connectivity, `docker compose ps`, host disk capacity, Docker log growth, and successful backup completion.

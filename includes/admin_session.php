@@ -13,7 +13,7 @@ function legacyAdminAuthorityEnabled(): bool
 {
     $configured = getenv(LEGACY_ADMIN_AUTH_ENABLED_ENV);
     if (!is_string($configured) || trim($configured) === '') {
-        return true;
+        return false;
     }
 
     return in_array(strtolower(trim($configured)), ['1', 'true'], true);
@@ -23,6 +23,7 @@ function legacyAdminAuthorityConfigurationIsValid(): bool
 {
     $configured = getenv(LEGACY_ADMIN_AUTH_ENABLED_ENV);
 
+    // Missing configuration is valid because the safe default is disabled.
     return !is_string($configured)
         || trim($configured) === ''
         || in_array(strtolower(trim($configured)), ['0', '1', 'false', 'true'], true);

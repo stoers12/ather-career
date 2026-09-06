@@ -74,17 +74,20 @@
         });
     });
 
+    function formState(form) {
+        return JSON.stringify(Array.from(new FormData(form).entries(), function (entry) {
+            var value = entry[1];
+            return [entry[0], value instanceof File ? [value.name, value.size, value.lastModified] : value];
+        }));
+    }
+
     var profileForm = document.getElementById('profile-form');
     if (profileForm) {
-        var initialState = new FormData(profileForm);
+        var initialState = formState(profileForm);
         function hasChanges() {
-            var current = new FormData(profileForm);
-            for (var pair of initialState.entries()) {
-                if (current.get(pair[0]) !== pair[1]) return true;
-            }
-            return false;
+            return formState(profileForm) !== initialState;
         }
-        profileForm.addEventListener('submit', function () { initialState = new FormData(profileForm); });
+        profileForm.addEventListener('submit', function () { initialState = formState(profileForm); });
         window.addEventListener('beforeunload', function (event) {
             if (hasChanges()) { event.preventDefault(); event.returnValue = ''; }
         });

@@ -14,8 +14,10 @@ final class LegacyAdminCutoverStaticTest
         phase2Assert(str_contains($adminSession, "LEGACY_ADMIN_AUTH_ENABLED_ENV = 'LEGACY_ADMIN_AUTH_ENABLED'")
             && str_contains($adminSession, 'function denyRetiredLegacyAdminAuthority(): never')
             && str_contains($adminSession, 'http_response_code(404)'), 'P2J-11 legacy authority retirement gate is missing.');
-        phase2Assert(str_contains($compose, 'LEGACY_ADMIN_AUTH_ENABLED: ${LEGACY_ADMIN_AUTH_ENABLED:-true}')
-            && str_contains($guard, 'legacyAdminAuthorityConfigurationIsValid'), 'P2J-11 legacy authority runtime configuration is incomplete.');
+        phase2Assert(str_contains($compose, 'LEGACY_ADMIN_AUTH_ENABLED: ${LEGACY_ADMIN_AUTH_ENABLED:-false}')
+            && str_contains($guard, 'legacyAdminAuthorityConfigurationIsValid')
+            && str_contains($guard, 'legacyAdminAuthorityEnabled()')
+            && str_contains($guard, 'must be false in production'), 'P2J-11 legacy authority production retirement is incomplete.');
 
         foreach (['login.php', 'logout.php', 'admin.php', 'personal_info.php', 'projects.php', 'messages.php'] as $route) {
             phase2Assert(str_contains(self::read($route), 'startAdminSession();'), "{$route} bypasses the P2J-11 legacy authority gate.");
@@ -24,7 +26,7 @@ final class LegacyAdminCutoverStaticTest
         $original = getenv(LEGACY_ADMIN_AUTH_ENABLED_ENV);
         try {
             putenv(LEGACY_ADMIN_AUTH_ENABLED_ENV);
-            phase2Assert(legacyAdminAuthorityEnabled() && legacyAdminAuthorityConfigurationIsValid(), 'Legacy authority must remain enabled by default before cutover.');
+            phase2Assert(!legacyAdminAuthorityEnabled() && legacyAdminAuthorityConfigurationIsValid(), 'Legacy authority must fail closed when configuration is absent.');
             putenv(LEGACY_ADMIN_AUTH_ENABLED_ENV . '=true');
             phase2Assert(legacyAdminAuthorityEnabled() && legacyAdminAuthorityConfigurationIsValid(), 'Explicit legacy authority enablement is invalid.');
             putenv(LEGACY_ADMIN_AUTH_ENABLED_ENV . '=false');
