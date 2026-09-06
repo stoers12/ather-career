@@ -26,4 +26,16 @@ if [ "${PORTFOLIO_PRODUCTION_SECURITY_CHECK:-0}" = "1" ]; then
     php /var/www/app/scripts/check-production-security.php
 fi
 
+# Docker's MySQL health command can pass while the mounted baseline SQL is
+# still creating tables. Wait for that immutable baseline before migration.
+php /var/www/app/database/wait-for-production-bootstrap.php
+
+# The production database is initialized from the immutable V1 baseline. Bring
+# it through the ownership-expansion point, apply the separately configured
+# preserved-owner binding when needed, then complete the ledger before Apache
+# accepts traffic. The bootstrap is a no-op once the ownership contract exists.
+php /var/www/app/database/migrate.php --through=003
+php /var/www/app/database/production-ownership-bootstrap.php
+php /var/www/app/database/migrate.php
+
 exec docker-php-entrypoint "$@"

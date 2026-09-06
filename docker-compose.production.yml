@@ -2,6 +2,7 @@ name: portfolio_course_production
 
 services:
   web:
+    image: ${PORTFOLIO_PRODUCTION_IMAGE:-portfolio_course_production-web:latest}
     build:
       context: .
       dockerfile: Dockerfile.production
@@ -9,7 +10,7 @@ services:
         APP_VERSION: ${APP_VERSION:-unknown}
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8098:80"
+      - "127.0.0.1:${PORTFOLIO_PRODUCTION_PORT:-8098}:80"
     mem_limit: 512m
     environment:
       DB_HOST: ${DB_HOST}
@@ -24,6 +25,8 @@ services:
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
       LEGACY_ADMIN_AUTH_ENABLED: ${LEGACY_ADMIN_AUTH_ENABLED:-true}
       EXPECTED_OIDC_ISSUER: ${EXPECTED_OIDC_ISSUER}
+      # Required only for a fresh V1 baseline before ownership migration 004.
+      PRESERVED_V1_OIDC_SUBJECT: ${PRESERVED_V1_OIDC_SUBJECT:-}
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
       OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI}

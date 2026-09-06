@@ -6,7 +6,10 @@ param(
 
     [Parameter(Mandatory)]
     [ValidatePattern('^[a-z0-9][a-z0-9_.-]+$')]
-    [string]$DbContainer
+    [string]$DbContainer,
+
+    [ValidatePattern('^$|^https://localhost:8443$')]
+    [string]$PublicBaseUrl = ''
 )
 
 Set-StrictMode -Version Latest
@@ -57,14 +60,18 @@ try {
         throw 'Could not grant the lifecycle test database to the application test account.'
     }
 
-    & docker exec `
-        -e 'APP_ENV=test' `
-        -e 'ATHERCAR_TEST_MODE=1' `
-        -e 'DB_NAME=' `
-        -e 'PORTFOLIO_DB_NAME=' `
-        -e "ATHERCAR_TEST_DB_NAME=$testDatabase" `
-        -e 'ATHERCAR_TEST_DB_PROVISIONED=1' `
-        $WebContainer php scripts/run-phase2-publication-lifecycle-e2e.php
+    $webEnvironment = @(
+        '-e', 'APP_ENV=test',
+        '-e', 'ATHERCAR_TEST_MODE=1',
+        '-e', 'DB_NAME=',
+        '-e', 'PORTFOLIO_DB_NAME=',
+        '-e', "ATHERCAR_TEST_DB_NAME=$testDatabase",
+        '-e', 'ATHERCAR_TEST_DB_PROVISIONED=1'
+    )
+    if ($PublicBaseUrl -ne '') {
+        $webEnvironment += @('-e', "PUBLIC_BASE_URL=$PublicBaseUrl")
+    }
+    & docker exec @webEnvironment $WebContainer php scripts/run-phase2-publication-lifecycle-e2e.php
     if ($LASTEXITCODE -ne 0) {
         throw 'Publication lifecycle E2E failed.'
     }
