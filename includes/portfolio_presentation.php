@@ -353,7 +353,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
             <a href="#contact" data-portfolio-section="contact">Contact</a>
         </nav>
         <div class="portfolio-header-actions">
-            <a class="portfolio-header-cta" href="#contact"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.5A2.5 2.5 0 0 1 6 4h12a2.5 2.5 0 0 1 2.5 2.5v11A2.5 2.5 0 0 1 18 20H6a2.5 2.5 0 0 1-2.5-2.5v-11Z"/><path d="m4.5 6 6.07 5.06a2.23 2.23 0 0 0 2.86 0L19.5 6"/></svg><span>Let’s Connect</span></a>
+            <a class="portfolio-header-cta" href="#contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8.2 11.5 8.3-3.3-3.4 7.8-1.7-3.1-3.2-1.4Z"/><path d="m11.5 12.9 2.2-2.2"/></svg><span>Let’s Connect</span></a>
             <button class="portfolio-menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="portfolio-mobile-nav"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
         </div>
     </div>
