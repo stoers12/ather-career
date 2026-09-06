@@ -1,0 +1,6 @@
+# Local-only TLS termination for the Owner development service.
+# Caddy's internal CA is intentional; clients may trust it or use curl -k.
+https://localhost {
+    tls internal
+    reverse_proxy web:80
+}
