@@ -4,30 +4,25 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/public_lifecycle.php';
 
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store');
+httpRegisterExceptionBoundary('public_projects_json.php', true);
 
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
-    http_response_code(405);
+if (!httpMethodIsAllowed(['GET'])) {
     header('Allow: GET');
-    echo json_encode(['success' => false, 'projects' => [], 'error' => 'Method not allowed.']);
-    exit;
+    httpJsonResponse(405, ['success' => false, 'projects' => [], 'error' => 'Method not allowed.']);
 }
 
 try {
     $database = getDatabaseConnection();
     $context = resolvePublicReadContext($database, $_GET['slug'] ?? null);
     if ($context === null) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'projects' => [], 'error' => 'Portfolio not found.']);
-        exit;
+        httpJsonResponse(404, ['success' => false, 'projects' => [], 'error' => 'Portfolio not found.']);
     }
 
-    echo json_encode(['success' => true, 'projects' => listPublicProjects($database, $context)], JSON_UNESCAPED_SLASHES);
+    httpJsonResponse(200, ['success' => true, 'projects' => listPublicProjects($database, $context)]);
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'public_projects_json.php', 'public_projects_json_load');
-    http_response_code(503);
-    echo json_encode(['success' => false, 'projects' => [], 'error' => 'Projects are temporarily unavailable.']);
+    httpJsonResponse(503, ['success' => false, 'projects' => [], 'error' => 'Projects are temporarily unavailable.']);
 }

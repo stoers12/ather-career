@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/public_contact.php';
 require_once __DIR__ . '/includes/rate_limit.php';
 require_once __DIR__ . '/includes/portfolio_presentation.php';
@@ -59,9 +60,8 @@ function publicContactValidationFailure(PDO $database, PublicReadContext $contex
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    publicContactNotFound();
-}
+httpRegisterExceptionBoundary('public_contact.php');
+httpRequireMethod(['POST']);
 
 header('Cache-Control: no-store');
 
@@ -102,8 +102,7 @@ try {
     if ($slug === null) {
         publicContactNotFound();
     }
-    header('Location: /p/' . rawurlencode($slug) . '?contact=sent#contact', true, 303);
-    exit;
+    httpRedirect('/p/' . rawurlencode($slug) . '?contact=sent#contact');
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'public_contact.php', 'public_contact_submit');
     publicContactError(503, ['The message could not be saved right now.']);

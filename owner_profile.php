@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/owner_session.php';
 require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/owner_actions.php';
 require_once __DIR__ . '/includes/portfolio_scoped_data.php';
@@ -13,6 +14,8 @@ require_once __DIR__ . '/includes/owner_layout.php';
 require_once __DIR__ . '/includes/operational_security.php';
 
 startOwnerSession();
+httpRegisterExceptionBoundary('owner_profile.php');
+httpRequireMethod(['GET', 'HEAD', 'POST']);
 
 $fields = [
     'full_name', 'professional_title', 'hero_headline', 'email', 'phone_primary', 'phone_secondary',
@@ -24,6 +27,7 @@ $profile['profile_image_path'] = null;
 $profile['public_contact_visible'] = false;
 $skills = [];
 $errors = [];
+$fieldErrors = [];
 $message = '';
 $profileCompletion = 0;
 
@@ -55,10 +59,13 @@ try {
         if ($mayMutate) {
             $result = handleAuthorizedProfileAction($database, $context, $_POST, $_FILES, $current, $fields, $profile);
             $errors = $result['errors'];
+            $fieldErrors = $result['field_errors'];
             $profile = $result['profile'];
             if ($result['redirect'] !== null) {
-                header('Location: ' . $result['redirect'], true, 303);
-                exit;
+                httpRedirect($result['redirect']);
+            }
+            if ($errors !== []) {
+                http_response_code($result['status']);
             }
         }
     } else {
@@ -121,7 +128,7 @@ ownerLayoutStart('Personal Info', 'profile');
             <p class="form-hint" id="public-contact-help">When enabled, visitors can see your primary phone and profile email. Private Preview always shows your saved contact details.</p>
         </div>
         <h2 class="form-section-title">About Me</h2>
-        <label class="form-field form-field-full" for="about_me"><span>About Me</span><textarea id="about_me" name="about_me"><?php echo ownerEscapeHtml((string) $profile['about_me']); ?></textarea></label>
+        <label class="form-field form-field-full" for="about_me"><span>About Me</span><textarea id="about_me" name="about_me" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS['about_me']; ?>"><?php echo ownerEscapeHtml((string) $profile['about_me']); ?></textarea></label>
         <label class="form-field form-field-full" for="work_description"><span>Professional summary <em>(optional)</em></span><textarea id="work_description" name="work_description" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS['work_description']; ?>" aria-describedby="professional-summary-help"><?php echo ownerEscapeHtml((string) $profile['work_description']); ?></textarea><small id="professional-summary-help" class="form-hint">Add supporting context for your public Hero.</small></label>
         <h2 class="form-section-title">Social Accounts</h2>
         <?php foreach (['linkedin_url' => 'LinkedIn URL', 'github_url' => 'GitHub URL', 'instagram_url' => 'Instagram URL', 'facebook_url' => 'Facebook URL', 'website_url' => 'Personal Website URL'] as $field => $label): ?>

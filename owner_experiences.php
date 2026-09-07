@@ -6,15 +6,19 @@ require_once __DIR__ . '/includes/owner_session.php';
 require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/owner_actions.php';
 require_once __DIR__ . '/includes/portfolio_scoped_data.php';
 require_once __DIR__ . '/includes/owner_layout.php';
 
 startOwnerSession();
+httpRegisterExceptionBoundary('owner_experiences.php');
+httpRequireMethod(['GET', 'HEAD', 'POST']);
 
 $experiences = [];
 $formErrors = [];
+$fieldErrors = [];
 $pageMessage = '';
 $databaseError = '';
 $formMode = 'add';
@@ -30,11 +34,14 @@ try {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
         $result = handleAuthorizedExperienceAction($database, $context, $_POST);
         $formErrors = $result['errors'];
+        $fieldErrors = $result['field_errors'];
         $formMode = $result['form_mode'];
         $editingExperience = $result['editing_experience'];
         if ($result['redirect'] !== null) {
-            header('Location: ' . $result['redirect'], true, 303);
-            exit;
+            httpRedirect($result['redirect']);
+        }
+        if ($formErrors !== []) {
+            http_response_code($result['status']);
         }
     } elseif (isset($_GET['edit'])) {
         $experienceId = experienceActionId($_GET['edit']);

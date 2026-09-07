@@ -13,9 +13,12 @@ const PUBLIC_CONTACT_MESSAGE_MAX_LENGTH = 5000;
 function publicContactSubmittedValues(array $submitted): array
 {
     $values = [];
-    foreach (['name', 'email', 'message'] as $field) {
-        $value = isset($submitted[$field]) && is_string($submitted[$field]) ? trim($submitted[$field]) : '';
-        $values[$field] = utf8CharacterLength($value) === null ? '' : $value;
+    foreach ([
+        'name' => [PUBLIC_CONTACT_NAME_MAX_LENGTH, 'Name'],
+        'email' => [PUBLIC_CONTACT_EMAIL_MAX_LENGTH, 'Email'],
+        'message' => [PUBLIC_CONTACT_MESSAGE_MAX_LENGTH, 'Message'],
+    ] as $field => [$maximum, $label]) {
+        $values[$field] = submittedStringField($submitted, $field, $maximum, $label, true)['value'];
     }
 
     return $values;
@@ -26,35 +29,26 @@ function publicContactSubmittedValues(array $submitted): array
  */
 function publicContactFormState(array $submitted): array
 {
-    $values = publicContactSubmittedValues($submitted);
-    $errors = [];
+    $values = [];
     $fieldErrors = [];
 
-    if ($values['name'] === '') {
-        $fieldErrors['name'] = 'Name is required.';
-    } elseif (utf8CharacterLength($values['name']) > PUBLIC_CONTACT_NAME_MAX_LENGTH) {
-        $fieldErrors['name'] = 'Name must be 100 characters or fewer.';
+    foreach ([
+        'name' => [PUBLIC_CONTACT_NAME_MAX_LENGTH, 'Name'],
+        'email' => [PUBLIC_CONTACT_EMAIL_MAX_LENGTH, 'Email'],
+        'message' => [PUBLIC_CONTACT_MESSAGE_MAX_LENGTH, 'Message'],
+    ] as $field => [$maximum, $label]) {
+        $result = submittedStringField($submitted, $field, $maximum, $label, true);
+        $values[$field] = $result['value'];
+        if ($result['error'] !== null) {
+            $fieldErrors[$field] = $result['error'];
+        }
     }
 
-    if ($values['email'] === '') {
-        $fieldErrors['email'] = 'Email is required.';
-    } elseif (utf8CharacterLength($values['email']) > PUBLIC_CONTACT_EMAIL_MAX_LENGTH) {
-        $fieldErrors['email'] = 'Email must be 255 characters or fewer.';
-    } elseif (!filter_var($values['email'], FILTER_VALIDATE_EMAIL)) {
+    if (!isset($fieldErrors['email']) && !filter_var($values['email'], FILTER_VALIDATE_EMAIL)) {
         $fieldErrors['email'] = 'Please enter a valid email address.';
     }
 
-    if ($values['message'] === '') {
-        $fieldErrors['message'] = 'Message is required.';
-    } elseif (utf8CharacterLength($values['message']) > PUBLIC_CONTACT_MESSAGE_MAX_LENGTH) {
-        $fieldErrors['message'] = 'Message must be 5000 characters or fewer.';
-    }
-
-    foreach ($fieldErrors as $error) {
-        $errors[] = $error;
-    }
-
-    return ['values' => $values, 'errors' => $errors, 'field_errors' => $fieldErrors];
+    return ['values' => $values, 'errors' => validationErrorList($fieldErrors), 'field_errors' => $fieldErrors];
 }
 
 /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/public_lifecycle.php';
 require_once __DIR__ . '/includes/portfolio_presentation.php';
 
@@ -15,6 +16,8 @@ function publicPortfolioNotFound(): never
     exit;
 }
 
+httpRegisterExceptionBoundary('public_portfolio.php');
+httpRequireMethod(['GET', 'HEAD']);
 header('Cache-Control: no-store');
 
 try {

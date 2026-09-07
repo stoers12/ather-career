@@ -5,11 +5,14 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/owner_session.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/portfolio_scoped_data.php';
 require_once __DIR__ . '/includes/owner_layout.php';
 
 startOwnerSession();
+httpRegisterExceptionBoundary('owner.php');
+httpRequireMethod(['GET', 'HEAD']);
 
 $dashboard = ['project_count' => 0, 'skill_count' => 0, 'message_count' => 0, 'profile_count' => 0];
 $profile = null;

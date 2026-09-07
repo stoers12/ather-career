@@ -151,12 +151,15 @@ function takeProjectSuccessFlash(): string
     return $message;
 }
 
-function projectActionResult(array $errors = [], string $formMode = 'add', ?array $editingProject = null, ?string $redirect = null): array
+/** @return array{errors: list<string>, field_errors: array<string, string>, form_mode: string, editing_project: array<string, mixed>, redirect: string|null, status: int} */
+function projectActionResult(array $errors = [], string $formMode = 'add', ?array $editingProject = null, ?string $redirect = null, array $fieldErrors = [], int $status = 200): array
 {
     return [
         'errors' => $errors,
+        'field_errors' => $fieldErrors,
         'form_mode' => $formMode,
         'editing_project' => $editingProject ?? projectFormDefaults(),
         'redirect' => $redirect,
+        'status' => $status,
     ];
 }

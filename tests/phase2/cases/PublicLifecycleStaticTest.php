@@ -33,11 +33,11 @@ final class PublicLifecycleStaticTest
         phase2Assert(preg_match('/FROM skills\\s+WHERE portfolio_id = :public_portfolio_id/', $lifecycle) === 1, 'P2J-05 public skills query is not Portfolio scoped.');
         phase2Assert(!str_contains($lifecycle, '$_SESSION') && !str_contains($lifecycle, 'requireOwnedPortfolioContext'), 'P2J-05 public context must not use owner authority.');
 
-        phase2Assert(str_contains($ownerRoute, 'requireOwnerPortfolioContext($database)') && str_contains($ownerRoute, 'requireValidCsrfToken') && str_contains($ownerRoute, 'true, 303'), 'P2J-05 publication actions require owner context, CSRF, and PRG.');
+        phase2Assert(str_contains($ownerRoute, 'requireOwnerPortfolioContext($database)') && str_contains($ownerRoute, 'requireValidCsrfToken') && str_contains($ownerRoute, 'httpRedirect('), 'P2J-05 publication actions require owner context, CSRF, and PRG.');
         phase2Assert(!str_contains($ownerRoute, 'portfolio_id') && !str_contains($ownerRoute, 'owner_user_id'), 'P2J-05 publication route must not accept tenant authority.');
         phase2Assert(str_contains($publicRoute, 'resolvePublicReadContext') && str_contains($publicRoute, 'loadPublicPersonalInfo') && str_contains($publicRoute, 'listPublicSkills') && str_contains($publicRoute, 'listPublicProjects'), 'P2J-05 public Portfolio route is incomplete.');
         phase2Assert(!str_contains($publicRoute, 'requireOwnerPortfolioContext'), 'P2J-05 public route must remain independent of owner authority.');
-        phase2Assert(str_contains($publicJson, 'resolvePublicReadContext') && str_contains($publicJson, 'listPublicProjects') && str_contains($publicJson, "header('Cache-Control: no-store')"), 'P2J-05 public projects JSON is incomplete.');
+        phase2Assert(str_contains($publicJson, 'resolvePublicReadContext') && str_contains($publicJson, 'listPublicProjects') && str_contains($publicJson, 'httpJsonResponse'), 'P2J-05 public projects JSON is incomplete.');
         phase2Assert(!str_contains($root, 'FROM projects') && !str_contains($root, 'FROM personal_info') && !str_contains($root, '<form'), 'P2J-05 root must not retain a global Portfolio fallback or contact action.');
         phase2Assert(str_contains($developmentDockerfile, 'a2enmod rewrite'), 'P2J-05 Owner development image must enable mod_rewrite.');
         self::assertPublicRouteContract($developmentVhost, [

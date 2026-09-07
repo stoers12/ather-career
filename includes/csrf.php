@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/http.php';
+
 function getCsrfToken(): string
 {
     if (!isset($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token']) || strlen($_SESSION['csrf_token']) !== 64) {
@@ -21,7 +23,6 @@ function isValidCsrfToken(mixed $submittedToken): bool
 function requireValidCsrfToken(mixed $submittedToken): void
 {
     if (!isValidCsrfToken($submittedToken)) {
-        http_response_code(403);
-        exit('Invalid request.');
+        httpAbortHtml(403, 'Invalid request.');
     }
 }

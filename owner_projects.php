@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/owner_session.php';
 require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/owner_actions.php';
 require_once __DIR__ . '/includes/portfolio_scoped_data.php';
@@ -13,9 +14,12 @@ require_once __DIR__ . '/includes/owner_layout.php';
 require_once __DIR__ . '/includes/operational_security.php';
 
 startOwnerSession();
+httpRegisterExceptionBoundary('owner_projects.php');
+httpRequireMethod(['GET', 'HEAD', 'POST']);
 
 $projects = [];
 $formErrors = [];
+$fieldErrors = [];
 $pageMessage = '';
 $databaseError = '';
 $formMode = 'add';
@@ -50,11 +54,14 @@ try {
         if ($mayMutate) {
             $result = handleAuthorizedProjectAction($database, $context, $_POST, $_FILES);
             $formErrors = $result['errors'];
+            $fieldErrors = $result['field_errors'];
             $formMode = $result['form_mode'];
             $editingProject = $result['editing_project'];
             if ($result['redirect'] !== null) {
-                header('Location: ' . $result['redirect'], true, 303);
-                exit;
+                httpRedirect($result['redirect']);
+            }
+            if ($formErrors !== []) {
+                http_response_code($result['status']);
             }
         }
     } elseif (isset($_GET['edit'])) {

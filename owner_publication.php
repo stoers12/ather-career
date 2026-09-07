@@ -6,12 +6,15 @@ require_once __DIR__ . '/includes/owner_session.php';
 require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/public_lifecycle.php';
 require_once __DIR__ . '/includes/owner_publication_presentation.php';
 require_once __DIR__ . '/includes/operational_security.php';
 
 startOwnerSession();
+httpRegisterExceptionBoundary('owner_publication.php');
+httpRequireMethod(['GET', 'HEAD', 'POST']);
 
 $state = null;
 $message = '';
@@ -47,28 +50,21 @@ try {
         }
         if ($action === 'set_slug' && $limit !== null) {
             setOwnedPublicSlug($database, $context, $_POST['public_slug'] ?? null);
-            header('Location: owner_publication.php?slug_saved=1', true, 303);
-            exit;
+            httpRedirect('owner_publication.php?slug_saved=1');
         }
         if ($action === 'publish' && $limit !== null) {
             publishOwnedPortfolio($database, $context);
-            header('Location: owner_publication.php?published=1', true, 303);
-            exit;
+            httpRedirect('owner_publication.php?published=1');
         }
         if ($action === 'unpublish' && $limit !== null) {
             unpublishOwnedPortfolio($database, $context);
-            header('Location: owner_publication.php?unpublished=1', true, 303);
-            exit;
+            httpRedirect('owner_publication.php?unpublished=1');
         }
 
         if (!in_array($action, ['set_slug', 'publish', 'unpublish'], true)) {
             http_response_code(400);
             $errors[] = 'Invalid publication action.';
         }
-    } elseif (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
-        http_response_code(405);
-        header('Allow: GET, POST');
-        $errors[] = 'Method not allowed.';
     } else {
         if (isset($_GET['slug_saved'])) $message = 'Public slug saved.';
         if (isset($_GET['published'])) $message = 'Portfolio published.';

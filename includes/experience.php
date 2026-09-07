@@ -111,8 +111,24 @@ function experienceFormValues(array $post): array
     ];
 }
 
+/** @return array<string, string> */
+function experienceSubmittedFieldErrors(array $post): array
+{
+    $errors = [];
+    foreach (['id', 'experience_type', 'role_title', 'organization', 'location', 'start_month', 'end_month', 'description'] as $field) {
+        if (array_key_exists($field, $post) && !is_string($post[$field])) {
+            $errors[$field] = ucwords(str_replace('_', ' ', $field)) . ' must be submitted as text.';
+        }
+    }
+    if (array_key_exists('is_current', $post) && $post['is_current'] !== '1') {
+        $errors['is_current'] = 'Current role selection is invalid.';
+    }
+
+    return $errors;
+}
+
 /** @param array<string, mixed> $values */
-function validateExperienceValues(array $values, ?string $referenceMonth = null): array
+function experienceValidationFieldErrors(array $values, ?string $referenceMonth = null): array
 {
     $errors = [];
     $type = isset($values['experience_type']) && is_string($values['experience_type']) ? $values['experience_type'] : '';
@@ -125,57 +141,65 @@ function validateExperienceValues(array $values, ?string $referenceMonth = null)
     $description = isset($values['description']) && is_string($values['description']) ? $values['description'] : '';
     $currentMonth = experienceValidationReferenceMonth($referenceMonth);
 
-    if (!in_array($type, EXPERIENCE_TYPE_VALUES, true)) {
-        $errors[] = 'Please choose a valid experience type.';
+    if (submittedEnumValue($type, EXPERIENCE_TYPE_VALUES) === null) {
+        $errors['experience_type'] = 'Please choose a valid experience type.';
     }
     if ($roleTitle === '') {
-        $errors[] = 'Role or title is required.';
+        $errors['role_title'] = 'Role or title is required.';
     }
     if ($organization === '') {
-        $errors[] = 'Organization is required.';
+        $errors['organization'] = 'Organization is required.';
     }
 
     foreach ([
-        [$roleTitle, EXPERIENCE_ROLE_TITLE_MAX_LENGTH, 'Role or title'],
-        [$organization, EXPERIENCE_ORGANIZATION_MAX_LENGTH, 'Organization'],
-        [$location, EXPERIENCE_LOCATION_MAX_LENGTH, 'Location'],
-        [$description, EXPERIENCE_DESCRIPTION_MAX_LENGTH, 'Description'],
-    ] as [$value, $maximum, $label]) {
+        ['role_title', $roleTitle, EXPERIENCE_ROLE_TITLE_MAX_LENGTH, 'Role or title'],
+        ['organization', $organization, EXPERIENCE_ORGANIZATION_MAX_LENGTH, 'Organization'],
+        ['location', $location, EXPERIENCE_LOCATION_MAX_LENGTH, 'Location'],
+        ['description', $description, EXPERIENCE_DESCRIPTION_MAX_LENGTH, 'Description'],
+    ] as [$field, $value, $maximum, $label]) {
         $error = utf8FieldLengthError($value, $maximum, $label);
         if ($error !== null) {
-            $errors[] = $error;
+            $errors[$field] = $error;
         }
     }
 
     $normalizedStartMonth = normalizeExperienceMonth($startMonth);
     if ($startMonth === '') {
-        $errors[] = 'Start month is required.';
+        $errors['start_month'] = 'Start month is required.';
     } elseif ($normalizedStartMonth === null) {
-        $errors[] = 'Start month must be a valid month.';
+        $errors['start_month'] = 'Start month must be a valid month.';
     } elseif ($normalizedStartMonth > $currentMonth) {
-        $errors[] = 'Start month cannot be later than the current month.';
+        $errors['start_month'] = 'Start month cannot be later than the current month.';
     }
 
     $normalizedEndMonth = null;
     if ($isCurrent) {
         if ($endMonth !== '') {
-            $errors[] = 'End month must be empty for a current role.';
+            $errors['end_month'] = 'End month must be empty for a current role.';
         }
     } else {
         $normalizedEndMonth = normalizeExperienceMonth($endMonth);
         if ($endMonth === '') {
-            $errors[] = 'End month is required unless this is your current role.';
+            $errors['end_month'] = 'End month is required unless this is your current role.';
         } elseif ($normalizedEndMonth === null) {
-            $errors[] = 'End month must be a valid month.';
+            $errors['end_month'] = 'End month must be a valid month.';
         } elseif ($normalizedEndMonth > $currentMonth) {
-            $errors[] = 'End month cannot be later than the current month.';
+            $errors['end_month'] = 'End month cannot be later than the current month.';
         }
     }
     if ($normalizedStartMonth !== null && $normalizedEndMonth !== null && $normalizedEndMonth < $normalizedStartMonth) {
-        $errors[] = 'End month cannot be earlier than start month.';
+        $errors['end_month'] = 'End month cannot be earlier than start month.';
     }
 
     return $errors;
+}
+
+/** @param array<string, mixed> $values
+ *  @return list<string>
+ */
+function validateExperienceValues(array $values, ?string $referenceMonth = null): array
+{
+    return validationErrorList(experienceValidationFieldErrors($values, $referenceMonth));
 }
 
 /** @param array<string, mixed> $values

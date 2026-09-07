@@ -7,24 +7,25 @@ require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/includes/owner_flow.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/owner_layout.php';
 
 startOwnerSession();
+httpRegisterExceptionBoundary('owner_onboarding.php');
+httpRequireMethod(['GET', 'HEAD', 'POST']);
 
 $error = '';
 try {
     $database = getDatabaseConnection();
     $user = requireOwnerAuthenticatedUser($database);
     if (ownerHasPortfolio($database, $user)) {
-        header('Location: owner.php', true, 303);
-        exit;
+        httpRedirect('owner.php');
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
         createOwnedPortfolio($database, $user);
-        header('Location: owner.php', true, 303);
-        exit;
+        httpRedirect('owner.php');
     }
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'owner_onboarding.php', 'owner_portfolio_create');
