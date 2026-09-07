@@ -294,6 +294,13 @@ function publicationLifecycleE2eHeader(array $headers, string $name): ?string
     return null;
 }
 
+function publicationLifecycleE2eAssertPublicContactIsPostOnly(array $response, string $message): void
+{
+    phase2AssertSame(405, $response['status'], $message . ' did not return HTTP 405.');
+    $allow = publicationLifecycleE2eHeader($response['headers'], 'Allow');
+    phase2Assert(is_string($allow) && str_contains(strtoupper($allow), 'POST'), $message . ' did not declare Allow: POST.');
+}
+
 function publicationLifecycleE2eMessageCount(PDO $database, int $portfolioId): int
 {
     $statement = $database->prepare('SELECT COUNT(*) FROM messages WHERE recipient_portfolio_id = :portfolio_id');
@@ -368,10 +375,13 @@ try {
         '/public_portfolio.php?slug=e2e-tenant-a',
         '/public_media.php?slug=e2e-tenant-a&type=profile',
         '/public_projects_json.php?slug=e2e-tenant-a',
-        '/public_contact.php?slug=e2e-tenant-a',
     ] as $path) {
         phase2AssertSame(404, publicationLifecycleE2eHttpRequest($server['port'], $path)['status'], 'Private Portfolio endpoint exposed data: ' . $path);
     }
+    publicationLifecycleE2eAssertPublicContactIsPostOnly(
+        publicationLifecycleE2eHttpRequest($server['port'], '/public_contact.php?slug=e2e-tenant-a'),
+        'Private Portfolio Contact GET',
+    );
     $passed[] = 'T-E2E-INITIAL-PRIVATE';
 
     phase2AssertSame('e2e-tenant-b', setOwnedPublicSlug($database, $contextB, 'E2E-Tenant-B'), 'B could not reserve its independent slug.');
@@ -495,7 +505,10 @@ try {
     $passed[] = 'T-E2E-PROJECTS-JSON-ISOLATION';
 
     $contactPath = '/public_contact.php?slug=e2e-tenant-a';
-    phase2AssertSame(404, publicationLifecycleE2eHttpRequest($server['port'], $contactPath)['status'], 'Contact GET did not retain POST-only behavior.');
+    publicationLifecycleE2eAssertPublicContactIsPostOnly(
+        publicationLifecycleE2eHttpRequest($server['port'], $contactPath),
+        'Published Portfolio Contact GET',
+    );
     $beforeMessages = publicationLifecycleE2eMessageCount($database, $portfolioA);
     $emptyContact = publicationLifecycleE2eHttpRequest($server['port'], $contactPath, 'POST', []);
     phase2AssertSame(422, $emptyContact['status'], 'Empty Contact POST did not return validation failure.');
@@ -592,10 +605,13 @@ try {
         '/public_portfolio.php?slug=e2e-inactive',
         '/public_media.php?slug=e2e-inactive&type=profile',
         '/public_projects_json.php?slug=e2e-inactive',
-        '/public_contact.php?slug=e2e-inactive',
     ] as $path) {
         phase2AssertSame(404, publicationLifecycleE2eHttpRequest($server['port'], $path)['status'], 'Inactive owner endpoint was available: ' . $path);
     }
+    publicationLifecycleE2eAssertPublicContactIsPostOnly(
+        publicationLifecycleE2eHttpRequest($server['port'], '/public_contact.php?slug=e2e-inactive'),
+        'Inactive Portfolio Contact GET',
+    );
     phase2AssertSame(404, publicationLifecycleE2eHttpRequest($server['port'], '/public_contact.php?slug=e2e-inactive', 'POST', [
         'name' => 'Synthetic Sender',
         'email' => 'sender@example.test',
