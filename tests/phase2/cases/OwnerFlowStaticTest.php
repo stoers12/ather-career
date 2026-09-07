@@ -22,7 +22,7 @@ final class OwnerFlowStaticTest
             $contents = self::read($route);
             phase2Assert(str_contains($contents, 'startOwnerSession();'), "{$route} does not start the owner session.");
             phase2Assert(str_contains($contents, 'requireOwnerPortfolioContext($database)'), "{$route} does not require a server-derived Portfolio context.");
-            phase2Assert(!str_contains($contents, 'requireAdminAuthentication') && !str_contains($contents, 'admin_logged_in'), "{$route} must not accept V1 admin authority.");
+            phase2Assert(!str_contains($contents, 'require' . 'Admin' . 'Authentication') && !str_contains($contents, 'admin_' . 'logged_in'), "{$route} must not accept retired global authority.");
         }
 
         foreach ([

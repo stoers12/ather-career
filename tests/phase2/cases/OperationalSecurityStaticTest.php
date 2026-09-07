@@ -14,14 +14,12 @@ final class OperationalSecurityStaticTest
         $backup = self::read('scripts/backup-production.sh');
         $restore = self::read('scripts/restore-production.sh');
         $contact = self::read('public_contact.php');
-        $login = self::read('login.php');
         $readiness = self::read('ready.php');
         $all = $session . $operations . $storage . $account . $logging . $backup . $restore;
 
         phase2Assert(str_contains($session, 'INTERNAL_SESSION_IDLE_TIMEOUT_SECONDS = 1800') && str_contains($session, 'INTERNAL_SESSION_ABSOLUTE_LIFETIME_SECONDS = 43200'), 'P2J-08 session policy is incorrect.');
         phase2Assert(str_contains($operations, 'OWNER_UPLOAD_RATE_LIMIT_ATTEMPTS = 20') && substr_count($operations, '900') >= 2, 'P2J-08 owner limiter policy is incorrect.');
         phase2Assert(str_contains($contact, 'PUBLIC_CONTACT_RATE_LIMIT_ATTEMPTS = 3') && str_contains($contact, 'PUBLIC_CONTACT_RATE_LIMIT_WINDOW_SECONDS = 900'), 'P2J-08 changed the contact limiter policy.');
-        phase2Assert(str_contains($login, 'LOGIN_RATE_LIMIT_ATTEMPTS = 5') && str_contains($login, 'LOGIN_RATE_LIMIT_WINDOW_SECONDS = 300'), 'P2J-08 changed the legacy login limiter policy.');
         phase2Assert(str_contains($storage, 'PORTFOLIO_STORAGE_QUOTA_BYTES = 104857600') && str_contains($storage, 'LOCK_EX'), 'P2J-08 quota policy/locking is incomplete.');
         $mediaPolicy = self::read('includes/media_image_policy.php');
         $processor = self::read('includes/image_processor.php');

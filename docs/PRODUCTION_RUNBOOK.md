@@ -5,7 +5,7 @@ This runbook is for the current single-host Docker Compose deployment. It does n
 ## Prerequisites and configuration
 
 - Docker Engine with Compose v2 and host access restricted to operators.
-- Copy `.env.example` to a host-only `.env`; set unique database credentials, the Auth0 configuration, `LEGACY_ADMIN_AUTH_ENABLED=false`, and `SESSION_COOKIE_SECURE=true`.
+- Copy `.env.example` to a host-only `.env`; set unique database credentials, the Auth0 configuration, and `SESSION_COOKIE_SECURE=true`.
 - Keep `.env` and `backups/` outside Git and outside the public document root.
 - Use a short read-only/maintenance window for backup, migration, and restore operations.
 
@@ -28,7 +28,7 @@ curl -fsS http://127.0.0.1:8098/ready.php
 docker compose -f docker-compose.production.yml logs --tail 100 web db
 ```
 
-The web healthcheck is liveness only: `GET /health.php` returns `OK` without a DB query. `GET /ready.php` returns `READY` only when the application can query MySQL; otherwise it returns `503` without exposing the database error. Legacy V1 admin routes and the retired unscoped `/api/projects.php` endpoint must return `404` in production.
+The web healthcheck is liveness only: `GET /health.php` returns `OK` without a DB query. `GET /ready.php` returns `READY` only when the application can query MySQL; otherwise it returns `503` without exposing the database error. Retired global administration routes and the retired unscoped `/api/projects.php` endpoint must return `404` in production.
 
 ## First deployment / empty volumes
 

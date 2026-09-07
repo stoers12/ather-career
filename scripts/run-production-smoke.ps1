@@ -347,7 +347,6 @@ function Set-SmokeEnvironment([string]$Project, [string]$Port, [string]$Image, [
         MYSQL_ROOT_PASSWORD = (Get-RandomHex 24)
         PUBLIC_BASE_URL = 'https://portfolio-smoke.invalid'
         SESSION_COOKIE_SECURE = 'true'
-        LEGACY_ADMIN_AUTH_ENABLED = 'false'
         EXPECTED_OIDC_ISSUER = 'https://oidc-smoke.invalid/'
         PRESERVED_V1_OIDC_SUBJECT = ('smoke-owner-' + $Project.Substring('ather_production_smoke_'.Length))
         OIDC_CLIENT_ID = ('smoke-client-' + (Get-RandomHex 8))
@@ -612,6 +611,9 @@ function Invoke-ProductionSmokeRun([int]$Number, [string]$Head) {
         Assert-HttpStatus $readiness @(200) 'ready.php'
         Assert-Smoke ([System.Text.Encoding]::UTF8.GetString($readiness.Bytes) -eq "READY`n") 'ready.php did not confirm database readiness.'
         Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/") @(200) 'root route'
+        foreach ($path in @('/admin.php', '/login.php', '/logout.php', '/personal_info.php', '/projects.php', '/messages.php', '/api/projects.php')) {
+            Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl$path") @(404) "retired route $path"
+        }
 
         $schema = Invoke-SmokeFixture $web $project 'assert-schema' $slug
         Assert-Smoke ($schema.ok -eq $true) 'The entrypoint did not fully bootstrap the migration ledger.'

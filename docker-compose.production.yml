@@ -21,7 +21,6 @@ services:
       APP_ENV: production
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?PUBLIC_BASE_URL must be configured}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE}
-      LEGACY_ADMIN_AUTH_ENABLED: ${LEGACY_ADMIN_AUTH_ENABLED:-false}
       EXPECTED_OIDC_ISSUER: ${EXPECTED_OIDC_ISSUER}
       # Required only for a fresh V1 baseline before ownership migration 004.
       PRESERVED_V1_OIDC_SUBJECT: ${PRESERVED_V1_OIDC_SUBJECT:-}

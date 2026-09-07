@@ -6,7 +6,6 @@ if (PHP_SAPI !== 'cli') {
 }
 
 require_once __DIR__ . '/../includes/session.php';
-require_once __DIR__ . '/../includes/admin_session.php';
 require_once __DIR__ . '/../includes/storage.php';
 require_once __DIR__ . '/../includes/auth0_oidc.php';
 require_once __DIR__ . '/../includes/public_url.php';
@@ -28,12 +27,6 @@ try {
 if (getenv('APP_ENV') === 'test' || getenv('ATHERCAR_TEST_MODE') === '1') {
     $failures[] = 'test-mode configuration is forbidden in production.';
 }
-if (!legacyAdminAuthorityConfigurationIsValid()) {
-    $failures[] = 'LEGACY_ADMIN_AUTH_ENABLED must be a boolean value.';
-} elseif (legacyAdminAuthorityEnabled()) {
-    $failures[] = 'LEGACY_ADMIN_AUTH_ENABLED must be false in production.';
-}
-
 try {
     requirePrivateStorageRoot();
 } catch (PrivateStorageConfigurationException $exception) {

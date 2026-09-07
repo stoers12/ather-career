@@ -12,7 +12,6 @@ final class PublicLifecycleStaticTest
         $publicRoute = self::read('public_portfolio.php');
         $publicJson = self::read('public_projects_json.php');
         $root = self::read('index.php');
-        $legacyJson = self::read('api/projects.php');
         $developmentDockerfile = self::read('Dockerfile');
         $developmentVhost = self::read('docker/apache/development-vhost.conf');
         $productionVhost = self::read('docker/apache/production-vhost.conf');
@@ -39,7 +38,6 @@ final class PublicLifecycleStaticTest
         phase2Assert(str_contains($publicRoute, 'resolvePublicReadContext') && str_contains($publicRoute, 'loadPublicPersonalInfo') && str_contains($publicRoute, 'listPublicSkills') && str_contains($publicRoute, 'listPublicProjects'), 'P2J-05 public Portfolio route is incomplete.');
         phase2Assert(!str_contains($publicRoute, 'requireOwnerPortfolioContext'), 'P2J-05 public route must remain independent of owner authority.');
         phase2Assert(str_contains($publicJson, 'resolvePublicReadContext') && str_contains($publicJson, 'listPublicProjects') && str_contains($publicJson, "header('Cache-Control: no-store')"), 'P2J-05 public projects JSON is incomplete.');
-        phase2Assert(!str_contains($legacyJson, 'FROM projects') && str_contains($legacyJson, 'http_response_code(404)'), 'P2J-05 must retire global project JSON semantics.');
         phase2Assert(!str_contains($root, 'FROM projects') && !str_contains($root, 'FROM personal_info') && !str_contains($root, '<form'), 'P2J-05 root must not retain a global Portfolio fallback or contact action.');
         phase2Assert(str_contains($developmentDockerfile, 'a2enmod rewrite'), 'P2J-05 Owner development image must enable mod_rewrite.');
         self::assertPublicRouteContract($developmentVhost, [

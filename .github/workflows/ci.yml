@@ -18,7 +18,7 @@ jobs:
           docker run --rm -v "$PWD:/app:ro" -w /app php:8.3-cli sh -lc 'find . -name "*.php" -not -path "./.git/*" -print0 | xargs -0 -n1 php -l'
 
       - name: JavaScript syntax
-        run: node --check admin.js && node --check portfolio.js && node --check script.js
+        run: node --check admin.js && node --check portfolio.js
 
       - name: Phase 2 test foundation
         run: |
@@ -69,11 +69,10 @@ jobs:
           curl --fail http://127.0.0.1:8098/ready.php | grep -x READY
           curl --fail http://127.0.0.1:8098/
           curl --fail http://127.0.0.1:8098/owner_login.php
-          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8098/login.php)" = 404
+          for route in /admin.php /login.php /logout.php /personal_info.php /projects.php /messages.php /api/projects.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done
           curl --fail http://127.0.0.1:8098/p/a-public
           curl --fail http://127.0.0.1:8098/p/a-public/projects.json
-          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8098/api/projects.php)" = 404
-          test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/api/projects.php)" = 405
+          test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/api/projects.php)" = 404
 
       - name: Cleanup
         if: always()

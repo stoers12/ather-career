@@ -28,7 +28,7 @@ require_once __DIR__ . '/../tests/phase2/cases/MediaNormalizationTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/LibvipsImageProcessorTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OperationalSecurityStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/Auth0OidcStaticTest.php';
-require_once __DIR__ . '/../tests/phase2/cases/LegacyAdminCutoverStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/LegacyBackendRemovalStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/StaticArchitectureGuardTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/TenantAuthorizationStaticTest.php';
 
@@ -53,7 +53,7 @@ $tests = [
     'bounded libvips image processor contract' => [LibvipsImageProcessorTest::class, 'run'],
     'operational security static contract' => [OperationalSecurityStaticTest::class, 'run'],
     'Auth0 OIDC static contract' => [Auth0OidcStaticTest::class, 'run'],
-    'legacy admin cutover static contract' => [LegacyAdminCutoverStaticTest::class, 'run'],
+    'legacy backend removal static contract' => [LegacyBackendRemovalStaticTest::class, 'run'],
     'environment safety and disposable namespace' => [EnvironmentSafetyTest::class, 'run'],
     'synthetic fixture contract and test authentication carrier' => [FixtureContractTest::class, 'run'],
     'static architecture guards' => [StaticArchitectureGuardTest::class, 'run'],

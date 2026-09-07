@@ -11,14 +11,13 @@ final class ProjectTechnologiesStaticTest
         $scopedData = self::read('includes/portfolio_scoped_data.php');
         $lifecycle = self::read('includes/public_lifecycle.php');
         $ownerActions = self::read('includes/owner_actions.php');
-        $legacyActions = self::read('includes/project_actions.php');
+        $projectActions = self::read('includes/project_actions.php');
         $ownerForm = self::read('owner_projects.php');
-        $legacyForm = self::read('projects.php');
 
         phase2Assert(trim($migration) === 'ALTER TABLE projects ADD COLUMN technologies JSON NULL AFTER image_path;', 'S05C migration must add only the nullable native JSON Project technologies column.');
         phase2Assert(str_contains($technologies, 'PROJECT_TECHNOLOGIES_MAXIMUM = 12') && str_contains($technologies, 'PROJECT_TECHNOLOGY_MAX_LENGTH = 60') && str_contains($technologies, 'normalizeProjectTechnologies') && str_contains($technologies, 'projectTechnologiesFromStorage') && str_contains($technologies, 'JSON_THROW_ON_ERROR'), 'S05C technologies must have one bounded normalization and safe decode contract.');
         phase2Assert(str_contains($scopedData, 'technologies, created_at') && str_contains($scopedData, 'projectTechnologiesFromStorage') && str_contains($lifecycle, 'technologies, created_at') && str_contains($lifecycle, 'projectTechnologiesFromStorage'), 'S05C authorized and public Project mappings must select and safely decode technologies.');
-        phase2Assert(str_contains($ownerActions, 'normalizeProjectTechnologies($technologiesInput, $errors)') && str_contains($legacyActions, 'normalizeProjectTechnologies($technologiesInput, $errors)') && str_contains($ownerForm, 'name="technologies"') && str_contains($legacyForm, 'name="technologies"') && str_contains($ownerForm, 'One technology per line · Up to'), 'S05C active and legacy Project forms must share the same technologies contract.');
+        phase2Assert(str_contains($ownerActions, 'normalizeProjectTechnologies($technologiesInput, $errors)') && str_contains($projectActions, 'validateProjectImageUpload($file)') && str_contains($ownerForm, 'name="technologies"') && str_contains($ownerForm, 'One technology per line · Up to'), 'S05C Owner Project flow must retain one technologies contract and the shared Project validation helpers.');
         phase2Assert(!str_contains($ownerActions, 'listAuthorizedSkills'), 'S05C must not infer per-Project technologies from Portfolio-wide skills.');
 
         require_once PHASE2_REPOSITORY_ROOT . '/includes/project_technologies.php';
