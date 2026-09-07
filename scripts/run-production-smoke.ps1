@@ -78,8 +78,25 @@ function Get-ContainerLabel([string]$Container, [string]$Label) {
 }
 
 function Get-ContainerMountIdentity([string]$Container) {
-    $mounts = (Invoke-Native 'docker' @('inspect', '--format', '{{range .Mounts}}{{.Name}}|{{.Source}}|{{.Destination}}{{"\n"}}{{end}}', $Container)).Trim()
-    return @($mounts -split "`r?`n" | Where-Object { $_ -ne '' } | Sort-Object)
+    # Parse Docker's JSON rather than a Go-template record separator. Docker
+    # Desktop can emit several mount records as one template string, which
+    # makes a bind source look like a volume identity and invalidates the
+    # smoke test's isolation check.
+    $mountsJson = Invoke-Native 'docker' @('inspect', '--format', '{{json .Mounts}}', $Container)
+    try {
+        $mounts = @($mountsJson | ConvertFrom-Json -ErrorAction Stop)
+    } catch {
+        throw 'A container mount identity could not be parsed.'
+    }
+    # A read-only repository bind (for example the immutable baseline SQL)
+    # is shared source code, not mutable environment state. Isolation guards
+    # compare writable binds and named volumes only.
+    return @($mounts | Where-Object {
+        $_.Type -eq 'volume' -or ($null -ne $_.PSObject.Properties['RW'] -and [bool]$_.RW)
+    } | ForEach-Object {
+        $mountName = if ($null -ne $_.PSObject.Properties['Name']) { [string]$_.Name } else { '' }
+        "{0}|{1}|{2}" -f $mountName, [string]$_.Source, [string]$_.Destination
+    } | Sort-Object)
 }
 
 function Get-ContainerIdentity([string]$Container) {
@@ -654,7 +671,7 @@ function Invoke-ProductionSmokeRun([int]$Number, [string]$Head) {
         Assert-Smoke ($projectsJson.success -eq $true -and @($projectsJson.projects).Count -eq 2 -and @($projectsJson.projects.title) -contains 'Smoke Media Project' -and @($projectsJson.projects.title) -contains 'Smoke Text Project') 'Projects JSON did not retain synthetic Portfolio tenant scope.'
         Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/p/$slug/projects.json" -Method POST) @(405) 'invalid projects JSON method'
 
-        Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/p/$slug/contact") @(404) 'Contact GET'
+        Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/p/$slug/contact") @(405) 'Contact GET'
         Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/p/$slug/contact" -Method POST) @(422) 'empty Contact POST'
         $beforeMessage = Invoke-SmokeFixture $web $project 'message-count' $slug
         Assert-Smoke ([int]$beforeMessage.count -eq 0) 'An empty Contact POST inserted a message.'
@@ -672,9 +689,10 @@ function Invoke-ProductionSmokeRun([int]$Number, [string]$Head) {
 
         $unpublished = Invoke-SmokeFixture $web $project 'unpublish' $slug
         Assert-Smoke ([int]$unpublished.is_published -eq 0) 'The synthetic Portfolio did not unpublish.'
-        foreach ($path in @("/p/$slug", "/p/$slug/media/profile", "/p/$slug/media/project/$($fixture.project_id)", "/p/$slug/projects.json", "/p/$slug/contact")) {
+        foreach ($path in @("/p/$slug", "/p/$slug/media/profile", "/p/$slug/media/project/$($fixture.project_id)", "/p/$slug/projects.json")) {
             Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl$path") @(404) "unpublished $path"
         }
+        Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/p/$slug/contact") @(405) 'unpublished Contact GET'
         Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/p/$slug/contact" -Method POST -Form @{ name = 'Denied'; email = 'denied@portfolio-smoke.invalid'; message = 'Synthetic denied payload.' }) @(404) 'unpublished Contact POST'
         Assert-Smoke ([int](Invoke-SmokeFixture $web $project 'message-count' $slug).count -eq 3) 'Unpublished Contact changed message rows.'
         $republished = Invoke-SmokeFixture $web $project 'republish' $slug

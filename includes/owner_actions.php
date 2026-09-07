@@ -7,6 +7,7 @@ require_once __DIR__ . '/error_reporting.php';
 require_once __DIR__ . '/profile_actions.php';
 require_once __DIR__ . '/project_actions.php';
 require_once __DIR__ . '/experience_actions.php';
+require_once __DIR__ . '/transaction.php';
 
 function ownerActionId(mixed $value): ?int
 {
@@ -46,6 +47,8 @@ function handleAuthorizedProfileAction(
     $action = isset($post['action']) && is_string($post['action']) ? $post['action'] : '';
     $errors = [];
     $fieldErrors = [];
+    $target = null;
+    $newImagePath = null;
 
     try {
         $target = ownerProfileActionTarget($database, $context, $post, $current);
@@ -67,7 +70,13 @@ function handleAuthorizedProfileAction(
                 return ownerProfileActionResult($errors, $profile, null, $fieldErrors, 422);
             }
 
-            if (!updateAuthorizedPersonalInfo($database, $context, (int) $target['id'], ['profile_image_path' => $newImagePath])) {
+            $updated = runDatabaseTransaction($database, static fn (): bool => updateAuthorizedPersonalInfo(
+                $database,
+                $context,
+                (int) $target['id'],
+                ['profile_image_path' => $newImagePath],
+            ));
+            if (!$updated) {
                 cleanProfileImage($newImagePath, 'owner_profile_update_compensation', $context->portfolioId);
                 $fieldErrors['profile_image'] = 'The profile photo could not be updated.';
                 return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 503);
@@ -116,8 +125,8 @@ function handleAuthorizedProfileAction(
             $values['public_contact_visible'] = $profile['public_contact_visible'];
 
             if ($target === null) {
-                createAuthorizedPersonalInfo($database, $context, $values);
-            } elseif (!updateAuthorizedPersonalInfo($database, $context, (int) $target['id'], $values)) {
+                runDatabaseTransaction($database, static fn (): int => createAuthorizedPersonalInfo($database, $context, $values));
+            } elseif (!runDatabaseTransaction($database, static fn (): bool => updateAuthorizedPersonalInfo($database, $context, (int) $target['id'], $values))) {
                 $fieldErrors['profile'] = 'Your personal information could not be saved. Please reload and try again.';
                 return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 503);
             }
@@ -132,7 +141,7 @@ function handleAuthorizedProfileAction(
             }
 
             $imagePath = (string) $target['profile_image_path'];
-            if (!updateAuthorizedPersonalInfo($database, $context, (int) $target['id'], ['profile_image_path' => null])) {
+            if (!runDatabaseTransaction($database, static fn (): bool => updateAuthorizedPersonalInfo($database, $context, (int) $target['id'], ['profile_image_path' => null]))) {
                 $fieldErrors['profile_image'] = 'Profile photo not found.';
                 return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 404);
             }
@@ -149,13 +158,13 @@ function handleAuthorizedProfileAction(
                 return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 422);
             }
 
-            createAuthorizedSkill($database, $context, $skill);
+            runDatabaseTransaction($database, static fn (): int => createAuthorizedSkill($database, $context, $skill));
             return ownerProfileActionResult([], $profile, 'owner_profile.php?skill_added=1');
         }
 
         if ($action === 'delete_skill') {
             $skillId = ownerActionId($post['skill_id'] ?? null);
-            if ($skillId === null || !deleteAuthorizedSkill($database, $context, $skillId)) {
+            if ($skillId === null || !runDatabaseTransaction($database, static fn (): bool => deleteAuthorizedSkill($database, $context, $skillId))) {
                 $status = $skillId === null ? 422 : 404;
                 $fieldErrors['skill_id'] = $status === 422 ? 'Please provide a valid skill ID.' : 'Skill not found.';
                 return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, $status);
@@ -177,7 +186,7 @@ function handleAuthorizedProfileAction(
             if ($fieldErrors !== []) {
                 return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 422);
             }
-            if (!updateAuthorizedSkill($database, $context, $skillId, $skill)) {
+            if (!runDatabaseTransaction($database, static fn (): bool => updateAuthorizedSkill($database, $context, $skillId, $skill))) {
                 $fieldErrors['skill_id'] = 'Skill not found.';
                 return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 404);
             }
@@ -187,18 +196,18 @@ function handleAuthorizedProfileAction(
 
         $fieldErrors['action'] = 'Invalid profile action.';
         return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 400);
-    } catch (PDOException $exception) {
-        if ($action === 'add_skill' && isMySqlDuplicateKeyViolation($exception)) {
+    } catch (Throwable $exception) {
+        if ($action === 'add_skill' && $exception instanceof PDOException && isMySqlDuplicateKeyViolation($exception)) {
             $fieldErrors['skill_name'] = 'That skill already exists.';
             return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 422);
         }
-        if ($action === 'save_profile' && $target === null && isMySqlDuplicateKeyViolation($exception)) {
+        if ($action === 'save_profile' && $target === null && $exception instanceof PDOException && isMySqlDuplicateKeyViolation($exception)) {
             $fieldErrors['profile'] = 'Profile was initialized by another request. Please reload and try again.';
             return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 409);
         }
 
         reportApplicationError($exception, 'owner_profile.php', 'owner_profile_' . ($action === '' ? 'unknown' : $action));
-        if (isset($newImagePath)) {
+        if ($newImagePath !== null) {
             cleanProfileImage($newImagePath, 'owner_profile_database_compensation', $context->portfolioId);
         }
         $fieldErrors['profile'] = 'The requested change could not be saved.';
@@ -209,18 +218,22 @@ function handleAuthorizedProfileAction(
 function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext $context, array $post, array $files): array
 {
     $action = isset($post['action']) && is_string($post['action']) ? $post['action'] : '';
+    $newImagePath = null;
 
     try {
         if ($action === 'delete') {
             $projectId = ownerActionId($post['id'] ?? null);
             $project = $projectId === null ? null : findAuthorizedProject($database, $context, $projectId);
-            if ($project === null || !deleteAuthorizedProject($database, $context, $projectId)) {
+            if ($project === null || !runDatabaseTransaction($database, static fn (): bool => deleteAuthorizedProject($database, $context, $projectId))) {
                 $status = $projectId === null ? 422 : 404;
                 $fieldErrors = ['id' => $status === 422 ? 'Please provide a valid project ID.' : 'Project not found.'];
                 return projectActionResult(validationErrorList($fieldErrors), 'add', null, null, $fieldErrors, $status);
             }
 
-            cleanProjectImage($project['image_path'] ?? null, 'owner_project_delete', $context->portfolioId);
+            $oldImagePath = $project['image_path'] ?? null;
+            if (authorizedProjectImageIsUnreferenced($database, $context, is_string($oldImagePath) ? $oldImagePath : null)) {
+                cleanProjectImage($oldImagePath, 'owner_project_delete', $context->portfolioId);
+            }
             setProjectSuccessFlash('Project deleted successfully.');
             return projectActionResult([], 'add', null, 'owner_projects.php');
         }
@@ -267,16 +280,19 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         $existing = null;
         if ($action === 'update' && $projectId === null) {
             $fieldErrors['id'] = 'Please provide a valid project ID.';
+            $editingProject['id'] = '';
+            $formMode = 'add';
         } elseif ($action === 'update') {
             $existing = findAuthorizedProject($database, $context, $projectId);
             if ($existing === null) {
                 $fieldErrors['id'] = 'Project not found.';
+                $editingProject['id'] = '';
+                $formMode = 'add';
             } else {
                 $editingProject['image_path'] = $existing['image_path'];
             }
         }
 
-        $newImagePath = null;
         $hasUpload = isset($files['project_image']) && (($files['project_image']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE);
         if ($fieldErrors === [] && $hasUpload) {
             $imageErrors = [];
@@ -292,7 +308,7 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         }
 
         if ($action === 'add') {
-            createAuthorizedProject($database, $context, $title, $category, $description, $githubUrl, $newImagePath, $technologies ?? []);
+            runDatabaseTransaction($database, static fn (): int => createAuthorizedProject($database, $context, $title, $category, $description, $githubUrl, $newImagePath, $technologies ?? []));
             setProjectSuccessFlash('Project added successfully.');
             return projectActionResult([], 'add', null, 'owner_projects.php');
         }
@@ -300,20 +316,21 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         $removeImage = isset($post['remove_image']) && $post['remove_image'] === '1';
         $oldImagePath = $existing['image_path'] ?? null;
         $imagePath = $newImagePath ?? ($removeImage ? null : $oldImagePath);
-        if (!updateAuthorizedProject($database, $context, $projectId, $title, $category, $description, $githubUrl, $imagePath, $technologies ?? [])) {
+        if (!runDatabaseTransaction($database, static fn (): bool => updateAuthorizedProject($database, $context, $projectId, $title, $category, $description, $githubUrl, $imagePath, $technologies ?? []))) {
             cleanProjectImage($newImagePath, 'owner_project_update_compensation', $context->portfolioId);
             $fieldErrors = ['id' => 'Project not found.'];
             return projectActionResult(validationErrorList($fieldErrors), $formMode, $editingProject, null, $fieldErrors, 404);
         }
 
-        if ($newImagePath !== null || $removeImage) {
+        if (($newImagePath !== null || $removeImage)
+            && authorizedProjectImageIsUnreferenced($database, $context, is_string($oldImagePath) ? $oldImagePath : null)) {
             cleanProjectImage($oldImagePath, 'owner_project_update_old_image', $context->portfolioId);
         }
         setProjectSuccessFlash('Project updated successfully.');
         return projectActionResult([], 'add', null, 'owner_projects.php');
-    } catch (PDOException $exception) {
+    } catch (Throwable $exception) {
         reportApplicationError($exception, 'owner_projects.php', 'owner_project_' . ($action === '' ? 'unknown' : $action));
-        if (isset($newImagePath)) {
+        if ($newImagePath !== null) {
             cleanProjectImage($newImagePath, 'owner_project_database_compensation', $context->portfolioId);
         }
         $fieldErrors = ['project' => 'The project could not be saved.'];
@@ -330,7 +347,7 @@ function handleAuthorizedExperienceAction(PDO $database, AuthorizedPortfolioCont
         if ($action === 'delete') {
             $experienceId = experienceActionId($post['id'] ?? null);
             $experience = $experienceId === null ? null : findAuthorizedExperience($database, $context, $experienceId);
-            if ($experience === null || !deleteAuthorizedExperience($database, $context, $experienceId)) {
+            if ($experience === null || !runDatabaseTransaction($database, static fn (): bool => deleteAuthorizedExperience($database, $context, $experienceId))) {
                 $status = $experienceId === null ? 422 : 404;
                 $fieldErrors = ['id' => $status === 422 ? 'Please provide a valid experience record ID.' : 'Experience record not found.'];
                 return experienceActionResult(validationErrorList($fieldErrors), 'add', null, null, $fieldErrors, $status);
@@ -354,8 +371,12 @@ function handleAuthorizedExperienceAction(PDO $database, AuthorizedPortfolioCont
         $experienceId = $action === 'update' ? experienceActionId($post['id'] ?? null) : null;
         if ($action === 'update' && $experienceId === null) {
             $fieldErrors['id'] = 'Please provide a valid experience record ID.';
+            $editingExperience['id'] = '';
+            $formMode = 'add';
         } elseif ($action === 'update' && findAuthorizedExperience($database, $context, $experienceId) === null) {
             $fieldErrors['id'] = 'Experience record not found.';
+            $editingExperience['id'] = '';
+            $formMode = 'add';
         }
 
         if ($fieldErrors !== []) {
@@ -364,19 +385,19 @@ function handleAuthorizedExperienceAction(PDO $database, AuthorizedPortfolioCont
         }
 
         if ($action === 'add') {
-            createAuthorizedExperience($database, $context, $editingExperience, $referenceMonth);
+            runDatabaseTransaction($database, static fn (): int => createAuthorizedExperience($database, $context, $editingExperience, $referenceMonth));
             setExperienceSuccessFlash('Experience record added successfully.');
             return experienceActionResult([], 'add', null, 'owner_experiences.php');
         }
 
-        if (!updateAuthorizedExperience($database, $context, $experienceId, $editingExperience, $referenceMonth)) {
+        if (!runDatabaseTransaction($database, static fn (): bool => updateAuthorizedExperience($database, $context, $experienceId, $editingExperience, $referenceMonth))) {
             $fieldErrors = ['id' => 'Experience record not found.'];
             return experienceActionResult(validationErrorList($fieldErrors), $formMode, $editingExperience, null, $fieldErrors, 404);
         }
 
         setExperienceSuccessFlash('Experience record updated successfully.');
         return experienceActionResult([], 'add', null, 'owner_experiences.php');
-    } catch (PDOException $exception) {
+    } catch (Throwable $exception) {
         reportApplicationError($exception, 'owner_experiences.php', 'owner_experience_' . ($action === '' ? 'unknown' : $action));
 
         $fieldErrors = ['experience' => 'The experience record could not be saved.'];

@@ -148,7 +148,7 @@ try {
     publicLifecycleRunPhp([PHP_BINARY, __DIR__ . '/../database/migrate.php']);
     publicLifecycleRunPhp([PHP_BINARY, __DIR__ . '/../database/migrate.php']);
     phase2AssertSame('project_technologies', $database->query("SELECT name FROM schema_migrations WHERE version = '006'")->fetchColumn(), 'Project technologies migration was not recorded.');
-    $technologyColumn = $database->query("SELECT column_type, is_nullable FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'projects' AND column_name = 'technologies'")->fetch(PDO::FETCH_ASSOC);
+    $technologyColumn = $database->query("SELECT column_type AS column_type, is_nullable AS is_nullable FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'projects' AND column_name = 'technologies'")->fetch(PDO::FETCH_ASSOC);
     phase2Assert(is_array($technologyColumn) && strtolower((string) $technologyColumn['column_type']) === 'json' && $technologyColumn['is_nullable'] === 'YES', 'Project technologies must be a nullable native JSON column.');
     $columns = $database->query("SELECT column_name AS column_name, column_type AS column_type, is_nullable AS is_nullable, column_default AS column_default FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'portfolios' AND column_name IN ('public_slug', 'is_published', 'published_at') ORDER BY column_name")->fetchAll(PDO::FETCH_ASSOC);
     phase2AssertSame(['is_published', 'public_slug', 'published_at'], array_column($columns, 'column_name'), 'Migration C columns are incomplete.');

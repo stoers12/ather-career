@@ -102,6 +102,9 @@ function storeValidatedProfileImage(array $file, array &$errors, ?int $portfolio
         $presentation = ['key' => null, 'reason' => 'NORMALIZATION_FAILED'];
     }
     if ($presentation['key'] === null) {
+        // Normalization may have committed a derivative before a later check
+        // fails. Both files belong to this request, so retire both.
+        deleteProfilePresentationImage($key, $portfolioId);
         deletePrivateMediaFile($key, $portfolioId, 'profile_original');
         reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'normalization', $presentation['reason']);
         $errors[] = portfolioImageFailureMessage($presentation['reason']);

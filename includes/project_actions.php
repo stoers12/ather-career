@@ -108,6 +108,9 @@ function storeValidatedProjectImage(array $file, array &$errors, ?int $portfolio
     }
     $presentation = generateProjectPresentationResult($key, $portfolioId);
     if ($presentation['key'] === null) {
+        // Both the original and derivative are request-owned until the
+        // database reference is committed.
+        deleteProjectPresentationImage($key, $portfolioId);
         deletePrivateMediaFile($key, $portfolioId, 'projects');
         reportPortfolioMediaEvent('media_upload_rejected', 'project', 'normalization', $presentation['reason']);
         $errors[] = portfolioImageFailureMessage($presentation['reason']);

@@ -6,6 +6,7 @@ require_once __DIR__ . '/authorization.php';
 require_once __DIR__ . '/error_reporting.php';
 require_once __DIR__ . '/project_technologies.php';
 require_once __DIR__ . '/project_presentation.php';
+require_once __DIR__ . '/transaction.php';
 
 const PUBLIC_SLUG_MIN_LENGTH = 3;
 const PUBLIC_SLUG_MAX_LENGTH = 64;
@@ -108,93 +109,99 @@ function publicLifecycleDuplicateKey(PDOException $exception): bool
 function setOwnedPublicSlug(PDO $database, AuthorizedPortfolioContext $context, mixed $candidate): string
 {
     $slug = requirePublicSlug($candidate);
-    $state = ownedPublicLifecycleState($database, $context);
-    if ($state['published_at'] !== null) {
-        throw new PublicLifecycleConflictException('Your public slug is permanent after first publication.');
-    }
-
     try {
-        $statement = $database->prepare(
-            'UPDATE portfolios
-             SET public_slug = :public_slug
-             WHERE id = :authorized_portfolio_id
-               AND owner_user_id = :authorized_user_id
-               AND published_at IS NULL'
-        );
-        $statement->execute([
-            'public_slug' => $slug,
-            'authorized_portfolio_id' => $context->portfolioId,
-            'authorized_user_id' => $context->userId,
-        ]);
+        return runDatabaseTransaction($database, static function () use ($database, $context, $slug): string {
+            $state = ownedPublicLifecycleState($database, $context);
+            if ($state['published_at'] !== null) {
+                throw new PublicLifecycleConflictException('Your public slug is permanent after first publication.');
+            }
+
+            $statement = $database->prepare(
+                'UPDATE portfolios
+                 SET public_slug = :public_slug
+                 WHERE id = :authorized_portfolio_id
+                   AND owner_user_id = :authorized_user_id
+                   AND published_at IS NULL'
+            );
+            $statement->execute([
+                'public_slug' => $slug,
+                'authorized_portfolio_id' => $context->portfolioId,
+                'authorized_user_id' => $context->userId,
+            ]);
+
+            $updated = ownedPublicLifecycleState($database, $context);
+            if ($updated['published_at'] !== null) {
+                throw new PublicLifecycleConflictException('Your public slug is permanent after first publication.');
+            }
+            if ($updated['public_slug'] !== $slug) {
+                throw new PublicLifecycleConflictException('That public slug could not be saved.');
+            }
+
+            return $slug;
+        });
     } catch (PDOException $exception) {
         if (publicLifecycleDuplicateKey($exception)) {
             throw new PublicLifecycleConflictException('That public slug is already in use.', 0, $exception);
         }
         throw $exception;
     }
-
-    $updated = ownedPublicLifecycleState($database, $context);
-    if ($updated['published_at'] !== null) {
-        throw new PublicLifecycleConflictException('Your public slug is permanent after first publication.');
-    }
-    if ($updated['public_slug'] !== $slug) {
-        throw new PublicLifecycleConflictException('That public slug could not be saved.');
-    }
-
-    return $slug;
 }
 
 function publishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $context): void
 {
-    $state = ownedPublicLifecycleState($database, $context);
-    $slug = normalizePublicSlug($state['public_slug']);
-    if ($slug === null || $slug !== $state['public_slug'] || in_array($slug, PUBLIC_SLUG_RESERVED, true)) {
-        throw new PublicLifecycleValidationException('Set a valid public slug before publishing.');
-    }
+    runDatabaseTransaction($database, static function () use ($database, $context): void {
+        $state = ownedPublicLifecycleState($database, $context);
+        $slug = normalizePublicSlug($state['public_slug']);
+        if ($slug === null || $slug !== $state['public_slug'] || in_array($slug, PUBLIC_SLUG_RESERVED, true)) {
+            throw new PublicLifecycleValidationException('Set a valid public slug before publishing.');
+        }
 
-    $profile = $database->prepare(
-        'SELECT full_name
-         FROM personal_info
-         WHERE portfolio_id = :authorized_portfolio_id
-         LIMIT 1'
-    );
-    $profile->execute(['authorized_portfolio_id' => $context->portfolioId]);
-    $fullName = $profile->fetchColumn();
-    if (!is_string($fullName) || trim($fullName) === '') {
-        throw new PublicLifecycleValidationException('Add your professional name before publishing.');
-    }
+        $profile = $database->prepare(
+            'SELECT full_name
+             FROM personal_info
+             WHERE portfolio_id = :authorized_portfolio_id
+             LIMIT 1'
+        );
+        $profile->execute(['authorized_portfolio_id' => $context->portfolioId]);
+        $fullName = $profile->fetchColumn();
+        if (!is_string($fullName) || trim($fullName) === '') {
+            throw new PublicLifecycleValidationException('Add your professional name before publishing.');
+        }
 
-    $statement = $database->prepare(
-        'UPDATE portfolios
-         SET is_published = 1,
-             published_at = COALESCE(published_at, CURRENT_TIMESTAMP)
-         WHERE id = :authorized_portfolio_id
-           AND owner_user_id = :authorized_user_id'
-    );
-    $statement->execute([
-        'authorized_portfolio_id' => $context->portfolioId,
-        'authorized_user_id' => $context->userId,
-    ]);
-    if ($statement->rowCount() !== 1 && ownedPublicLifecycleState($database, $context)['is_published'] !== 1) {
-        throw new RuntimeException('Portfolio publication could not be saved.');
-    }
+        $statement = $database->prepare(
+            'UPDATE portfolios
+             SET is_published = 1,
+                 published_at = COALESCE(published_at, CURRENT_TIMESTAMP)
+             WHERE id = :authorized_portfolio_id
+               AND owner_user_id = :authorized_user_id'
+        );
+        $statement->execute([
+            'authorized_portfolio_id' => $context->portfolioId,
+            'authorized_user_id' => $context->userId,
+        ]);
+        if ($statement->rowCount() !== 1 && ownedPublicLifecycleState($database, $context)['is_published'] !== 1) {
+            throw new RuntimeException('Portfolio publication could not be saved.');
+        }
+    });
 }
 
 function unpublishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $context): void
 {
-    $statement = $database->prepare(
-        'UPDATE portfolios
-         SET is_published = 0
-         WHERE id = :authorized_portfolio_id
-           AND owner_user_id = :authorized_user_id'
-    );
-    $statement->execute([
-        'authorized_portfolio_id' => $context->portfolioId,
-        'authorized_user_id' => $context->userId,
-    ]);
-    if ($statement->rowCount() !== 1 && ownedPublicLifecycleState($database, $context)['is_published'] !== 0) {
-        throw new RuntimeException('Portfolio unpublication could not be saved.');
-    }
+    runDatabaseTransaction($database, static function () use ($database, $context): void {
+        $statement = $database->prepare(
+            'UPDATE portfolios
+             SET is_published = 0
+             WHERE id = :authorized_portfolio_id
+               AND owner_user_id = :authorized_user_id'
+        );
+        $statement->execute([
+            'authorized_portfolio_id' => $context->portfolioId,
+            'authorized_user_id' => $context->userId,
+        ]);
+        if ($statement->rowCount() !== 1 && ownedPublicLifecycleState($database, $context)['is_published'] !== 0) {
+            throw new RuntimeException('Portfolio unpublication could not be saved.');
+        }
+    });
 }
 
 function resolvePublicReadContext(PDO $database, mixed $candidate): ?PublicReadContext

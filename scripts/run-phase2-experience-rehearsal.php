@@ -71,16 +71,20 @@ function experienceRehearsalContext(int $userId, int $portfolioId): AuthorizedPo
 /** @return array<string, mixed> */
 function experienceRehearsalValues(string $roleTitle, bool $isCurrent, string $startMonth, string $endMonth = ''): array
 {
-    return [
+    $values = [
         'experience_type' => 'internship',
         'role_title' => $roleTitle,
         'organization' => 'Example Organization',
         'location' => 'Amman',
         'start_month' => $startMonth,
         'end_month' => $endMonth,
-        'is_current' => $isCurrent ? '1' : null,
         'description' => 'Plain-text rehearsal record.',
     ];
+    if ($isCurrent) {
+        $values['is_current'] = '1';
+    }
+
+    return $values;
 }
 
 /** @param array<string, mixed> $post */

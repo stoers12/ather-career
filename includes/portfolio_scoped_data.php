@@ -366,6 +366,31 @@ function deleteAuthorizedProject(PDO $database, AuthorizedPortfolioContext $cont
     return $statement->rowCount() === 1;
 }
 
+/**
+ * Managed project keys are generated per upload, but retirement stays
+ * conservative if a legacy or manually repaired row references the same key.
+ */
+function authorizedProjectImageIsUnreferenced(PDO $database, AuthorizedPortfolioContext $context, ?string $imagePath): bool
+{
+    if ($imagePath === null || $imagePath === '') {
+        return false;
+    }
+
+    $statement = $database->prepare(
+        'SELECT 1
+         FROM projects
+         WHERE portfolio_id = :authorized_portfolio_id
+           AND image_path = :image_path
+         LIMIT 1'
+    );
+    $statement->execute([
+        'authorized_portfolio_id' => $context->portfolioId,
+        'image_path' => $imagePath,
+    ]);
+
+    return $statement->fetchColumn() === false;
+}
+
 /** @return list<array<string, mixed>> */
 function listAuthorizedExperiences(PDO $database, AuthorizedPortfolioContext $context): array
 {
