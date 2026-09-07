@@ -16,12 +16,13 @@ if (!httpMethodIsAllowed(['GET'])) {
 
 try {
     $database = getDatabaseConnection();
-    $context = resolvePublicReadContext($database, $_GET['slug'] ?? null);
+    $slug = normalizePublicSlug($_GET['slug'] ?? null);
+    $context = $slug === null ? null : resolvePublicReadContext($database, $slug);
     if ($context === null) {
         httpJsonResponse(404, ['success' => false, 'projects' => [], 'error' => 'Portfolio not found.']);
     }
 
-    httpJsonResponse(200, ['success' => true, 'projects' => listPublicProjects($database, $context)]);
+    httpJsonResponse(200, ['success' => true, 'projects' => listPublicProjectJsonPayload($database, $context, $slug)]);
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'public_projects_json.php', 'public_projects_json_load');
     httpJsonResponse(503, ['success' => false, 'projects' => [], 'error' => 'Projects are temporarily unavailable.']);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/authorization.php';
 require_once __DIR__ . '/error_reporting.php';
 require_once __DIR__ . '/project_technologies.php';
+require_once __DIR__ . '/project_presentation.php';
 
 const PUBLIC_SLUG_MIN_LENGTH = 3;
 const PUBLIC_SLUG_MAX_LENGTH = 64;
@@ -268,6 +269,67 @@ function listPublicProjects(PDO $database, PublicReadContext $context): array
     unset($project);
 
     return $projects;
+}
+
+/**
+ * Build the deliberately small public JSON representation of Projects for a
+ * resolved published Portfolio. Raw storage locators remain server-side: the
+ * optional image URL is a scoped public-media capability instead.
+ *
+ * @return list<array{title: string, category: string, description: string, github_url: string, technologies: list<string>, image_url?: string}>
+ */
+function listPublicProjectJsonPayload(PDO $database, PublicReadContext $context, string $slug): array
+{
+    $normalizedSlug = normalizePublicSlug($slug);
+    if ($normalizedSlug === null) {
+        throw new LogicException('Public Project JSON requires a canonical slug.');
+    }
+
+    $statement = $database->prepare(
+        'SELECT id, title, category, description, github_url, image_path, technologies
+         FROM projects
+         WHERE portfolio_id = :public_portfolio_id
+         ORDER BY created_at DESC, id DESC'
+    );
+    $statement->execute(['public_portfolio_id' => $context->portfolioId]);
+
+    $projects = [];
+    foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $record) {
+        $project = [
+            'title' => (string) ($record['title'] ?? ''),
+            'category' => (string) ($record['category'] ?? ''),
+            'description' => (string) ($record['description'] ?? ''),
+            'github_url' => (string) ($record['github_url'] ?? ''),
+            'technologies' => projectTechnologiesFromStorage($record['technologies'] ?? null),
+        ];
+
+        $imagePath = $record['image_path'] ?? null;
+        $projectId = authorizationPositiveInteger($record['id'] ?? null);
+        if (is_string($imagePath)
+            && trim($imagePath) !== ''
+            && $projectId !== null
+            && publicProjectPresentationIsReadable($imagePath, $context->portfolioId)
+        ) {
+            $project['image_url'] = publicProjectMediaUrl($normalizedSlug, $projectId);
+        }
+
+        $projects[] = $project;
+    }
+
+    return $projects;
+}
+
+function publicProjectMediaUrl(string $slug, int $projectId): string
+{
+    return '/p/' . rawurlencode($slug) . '/media/project/' . $projectId;
+}
+
+function publicProjectPresentationIsReadable(string $originalKey, int $portfolioId): bool
+{
+    $presentationKey = projectPresentationKey($originalKey, $portfolioId);
+
+    return $presentationKey !== null
+        && privateMediaDescriptor($presentationKey, $portfolioId, 'project_presentation') !== null;
 }
 
 /** @return list<array{experience_type: string, role_title: string, organization: string, location: string|null, start_month: string, end_month: string|null, is_current: bool, description: string|null}> */

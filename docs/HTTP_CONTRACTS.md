@@ -14,8 +14,19 @@ Validation failures keep the existing form recovery workflow, return safe
 field-keyed errors, reject structured input where a scalar is required, and
 preserve only non-sensitive submitted values.
 
-The only active JSON read route is `/p/<slug>/projects.json`. It is GET-only
-and uses a stable sanitized JSON response shape. There are no active JSON
+The only active JSON read route is `/p/<slug>/projects.json`. Its JSON
+contract starts only after the request matches the canonical slug route. A
+non-matching path (for example, a slug containing an underscore) remains a
+normal web-server `404` and is not routed into PHP solely to produce JSON. A
+matched canonical route is GET-only and uses a stable sanitized JSON response
+shape; missing, inactive, or unpublished Portfolios return JSON `404`.
+
+Public Project JSON is an explicit allow-list, not a database-row
+serialization. It contains only presentation fields and an optional
+`image_url`, emitted only for an already-readable presentation asset and using
+the scoped public Portfolio-media route. Raw managed-media paths, storage
+keys, Owner identifiers, publication state, and operational metadata are never
+public JSON fields. There are no active JSON
 mutation or JSON request-body contracts. HTML form routes remain HTML
 workflows and are not JSON APIs.
 

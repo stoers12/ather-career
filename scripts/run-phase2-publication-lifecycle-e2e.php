@@ -478,8 +478,19 @@ try {
     $decodedProjects = json_decode($jsonResponse['body'], true);
     phase2AssertSame(200, $jsonResponse['status'], 'Published A projects JSON did not return 200.');
     phase2Assert(is_array($decodedProjects) && ($decodedProjects['success'] ?? false) === true && isset($decodedProjects['projects']) && is_array($decodedProjects['projects']), 'Published A projects JSON was invalid.');
-    phase2AssertSame($aResources['project_ids'], array_values(array_reverse(array_map(static fn (array $project): int => (int) $project['id'], $decodedProjects['projects']))), 'Projects JSON did not contain only A projects.');
-    phase2Assert(!str_contains($jsonResponse['body'], 'E2E B Private') && !str_contains($jsonResponse['body'], $storageRoot), 'Projects JSON exposed foreign or filesystem data.');
+    phase2AssertSame(['E2E A Media Project', 'E2E A Text Project'], array_values(array_reverse(array_column($decodedProjects['projects'], 'title'))), 'Projects JSON did not contain only A Projects.');
+    foreach ($decodedProjects['projects'] as $project) {
+        phase2Assert(is_array($project), 'Projects JSON returned a non-object Project.');
+        foreach (['id', 'portfolio_id', 'owner_user_id', 'user_id', 'image_path', 'created_at', 'is_published'] as $forbidden) {
+            phase2Assert(!array_key_exists($forbidden, $project), "Projects JSON exposed {$forbidden}.");
+        }
+    }
+    $mediaProject = current(array_filter($decodedProjects['projects'], static fn (array $project): bool => ($project['title'] ?? null) === 'E2E A Media Project'));
+    $textProject = current(array_filter($decodedProjects['projects'], static fn (array $project): bool => ($project['title'] ?? null) === 'E2E A Text Project'));
+    phase2Assert(is_array($mediaProject) && is_array($textProject), 'Projects JSON did not retain its public Project identities.');
+    phase2AssertSame('/p/e2e-tenant-a/media/project/' . $aResources['project_ids'][0], $mediaProject['image_url'] ?? null, 'Projects JSON did not use the scoped public Project media URL.');
+    phase2Assert(!array_key_exists('image_url', $textProject), 'Image-less Project exposed an image URL.');
+    phase2Assert(!str_contains($jsonResponse['body'], 'E2E B Private') && !str_contains($jsonResponse['body'], $storageRoot) && !str_contains($jsonResponse['body'], $aResources['project_image']), 'Projects JSON exposed foreign or private media data.');
     phase2AssertSame(404, publicationLifecycleE2eHttpRequest($server['port'], '/public_projects_json.php?slug=bad--slug')['status'], 'Malformed slug reached projects JSON.');
     $passed[] = 'T-E2E-PROJECTS-JSON-ISOLATION';
 

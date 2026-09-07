@@ -18,7 +18,7 @@ final class HttpValidationContractTest
         phase2Assert(str_contains($http, "header('Allow: '") && str_contains($http, 'http_response_code(405)'), 'Method contract does not emit HTTP 405 and Allow.');
         phase2Assert(str_contains($ownerFlow, 'function ownerAuthenticationRequired') && str_contains($ownerFlow, "httpRedirect('owner_login.php')"), 'Unauthenticated Owner HTML workflow no longer redirects safely to Owner login.');
         phase2Assert(str_contains($ownerFlow, 'function ownerAuthorizationDenied') && str_contains($ownerFlow, 'httpAbortHtml(403'), 'Authenticated authorization denial no longer returns HTTP 403.');
-        phase2Assert(str_contains($json, "httpMethodIsAllowed(['GET'])") && str_contains($json, 'httpJsonResponse(405') && str_contains($json, 'httpJsonResponse(404'), 'The active JSON read route does not keep its explicit method and missing-resource contracts.');
+        phase2Assert(str_contains($json, "httpMethodIsAllowed(['GET'])") && str_contains($json, 'httpJsonResponse(405') && str_contains($json, 'httpJsonResponse(404') && str_contains($json, 'listPublicProjectJsonPayload'), 'The active JSON read route does not keep its explicit method and missing-resource contracts.');
 
         foreach ([
             'index.php' => "httpRequireMethod(['GET', 'HEAD'])",
