@@ -6,7 +6,7 @@
         if (!modal) {
             modal = document.createElement('div');
             modal.className = 'confirm-modal';
-            modal.innerHTML = '<div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title"><h2 id="confirm-title">Are you sure?</h2><p class="confirm-message"></p><div class="confirm-actions"><button type="button" class="button-link confirm-cancel">Cancel</button><button type="button" class="button-danger confirm-ok">Continue</button></div></div>';
+            modal.innerHTML = '<div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message"><h2 id="confirm-title">Are you sure?</h2><p class="confirm-message" id="confirm-message"></p><div class="confirm-actions"><button type="button" class="button-link confirm-cancel">Cancel</button><button type="button" class="button-danger confirm-ok">Continue</button></div></div>';
             document.body.appendChild(modal);
         }
         lastActiveElement = document.activeElement;

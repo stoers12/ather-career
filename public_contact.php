@@ -14,21 +14,15 @@ const PUBLIC_CONTACT_RATE_LIMIT_WINDOW_SECONDS = 900;
 
 function publicContactNotFound(): never
 {
-    http_response_code(404);
-    header('Cache-Control: no-store');
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Portfolio not found</title></head><body><h1>Portfolio not found.</h1></body></html>';
+    httpSetHtmlResponse(404);
+    httpRenderStatusPage('Portfolio not found', 'Portfolio not found.');
     exit;
 }
 
 function publicContactError(int $status, array $errors): never
 {
-    http_response_code($status);
-    header('Cache-Control: no-store');
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Message unavailable</title></head><body><h1>Message unavailable.</h1><ul>';
-    foreach ($errors as $error) {
-        echo '<li>' . htmlspecialchars((string) $error, ENT_QUOTES, 'UTF-8') . '</li>';
-    }
-    echo '</ul></body></html>';
+    httpSetHtmlResponse($status);
+    httpRenderStatusPage('Message unavailable', 'Message unavailable.', array_values(array_map(static fn (mixed $error): string => (string) $error, $errors)));
     exit;
 }
 

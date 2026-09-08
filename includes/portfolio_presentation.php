@@ -347,7 +347,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
             <a class="is-current" href="#top" data-portfolio-section="top" aria-current="page">Home</a>
             <?php if ($showAbout): ?><a href="#about" data-portfolio-section="about">About</a><?php endif; ?>
             <?php if ($showProjects): ?><a href="#projects" data-portfolio-section="projects">Projects</a><?php endif; ?>
-            <a href="#experience" data-portfolio-section="experience">Experience</a>
+            <?php if ($presentationExperiences !== []): ?><a href="#experience" data-portfolio-section="experience">Experience</a><?php endif; ?>
             <?php if ($showSkills): ?><a href="#skills" data-portfolio-section="skills">Skills</a><?php endif; ?>
             <span class="portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Insights</span>
             <a href="#contact" data-portfolio-section="contact">Contact</a>
@@ -361,13 +361,13 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
 
 <div class="portfolio-mobile-nav-layer" aria-hidden="true" inert>
     <button class="portfolio-mobile-nav-backdrop" type="button" aria-label="Close navigation" tabindex="-1"></button>
-    <aside class="portfolio-mobile-nav-panel" aria-label="Portfolio mobile navigation">
-        <div class="portfolio-mobile-nav-panel-heading"><span>Navigation</span><button class="portfolio-mobile-nav-close" type="button" aria-label="Close navigation"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <aside class="portfolio-mobile-nav-panel" role="dialog" aria-modal="true" aria-labelledby="portfolio-mobile-navigation-title">
+        <div class="portfolio-mobile-nav-panel-heading"><span id="portfolio-mobile-navigation-title">Navigation</span><button class="portfolio-mobile-nav-close" type="button" aria-label="Close navigation"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
         <nav class="portfolio-mobile-nav-links" id="portfolio-mobile-nav" aria-label="Portfolio mobile sections">
             <a class="is-current" href="#top" data-portfolio-section="top" aria-current="page">Home</a>
             <?php if ($showAbout): ?><a href="#about" data-portfolio-section="about">About</a><?php endif; ?>
             <?php if ($showProjects): ?><a href="#projects" data-portfolio-section="projects">Projects</a><?php endif; ?>
-            <a href="#experience" data-portfolio-section="experience">Experience</a>
+            <?php if ($presentationExperiences !== []): ?><a href="#experience" data-portfolio-section="experience">Experience</a><?php endif; ?>
             <?php if ($showSkills): ?><a href="#skills" data-portfolio-section="skills">Skills</a><?php endif; ?>
             <span class="portfolio-mobile-nav-placeholder" aria-disabled="true">Insights <small>Coming soon</small></span>
             <a href="#contact" data-portfolio-section="contact">Contact</a>
@@ -544,7 +544,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                 <h3 id="portfolio-contact-form-title">Send a message</h3>
                 <?php if (($options['contact_sent'] ?? false) === true): ?><p class="portfolio-form-status" role="status">Message submitted successfully.</p><?php endif; ?>
                 <?php if ($preview): ?><p class="portfolio-preview-note portfolio-preview-note--contact" role="status"><?php echo portfolioPresentationSocialIcon('Email'); ?><span>The contact form is inactive in private preview.</span></p><?php endif; ?>
-                <?php if ($contactFormError !== ''): ?><p class="portfolio-contact-form-error" role="alert"><?php echo portfolioPresentationEscape($contactFormError); ?></p><?php endif; ?>
+                <?php if ($contactFormError !== ''): ?><p class="portfolio-contact-form-error" role="alert" tabindex="-1" data-portfolio-error-summary><?php echo portfolioPresentationEscape($contactFormError); ?></p><?php endif; ?>
                 <form method="post"<?php if ($contactAction !== ''): ?> action="<?php echo portfolioPresentationEscape($contactAction); ?>#contact"<?php endif; ?>>
                     <div class="portfolio-contact-field<?php echo $contactNameError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-name">Name</label><input id="portfolio-contact-name" type="text" name="name" maxlength="100" required autocomplete="name" value="<?php echo portfolioPresentationEscape($contactName); ?>"<?php echo $contactNameError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-name-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactNameError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-name-error"><?php echo portfolioPresentationEscape($contactNameError); ?></p><?php endif; ?></div>
                     <div class="portfolio-contact-field<?php echo $contactEmailError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-email">Email</label><input id="portfolio-contact-email" type="email" name="email" maxlength="255" required autocomplete="email" value="<?php echo portfolioPresentationEscape($contactEmail); ?>"<?php echo $contactEmailError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-email-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactEmailError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-email-error"><?php echo portfolioPresentationEscape($contactEmailError); ?></p><?php endif; ?></div>

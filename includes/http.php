@@ -40,12 +40,35 @@ function httpSetHtmlResponse(int $status): void
     header('Cache-Control: no-store');
 }
 
+/** @param list<string> $messages */
+function httpRenderStatusPage(string $title, string $heading, array $messages = []): void
+{
+    $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+    $safeHeading = htmlspecialchars($heading, ENT_QUOTES, 'UTF-8');
+
+    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>'
+        . $safeTitle
+        . '</title></head><body><main id="request-main"><h1>'
+        . $safeHeading
+        . '</h1>';
+
+    if (count($messages) === 1) {
+        echo '<p>' . htmlspecialchars($messages[0], ENT_QUOTES, 'UTF-8') . '</p>';
+    } elseif ($messages !== []) {
+        echo '<ul>';
+        foreach ($messages as $message) {
+            echo '<li>' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</li>';
+        }
+        echo '</ul>';
+    }
+
+    echo '</main></body></html>';
+}
+
 function httpAbortHtml(int $status, string $message): never
 {
     httpSetHtmlResponse($status);
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Request unavailable</title></head><body><h1>Request unavailable.</h1><p>'
-        . htmlspecialchars($message, ENT_QUOTES, 'UTF-8')
-        . '</p></body></html>';
+    httpRenderStatusPage('Request unavailable', 'Request unavailable.', [$message]);
     exit;
 }
 

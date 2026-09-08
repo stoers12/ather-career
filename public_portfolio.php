@@ -10,9 +10,8 @@ require_once __DIR__ . '/includes/portfolio_presentation.php';
 
 function publicPortfolioNotFound(): never
 {
-    http_response_code(404);
-    header('Cache-Control: no-store');
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Portfolio not found</title></head><body><h1>Portfolio not found.</h1></body></html>';
+    httpSetHtmlResponse(404);
+    httpRenderStatusPage('Portfolio not found', 'Portfolio not found.');
     exit;
 }
 
@@ -39,8 +38,8 @@ try {
     $experiences = listPublicExperiences($database, $context);
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'public_portfolio.php', 'public_portfolio_load');
-    http_response_code(503);
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Portfolio unavailable</title></head><body><h1>Portfolio temporarily unavailable.</h1></body></html>';
+    httpSetHtmlResponse(503);
+    httpRenderStatusPage('Portfolio unavailable', 'Portfolio temporarily unavailable.');
     exit;
 }
 

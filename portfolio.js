@@ -1,6 +1,8 @@
 (() => {
     'use strict';
 
+    document.documentElement.classList.add('portfolio-js');
+
     const initializePortfolioScrollspy = () => {
         const header = document.querySelector('.portfolio-header');
         const links = Array.from(document.querySelectorAll('[data-portfolio-section]'));
@@ -247,6 +249,7 @@
         const close = document.querySelector('.portfolio-mobile-nav-close');
         const backdrop = document.querySelector('.portfolio-mobile-nav-backdrop');
         const navigation = document.querySelector('.portfolio-mobile-nav-links');
+        const background = Array.from(document.body.children).filter((element) => element !== layer);
 
         if (!(toggle instanceof HTMLButtonElement)
             || !(layer instanceof HTMLElement)
@@ -263,6 +266,7 @@
             layer.setAttribute('inert', '');
             toggle.setAttribute('aria-expanded', 'false');
             document.body.classList.remove('portfolio-mobile-nav-open');
+            background.forEach((element) => element.removeAttribute('inert'));
             if (restoreFocus) {
                 toggle.focus();
             }
@@ -273,6 +277,7 @@
             layer.removeAttribute('inert');
             toggle.setAttribute('aria-expanded', 'true');
             document.body.classList.add('portfolio-mobile-nav-open');
+            background.forEach((element) => element.setAttribute('inert', ''));
             close.focus();
         };
 
@@ -325,12 +330,29 @@
         });
     };
 
+    const initializePortfolioFeedbackAndBackToTop = () => {
+        const errorSummary = document.querySelector('[data-portfolio-error-summary]');
+        if (errorSummary instanceof HTMLElement) {
+            window.setTimeout(() => errorSummary.focus(), 0);
+        }
+
+        const backToTop = document.querySelector('.portfolio-footer-back-to-top');
+        const title = document.getElementById('portfolio-title');
+        if (backToTop instanceof HTMLAnchorElement && title instanceof HTMLElement) {
+            backToTop.addEventListener('click', () => {
+                title.setAttribute('tabindex', '-1');
+                window.setTimeout(() => title.focus({ preventScroll: true }), 0);
+            });
+        }
+    };
+
     const initializePortfolio = () => {
         initializePortfolioScrollspy();
         initializePortfolioSkills();
         initializeProjectNavigator();
         initializeExperiencePagination();
         initializePortfolioMobileNavigation();
+        initializePortfolioFeedbackAndBackToTop();
     };
 
     if (document.readyState === 'loading') {
