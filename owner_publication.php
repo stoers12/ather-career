@@ -19,13 +19,16 @@ httpRequireMethod(['GET', 'HEAD', 'POST']);
 $state = null;
 $message = '';
 $errors = [];
+$fieldErrors = [];
+$submittedAction = is_string($_POST['action'] ?? null) ? $_POST['action'] : null;
+$submittedSlug = $submittedAction === 'set_slug' && is_string($_POST['public_slug'] ?? null) ? trim($_POST['public_slug']) : null;
 try {
     $database = getDatabaseConnection();
     $context = requireOwnerPortfolioContext($database);
 
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
-        $action = $_POST['action'] ?? null;
+        $action = $submittedAction;
         if (in_array($action, ['set_slug', 'publish', 'unpublish'], true)) {
             try {
                 $limit = consumeOwnerPublicationRateLimit($context);
@@ -73,6 +76,9 @@ try {
     $state = ownedPublicLifecycleState($database, $context);
 } catch (PublicLifecycleValidationException | PublicLifecycleConflictException $exception) {
     $errors[] = $exception->getMessage();
+    if ($submittedAction === 'set_slug') {
+        $fieldErrors['public_slug'] = $exception->getMessage();
+    }
     if (isset($database, $context)) {
         $state = ownedPublicLifecycleState($database, $context);
     }
@@ -99,7 +105,6 @@ ownerLayoutStart('Publication', 'publication');
     <div class="admin-page-header-copy"><p class="admin-eyebrow">Publication</p><h1 class="admin-page-title">Public Portfolio</h1><p class="admin-page-description">Choose the permanent public address, then publish when your profile is ready.</p></div>
     <div class="admin-page-header-actions"><a class="button-secondary" href="owner_preview.php">Private Preview</a></div>
 </div>
-<?php if ($message !== ''): ?><p class="status-message" role="status"><?php echo ownerEscapeHtml($message); ?></p><?php endif; ?>
-<?php if ($errors !== []): ?><ul class="status-message error" role="alert"><?php foreach ($errors as $error): ?><li><?php echo ownerEscapeHtml($error); ?></li><?php endforeach; ?></ul><?php endif; ?>
-<?php if (is_array($state)): renderOwnerPublicationPresentation($state, $publicUrl); endif; ?>
+<?php ownerRenderFormFeedback($message, $errors, $fieldErrors); ?>
+<?php if (is_array($state)): renderOwnerPublicationPresentation($state, $publicUrl, $fieldErrors, $submittedSlug); endif; ?>
 <?php ownerLayoutEnd();

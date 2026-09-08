@@ -10,6 +10,8 @@ function ownerEscapeHtml(string $value): string
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
+require_once __DIR__ . '/owner_form_feedback.php';
+
 function ownerLayoutStart(string $title, string $activePage): void
 {
     ?>
@@ -54,9 +56,9 @@ function ownerNavigation(string $activePage): void
         </nav>
         <div class="sidebar-footer">
             <a href="owner_preview.php">Private Preview</a>
-            <form class="sidebar-logout-form" method="POST" action="owner_logout.php">
+            <form class="sidebar-logout-form" method="POST" action="owner_logout.php" data-owner-form>
                 <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
-                <button class="sidebar-logout-button" type="submit">Logout</button>
+                <button class="sidebar-logout-button" type="submit" data-pending-label="Signing out…">Logout</button>
             </form>
         </div>
     </aside>

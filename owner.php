@@ -45,7 +45,7 @@ ownerLayoutStart('Owner Dashboard', 'dashboard');
     </div>
     <div class="admin-page-header-actions"><a class="button-primary" href="owner_preview.php">Private Preview</a></div>
 </div>
-<?php if ($dashboardError !== ''): ?><p class="status-message error" role="alert"><?php echo ownerEscapeHtml($dashboardError); ?></p><?php endif; ?>
+<?php ownerRenderFormFeedback('', $dashboardError === '' ? [] : [$dashboardError]); ?>
 <div class="stat-grid" aria-label="Portfolio summary">
     <article class="stat-card"><span class="stat-label">Projects</span><strong><?php echo $dashboard['project_count']; ?></strong><a href="owner_projects.php">Manage projects →</a></article>
     <article class="stat-card"><span class="stat-label">Skills</span><strong><?php echo $dashboard['skill_count']; ?></strong><a href="owner_profile.php#skills">Manage skills →</a></article>
@@ -56,7 +56,9 @@ ownerLayoutStart('Owner Dashboard', 'dashboard');
 <div class="quick-actions-grid" aria-label="Quick actions">
     <a class="quick-action" href="owner_profile.php">Edit Profile <span aria-hidden="true">→</span></a>
     <a class="quick-action" href="owner_projects.php?add=1">+ Add Project</a>
+    <a class="quick-action" href="owner_experiences.php?add=1">+ Add Experience</a>
     <a class="quick-action" href="owner_messages.php">View Messages <span aria-hidden="true">→</span></a>
+    <a class="quick-action" href="owner_publication.php">Publication Settings <span aria-hidden="true">→</span></a>
     <a class="quick-action" href="owner_preview.php">Private Preview <span aria-hidden="true">→</span></a>
 </div>
 <?php ownerLayoutEnd();

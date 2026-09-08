@@ -32,6 +32,7 @@ require_once __DIR__ . '/../tests/phase2/cases/LegacyBackendRemovalStaticTest.ph
 require_once __DIR__ . '/../tests/phase2/cases/HttpValidationContractTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PublicProjectJsonContractTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OwnerTransactionIntegrityStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/OwnerFrontendExperienceStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/StaticArchitectureGuardTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/TenantAuthorizationStaticTest.php';
 
@@ -60,6 +61,7 @@ $tests = [
     'HTTP response and validation contract' => [HttpValidationContractTest::class, 'run'],
     'public Project JSON allow-list and media contract' => [PublicProjectJsonContractTest::class, 'run'],
     'owner transaction and media-integrity static contract' => [OwnerTransactionIntegrityStaticTest::class, 'run'],
+    'Owner frontend experience static contract' => [OwnerFrontendExperienceStaticTest::class, 'run'],
     'environment safety and disposable namespace' => [EnvironmentSafetyTest::class, 'run'],
     'synthetic fixture contract and test authentication carrier' => [FixtureContractTest::class, 'run'],
     'static architecture guards' => [StaticArchitectureGuardTest::class, 'run'],

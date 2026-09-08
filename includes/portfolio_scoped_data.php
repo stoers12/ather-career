@@ -141,7 +141,26 @@ function updateAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext 
         'authorized_portfolio_id' => $context->portfolioId,
     ]);
 
-    return $statement->rowCount() === 1;
+    if ($statement->rowCount() === 1) {
+        return true;
+    }
+
+    // MySQL reports zero affected rows when an Owner resubmits unchanged
+    // values. Confirm the same scoped record still exists so that case is a
+    // successful no-op, while a missing or cross-Owner record remains false.
+    $exists = $database->prepare(
+        'SELECT 1
+         FROM personal_info
+         WHERE id = :resource_id
+           AND portfolio_id = :authorized_portfolio_id
+         LIMIT 1'
+    );
+    $exists->execute([
+        'resource_id' => $profileId,
+        'authorized_portfolio_id' => $context->portfolioId,
+    ]);
+
+    return (int) $exists->fetchColumn() === 1;
 }
 
 /** @return list<array<string, mixed>> */

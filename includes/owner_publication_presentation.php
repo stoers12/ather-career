@@ -53,7 +53,7 @@ function ownerPublicationUrlDisplay(?string $publicUrl): void
 }
 
 /** @param array{public_slug: string|null, is_published: int, published_at: string|null} $state */
-function renderOwnerPublicationPresentation(array $state, ?string $publicUrl): void
+function renderOwnerPublicationPresentation(array $state, ?string $publicUrl, array $fieldErrors = [], ?string $submittedSlug = null): void
 {
     $viewState = ownerPublicationViewState($state);
     $slug = ownerPublicationStateSlug($state);
@@ -69,26 +69,26 @@ function renderOwnerPublicationPresentation(array $state, ?string $publicUrl): v
                 </div>
                 <p class="publication-copy-feedback" id="publication-copy-feedback" role="status" aria-live="polite"></p>
             <?php endif; ?>
-            <form class="publication-destructive-action" method="POST" action="owner_publication.php" data-confirm="Take this Portfolio offline? Visitors will no longer be able to open its public link until you publish it again." data-confirm-title="Unpublish Portfolio?" data-confirm-action="Unpublish"><input type="hidden" name="action" value="unpublish"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><button class="button-danger" type="submit">Unpublish</button></form>
+            <form class="publication-destructive-action" method="POST" action="owner_publication.php" data-owner-form data-confirm="Take this Portfolio offline? Visitors will no longer be able to open its public link until you publish it again." data-confirm-title="Unpublish Portfolio?" data-confirm-action="Unpublish"><input type="hidden" name="action" value="unpublish"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><button class="button-danger" type="submit" data-pending-label="Taking Portfolio offline…">Unpublish</button></form>
         <?php elseif ($viewState === 'offline'): ?>
             <div class="publication-status publication-status--offline" role="status"><div><p class="admin-eyebrow">Offline</p><h2 id="publication-status-title">Your public link is offline</h2><p>Your permanent public address is preserved. Publish again to make the Portfolio public.</p></div></div>
             <?php ownerPublicationUrlDisplay($publicUrl); ?>
-            <form class="publication-primary-action" method="POST" action="owner_publication.php"><input type="hidden" name="action" value="publish"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><button class="button-primary" type="submit">Publish Portfolio</button></form>
+            <form class="publication-primary-action" method="POST" action="owner_publication.php" data-owner-form data-confirm="Publish this Portfolio? Anyone with the public link will be able to view it."><input type="hidden" name="action" value="publish"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><button class="button-primary" type="submit" data-pending-label="Publishing Portfolio…">Publish Portfolio</button></form>
         <?php elseif ($viewState === 'reserved'): ?>
             <div class="publication-status" role="status"><div><p class="admin-eyebrow">Address reserved</p><h2 id="publication-status-title">Your public address is reserved</h2><p>This address is not live until you publish the Portfolio.</p></div></div>
             <?php ownerPublicationUrlDisplay($publicUrl); ?>
-            <form class="profile-form publication-slug-form" method="POST" action="owner_publication.php">
+            <form class="profile-form publication-slug-form" method="POST" action="owner_publication.php" data-owner-form>
                 <input type="hidden" name="action" value="set_slug"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
-                <label class="form-field" for="public_slug"><span>Public slug</span><input id="public_slug" type="text" name="public_slug" value="<?php echo ownerEscapeHtml((string) $slug); ?>" minlength="3" maxlength="64" pattern="[a-z0-9]+(-[a-z0-9]+)*" required></label>
-                <div class="form-actions"><button class="button-secondary" type="submit">Update public slug</button></div>
+                <label class="form-field" for="public_slug"><span>Public slug <?php ownerRenderRequiredIndicator(); ?></span><input id="public_slug" type="text" name="public_slug" value="<?php echo ownerEscapeHtml($submittedSlug ?? (string) $slug); ?>" minlength="3" maxlength="64" pattern="[a-z0-9]+(-[a-z0-9]+)*" required<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'public_slug', 'public-slug-help'); ?>><small class="form-hint" id="public-slug-help">Use 3–64 lowercase letters, numbers, and single hyphens. This address becomes permanent after publishing.</small></label><?php ownerRenderFieldError($fieldErrors, 'public_slug'); ?>
+                <div class="form-actions"><button class="button-secondary" type="submit" data-pending-label="Saving public slug…">Update public slug</button></div>
             </form>
-            <form class="publication-primary-action" method="POST" action="owner_publication.php"><input type="hidden" name="action" value="publish"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><button class="button-primary" type="submit">Publish Portfolio</button></form>
+            <form class="publication-primary-action" method="POST" action="owner_publication.php" data-owner-form data-confirm="Publish this Portfolio? Anyone with the public link will be able to view it."><input type="hidden" name="action" value="publish"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><button class="button-primary" type="submit" data-pending-label="Publishing Portfolio…">Publish Portfolio</button></form>
         <?php else: ?>
             <div class="publication-status" role="status"><div><p class="admin-eyebrow">Draft</p><h2 id="publication-status-title">Choose your public address</h2><p>Reserve a permanent public slug before publishing your Portfolio.</p></div></div>
-            <form class="profile-form publication-slug-form" method="POST" action="owner_publication.php">
+            <form class="profile-form publication-slug-form" method="POST" action="owner_publication.php" data-owner-form>
                 <input type="hidden" name="action" value="set_slug"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
-                <label class="form-field" for="public_slug"><span>Public slug</span><input id="public_slug" type="text" name="public_slug" value="" minlength="3" maxlength="64" pattern="[a-z0-9]+(-[a-z0-9]+)*" required></label>
-                <div class="form-actions"><button class="button-primary" type="submit">Save public slug</button></div>
+                <label class="form-field" for="public_slug"><span>Public slug <?php ownerRenderRequiredIndicator(); ?></span><input id="public_slug" type="text" name="public_slug" value="<?php echo ownerEscapeHtml($submittedSlug ?? ''); ?>" minlength="3" maxlength="64" pattern="[a-z0-9]+(-[a-z0-9]+)*" required<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'public_slug', 'public-slug-help'); ?>><small class="form-hint" id="public-slug-help">Use 3–64 lowercase letters, numbers, and single hyphens. This address becomes permanent after publishing.</small></label><?php ownerRenderFieldError($fieldErrors, 'public_slug'); ?>
+                <div class="form-actions"><button class="button-primary" type="submit" data-pending-label="Saving public slug…">Save public slug</button></div>
             </form>
         <?php endif; ?>
     </section>

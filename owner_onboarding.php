@@ -42,9 +42,9 @@ ownerLayoutStart('Create Your Portfolio', '');
         <p class="admin-page-description">Your private workspace is ready to set up. It is not public or published.</p>
     </div>
 </div>
-<?php if ($error !== ''): ?><p class="status-message error" role="alert"><?php echo ownerEscapeHtml($error); ?></p><?php endif; ?>
-<form method="POST" action="owner_onboarding.php" class="profile-form">
+<?php ownerRenderFormFeedback('', $error === '' ? [] : [$error]); ?>
+<form method="POST" action="owner_onboarding.php" class="profile-form" data-owner-form>
     <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
-    <div class="form-actions"><button class="button-primary" type="submit">Create Portfolio</button></div>
+    <div class="form-actions"><button class="button-primary" type="submit" data-pending-label="Creating Portfolio…">Create Portfolio</button></div>
 </form>
 <?php ownerLayoutEnd();

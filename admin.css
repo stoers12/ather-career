@@ -42,3 +42,6 @@ body:has(.admin-layout){margin:0;background:var(--admin-bg);color:var(--admin-te
 @media (max-width:799px){.publication-card{padding:20px}.publication-actions{align-items:stretch;flex-direction:column}.publication-actions :is(a,button),.publication-primary-action .button-primary,.publication-destructive-action .button-danger{width:100%}}
 .login-card label{display:block}
 .login-card input:not([type="hidden"]){display:block;box-sizing:border-box;width:100%}
+
+/* Stage-3A owner feedback states. These rules are intentionally limited to Owner forms. */
+.required-indicator{color:var(--admin-danger);font-weight:800}.field-error{display:block;margin:6px 0 0;color:#b91c1c;font-size:.86rem;font-weight:600;line-height:1.4}.form-grid>.field-error{grid-column:1/-1;margin-top:-10px}.owner-error-summary{border:1px solid #fecaca}.owner-error-summary h2{margin:0 0 8px;font-size:1rem}.owner-error-summary ul{margin:0;padding:0 0 0 20px;background:transparent}.owner-error-summary li+li{margin-top:5px}.admin-content :is(input,textarea,select)[aria-invalid="true"]{border-color:var(--admin-danger);box-shadow:0 0 0 3px rgba(220,38,38,.12)}.admin-content form[aria-busy="true"]{cursor:progress}

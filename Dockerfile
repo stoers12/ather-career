@@ -19,7 +19,8 @@ WORKDIR /var/www/html
 
 COPY . /var/www/html/
 
-RUN chmod 755 /usr/local/bin/portfolio-runtime-entrypoint
+RUN ln -s /var/www/html /var/www/app \
+    && chmod 755 /usr/local/bin/portfolio-runtime-entrypoint
 
 ENTRYPOINT ["/usr/local/bin/portfolio-runtime-entrypoint"]
 CMD ["apache2-foreground"]
