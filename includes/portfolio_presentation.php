@@ -321,6 +321,10 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $previewError = isset($options['preview_error']) && is_string($options['preview_error'])
         ? $options['preview_error']
         : '';
+    $canonicalUrl = !$preview && isset($options['canonical_url']) && is_string($options['canonical_url'])
+        && filter_var($options['canonical_url'], FILTER_VALIDATE_URL) !== false
+        ? $options['canonical_url']
+        : '';
     $stylesheet = '/' . versionedAssetUrl('portfolio.css');
     $script = '/' . versionedAssetUrl('portfolio.js');
     ?>
@@ -332,8 +336,10 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     <?php if ($preview): ?><meta name="robots" content="noindex,nofollow"><?php else: ?><meta name="robots" content="index,follow"><?php endif; ?>
     <meta name="color-scheme" content="dark">
     <title><?php echo portfolioPresentationEscape($name); ?> — Portfolio</title>
+    <?php if ($canonicalUrl !== ''): ?><link rel="canonical" href="<?php echo portfolioPresentationEscape($canonicalUrl); ?>"><?php endif; ?>
+    <script>document.documentElement.classList.add('portfolio-js');</script>
     <link rel="stylesheet" href="<?php echo portfolioPresentationEscape($stylesheet); ?>">
-    <script src="<?php echo portfolioPresentationEscape($script); ?>" defer></script>
+    <script src="<?php echo portfolioPresentationEscape($script); ?>" defer onerror="document.documentElement.classList.remove('portfolio-js')"></script>
 </head>
 <body class="portfolio-page<?php echo $preview ? ' portfolio-preview-mode' : ''; ?>">
 <a class="portfolio-skip-link" href="#portfolio-main">Skip to content</a>
@@ -405,7 +411,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                 <article class="portfolio-hero-profile-card portfolio-hero-profile-card--<?php echo $profileMediaUrl !== '' ? 'image' : 'fallback'; ?>" aria-label="Profile summary">
                     <div class="portfolio-hero-profile-visual">
                         <?php if ($profileMediaUrl !== ''): ?>
-                            <img src="<?php echo portfolioPresentationEscape($profileMediaUrl); ?>" alt="<?php echo portfolioPresentationEscape($name); ?> portrait">
+                            <img src="<?php echo portfolioPresentationEscape($profileMediaUrl); ?>" alt="<?php echo portfolioPresentationEscape($name); ?> portrait" loading="eager" fetchpriority="high" decoding="async">
                         <?php else: ?>
                             <span class="portfolio-hero-profile-fallback" aria-hidden="true"><?php echo portfolioPresentationEscape($initials); ?></span>
                         <?php endif; ?>

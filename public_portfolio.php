@@ -6,6 +6,7 @@ require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/public_lifecycle.php';
+require_once __DIR__ . '/includes/public_url.php';
 require_once __DIR__ . '/includes/portfolio_presentation.php';
 
 function publicPortfolioNotFound(): never
@@ -48,6 +49,7 @@ renderPortfolioPresentation($profile, $skills, $projects, [
     'profile_media_url' => (string) ($profile['profile_image_path'] ?? '') !== '' ? "/p/{$encodedSlug}/media/profile" : '',
     'project_media_url' => static fn (int $projectId): string => "/p/{$encodedSlug}/media/project/{$projectId}",
     'contact_action' => "/p/{$encodedSlug}/contact",
+    'canonical_url' => publicPortfolioUrl($slug),
     'contact_sent' => ($_GET['contact'] ?? null) === 'sent',
     'experiences' => $experiences,
 ]);

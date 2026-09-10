@@ -137,3 +137,12 @@ body.portfolio-page :where(a, button, input, textarea):focus-visible { outline: 
     .portfolio-js .portfolio-nav-links { display: none; }
     .portfolio-mobile-nav-layer { z-index: 70; }
 }
+
+/* Match the first enhanced project window before navigation initialization runs. */
+.portfolio-js [data-project-navigator]:not(.portfolio-project-navigator--active) .portfolio-project-card:nth-child(n+4) { display: none; }
+@media (max-width: 1100px) {
+    .portfolio-js [data-project-navigator]:not(.portfolio-project-navigator--active) .portfolio-project-card:nth-child(n+3) { display: none; }
+}
+@media (max-width: 620px) {
+    .portfolio-js [data-project-navigator]:not(.portfolio-project-navigator--active) .portfolio-project-card:nth-child(n+2) { display: none; }
+}

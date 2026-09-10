@@ -70,11 +70,13 @@
             link.addEventListener('click', () => setActive(link.dataset.portfolioSection || 'top'));
         });
 
-        const observer = new IntersectionObserver(() => selectDominantSection(), {
-            rootMargin: '-8% 0px -42% 0px',
-            threshold: [0, 0.12, 0.5],
-        });
-        sections.forEach((entry) => observer.observe(entry.element));
+        if (typeof window.IntersectionObserver === 'function') {
+            const observer = new IntersectionObserver(() => selectDominantSection(), {
+                rootMargin: '-8% 0px -42% 0px',
+                threshold: [0, 0.12, 0.5],
+            });
+            sections.forEach((entry) => observer.observe(entry.element));
+        }
 
         const initialId = window.location.hash.slice(1);
         if (links.some((link) => link.dataset.portfolioSection === initialId)) {

@@ -34,6 +34,7 @@ require_once __DIR__ . '/../tests/phase2/cases/PublicProjectJsonContractTest.php
 require_once __DIR__ . '/../tests/phase2/cases/OwnerTransactionIntegrityStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OwnerFrontendExperienceStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/ResponsiveAccessibilityStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/FrontendPerformanceResilienceStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/StaticArchitectureGuardTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/TenantAuthorizationStaticTest.php';
 
@@ -64,6 +65,7 @@ $tests = [
     'owner transaction and media-integrity static contract' => [OwnerTransactionIntegrityStaticTest::class, 'run'],
     'Owner frontend experience static contract' => [OwnerFrontendExperienceStaticTest::class, 'run'],
     'responsive and accessibility static contract' => [ResponsiveAccessibilityStaticTest::class, 'run'],
+    'frontend performance and resilience static contract' => [FrontendPerformanceResilienceStaticTest::class, 'run'],
     'environment safety and disposable namespace' => [EnvironmentSafetyTest::class, 'run'],
     'synthetic fixture contract and test authentication carrier' => [FixtureContractTest::class, 'run'],
     'static architecture guards' => [StaticArchitectureGuardTest::class, 'run'],
