@@ -2,14 +2,21 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/observability.php';
+
 /** @param array<string, int|string|bool|null> $context */
 function reportSecurityEvent(string $event, string $outcome, array $context = []): bool
 {
     $record = [
         'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
+        'level' => 'notice',
         'event' => preg_replace('/[^a-z0-9_.-]/', '_', strtolower($event)) ?: 'unknown',
         'outcome' => preg_replace('/[^a-z0-9_.-]/', '_', strtolower($outcome)) ?: 'unknown',
     ];
+    $requestId = runtimeActiveRequestId();
+    if ($requestId !== null) {
+        $record['request_id'] = $requestId;
+    }
     $allowed = [
         'internal_user_id', 'portfolio_id', 'resource_type', 'reason', 'scope',
         'media_kind', 'stage', 'mime', 'bytes', 'width', 'height', 'pixels', 'processor', 'duration_ms',

@@ -127,6 +127,7 @@ function httpJsonResponse(int $status, array $payload): never
 
 function httpRegisterExceptionBoundary(string $route, bool $json = false): void
 {
+    runtimeStartRequest($route);
     set_exception_handler(static function (Throwable $exception) use ($route, $json): never {
         reportApplicationError($exception, $route, 'unhandled_request');
         if ($json) {

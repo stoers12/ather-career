@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/includes/http.php';
+require_once __DIR__ . '/includes/runtime_readiness.php';
 
 httpRegisterExceptionBoundary('ready.php');
 httpRequireMethod(['GET', 'HEAD']);
@@ -13,12 +13,13 @@ header('Content-Type: text/plain; charset=utf-8');
 header('Cache-Control: no-store');
 
 try {
-    $database = getDatabaseConnection();
-    if ((int) $database->query('SELECT 1')->fetchColumn() !== 1) {
-        throw new RuntimeException('Database readiness query returned an unexpected result.');
+    $failureReason = runtimeReadinessFailureReason();
+    if ($failureReason !== null) {
+        runtimeSetRequestOutcome('dependency_unavailable', $failureReason);
+        throw new RuntimeException('Runtime readiness dependency is unavailable.');
     }
 } catch (Throwable $exception) {
-    reportApplicationError($exception, 'ready.php', 'database_readiness');
+    reportApplicationError($exception, 'ready.php', 'runtime_readiness');
     http_response_code(503);
     echo "UNAVAILABLE\n";
     exit;

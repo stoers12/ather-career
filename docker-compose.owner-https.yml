@@ -10,8 +10,15 @@ services:
     restart: "no"
     depends_on:
       web:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "127.0.0.1:8443:443"
     volumes:
       - ./docker/Caddyfile.owner-local:/etc/caddy/Caddyfile:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --show-error --insecure --resolve localhost:443:127.0.0.1 https://localhost/health.php >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    stop_grace_period: 15s

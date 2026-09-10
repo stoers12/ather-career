@@ -83,15 +83,22 @@ function reportApplicationError(Throwable $exception, string $route, string $act
     $safeAction = safeErrorContext($action);
     $safeCode = $exception instanceof PDOException ? safePdoErrorCode($exception) : null;
 
-    error_log(sprintf(
-        'application_error error_id=%s route=%s action=%s exception=%s category=%s code=%s',
-        $errorId,
-        $safeRoute,
-        $safeAction,
-        safeErrorContext(get_class($exception)),
-        applicationErrorCategory($exception, $safeAction),
-        $safeCode ?? 'none'
-    ));
+    $record = [
+        'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
+        'level' => 'error',
+        'event' => 'application_error',
+        'error_id' => $errorId,
+        'route' => $safeRoute,
+        'action' => $safeAction,
+        'exception' => safeErrorContext(get_class($exception)),
+        'category' => applicationErrorCategory($exception, $safeAction),
+        'code' => $safeCode ?? 'none',
+    ];
+    $requestId = runtimeActiveRequestId();
+    if ($requestId !== null) {
+        $record['request_id'] = $requestId;
+    }
+    runtimeWriteStructuredRecord($record);
 
     return $errorId;
 }

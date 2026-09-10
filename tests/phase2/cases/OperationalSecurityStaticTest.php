@@ -29,8 +29,8 @@ final class OperationalSecurityStaticTest
         phase2Assert(str_contains($logging, 'JSON_THROW_ON_ERROR') && !preg_match('/session.?id|cookie|password|token|message.?body|authorization/i', $logging), 'P2J-08 security logger includes sensitive fields.');
         phase2Assert(str_contains($backup, 'private-storage.tar.gz') && str_contains($backup, 'recovery_pair_id') && str_contains($restore, 'Recovery-pair manifest mismatch'), 'P2J-08 paired recovery contract is incomplete.');
         phase2Assert(!preg_match('/X-Forwarded-For|Forwarded/i', self::read('includes/rate_limit.php')), 'P2J-08 introduced proxy-header trust.');
-        phase2Assert(str_contains($readiness, "query('SELECT 1')")
-            && str_contains($readiness, "reportApplicationError(\$exception, 'ready.php', 'database_readiness')")
+        phase2Assert(str_contains($readiness, 'runtimeReadinessFailureReason()')
+            && str_contains($readiness, "reportApplicationError(\$exception, 'ready.php', 'runtime_readiness')")
             && str_contains($readiness, 'http_response_code(503)')
             && str_contains(self::read('public/ready.php'), "'/app/ready.php'")
             && !str_contains($readiness, 'getMessage()'), 'Database readiness endpoint is missing or leaks internal failure details.');

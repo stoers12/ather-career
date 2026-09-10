@@ -28,7 +28,11 @@ curl -fsS http://127.0.0.1:8098/ready.php
 docker compose -f docker-compose.production.yml logs --tail 100 web db
 ```
 
-The web healthcheck is liveness only: `GET /health.php` returns `OK` without a DB query. `GET /ready.php` returns `READY` only when the application can query MySQL; otherwise it returns `503` without exposing the database error. Retired global administration routes and the retired unscoped `/api/projects.php` endpoint must return `404` in production.
+The web healthcheck is liveness only: `GET /health.php` returns `OK` without a DB query. `GET /ready.php` returns `READY` only when database connectivity, the checked-in migration/schema state, writable managed-media storage, and required local configuration are compatible; otherwise it returns a sanitized `503`. Neither endpoint contacts Auth0. Retired global administration routes and the retired unscoped `/api/projects.php` endpoint must return `404` in production.
+
+Both endpoints return a generated `X-Request-ID` response header. Use that value to correlate sanitized JSON Lines application events in `docker compose -f docker-compose.production.yml logs web`; do not supply a client request-ID expecting it to be trusted. Successful health and readiness probes are intentionally not logged as normal request-completion events.
+
+The `web` healthcheck runs local liveness every 10 seconds (3-second timeout, 3 retries, 30-second start period). MySQL uses a local `mysqladmin ping` every 5 seconds (5-second timeout, 20 retries, 20-second start period). Normal stops allow 30 seconds for web and 60 seconds for MySQL before force termination. Dependency ordering only protects initial startup; if MySQL becomes unavailable later, liveness remains available and readiness must recover to `READY` after the compatible database returns.
 
 ## First deployment / empty volumes
 
