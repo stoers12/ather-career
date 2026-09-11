@@ -88,6 +88,9 @@ events retain their sanitized scope and reason metadata.
 ## Operational boundaries
 
 Stage-4A is limited to runtime health, startup/shutdown behavior, correlation,
-and local structured observability. Stage-4B may address backup/recovery and
-operational automation. Stage-4C may address deployment-edge hardening and
-external monitoring decisions. Neither is included here.
+and local structured observability. Stage-4B covers Edge Security, CSP, and
+Abuse Protection. Stage-4C covers Backup, Recovery,
+vulnerability/operational-security closure, and monitoring readiness. Stage-5
+owns the actual production domain, DNS, TLS, Auth0 production configuration,
+deployment, production acceptance, rollback, and explicitly authorized
+merge/push/tag.

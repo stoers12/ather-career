@@ -336,10 +336,10 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     <?php if ($preview): ?><meta name="robots" content="noindex,nofollow"><?php else: ?><meta name="robots" content="index,follow"><?php endif; ?>
     <meta name="color-scheme" content="dark">
     <title><?php echo portfolioPresentationEscape($name); ?> — Portfolio</title>
+    <link rel="icon" type="image/png" href="/assets/images/ather-navbar-logo.png">
     <?php if ($canonicalUrl !== ''): ?><link rel="canonical" href="<?php echo portfolioPresentationEscape($canonicalUrl); ?>"><?php endif; ?>
-    <script>document.documentElement.classList.add('portfolio-js');</script>
     <link rel="stylesheet" href="<?php echo portfolioPresentationEscape($stylesheet); ?>">
-    <script src="<?php echo portfolioPresentationEscape($script); ?>" defer onerror="document.documentElement.classList.remove('portfolio-js')"></script>
+    <script src="<?php echo portfolioPresentationEscape($script); ?>" defer></script>
 </head>
 <body class="portfolio-page<?php echo $preview ? ' portfolio-preview-mode' : ''; ?>">
 <a class="portfolio-skip-link" href="#portfolio-main">Skip to content</a>
@@ -439,7 +439,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     <?php if ($metrics !== []): ?>
         <section class="portfolio-metrics" aria-label="Portfolio metrics">
             <div class="portfolio-container">
-                <ul class="portfolio-metrics-strip" style="--portfolio-metric-count: <?php echo count($metrics); ?>; --portfolio-metric-compact-count: <?php echo min(2, count($metrics)); ?>">
+                <ul class="portfolio-metrics-strip portfolio-metrics-strip--count-<?php echo count($metrics); ?>">
                     <?php foreach ($metrics as $metric): ?>
                         <li class="portfolio-metric"><span class="portfolio-metric-icon"><?php echo portfolioPresentationMetricIcon($metric['key']); ?></span><span><strong><?php echo $metric['value']; ?></strong><small><?php echo portfolioPresentationEscape($metric['label']); ?></small></span></li>
                     <?php endforeach; ?>

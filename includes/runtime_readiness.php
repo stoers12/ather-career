@@ -6,6 +6,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/auth0_oidc.php';
 require_once __DIR__ . '/public_url.php';
 require_once __DIR__ . '/storage.php';
+require_once __DIR__ . '/rate_limit.php';
 
 /** @return list<array{version: string, name: string}> */
 function runtimeExpectedMigrations(): array
@@ -108,7 +109,7 @@ function runtimeSchemaIsCompatible(PDO $database): bool
 /** Returns null only when normal traffic can safely be served. */
 function runtimeReadinessFailureReason(): ?string
 {
-    if (!runtimeDatabaseConfigurationHasSafeFormat() || !runtimeSessionCookieConfigurationHasSafeFormat()) {
+    if (!runtimeDatabaseConfigurationHasSafeFormat() || !runtimeSessionCookieConfigurationHasSafeFormat() || rateLimitTrustedProxyCidrs() === null) {
         return 'configuration_invalid';
     }
 

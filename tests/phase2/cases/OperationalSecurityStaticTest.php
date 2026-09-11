@@ -28,7 +28,7 @@ final class OperationalSecurityStaticTest
         phase2Assert(str_contains($account, 'authz_version = authz_version + 1') && !preg_match('/DELETE\s+FROM\s+(?:users|portfolios)/i', $all), 'P2J-08 account transition is not versioned or introduced hard delete.');
         phase2Assert(str_contains($logging, 'JSON_THROW_ON_ERROR') && !preg_match('/session.?id|cookie|password|token|message.?body|authorization/i', $logging), 'P2J-08 security logger includes sensitive fields.');
         phase2Assert(str_contains($backup, 'private-storage.tar.gz') && str_contains($backup, 'recovery_pair_id') && str_contains($restore, 'Recovery-pair manifest mismatch'), 'P2J-08 paired recovery contract is incomplete.');
-        phase2Assert(!preg_match('/X-Forwarded-For|Forwarded/i', self::read('includes/rate_limit.php')), 'P2J-08 introduced proxy-header trust.');
+        phase2Assert(str_contains(self::read('includes/rate_limit.php'), 'TRUSTED_PROXY_CIDRS') && str_contains(self::read('includes/rate_limit.php'), 'rateLimitIsTrustedProxy') && str_contains(self::read('includes/rate_limit.php'), 'RATE_LIMIT_FORWARDED_HEADER_MAX_HOPS'), 'Proxy trust no longer has the bounded explicit Stage-4B contract.');
         phase2Assert(str_contains($readiness, 'runtimeReadinessFailureReason()')
             && str_contains($readiness, "reportApplicationError(\$exception, 'ready.php', 'runtime_readiness')")
             && str_contains($readiness, 'http_response_code(503)')

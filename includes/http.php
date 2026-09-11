@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/error_reporting.php';
+require_once __DIR__ . '/edge_security.php';
 
 /** @param list<string> $allowedMethods */
 function httpAllowHeader(array $allowedMethods): string
@@ -36,8 +37,8 @@ function httpMethodIsAllowed(array $allowedMethods): bool
 function httpSetHtmlResponse(int $status): void
 {
     http_response_code($status);
+    edgeSecuritySensitiveResponse();
     header('Content-Type: text/html; charset=utf-8');
-    header('Cache-Control: no-store');
 }
 
 /** @param list<string> $messages */
@@ -80,6 +81,7 @@ function httpRequireMethod(array $allowedMethods): void
     }
 
     http_response_code(405);
+    edgeSecuritySensitiveResponse();
     header('Allow: ' . httpAllowHeader($allowedMethods));
     header('Content-Type: text/plain; charset=utf-8');
     header('Cache-Control: no-store');
@@ -112,6 +114,7 @@ function httpRedirect(string $target, int $status = 303): never
 function httpJsonResponse(int $status, array $payload): never
 {
     http_response_code($status);
+    edgeSecuritySensitiveResponse();
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
 
@@ -128,6 +131,7 @@ function httpJsonResponse(int $status, array $payload): never
 function httpRegisterExceptionBoundary(string $route, bool $json = false): void
 {
     runtimeStartRequest($route);
+    edgeSecuritySensitiveResponse();
     set_exception_handler(static function (Throwable $exception) use ($route, $json): never {
         reportApplicationError($exception, $route, 'unhandled_request');
         if ($json) {

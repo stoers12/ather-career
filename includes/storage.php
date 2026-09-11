@@ -269,7 +269,6 @@ function privateMediaDescriptor(mixed $key, int $portfolioId, string $collection
 function streamPrivateMedia(array $descriptor): never
 {
     header('Cache-Control: no-store');
-    header('X-Content-Type-Options: nosniff');
     header('Content-Type: ' . $descriptor['mime']);
     header('Content-Disposition: inline');
     if (is_int($descriptor['size']) && $descriptor['size'] >= 0) {

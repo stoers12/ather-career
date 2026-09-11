@@ -21,13 +21,13 @@ final class FrontendPerformanceResilienceStaticTest
             str_contains($presentation, 'filter_var($options[\'canonical_url\'], FILTER_VALIDATE_URL)')
             && str_contains($presentation, '<link rel="canonical" href="')
             && str_contains($presentation, 'loading="eager" fetchpriority="high" decoding="async"')
-            && str_contains($presentation, "onerror=\"document.documentElement.classList.remove('portfolio-js')\""),
+            && !str_contains($presentation, 'onerror='),
             'Public canonical metadata or Hero image loading priority is incomplete.',
         );
         phase2Assert(
             substr_count($presentation, 'src="<?php echo portfolioPresentationEscape($script); ?>" defer') === 1
-            && str_contains($presentation, '<script>document.documentElement.classList.add(\'portfolio-js\');</script>'),
-            'The Portfolio enhancement script must have one deferred application entry point after the enhancement marker.',
+            && !str_contains($presentation, '<script>'),
+            'The Portfolio enhancement script must have one external deferred application entry point without inline CSP exceptions.',
         );
 
         ob_start();

@@ -2,14 +2,100 @@
 
 const RATE_LIMIT_RETENTION_SECONDS = 3600;
 const RATE_LIMIT_CLEANUP_FILE_LIMIT = 25;
+const RATE_LIMIT_FORWARDED_HEADER_MAX_BYTES = 1024;
+const RATE_LIMIT_FORWARDED_HEADER_MAX_HOPS = 16;
+
+/** @return list<string>|null null means malformed configuration. */
+function rateLimitTrustedProxyCidrs(): ?array
+{
+    $configured = getenv('TRUSTED_PROXY_CIDRS');
+    if (!is_string($configured) || trim($configured) === '') {
+        return [];
+    }
+
+    $cidrs = [];
+    foreach (explode(',', $configured) as $candidate) {
+        $candidate = trim($candidate);
+        if ($candidate === '' || !preg_match('/^([0-9A-Fa-f:.]+)\/(\d{1,3})$/', $candidate, $matches)) {
+            return null;
+        }
+        $packed = @inet_pton($matches[1]);
+        $bits = (int) $matches[2];
+        if ($packed === false || $bits > strlen($packed) * 8) {
+            return null;
+        }
+        $cidrs[] = strtolower($matches[1]) . '/' . $bits;
+    }
+
+    return array_values(array_unique($cidrs));
+}
+
+function rateLimitAddressInCidr(string $address, string $cidr): bool
+{
+    [$network, $prefix] = explode('/', $cidr, 2);
+    $packedAddress = @inet_pton($address);
+    $packedNetwork = @inet_pton($network);
+    if ($packedAddress === false || $packedNetwork === false || strlen($packedAddress) !== strlen($packedNetwork)) {
+        return false;
+    }
+    $bits = (int) $prefix;
+    for ($offset = 0; $offset < strlen($packedAddress); $offset++) {
+        $remaining = $bits - ($offset * 8);
+        if ($remaining <= 0) {
+            return true;
+        }
+        $mask = $remaining >= 8 ? 255 : (256 - (1 << (8 - $remaining)));
+        if ((ord($packedAddress[$offset]) & $mask) !== (ord($packedNetwork[$offset]) & $mask)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/** @param list<string> $cidrs */
+function rateLimitIsTrustedProxy(string $address, array $cidrs): bool
+{
+    foreach ($cidrs as $cidr) {
+        if (rateLimitAddressInCidr($address, $cidr)) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 function rateLimitClientIp(): string
 {
     $address = $_SERVER['REMOTE_ADDR'] ?? '';
+    if (!is_string($address) || filter_var($address, FILTER_VALIDATE_IP) === false) {
+        return 'unknown';
+    }
+    $trustedCidrs = rateLimitTrustedProxyCidrs();
+    if ($trustedCidrs === null || $trustedCidrs === [] || !rateLimitIsTrustedProxy($address, $trustedCidrs)) {
+        return $address;
+    }
 
-    return is_string($address) && filter_var($address, FILTER_VALIDATE_IP) !== false
-        ? $address
-        : 'unknown';
+    $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    if (!is_string($forwarded) || $forwarded === '' || strlen($forwarded) > RATE_LIMIT_FORWARDED_HEADER_MAX_BYTES) {
+        return 'unknown';
+    }
+    $hops = array_map('trim', explode(',', $forwarded));
+    if ($hops === [] || count($hops) > RATE_LIMIT_FORWARDED_HEADER_MAX_HOPS) {
+        return 'unknown';
+    }
+    foreach ($hops as $hop) {
+        if ($hop === '' || filter_var($hop, FILTER_VALIDATE_IP) === false) {
+            return 'unknown';
+        }
+    }
+    for ($index = count($hops) - 1; $index >= 0; $index--) {
+        if (!rateLimitIsTrustedProxy($hops[$index], $trustedCidrs)) {
+            return $hops[$index];
+        }
+    }
+
+    return 'unknown';
 }
 
 function rateLimitDirectory(): string

@@ -22,6 +22,7 @@ function ownerLayoutStart(string $title, string $activePage): void
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow">
     <title><?php echo ownerEscapeHtml($title); ?> - My Portfolio</title>
+    <link rel="icon" type="image/png" href="/assets/images/ather-navbar-logo.png">
     <link rel="stylesheet" href="<?php echo versionedAssetUrl('style.css'); ?>">
     <link rel="stylesheet" href="<?php echo versionedAssetUrl('admin.css'); ?>">
     <script src="<?php echo versionedAssetUrl('admin.js'); ?>" defer></script>

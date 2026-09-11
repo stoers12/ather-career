@@ -18,7 +18,7 @@ RUN apt-get update \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install pdo pdo_mysql exif gd mbstring \
     && rm -rf /var/lib/apt/lists/* \
-    && a2enmod headers rewrite
+    && a2enmod headers rewrite unique_id
 
 COPY docker/php/production.ini /usr/local/etc/php/conf.d/portfolio-production.ini
 COPY docker/apache/access-policy.conf /etc/apache2/conf-enabled/zzz-portfolio-access-policy.conf
