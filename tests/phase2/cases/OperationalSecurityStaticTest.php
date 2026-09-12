@@ -13,6 +13,7 @@ final class OperationalSecurityStaticTest
         $logging = self::read('includes/security_events.php');
         $backup = self::read('scripts/backup-production.sh');
         $restore = self::read('scripts/restore-production.sh');
+        $recovery = self::read('scripts/stage4c-recovery.php');
         $contact = self::read('public_contact.php');
         $readiness = self::read('ready.php');
         $all = $session . $operations . $storage . $account . $logging . $backup . $restore;
@@ -27,7 +28,14 @@ final class OperationalSecurityStaticTest
         phase2Assert(str_contains($processor, 'proc_open($command') && str_contains($processor, "'bypass_shell' => true") && !str_contains($processor, 'sh -c') && str_contains($processor, 'VIPS_BLOCK_UNTRUSTED') && str_contains($processor, 'PORTFOLIO_IMAGE_PROCESSOR_TIMEOUT_MILLISECONDS = 10000') && str_contains($processor, 'LOCK_EX | LOCK_NB'), 'The bounded shell-free libvips processor contract is incomplete.');
         phase2Assert(str_contains($account, 'authz_version = authz_version + 1') && !preg_match('/DELETE\s+FROM\s+(?:users|portfolios)/i', $all), 'P2J-08 account transition is not versioned or introduced hard delete.');
         phase2Assert(str_contains($logging, 'JSON_THROW_ON_ERROR') && !preg_match('/session.?id|cookie|password|token|message.?body|authorization/i', $logging), 'P2J-08 security logger includes sensitive fields.');
-        phase2Assert(str_contains($backup, 'private-storage.tar.gz') && str_contains($backup, 'recovery_pair_id') && str_contains($restore, 'Recovery-pair manifest mismatch'), 'P2J-08 paired recovery contract is incomplete.');
+        phase2Assert(
+            str_contains($backup, 'stage4c-recovery.php" backup')
+            && str_contains($restore, 'stage4c-recovery.php" restore')
+            && str_contains($recovery, 'stage4cValidateBackupDirectory')
+            && str_contains($recovery, 'Database dump checksum mismatch.')
+            && str_contains($recovery, 'Media archive checksum mismatch.'),
+            'The Stage-4C replacement recovery contract is incomplete.'
+        );
         phase2Assert(str_contains(self::read('includes/rate_limit.php'), 'TRUSTED_PROXY_CIDRS') && str_contains(self::read('includes/rate_limit.php'), 'rateLimitIsTrustedProxy') && str_contains(self::read('includes/rate_limit.php'), 'RATE_LIMIT_FORWARDED_HEADER_MAX_HOPS'), 'Proxy trust no longer has the bounded explicit Stage-4B contract.');
         phase2Assert(str_contains($readiness, 'runtimeReadinessFailureReason()')
             && str_contains($readiness, "reportApplicationError(\$exception, 'ready.php', 'runtime_readiness')")

@@ -25,7 +25,7 @@ final class Auth0OidcStaticTest
         phase2Assert(str_contains($start, "consumeRateLimit('oidc_start', rateLimitClientIp()") && !preg_match('/X-Forwarded-For|Forwarded/i', $start), 'OIDC start limiter is not REMOTE_ADDR-only.');
         phase2Assert(str_contains($callback, 'establishVerifiedInternalUserSession') && str_contains($callback, 'destroyInternalUserSession'), 'Auth0 session establishment or denial cleanup is missing.');
         phase2Assert(str_contains($guard, 'auth0ProductionConfigurationFailures'), 'Production guard does not validate Auth0 configuration.');
-        phase2Assert(str_contains($safeAccessLog, '%m %U %H') && !str_contains($safeAccessLog, '%r')
+        phase2Assert(str_contains($safeAccessLog, '%m %H') && !preg_match('/%[hUqr]|%\{(?:Cookie|Authorization|Referer|User-agent)\}i/', $safeAccessLog)
             && str_contains($developmentDockerfile, 'a2disconf other-vhosts-access-log')
             && str_contains($productionDockerfile, 'a2disconf other-vhosts-access-log')
             && str_contains($developmentVhost, 'CustomLog ${APACHE_LOG_DIR}/access.log ather_safe')

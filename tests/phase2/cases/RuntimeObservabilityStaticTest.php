@@ -34,9 +34,10 @@ final class RuntimeObservabilityStaticTest
         }
 
         phase2Assert(str_contains($observability, 'random_bytes(16)')
-            && str_contains($observability, 'RUNTIME_REQUEST_ID_PATTERN')
-            && str_contains($observability, "header('X-Request-ID: ' . \$requestId)")
-            && !preg_match('/HTTP_X_REQUEST_ID|X-Forwarded|Forwarded/i', $observability), 'Request correlation accepts untrusted headers or lacks a generated response identifier.');
+            && str_contains($observability, 'RUNTIME_APACHE_REQUEST_ID_PATTERN')
+            && str_contains($observability, "\$_SERVER['UNIQUE_ID']")
+            && !str_contains($observability, "header('X-Request-ID:")
+            && !preg_match('/HTTP_X_REQUEST_ID|X-Forwarded|Forwarded/i', $observability), 'Request correlation accepts untrusted headers or does not share Apache-generated IDs with structured logs.');
         foreach (['request_complete', 'timestamp', 'level', 'request_id', 'method', 'route', 'status', 'duration_ms', 'outcome'] as $field) {
             phase2Assert(str_contains($observability, $field), "Request completion schema is missing {$field}.");
         }

@@ -34,7 +34,8 @@ final class EdgeSecurityStaticTest
         phase2Assert(str_contains($development, 'LimitRequestBody 16777216') && str_contains($production, 'LimitRequestBody 16777216'), 'Apache request-size boundary is missing.');
         phase2Assert(preg_match('#<Directory\s+"/var/www/public">[\s\S]*?LimitRequestBody\s+16777216#', $production) === 1, 'Production request-size enforcement is not scoped to the public document root.');
         phase2Assert(str_contains($dockerfile, 'a2enmod unique_id') && str_contains($productionDockerfile, 'a2enmod headers rewrite unique_id'), 'Apache must enable unique request IDs for generated 413 responses.');
-        phase2Assert(str_contains($apache, 'Header always set X-Request-ID "%{UNIQUE_ID}e" "expr=%{REQUEST_STATUS} == 413"'), 'Apache-generated 413 responses must retain a correlation header without competing with PHP response IDs.');
+        phase2Assert(substr_count($apache, 'Header always set X-Request-ID "%{UNIQUE_ID}e"') === 1
+            && str_contains($apache, "Header always set Cache-Control \"no-store\" \"expr=%{REQUEST_STATUS} >= 400 && resp('Cache-Control') == ''\""), 'Apache-generated errors must retain a correlation and safe-cache fallback without competing with PHP response IDs.');
         phase2Assert(!preg_match('/<script>|onerror=|style=/', $portfolio), 'Public Portfolio retains an inline CSP dependency.');
         phase2Assert(str_contains($portfolio, '<link rel="icon" type="image/png" href="/assets/images/ather-navbar-logo.png">'), 'The public Portfolio must provide an explicit public favicon instead of generating a browser 404.');
         phase2Assert(str_contains($storage, "header('Cache-Control: no-store')")

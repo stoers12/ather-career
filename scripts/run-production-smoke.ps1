@@ -704,7 +704,7 @@ function Invoke-ProductionSmokeRun([int]$Number, [string]$Head) {
         }
         Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/" -Method TRACE) @(405) 'TRACE request'
         $secured = Invoke-SmokeHttp -Url "$baseUrl/p/$slug"
-        foreach ($header in @('X-Frame-Options:\s*DENY', "Content-Security-Policy:\s*frame-ancestors 'none'", 'X-Content-Type-Options:\s*nosniff', 'Referrer-Policy:\s*strict-origin-when-cross-origin')) {
+        foreach ($header in @('X-Frame-Options:\s*DENY', "Content-Security-Policy:\s*.*frame-ancestors 'none'", 'X-Content-Type-Options:\s*nosniff', 'Referrer-Policy:\s*strict-origin-when-cross-origin')) {
             Assert-Smoke ($secured.Headers -match "(?im)^$header") 'A required Production security header is missing.'
         }
         Assert-Smoke ($secured.Headers -notmatch '(?im)^Server:.*(?:/[0-9]|PHP)') 'The server exposed unnecessary version diagnostics.'

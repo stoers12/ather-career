@@ -18,7 +18,7 @@ export APP_VERSION="$(git rev-parse HEAD)"
 docker compose -f docker-compose.production.yml build --build-arg APP_VERSION="$APP_VERSION" web
 docker compose -f docker-compose.production.yml up -d db
 docker compose -f docker-compose.production.yml ps
-./scripts/backup-production.sh --app-version "$APP_VERSION"
+# Complete the approved Stage-4C backup procedure before migration.
 docker compose -f docker-compose.production.yml run --rm --no-deps web php database/migrate.php
 docker compose -f docker-compose.production.yml run --rm --no-deps web php database/migrate.php
 docker compose -f docker-compose.production.yml exec -T db sh -lc 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -h 127.0.0.1 -uroot "$MYSQL_DATABASE" -e "SELECT version, name, applied_at FROM schema_migrations ORDER BY version"'
@@ -40,15 +40,15 @@ The `web` healthcheck runs local liveness every 10 seconds (3-second timeout, 3 
 
 ## Backup and restore
 
-`scripts/backup-production.sh` creates timestamped `database.sql`, `private-storage.tar.gz`, and `manifest.json` under ignored `backups/`. The manifest binds both checksums into one recovery-pair identifier. It captures MySQL and private managed media sequentially, so avoid mutations during the short backup window. Rate-limit state, PHP sessions, and container logs are intentionally excluded.
+The former sequential backup/restore examples are superseded by the explicit
+Stage-4C recovery contract in [Stage-4C recovery and operational security](STAGE4C_RECOVERY_OPERATIONS.md).
+It requires a controlled quiesced window, an explicit target, manifest and
+archive verification, encrypted production handling, and a new disposable
+restore target. It never stops or overwrites a live deployment automatically.
 
-Restore is destructive and requires explicit confirmation:
-
-```sh
-./scripts/restore-production.sh --backup-dir backups/20260101T000000Z --confirm-restore
-```
-
-It stops web, replaces the selected MySQL database and managed uploads, then starts web. Validate the migration ledger, `/health.php`, database connectivity, and referenced uploads before reopening mutations. Backup artifacts contain user data and require host-level access control.
+Use the linked procedure for the exact explicit command. It preserves source and
+target isolation: restore validates into a new target and never stops or
+replaces the live database/media volumes automatically.
 
 ## Failure and rollback
 

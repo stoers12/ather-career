@@ -12,6 +12,8 @@ services:
     ports:
       - "127.0.0.1:${PORTFOLIO_PRODUCTION_PORT:-8098}:80"
     mem_limit: 512m
+    security_opt:
+      - no-new-privileges:true
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
@@ -51,6 +53,8 @@ services:
   db:
     image: mysql:8.4
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
