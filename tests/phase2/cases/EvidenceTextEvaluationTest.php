@@ -23,6 +23,8 @@ final class EvidenceTextEvaluationTest
     private static function goldenFixtureBindings(): void
     {
         $fixtures = self::loadGoldenFixtures();
+        self::validateGoldenFixtureContract($fixtures);
+        self::fixtureContractMutationGuards($fixtures);
         phase2AssertSame([], $fixtures['text_fixture_execution']['descriptive_text_cases'] ?? null, 'All TEXT fixtures must be executable.');
         $profiles = $fixtures['text_generator_profiles'] ?? null;
         phase2Assert(is_array($profiles), 'Golden text generator profiles are missing.');
@@ -69,35 +71,429 @@ final class EvidenceTextEvaluationTest
         return $fixtures;
     }
 
+    /**
+     * The Golden fixture file is a test contract, not loose test data. Keep its
+     * shape closed so a misspelled expectation cannot turn into an untested case.
+     *
+     * @param array<string, mixed> $fixtures
+     */
+    private static function validateGoldenFixtureContract(array $fixtures): void
+    {
+        $execution = $fixtures['text_fixture_execution'] ?? null;
+        phase2Assert(is_array($execution), 'text_fixture_execution is required.');
+        self::assertClosedObject($execution, ['threshold_boundary_matrix', 'text_policy_cases', 'repetition_cases', 'descriptive_text_cases'], 'text_fixture_execution');
+        phase2AssertSame('all cases executable from their generator specification', $execution['threshold_boundary_matrix'] ?? null, 'text_fixture_execution.threshold_boundary_matrix is invalid.');
+        phase2AssertSame('all cases executable from literal input, encoded bytes, or generator specification', $execution['text_policy_cases'] ?? null, 'text_fixture_execution.text_policy_cases is invalid.');
+        phase2AssertSame('all cases executable from literal input or generator specification', $execution['repetition_cases'] ?? null, 'text_fixture_execution.repetition_cases is invalid.');
+        phase2AssertSame([], $execution['descriptive_text_cases'] ?? null, 'text_fixture_execution.descriptive_text_cases must remain empty.');
+
+        $profiles = $fixtures['text_generator_profiles'] ?? null;
+        phase2Assert(is_array($profiles), 'text_generator_profiles is required.');
+        self::assertClosedObject($profiles, ['latin_ascii_v1', 'arabic_letters_v1'], 'text_generator_profiles');
+        foreach (['latin_ascii_v1', 'arabic_letters_v1'] as $profileName) {
+            phase2Assert(array_key_exists($profileName, $profiles), "text_generator_profiles.{$profileName} is required.");
+        }
+
+        $fixtureIds = [];
+        $matrices = $fixtures['threshold_boundary_matrix'] ?? null;
+        phase2Assert(is_array($matrices) && $matrices !== [], 'threshold_boundary_matrix is required.');
+        foreach ($matrices as $matrix) {
+            phase2Assert(is_array($matrix), 'threshold_boundary_matrix must contain objects.');
+            self::assertClosedObject($matrix, ['id', 'field', 'language', 'execution', 'generator_profile', 'cases'], 'threshold_boundary_matrix entry');
+            $matrixId = self::requiredFixtureId($matrix, $fixtureIds);
+            $field = self::validatedField($matrix['field'] ?? null, "{$matrixId}.field");
+            phase2Assert(is_string($matrix['language'] ?? null) && $matrix['language'] !== '', "{$matrixId}.language is required.");
+            phase2AssertSame('executable', $matrix['execution'] ?? null, "{$matrixId}.execution must be executable.");
+            $profileName = $matrix['generator_profile'] ?? null;
+            phase2Assert(is_string($profileName) && $profileName !== '' && isset($profiles[$profileName]), "{$matrixId}.generator_profile is unknown.");
+            self::validateGeneratorProfile($profiles[$profileName], "{$matrixId}.generator_profile.{$profileName}");
+            phase2Assert(is_array($matrix['cases'] ?? null) && $matrix['cases'] !== [], "{$matrixId}.cases are required.");
+            foreach ($matrix['cases'] as $case) {
+                phase2Assert(is_array($case), "{$matrixId}.cases must contain objects.");
+                self::validateTextFixture($case, 'boundary', $field, $profileName, $fixtureIds);
+            }
+        }
+
+        foreach (['text_policy_cases' => 'policy', 'repetition_cases' => 'repetition'] as $family => $subtype) {
+            $cases = $fixtures[$family] ?? null;
+            phase2Assert(is_array($cases) && $cases !== [], "{$family} is required.");
+            foreach ($cases as $case) {
+                phase2Assert(is_array($case), "{$family} must contain objects.");
+                self::validateTextFixture($case, $subtype, null, null, $fixtureIds);
+            }
+        }
+    }
+
+    /** @param array<string, mixed> $profile */
+    private static function validateGeneratorProfile(mixed $profile, string $path): void
+    {
+        phase2Assert(is_array($profile), "{$path} is required.");
+        self::assertClosedObject($profile, ['alphabet', 'token_separator'], $path);
+        $alphabet = $profile['alphabet'] ?? null;
+        phase2Assert(is_array($alphabet) && array_is_list($alphabet) && count($alphabet) >= 2, "{$path}.alphabet must be a non-empty list.");
+        foreach ($alphabet as $index => $symbol) {
+            phase2Assert(is_string($symbol) && self::independentUnicodeScalarCount($symbol) === 1, "{$path}.alphabet.{$index} must be one Unicode scalar.");
+        }
+        phase2Assert(is_string($profile['token_separator'] ?? null), "{$path}.token_separator must be a string.");
+    }
+
+    /**
+     * @param array<string, mixed> $fixture
+     * @param array<string, bool> $fixtureIds
+     */
+    private static function validateTextFixture(array $fixture, string $subtype, ?string $inheritedField, ?string $generatorProfile, array &$fixtureIds): void
+    {
+        $allowed = match ($subtype) {
+            'boundary' => ['id', 'sample', 'input_spec', 'boundary', 'position', 'calculated', 'expected'],
+            'policy' => ['id', 'field', 'language', 'input', 'input_encoding', 'input_base64', 'input_spec', 'calculated', 'expected', 'analytical_copy', 'normalized_equivalent_to', 'accepted_limitation'],
+            'repetition' => ['id', 'field', 'language', 'input', 'input_spec', 'calculated', 'expected', 'analytical_copy'],
+            default => throw new LogicException("Unknown Golden fixture subtype {$subtype}."),
+        };
+        $candidateId = $fixture['id'] ?? null;
+        phase2Assert(is_string($candidateId) && preg_match('/^TEXT-[A-Z0-9-]+$/', $candidateId) === 1, "{$subtype} fixture.id is invalid.");
+        self::assertClosedObject($fixture, $allowed, "{$candidateId}");
+        $id = self::requiredFixtureId($fixture, $fixtureIds);
+        $field = $inheritedField ?? self::validatedField($fixture['field'] ?? null, "{$id}.field");
+        if ($subtype === 'boundary') {
+            phase2Assert(is_string($fixture['sample'] ?? null) && $fixture['sample'] !== '', "{$id}.sample is required.");
+            phase2Assert(in_array($fixture['boundary'] ?? null, ['content_graphemes', 'useful_tokens', 'distinct_tokens'], true), "{$id}.boundary is invalid.");
+            phase2Assert(in_array($fixture['position'] ?? null, ['below', 'at', 'above'], true), "{$id}.position is invalid.");
+        } else {
+            phase2Assert(is_string($fixture['language'] ?? null) && $fixture['language'] !== '', "{$id}.language is required.");
+        }
+
+        self::validateInputMode($fixture, $id, $generatorProfile);
+        self::validateExpectedResult($fixture['expected'] ?? null, $id);
+        $expected = $fixture['expected'];
+        self::validateCalculatedFacts($fixture, $id, $subtype, $expected['storage_validity']);
+        if (array_key_exists('analytical_copy', $fixture)) {
+            phase2Assert($expected['storage_validity'] === 'valid' && is_string($fixture['analytical_copy']), "{$id}.analytical_copy is invalid.");
+        }
+        if (array_key_exists('normalized_equivalent_to', $fixture)) {
+            phase2Assert(is_string($fixture['normalized_equivalent_to']) && $fixture['normalized_equivalent_to'] !== '', "{$id}.normalized_equivalent_to is invalid.");
+        }
+        if (array_key_exists('accepted_limitation', $fixture)) {
+            phase2Assert(is_string($fixture['accepted_limitation']) && $fixture['accepted_limitation'] !== '', "{$id}.accepted_limitation is invalid.");
+        }
+        phase2Assert(in_array($field, ['problem_statement', 'personal_role', 'measurable_outcome'], true), "{$id}.field is invalid.");
+    }
+
+    /** @param array<string, mixed> $fixture */
+    private static function validateInputMode(array $fixture, string $id, ?string $generatorProfile): void
+    {
+        $hasLiteral = array_key_exists('input', $fixture);
+        $hasEncoded = array_key_exists('input_encoding', $fixture) || array_key_exists('input_base64', $fixture);
+        $hasGenerated = array_key_exists('input_spec', $fixture);
+        phase2Assert(($hasLiteral ? 1 : 0) + ($hasEncoded ? 1 : 0) + ($hasGenerated ? 1 : 0) === 1, "{$id}.input_mode must contain exactly one supported input mode.");
+
+        if ($hasLiteral) {
+            $input = $fixture['input'];
+            phase2Assert(is_string($input) || (is_array($input) && array_is_list($input)), "{$id}.input has an unsupported primitive type.");
+            return;
+        }
+        if ($hasEncoded) {
+            phase2AssertSame('base64_invalid_utf8', $fixture['input_encoding'] ?? null, "{$id}.input_encoding is unsupported.");
+            $encoded = $fixture['input_base64'] ?? null;
+            phase2Assert(is_string($encoded) && $encoded !== '' && base64_decode($encoded, true) !== false, "{$id}.input_base64 is invalid.");
+            return;
+        }
+
+        $specification = $fixture['input_spec'];
+        phase2Assert(is_array($specification), "{$id}.input_spec must be an object.");
+        self::validateInputSpecification($specification, $id, $generatorProfile);
+    }
+
+    /** @param array<string, mixed> $specification */
+    private static function validateInputSpecification(array $specification, string $id, ?string $generatorProfile): void
+    {
+        $kind = $specification['kind'] ?? null;
+        phase2Assert(is_string($kind) && $kind !== '', "{$id}.input_spec.kind is required.");
+        $allowed = match ($kind) {
+            'calibrated_token_stream', 'balanced_token_stream' => ['kind', 'content_graphemes', 'useful_tokens', 'distinct_tokens'],
+            'repeat_scalar' => ['kind', 'scalar', 'count', 'sha256'],
+            'dominant_unique_token_stream' => ['kind', 'dominant_token', 'dominant_count', 'other_token_prefix', 'other_unique_token_count'],
+            default => throw new RuntimeException("{$id}.input_spec.kind is unsupported."),
+        };
+        self::assertClosedObject($specification, $allowed, "{$id}.input_spec");
+        if (in_array($kind, ['calibrated_token_stream', 'balanced_token_stream'], true)) {
+            phase2Assert(is_string($generatorProfile) && $generatorProfile !== '', "{$id}.generator_profile is required for {$kind}.");
+            foreach (['content_graphemes', 'useful_tokens', 'distinct_tokens'] as $key) {
+                self::positiveInteger($specification[$key] ?? null, "{$id}.input_spec.{$key}");
+            }
+            return;
+        }
+        if ($kind === 'repeat_scalar') {
+            $scalar = $specification['scalar'] ?? null;
+            phase2Assert(is_string($scalar) && self::independentUnicodeScalarCount($scalar) === 1, "{$id}.input_spec.scalar must be one Unicode scalar.");
+            self::positiveInteger($specification['count'] ?? null, "{$id}.input_spec.count");
+            phase2Assert(is_string($specification['sha256'] ?? null) && preg_match('/^[a-f0-9]{64}$/', $specification['sha256']) === 1, "{$id}.input_spec.sha256 is invalid.");
+            return;
+        }
+        foreach (['dominant_count', 'other_unique_token_count'] as $key) {
+            self::positiveInteger($specification[$key] ?? null, "{$id}.input_spec.{$key}");
+        }
+        foreach (['dominant_token', 'other_token_prefix'] as $key) {
+            phase2Assert(is_string($specification[$key] ?? null) && preg_match('/^[a-z]+$/', $specification[$key]) === 1, "{$id}.input_spec.{$key} is invalid.");
+        }
+    }
+
+    /** @param array<string, mixed> $expected */
+    private static function validateExpectedResult(mixed $expected, string $id): void
+    {
+        phase2Assert(is_array($expected), "{$id}.expected is required.");
+        self::assertClosedObject($expected, ['storage_validity', 'evidence_status', 'reason_codes'], "{$id}.expected");
+        $storage = $expected['storage_validity'] ?? null;
+        $status = $expected['evidence_status'] ?? null;
+        phase2Assert(in_array($storage, ['valid', 'invalid'], true), "{$id}.expected.storage_validity is invalid.");
+        phase2Assert(in_array($status, ['unavailable', 'needs_attention', 'complete'], true), "{$id}.expected.evidence_status is invalid.");
+        phase2Assert($storage !== 'invalid' || $status === 'unavailable', "{$id}.expected invalid storage must be unavailable evidence.");
+        self::validateReasonCodeList($expected['reason_codes'] ?? null, "{$id}.expected.reason_codes");
+    }
+
+    /** @param array<string, mixed> $fixture */
+    private static function validateCalculatedFacts(array $fixture, string $id, string $subtype, string $storageValidity): void
+    {
+        $hasCalculated = array_key_exists('calculated', $fixture);
+        if ($storageValidity === 'invalid') {
+            phase2Assert(!$hasCalculated, "{$id}.calculated is forbidden when storage is invalid.");
+            return;
+        }
+        phase2Assert($hasCalculated && is_array($fixture['calculated']), "{$id}.calculated is required for valid storage.");
+        $required = ['content_graphemes', 'useful_tokens', 'distinct_tokens'];
+        if ($subtype === 'repetition') {
+            $required[] = 'dominant_token_count';
+            $required[] = 'dominant_token_bps';
+        }
+        self::assertClosedObject($fixture['calculated'], $required, "{$id}.calculated");
+        foreach ($required as $key) {
+            phase2Assert(array_key_exists($key, $fixture['calculated']), "{$id}.calculated.{$key} is required for {$subtype} valid storage.");
+            phase2Assert(is_int($fixture['calculated'][$key]) && $fixture['calculated'][$key] >= 0, "{$id}.calculated.{$key} must be a non-negative integer.");
+        }
+        if ($subtype === 'repetition') {
+            phase2Assert($fixture['calculated']['dominant_token_count'] <= $fixture['calculated']['useful_tokens'], "{$id}.calculated.dominant_token_count exceeds useful_tokens.");
+            phase2Assert($fixture['calculated']['dominant_token_bps'] <= 10000, "{$id}.calculated.dominant_token_bps exceeds 10000.");
+        }
+    }
+
+    /** @param list<string> $allowed */
+    private static function assertClosedObject(array $object, array $allowed, string $path): void
+    {
+        foreach (array_keys($object) as $key) {
+            phase2Assert(is_string($key) && in_array($key, $allowed, true), "{$path}.{$key} is not allowed.");
+        }
+    }
+
+    /** @param array<string, mixed> $fixture @param array<string, bool> $fixtureIds */
+    private static function requiredFixtureId(array $fixture, array &$fixtureIds): string
+    {
+        $id = $fixture['id'] ?? null;
+        phase2Assert(is_string($id) && preg_match('/^TEXT-[A-Z0-9-]+$/', $id) === 1 && !isset($fixtureIds[$id]), 'TEXT fixture id must be unique and canonical.');
+        $fixtureIds[$id] = true;
+        return $id;
+    }
+
+    private static function validatedField(mixed $field, string $path): string
+    {
+        phase2Assert(is_string($field) && in_array($field, ['problem_statement', 'personal_role', 'measurable_outcome'], true), "{$path} is invalid.");
+        return $field;
+    }
+
+    private static function validateReasonCodeList(mixed $reasonCodes, string $path): void
+    {
+        phase2Assert(is_array($reasonCodes) && array_is_list($reasonCodes) && $reasonCodes !== [], "{$path} is required.");
+        phase2AssertSame(count($reasonCodes), count(array_unique($reasonCodes)), "{$path} contains duplicates.");
+        $allowed = array_fill_keys(self::frozenReasonCodes(), true);
+        foreach ($reasonCodes as $reasonCode) {
+            phase2Assert(is_string($reasonCode) && isset($allowed[$reasonCode]), "{$path} contains an unknown code.");
+        }
+    }
+
+    /** @return list<string> */
+    private static function frozenReasonCodes(): array
+    {
+        $contents = file_get_contents(PHASE2_REPOSITORY_ROOT . '/contracts/evidence-hub-contract-v1.schema.json');
+        phase2Assert(is_string($contents), 'Evidence Hub schema is unreadable.');
+        $schema = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+        $codes = $schema['$defs']['reason_code']['enum'] ?? null;
+        phase2Assert(is_array($codes) && array_is_list($codes), 'Frozen reason-code enum is unavailable.');
+        return $codes;
+    }
+
+    /** @param array<string, mixed> $fixtures */
+    private static function fixtureContractMutationGuards(array $fixtures): void
+    {
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'calculated.content_graphemes', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void { unset($fixture['calculated']['content_graphemes']); });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'calculated.useful_tokens', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void { unset($fixture['calculated']['useful_tokens']); });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'calculated.distinct_tokens', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void { unset($fixture['calculated']['distinct_tokens']); });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'expected.evidence_status', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void { unset($fixture['expected']['evidence_status']); });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'expected.storage_validity', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void { unset($fixture['expected']['storage_validity']); });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'expected.reason_codes', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void { unset($fixture['expected']['reason_codes']); });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-REPETITION-6000-BPS', 'calculated.dominant_token_bps', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-REPETITION-6000-BPS', static function (array &$fixture): void { unset($fixture['calculated']['dominant_token_bps']); });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-PLACEHOLDER-EN-EXACT', 'expected.reason_codes', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-PLACEHOLDER-EN-EXACT', static function (array &$fixture): void { unset($fixture['expected']['reason_codes']); });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MAX-PROBLEM', 'input_spec.sha256', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MAX-PROBLEM', static function (array &$fixture): void { unset($fixture['input_spec']['sha256']); });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MAX-PROBLEM', 'input_spec.count', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MAX-PROBLEM', static function (array &$fixture): void { $fixture['input_spec']['count'] = -1; });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'field', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void { unset($fixture['field']); });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'input_mode', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void { unset($fixture['input']); });
+        });
+
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'unexpected_top_level', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void { $fixture['unexpected_top_level'] = true; });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'expected.unexpected', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void { $fixture['expected']['unexpected'] = true; });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'calculated.unexpected', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void { $fixture['calculated']['unexpected'] = true; });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MAX-PROBLEM', 'input_spec.unexpected', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MAX-PROBLEM', static function (array &$fixture): void { $fixture['input_spec']['unexpected'] = true; });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-EN-PROBLEM-BOUNDARIES', 'latin_ascii_v1.unexpected', static function (array &$copy): void {
+            $copy['text_generator_profiles']['latin_ascii_v1']['unexpected'] = true;
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-EN-PROBLEM-BOUNDARIES', 'generator_profile', static function (array &$copy): void {
+            $copy['threshold_boundary_matrix'][0]['generator_profile'] = 'unknown_generator_profile';
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-EN-PROBLEM-BOUNDARIES', 'alphabet', static function (array &$copy): void {
+            unset($copy['text_generator_profiles']['latin_ascii_v1']['alphabet']);
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-EN-PROBLEM-BOUNDARIES', 'alphabet', static function (array &$copy): void {
+            $copy['text_generator_profiles']['latin_ascii_v1']['alphabet'] = 'not-a-list';
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MIXED-DIGITS', 'input_mode', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MIXED-DIGITS', static function (array &$fixture): void {
+                $fixture['input_spec'] = ['kind' => 'repeat_scalar', 'scalar' => 'a', 'count' => 1, 'sha256' => str_repeat('0', 64)];
+            });
+        });
+        self::assertFixtureContractRejects($fixtures, 'TEXT-MAX-PROBLEM', 'input_spec.kind', static function (array &$copy): void {
+            self::mutateTextFixture($copy, 'TEXT-MAX-PROBLEM', static function (array &$fixture): void { $fixture['input_spec']['kind'] = 'unsupported'; });
+        });
+        self::assertReasonCodeSetSemantics();
+    }
+
+    /** @param array<string, mixed> $fixtures */
+    private static function assertFixtureContractRejects(array $fixtures, string $fixtureId, string $property, callable $mutation): void
+    {
+        /** @var array<string, mixed> $copy */
+        $copy = unserialize(serialize($fixtures), ['allowed_classes' => false]);
+        $mutation($copy);
+        try {
+            self::validateGoldenFixtureContract($copy);
+        } catch (RuntimeException $exception) {
+            phase2Assert(str_contains($exception->getMessage(), $fixtureId), "{$fixtureId} malformed-fixture failure must identify its fixture.");
+            phase2Assert(str_contains($exception->getMessage(), $property), "{$fixtureId} malformed-fixture failure must name {$property}.");
+            return;
+        }
+
+        throw new RuntimeException("{$fixtureId} malformed fixture was accepted for {$property}.");
+    }
+
+    /** @param array<string, mixed> $fixtures */
+    private static function mutateTextFixture(array &$fixtures, string $id, callable $mutation): void
+    {
+        foreach (['text_policy_cases', 'repetition_cases'] as $family) {
+            foreach ($fixtures[$family] as $index => $_fixture) {
+                if (($_fixture['id'] ?? null) === $id) {
+                    $fixture =& $fixtures[$family][$index];
+                    $mutation($fixture);
+                    unset($fixture);
+                    return;
+                }
+            }
+        }
+        foreach ($fixtures['threshold_boundary_matrix'] as $matrixIndex => $matrix) {
+            foreach ($matrix['cases'] as $caseIndex => $case) {
+                if (($case['id'] ?? null) === $id) {
+                    $fixture =& $fixtures['threshold_boundary_matrix'][$matrixIndex]['cases'][$caseIndex];
+                    $mutation($fixture);
+                    unset($fixture);
+                    return;
+                }
+            }
+        }
+
+        throw new RuntimeException("Golden fixture {$id} was not found.");
+    }
+
+    private static function assertReasonCodeSetSemantics(): void
+    {
+        self::assertExactReasonCodes(
+            'TEXT-REASON-ORDER-SET',
+            ['DISTINCT_TOKEN_THRESHOLD_NOT_MET', 'GRAPHEME_THRESHOLD_NOT_MET', 'USEFUL_TOKEN_THRESHOLD_NOT_MET'],
+            ['GRAPHEME_THRESHOLD_NOT_MET', 'USEFUL_TOKEN_THRESHOLD_NOT_MET', 'DISTINCT_TOKEN_THRESHOLD_NOT_MET'],
+        );
+        self::assertReasonCodeComparisonFails('TEXT-REASON-MISSING', ['GRAPHEME_THRESHOLD_NOT_MET'], ['GRAPHEME_THRESHOLD_NOT_MET', 'USEFUL_TOKEN_THRESHOLD_NOT_MET']);
+        self::assertReasonCodeComparisonFails('TEXT-REASON-ADDITIONAL', ['GRAPHEME_THRESHOLD_NOT_MET', 'USEFUL_TOKEN_THRESHOLD_NOT_MET'], ['GRAPHEME_THRESHOLD_NOT_MET']);
+        self::assertReasonCodeComparisonFails('TEXT-REASON-DUPLICATE', ['GRAPHEME_THRESHOLD_NOT_MET', 'GRAPHEME_THRESHOLD_NOT_MET'], ['GRAPHEME_THRESHOLD_NOT_MET']);
+        self::assertReasonCodeComparisonFails('TEXT-REASON-ACTUAL-DUPLICATE', ['GRAPHEME_THRESHOLD_NOT_MET'], ['GRAPHEME_THRESHOLD_NOT_MET', 'GRAPHEME_THRESHOLD_NOT_MET']);
+        self::assertReasonCodeComparisonFails('TEXT-REASON-UNKNOWN', ['UNKNOWN_REASON_CODE'], ['GRAPHEME_THRESHOLD_NOT_MET']);
+    }
+
+    /** @param list<string> $expected @param list<string> $actual */
+    private static function assertReasonCodeComparisonFails(string $fixtureId, array $expected, array $actual): void
+    {
+        try {
+            self::assertExactReasonCodes($fixtureId, $expected, $actual);
+        } catch (RuntimeException) {
+            return;
+        }
+
+        throw new RuntimeException("{$fixtureId} invalid reason-code comparison was accepted.");
+    }
+
     /** @param array<string, mixed> $fixture @param array<string, mixed> $profiles @return array<string, mixed> */
     private static function assertGoldenFixture(array $fixture, array $profiles): array
     {
         $id = self::fixtureId($fixture);
-        $field = $fixture['field'] ?? null;
-        $expected = $fixture['expected'] ?? null;
-        $calculated = $fixture['calculated'] ?? [];
-        phase2Assert(is_string($field), "{$id} has no evidence field.");
-        phase2Assert(is_array($expected), "{$id} has no expected result.");
-        phase2Assert(is_array($calculated), "{$id} calculated facts are malformed.");
+        $field = $fixture['field'];
+        $expected = $fixture['expected'];
+        $calculated = $fixture['calculated'] ?? null;
+        phase2Assert(is_string($field), "{$id} field must be validated before evaluation.");
+        phase2Assert(is_array($expected), "{$id} expected result must be validated before evaluation.");
 
         $input = self::materializeGoldenInput($fixture, $profiles);
         $result = evaluateEvidenceText($field, $input);
 
-        phase2AssertSame($expected['storage_validity'] ?? null, $result['storage_validity'], "{$id} storage_validity mismatch.");
-        phase2AssertSame($expected['evidence_status'] ?? null, $result['evidence_status'], "{$id} evidence_status mismatch.");
-        self::assertExactReasonCodes($id, $expected['reason_codes'] ?? null, $result['reason_codes']);
+        phase2AssertSame($expected['storage_validity'], $result['storage_validity'], "{$id} storage_validity mismatch.");
+        phase2AssertSame($expected['evidence_status'], $result['evidence_status'], "{$id} evidence_status mismatch.");
+        self::assertExactReasonCodes($id, $expected['reason_codes'], $result['reason_codes']);
 
-        foreach ([
-            'content_graphemes' => 'content_graphemes',
-            'useful_tokens' => 'useful_token_count',
-            'distinct_tokens' => 'distinct_token_count',
-            'dominant_token_count' => 'dominant_token_count',
-        ] as $fixtureKey => $resultKey) {
-            if (array_key_exists($fixtureKey, $calculated)) {
-                phase2AssertSame($calculated[$fixtureKey], $result[$resultKey], "{$id} {$fixtureKey} mismatch.");
+        if (is_array($calculated)) {
+            foreach ([
+                'content_graphemes' => 'content_graphemes',
+                'useful_tokens' => 'useful_token_count',
+                'distinct_tokens' => 'distinct_token_count',
+                'dominant_token_count' => 'dominant_token_count',
+            ] as $fixtureKey => $resultKey) {
+                if (array_key_exists($fixtureKey, $calculated)) {
+                    phase2AssertSame($calculated[$fixtureKey], $result[$resultKey], "{$id} {$fixtureKey} mismatch.");
+                }
             }
         }
-        if (array_key_exists('dominant_token_bps', $calculated)) {
+        if (is_array($calculated) && array_key_exists('dominant_token_bps', $calculated)) {
             phase2Assert($result['useful_token_count'] > 0, "{$id} has a dominant-token BPS without tokens.");
             phase2AssertSame(
                 $calculated['dominant_token_bps'],
@@ -208,7 +604,16 @@ final class EvidenceTextEvaluationTest
     {
         phase2Assert(is_array($expected) && array_is_list($expected), "{$fixtureId} reason_codes are malformed.");
         phase2AssertSame(count($expected), count(array_unique($expected)), "{$fixtureId} declares duplicate reason codes.");
-        phase2AssertSame($expected, $actual, "{$fixtureId} reason_codes mismatch.");
+        phase2AssertSame(count($actual), count(array_unique($actual)), "{$fixtureId} evaluator returned duplicate reason codes.");
+        $allowed = array_fill_keys(self::frozenReasonCodes(), true);
+        foreach (array_merge($expected, $actual) as $reasonCode) {
+            phase2Assert(is_string($reasonCode) && isset($allowed[$reasonCode]), "{$fixtureId} has an unknown reason code.");
+        }
+        $expectedSet = $expected;
+        $actualSet = $actual;
+        sort($expectedSet, SORT_STRING);
+        sort($actualSet, SORT_STRING);
+        phase2AssertSame($expectedSet, $actualSet, "{$fixtureId} reason_codes mismatch.");
     }
 
     /** @param array<string, mixed> $fixture */
