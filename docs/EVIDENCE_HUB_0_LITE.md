@@ -1,6 +1,6 @@
 # EVIDENCE-HUB-0C — Gate-A calibration freeze
 
-Evidence Hub (مركز الأدلة / تحليلات مسارك) is a private future Owner capability. EVIDENCE-HUB-1A adds only private project evidence storage and a deterministic internal text evaluator; it adds no route, UI, Owner aggregation, recommendation, integration, worker, job, or dependency.
+Evidence Hub (مركز الأدلة / تحليلات مسارك) is a private future Owner capability. EVIDENCE-HUB-1A adds private project evidence storage and a deterministic internal text evaluator. EVIDENCE-HUB-1B adds only internal Owner-scoped aggregation, factual progress, and exact taxonomy mapping; it adds no route, UI, recommendation, integration, worker, job, or dependency.
 
 ## Repository inventory and approved gaps
 
@@ -104,18 +104,18 @@ Required flow: **Verified Owner Session → Internal User ID → Tenant Scope �
 
 Migration `010_project_evidence_fields.sql` adds nullable `TEXT` columns, with no default backfill. The companion rollback SQL is used only for task-owned disposable migration verification because applying column drops to populated storage would be destructive. Internal `createAuthorizedProject()` and `updateAuthorizedProject()` accept an optional allow-listed evidence map; omitted fields retain existing project behavior, and public Project JSON remains an explicit non-disclosing allow-list.
 
-The core intentionally does not aggregate an Owner response, expose a route, read public project output, implement recommendations, or create a persistence adapter for dispositions.
+The EVIDENCE-HUB-1B internal core loads only Owner-scoped private project facts, reuses the frozen field evaluator, calculates coverage/maturity/progress, and maps stored technology labels through the frozen taxonomy. It returns no HTTP response and has no public reader.
 
 ## Traceability
 
 | Metric/rule | Source/future field | Normalization/calculation | Reasons | Fixtures | JSON field | Future UI state |
 | --- | --- | --- | --- | --- | --- | --- |
 | Field evidence v1.0.0 | future evidence fields | frozen analytical pipeline, graphemes, token keys, repetition | text reasons | `TEXT-*` | `$defs.field_evaluation` | field action |
-| Documentation Coverage | three future fields per Owner project | complete/expected × 10000, half up | `NO_PROJECTS` and text reasons | `DOC-METRIC-*` | metrics.documentation_coverage | coverage card |
+| Documentation Coverage | three private evidence fields per Owner project | complete/expected × 10000, half up | `NO_PROJECTS` and text reasons | `DOC-METRIC-*` | metrics.documentation_coverage | coverage card |
 | Hub maturity | Owner project aggregation | zero/partial/ready predicates | `NO_PROJECTS` | `HUB-STATE-*` | maturity.state | constructive state |
 | Technology map | `projects.technologies` | normalized exact alias | `TECHNOLOGY_*` | `TECH-*` | metrics.technology_evidence_map | technology action |
 | Portfolio Progress | projects/created_at/Portfolio publication | factual-only; trend unavailable | `HISTORY_NOT_TRACKED` | `PROGRESS-*` | metrics.portfolio_progress | facts-only state |
 | Recommendations | allow-listed canonical predicate facts | predicate/fingerprint/order | lifecycle reasons | `REC-*` | recommendations | action list |
 | Tenant denial | validated Owner scope | reject request authority | `TENANT_AUTHORITY_REJECTED` | `TENANT-*` | none | private denial |
 
-EVIDENCE-HUB-1B UI, Owner aggregation, recommendations/dispositions, snapshots, AI, external services, queues, and public analytics remain deferred.
+EVIDENCE-HUB-1B UI, recommendations/dispositions, snapshots, AI, external services, queues, and public analytics remain deferred.

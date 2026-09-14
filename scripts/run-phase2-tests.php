@@ -43,6 +43,7 @@ require_once __DIR__ . '/../tests/phase2/cases/TenantAuthorizationStaticTest.php
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceTextEvaluationTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubStorageTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubAggregationTest.php';
 
 $environment = null;
 $failures = [];
@@ -82,6 +83,7 @@ $tests = [
     'Evidence Hub contracts, taxonomy, fixtures, and tenant isolation' => [EvidenceHubContractTest::class, 'run'],
     'Evidence Hub deterministic Unicode text evaluation' => [EvidenceTextEvaluationTest::class, 'run'],
     'Evidence Hub private storage and migration contract' => [EvidenceHubStorageTest::class, 'run'],
+    'Evidence Hub Owner aggregation and technology mapping core' => [EvidenceHubAggregationTest::class, 'run'],
 ];
 
 try {
