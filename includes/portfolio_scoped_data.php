@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/authorization.php';
 require_once __DIR__ . '/project_technologies.php';
 require_once __DIR__ . '/experience.php';
+require_once __DIR__ . '/evidence_text_evaluator.php';
 
 const AUTHORIZED_PERSONAL_INFO_FIELDS = [
     'full_name',
@@ -312,11 +313,24 @@ function createAuthorizedProject(
     string $githubUrl,
     ?string $imagePath,
     array $technologies,
+    ?array $evidenceFields = null,
 ): int {
-    $statement = $database->prepare(
-        'INSERT INTO projects (portfolio_id, title, category, description, github_url, image_path, technologies)
-         VALUES (:authorized_portfolio_id, :title, :category, :description, :github_url, :image_path, :technologies)'
-    );
+    $evidenceValues = projectEvidenceStorageValues($evidenceFields);
+    if ($evidenceValues === []) {
+        // Preserve the legacy column set when no private evidence is supplied.
+        $statement = $database->prepare(
+            'INSERT INTO projects (portfolio_id, title, category, description, github_url, image_path, technologies)
+             VALUES (:authorized_portfolio_id, :title, :category, :description, :github_url, :image_path, :technologies)'
+        );
+    } else {
+        $evidenceColumns = array_keys($evidenceValues);
+        $columns = ['portfolio_id', 'title', 'category', 'description', 'github_url', 'image_path', 'technologies', ...$evidenceColumns];
+        $parameters = [':authorized_portfolio_id', ':title', ':category', ':description', ':github_url', ':image_path', ':technologies', ...array_map(static fn (string $field): string => ':' . $field, $evidenceColumns)];
+        $statement = $database->prepare(
+            'INSERT INTO projects (' . implode(', ', $columns) . ')
+             VALUES (' . implode(', ', $parameters) . ')'
+        );
+    }
     $statement->execute([
         'authorized_portfolio_id' => $context->portfolioId,
         'title' => $title,
@@ -325,6 +339,7 @@ function createAuthorizedProject(
         'github_url' => $githubUrl,
         'image_path' => $imagePath,
         'technologies' => projectTechnologiesToStorage($technologies),
+        ...$evidenceValues,
     ]);
 
     return (int) $database->lastInsertId();
@@ -340,15 +355,19 @@ function updateAuthorizedProject(
     string $githubUrl,
     ?string $imagePath,
     array $technologies,
+    ?array $evidenceFields = null,
 ): bool {
     if ($projectId < 1) {
         return false;
     }
 
+    $evidenceValues = projectEvidenceStorageValues($evidenceFields);
+    $evidenceAssignments = array_map(static fn (string $field): string => "{$field} = :{$field}", array_keys($evidenceValues));
     $statement = $database->prepare(
         'UPDATE projects
          SET title = :title, category = :category, description = :description,
-             github_url = :github_url, image_path = :image_path, technologies = :technologies
+             github_url = :github_url, image_path = :image_path, technologies = :technologies' .
+             ($evidenceAssignments === [] ? '' : ', ' . implode(', ', $evidenceAssignments)) . '
          WHERE id = :resource_id
            AND portfolio_id = :authorized_portfolio_id'
     );
@@ -359,6 +378,7 @@ function updateAuthorizedProject(
         'github_url' => $githubUrl,
         'image_path' => $imagePath,
         'technologies' => projectTechnologiesToStorage($technologies),
+        ...$evidenceValues,
         'resource_id' => $projectId,
         'authorized_portfolio_id' => $context->portfolioId,
     ]);
@@ -383,6 +403,42 @@ function deleteAuthorizedProject(PDO $database, AuthorizedPortfolioContext $cont
     ]);
 
     return $statement->rowCount() === 1;
+}
+
+/** @return list<array<string, mixed>> */
+function listAuthorizedProjectEvidence(PDO $database, AuthorizedPortfolioContext $context): array
+{
+    $statement = $database->prepare(
+        'SELECT id, problem_statement, personal_role, measurable_outcome
+         FROM projects
+         WHERE portfolio_id = :authorized_portfolio_id
+         ORDER BY created_at DESC, id DESC'
+    );
+    $statement->execute(['authorized_portfolio_id' => $context->portfolioId]);
+
+    return $statement->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/** @return array<string, ?string> */
+function projectEvidenceStorageValues(?array $evidenceFields): array
+{
+    if ($evidenceFields === null) {
+        return [];
+    }
+    if (array_diff(array_keys($evidenceFields), evidenceTextFieldNames()) !== []) {
+        throw new InvalidArgumentException('Project evidence contains an unsupported field.');
+    }
+
+    $storedValues = [];
+    foreach ($evidenceFields as $field => $value) {
+        $evaluation = evaluateEvidenceText($field, $value);
+        if ($evaluation['storage_validity'] !== 'valid') {
+            throw new InvalidArgumentException("Project evidence field {$field} is invalid.");
+        }
+        $storedValues[$field] = $evaluation['stored_value'];
+    }
+
+    return $storedValues;
 }
 
 /**

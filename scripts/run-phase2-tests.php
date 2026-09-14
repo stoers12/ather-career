@@ -41,6 +41,8 @@ require_once __DIR__ . '/../tests/phase2/cases/FrontendPerformanceResilienceStat
 require_once __DIR__ . '/../tests/phase2/cases/StaticArchitectureGuardTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/TenantAuthorizationStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceTextEvaluationTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubStorageTest.php';
 
 $environment = null;
 $failures = [];
@@ -78,6 +80,8 @@ $tests = [
     'static architecture guards' => [StaticArchitectureGuardTest::class, 'run'],
     'tenant authorization static contract' => [TenantAuthorizationStaticTest::class, 'run'],
     'Evidence Hub contracts, taxonomy, fixtures, and tenant isolation' => [EvidenceHubContractTest::class, 'run'],
+    'Evidence Hub deterministic Unicode text evaluation' => [EvidenceTextEvaluationTest::class, 'run'],
+    'Evidence Hub private storage and migration contract' => [EvidenceHubStorageTest::class, 'run'],
 ];
 
 try {

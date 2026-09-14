@@ -15,9 +15,9 @@ ENV ATHERCAR_STORAGE_ROOT=/var/lib/ather-career/storage \
 
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y --no-install-recommends default-mysql-client openssl libjpeg62-turbo-dev libpng-dev libwebp-dev libonig-dev libvips-tools \
+    && apt-get install -y --no-install-recommends default-mysql-client openssl libicu-dev libjpeg62-turbo-dev libpng-dev libwebp-dev libonig-dev libvips-tools \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
-    && docker-php-ext-install pdo pdo_mysql exif gd mbstring \
+    && docker-php-ext-install pdo pdo_mysql exif gd mbstring intl \
     && rm -rf /var/lib/apt/lists/* \
     && a2enmod headers rewrite unique_id
 

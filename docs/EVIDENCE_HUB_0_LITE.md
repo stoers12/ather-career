@@ -1,6 +1,6 @@
 # EVIDENCE-HUB-0C — Gate-A calibration freeze
 
-Evidence Hub (مركز الأدلة / تحليلات مسارك) is a private future Owner capability. This package contains contracts and identity-free synthetic fixtures only. It adds no runtime, route, UI, migration, integration, worker, job, or dependency.
+Evidence Hub (مركز الأدلة / تحليلات مسارك) is a private future Owner capability. EVIDENCE-HUB-1A adds only private project evidence storage and a deterministic internal text evaluator; it adds no route, UI, Owner aggregation, recommendation, integration, worker, job, or dependency.
 
 ## Repository inventory and approved gaps
 
@@ -10,7 +10,7 @@ Evidence Hub (مركز الأدلة / تحليلات مسارك) is a private fu
 | Projects | `projects`, `portfolio_id`, `created_at` | exists | Analyze all authenticated Owner projects, public or private. |
 | Description | `projects.description` | exists | Never derive evidence fields from it. |
 | Technologies | `projects.technologies` JSON | exists | Preserve raw labels and use normalized exact taxonomy matching. |
-| `problem_statement`, `personal_role`, `measurable_outcome` | no fields | future fields | Later nullable optional fields; no backfill or semantic derivation. |
+| `problem_statement`, `personal_role`, `measurable_outcome` | nullable `projects` fields | exists | Optional independently authored storage; no backfill or semantic derivation. |
 | Project publication / `projects.updated_at` | no fields | deferred | Not needed for v1. |
 | Portfolio publication | `portfolios.is_published`, `published_at` | exists | A separate factual signal only. |
 
@@ -32,20 +32,20 @@ These are Evidence Hub v1 product defaults, not scientific quality scores. Passi
 
 Storage validity and evidence completeness are separate. Non-scalar input, invalid UTF-8, a scalar maximum violation, or a prohibited character makes storage invalid. Null or normalized-empty input is valid but unavailable evidence. Grapheme, token, distinct-token, placeholder, and repetition checks determine evidence completeness only; they never reject otherwise valid storage.
 
-The future EVIDENCE-HUB-1A runtime must apply this pipeline only to an analytical copy; stored user text remains unchanged:
+The EVIDENCE-HUB-1A runtime applies this pipeline only to an analytical copy; stored user text remains unchanged:
 
 1. Validate scalar type.
 2. Validate UTF-8.
 3. Enforce the field maximum in Unicode scalar values.
 4. Reject prohibited controls and directionality characters.
 5. Normalize to NFC with PHP `ext-intl` `Normalizer`; hand-written NFC normalization is prohibited.
-6. Trim leading/trailing Unicode whitespace.
-7. Collapse internal Unicode whitespace to one ASCII space.
-8. Remove Arabic Tatweel U+0640.
-9. Apply Unicode case folding where comparison is relevant.
-10. Calculate content graphemes and tokens.
+6. Treat TAB, LF, and CR as permitted whitespace in the analytical copy.
+7. Collapse Unicode whitespace to one ASCII space.
+8. Trim leading/trailing normalized whitespace.
+9. Remove Arabic Tatweel U+0640 and exclude allowed ZWNJ/ZWJ from analytical evidence.
+10. Apply safe Latin-only case folding where comparison is relevant, then calculate content graphemes and tokens.
 
-PHP `ext-intl` is a mandatory EVIDENCE-HUB-1A runtime prerequisite. This package does not modify runtime images.
+PHP `ext-intl` is a mandatory EVIDENCE-HUB-1A runtime prerequisite. Development, production, and derived test images install it; the evaluator fails closed with a clear runtime-readiness error if `Normalizer` or grapheme support is absent. Hand-written NFC normalization is prohibited.
 
 ### Unicode and control policy
 
@@ -98,6 +98,14 @@ The future pure core receives opaque `target_ref` from an Owner-scoped adapter; 
 
 Required flow: **Verified Owner Session → Internal User ID → Tenant Scope → Tenant-Scoped Repository → Pure Analytics Core → Contract Mapper → Owner Presenter**. Controllers never accept tenant authority from request `owner_id`, `portfolio_id`, `user_id`, `authz_version`, Auth0 subject, headers, or request IDs. Project resources require the resolved authenticated Owner scope. Future private responses use `Cache-Control: no-store` and never expose analytics publicly.
 
+## EVIDENCE-HUB-1A internal core boundary
+
+`includes/evidence_text_policy.php` is the runtime policy source for frozen v1 thresholds and placeholders. `includes/evidence_text_normalization.php` validates and prepares an analytical copy without changing stored text. `includes/evidence_text_evaluator.php` returns field-local validity, completeness facts, and stable reason codes. These pure functions accept only a field and candidate value; they accept no Owner, Portfolio, session, Auth0, or request authority.
+
+Migration `010_project_evidence_fields.sql` adds nullable `TEXT` columns, with no default backfill. The companion rollback SQL is used only for task-owned disposable migration verification because applying column drops to populated storage would be destructive. Internal `createAuthorizedProject()` and `updateAuthorizedProject()` accept an optional allow-listed evidence map; omitted fields retain existing project behavior, and public Project JSON remains an explicit non-disclosing allow-list.
+
+The core intentionally does not aggregate an Owner response, expose a route, read public project output, implement recommendations, or create a persistence adapter for dispositions.
+
 ## Traceability
 
 | Metric/rule | Source/future field | Normalization/calculation | Reasons | Fixtures | JSON field | Future UI state |
@@ -110,4 +118,4 @@ Required flow: **Verified Owner Session → Internal User ID → Tenant Scope �
 | Recommendations | allow-listed canonical predicate facts | predicate/fingerprint/order | lifecycle reasons | `REC-*` | recommendations | action list |
 | Tenant denial | validated Owner scope | reject request authority | `TENANT_AUTHORITY_REJECTED` | `TENANT-*` | none | private denial |
 
-EVIDENCE-HUB-1A CORE, EVIDENCE-HUB-1B UI, migrations, snapshots, AI, external services, queues, and public analytics remain deferred.
+EVIDENCE-HUB-1B UI, Owner aggregation, recommendations/dispositions, snapshots, AI, external services, queues, and public analytics remain deferred.

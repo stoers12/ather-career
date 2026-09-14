@@ -1,9 +1,9 @@
 FROM php:8.3-apache
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libjpeg62-turbo-dev libpng-dev libwebp-dev libonig-dev libvips-tools \
+    && apt-get install -y --no-install-recommends libicu-dev libjpeg62-turbo-dev libpng-dev libwebp-dev libonig-dev libvips-tools \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
-    && docker-php-ext-install pdo pdo_mysql exif gd mbstring \
+    && docker-php-ext-install pdo pdo_mysql exif gd mbstring intl \
     && a2enmod rewrite \
     && a2enmod headers \
     && a2enmod unique_id \
