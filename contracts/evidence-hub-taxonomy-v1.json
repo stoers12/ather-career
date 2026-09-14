@@ -1,7 +1,7 @@
 {
   "taxonomy_id": "evidence-hub-technology-taxonomy",
   "taxonomy_version": "v1",
-  "match_policy": "exact_nfc_only",
+  "match_policy": "normalized_exact_nfc_latin_casefold",
   "entries": [
     { "technology_id": "tech.javascript", "canonical_key": "javascript", "display_name": "JavaScript", "category": "language", "aliases": ["JavaScript", "JS"], "deprecated": false, "merged": false, "replaced_by_id": null },
     { "technology_id": "tech.java", "canonical_key": "java", "display_name": "Java", "category": "language", "aliases": ["Java"], "deprecated": false, "merged": false, "replaced_by_id": null },
@@ -19,6 +19,6 @@
     { "technology_id": "tech.sql-server", "canonical_key": "sql-server", "display_name": "SQL Server", "category": "database", "aliases": ["SQL Server", "Microsoft SQL Server", "MSSQL"], "deprecated": false, "merged": false, "replaced_by_id": null },
     { "technology_id": "tech.docker", "canonical_key": "docker", "display_name": "Docker", "category": "tool", "aliases": ["Docker"], "deprecated": false, "merged": false, "replaced_by_id": null },
     { "technology_id": "tech.nodejs", "canonical_key": "nodejs", "display_name": "Node.js", "category": "runtime", "aliases": ["Node.js", "NodeJS"], "deprecated": false, "merged": false, "replaced_by_id": null },
-    { "technology_id": "tech.jquery", "canonical_key": "jquery", "display_name": "jQuery", "category": "framework", "aliases": ["jQuery"], "deprecated": true, "merged": true, "replaced_by_id": "tech.javascript" }
+    { "technology_id": "tech.jquery", "canonical_key": "jquery", "display_name": "jQuery", "category": "library", "aliases": ["jQuery"], "deprecated": false, "merged": false, "replaced_by_id": null }
   ]
 }

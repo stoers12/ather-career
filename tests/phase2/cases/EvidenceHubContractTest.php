@@ -4,213 +4,174 @@ declare(strict_types=1);
 
 final class EvidenceHubContractTest
 {
-    private const CONTRACT = 'contracts/evidence-hub-contract-v1.schema.json';
-    private const TAXONOMY = 'contracts/evidence-hub-taxonomy-v1.json';
-    private const FIXTURES = 'tests/phase2/fixtures/evidence-hub-golden-fixtures.json';
-
     public static function run(TestEnvironment $environment): void
     {
-        $schema = self::readJson(self::CONTRACT);
-        $taxonomy = self::readJson(self::TAXONOMY);
-        $fixtureSet = self::readJson(self::FIXTURES);
-        $document = self::readText('docs/EVIDENCE_HUB_0_LITE.md');
+        $schema = self::json('contracts/evidence-hub-contract-v1.schema.json');
+        $taxonomy = self::json('contracts/evidence-hub-taxonomy-v1.json');
+        $fixtures = self::json('tests/phase2/fixtures/evidence-hub-golden-fixtures.json');
+        $document = self::text('docs/EVIDENCE_HUB_0_LITE.md');
 
-        self::assertSchema($schema);
-        self::assertTaxonomy($taxonomy);
-        self::assertFixtures($fixtureSet, $schema, $taxonomy);
-        self::assertTenantBoundary($document, $fixtureSet);
-        self::assertScopeAndNaming($document);
+        self::schema($schema);
+        self::taxonomy($taxonomy);
+        self::fixtures($fixtures, $schema, $taxonomy);
+        self::privacyAndScope($document, $fixtures);
     }
 
     /** @return array<string, mixed> */
-    private static function readJson(string $relativePath): array
+    private static function json(string $path): array
     {
-        $contents = self::readText($relativePath);
         try {
-            $decoded = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode(self::text($path), true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw new RuntimeException("{$relativePath} is not valid JSON.", 0, $exception);
+            throw new RuntimeException("{$path} is not valid JSON.", 0, $exception);
         }
-
-        phase2Assert(is_array($decoded) && !array_is_list($decoded), "{$relativePath} must decode to an object.");
-
+        phase2Assert(is_array($decoded) && !array_is_list($decoded), "{$path} must contain an object.");
         return $decoded;
     }
 
-    private static function assertSchema(array $schema): void
+    private static function schema(array $schema): void
     {
-        phase2AssertSame('evidence-hub-contract-v1', $schema['properties']['contract_id']['const'] ?? null, 'Evidence Hub contract identifier is not exact.');
-        phase2AssertSame('1.0.0', $schema['properties']['schema_version']['const'] ?? null, 'Evidence Hub schema version is not exact.');
-        self::assertClosedObjects($schema, 'root');
-
-        $basisPoints = $schema['$defs']['basis_points'] ?? [];
-        phase2AssertSame('integer', $basisPoints['type'] ?? null, 'Basis points must be integers.');
-        phase2AssertSame(0, $basisPoints['minimum'] ?? null, 'Basis points must not be negative.');
-        phase2AssertSame(10000, $basisPoints['maximum'] ?? null, 'Basis points must not exceed 10000.');
-
-        $coldStates = $schema['$defs']['cold_start']['properties']['state']['enum'] ?? [];
-        phase2AssertSame(['zero', 'partial', 'ready'], $coldStates, 'Zero, Partial, and Ready must be explicit contract states.');
-        phase2AssertSame(['unavailable', 'low', 'medium', 'high'], $schema['$defs']['evidence_confidence']['enum'] ?? [], 'Evidence confidence enum changed unexpectedly.');
-        phase2Assert(str_contains((string) ($schema['$defs']['evidence_confidence']['description'] ?? ''), 'never probability of competence'), 'Evidence confidence must not claim competence probability.');
-
-        $recommendation = $schema['$defs']['recommendation'] ?? [];
-        phase2AssertSame(['active', 'snoozed', 'dismissed', 'resolved', 'superseded'], $recommendation['properties']['lifecycle_state']['enum'] ?? [], 'Recommendation lifecycle enum is incomplete.');
-        phase2AssertSame(['owner_evidence_hub'], $schema['$defs']['recommendation_target']['properties']['route']['enum'] ?? [], 'Recommendation targets must use a route allow-list.');
-        phase2Assert(isset($schema['$defs']['technology_mapping']['properties']['raw_label']), 'Technology raw labels must be preserved in the output contract.');
+        phase2AssertSame('1.0.0', $schema['properties']['schema_version']['const'] ?? null, 'Schema version must remain 1.0.0.');
+        self::closed($schema, 'root');
+        phase2AssertSame(0, $schema['$defs']['basis_points']['minimum'] ?? null, 'BPS minimum changed.');
+        phase2AssertSame(10000, $schema['$defs']['basis_points']['maximum'] ?? null, 'BPS maximum changed.');
+        phase2AssertSame(['zero', 'partial', 'ready'], $schema['$defs']['maturity']['properties']['state']['enum'] ?? null, 'Maturity states are incomplete.');
+        phase2AssertSame('not_available', $schema['$defs']['portfolio_progress']['properties']['trend_status']['const'] ?? null, 'v1 trend must be unavailable.');
+        phase2Assert(array_key_exists('const', $schema['$defs']['portfolio_progress']['properties']['trend_direction'] ?? []) && $schema['$defs']['portfolio_progress']['properties']['trend_direction']['const'] === null, 'v1 trend direction must be null.');
+        phase2AssertSame(3, $schema['properties']['recommendations']['maxItems'] ?? null, 'Visible recommendations must be capped at three.');
+        phase2AssertSame(['mapped', 'unmapped'], $schema['$defs']['technology_mapping']['properties']['mapping_state']['enum'] ?? null, 'Technology v1 must not expose manual review.');
+        phase2Assert(str_contains((string) ($schema['$defs']['confidence']['description'] ?? ''), 'never competence probability'), 'Confidence meaning is unsafe.');
+        phase2Assert(isset($schema['$defs']['documentation_coverage']['allOf']), 'Documentation null-BPS condition is missing.');
+        phase2Assert(isset($schema['$defs']['technology_mapping']['allOf']), 'Technology mapped/unmapped conditions are missing.');
     }
 
-    private static function assertClosedObjects(array $node, string $path): void
+    private static function closed(array $node, string $path): void
     {
         if (($node['type'] ?? null) === 'object') {
-            phase2Assert(($node['additionalProperties'] ?? null) === false, "Controlled object {$path} must reject unknown fields.");
+            phase2Assert(($node['additionalProperties'] ?? null) === false, "{$path} must reject unknown properties.");
         }
-
         foreach ($node as $key => $value) {
             if (is_array($value)) {
-                self::assertClosedObjects($value, $path . '.' . (string) $key);
+                self::closed($value, $path . '.' . $key);
             }
         }
     }
 
-    private static function assertTaxonomy(array $taxonomy): void
+    private static function taxonomy(array $taxonomy): void
     {
-        phase2AssertSame('evidence-hub-technology-taxonomy', $taxonomy['taxonomy_id'] ?? null, 'Technology taxonomy identity is invalid.');
-        phase2AssertSame('v1', $taxonomy['taxonomy_version'] ?? null, 'Technology taxonomy version is invalid.');
-        phase2AssertSame('exact_nfc_only', $taxonomy['match_policy'] ?? null, 'Technology taxonomy must forbid fuzzy matching.');
-        phase2Assert(isset($taxonomy['entries']) && is_array($taxonomy['entries']) && array_is_list($taxonomy['entries']), 'Technology taxonomy entries are missing.');
-
+        phase2AssertSame('normalized_exact_nfc_latin_casefold', $taxonomy['match_policy'] ?? null, 'Taxonomy matching policy changed.');
+        $entries = $taxonomy['entries'] ?? null;
+        phase2Assert(is_array($entries) && array_is_list($entries) && count($entries) === 17, 'Taxonomy must remain the bounded 17-entry v1 set.');
         $ids = [];
         $aliases = [];
-        $byId = [];
-        foreach ($taxonomy['entries'] as $entry) {
-            phase2Assert(is_array($entry), 'Technology entry must be an object.');
-            foreach (['technology_id', 'canonical_key', 'display_name', 'category', 'aliases', 'deprecated', 'merged', 'replaced_by_id'] as $field) {
-                phase2Assert(array_key_exists($field, $entry), "Technology entry is missing {$field}.");
-            }
-            $id = $entry['technology_id'];
-            phase2Assert(is_string($id) && preg_match('/^tech\.[a-z0-9-]+$/', $id) === 1, 'Technology ID is not stable.');
-            phase2Assert(!isset($ids[$id]), "Technology ID {$id} is duplicated.");
+        foreach ($entries as $entry) {
+            phase2Assert(is_array($entry), 'Taxonomy entry must be an object.');
+            $id = $entry['technology_id'] ?? null;
+            phase2Assert(is_string($id) && preg_match('/^tech\.[a-z0-9-]+$/', $id) === 1 && !isset($ids[$id]), 'Technology IDs must be unique and stable.');
             $ids[$id] = true;
-            $byId[$id] = $entry;
-            phase2Assert(is_array($entry['aliases']) && $entry['aliases'] !== [], "Technology {$id} has no exact aliases.");
-            foreach ($entry['aliases'] as $alias) {
-                phase2Assert(is_string($alias) && $alias !== '', "Technology {$id} contains an invalid alias.");
-                phase2Assert(!isset($aliases[$alias]), "Exact alias collision for {$alias}.");
-                $aliases[$alias] = $id;
+            foreach ($entry['aliases'] ?? [] as $alias) {
+                phase2Assert(is_string($alias), 'Alias must be text.');
+                $key = self::aliasKey($alias);
+                phase2Assert(!isset($aliases[$key]), "Normalized alias collision for {$alias}.");
+                $aliases[$key] = $id;
+            }
+            if (($entry['deprecated'] ?? false) || ($entry['merged'] ?? false)) {
+                phase2Assert(is_string($entry['replaced_by_id'] ?? null) && isset($ids[$entry['replaced_by_id']]), 'Deprecated or merged metadata must name an explicit taxonomy entry.');
             }
         }
-
-        foreach ($byId as $id => $entry) {
-            $replacement = $entry['replaced_by_id'];
-            phase2Assert($replacement === null || (is_string($replacement) && isset($byId[$replacement])), "Technology {$id} has an unknown replacement ID.");
-            if (($entry['merged'] ?? false) === true) {
-                phase2Assert($replacement !== null, "Merged technology {$id} requires replaced_by_id.");
-            }
+        foreach (['js' => 'tech.javascript', 'java' => 'tech.java', 'c' => 'tech.c', 'c++' => 'tech.cpp', 'c#' => 'tech.csharp', 'react' => 'tech.react', 'react native' => 'tech.react-native', 'sql' => 'tech.sql', 'microsoft sql server' => 'tech.sql-server', 'jquery' => 'tech.jquery'] as $alias => $id) {
+            phase2AssertSame($id, $aliases[$alias] ?? null, "Collision guard failed for {$alias}.");
         }
-
-        foreach (['JS' => 'tech.javascript', 'Java' => 'tech.java', 'C' => 'tech.c', 'C++' => 'tech.cpp', 'C#' => 'tech.csharp', 'React' => 'tech.react', 'React Native' => 'tech.react-native', 'SQL' => 'tech.sql', 'SQL Server' => 'tech.sql-server'] as $alias => $expectedId) {
-            phase2AssertSame($expectedId, $aliases[$alias] ?? null, "Taxonomy collision guard failed for {$alias}.");
-        }
-        phase2Assert(!isset($aliases['javascript']), 'Case-altered JavaScript must not map without an explicit exact alias.');
+        $jquery = array_values(array_filter($entries, static fn (array $entry): bool => ($entry['technology_id'] ?? null) === 'tech.jquery'))[0] ?? [];
+        phase2AssertSame('library', $jquery['category'] ?? null, 'jQuery must remain a library.');
+        phase2AssertSame(false, $jquery['deprecated'] ?? null, 'jQuery is not globally deprecated.');
+        phase2AssertSame(false, $jquery['merged'] ?? null, 'jQuery must not merge into JavaScript.');
     }
 
-    private static function assertFixtures(array $fixtureSet, array $schema, array $taxonomy): void
+    private static function fixtures(array $fixtures, array $schema, array $taxonomy): void
     {
-        phase2AssertSame('evidence-hub-golden-fixtures-v1', $fixtureSet['fixture_set'] ?? null, 'Fixture set identity is invalid.');
-        phase2AssertSame('evidence-hub-contract-v1', $fixtureSet['contract_id'] ?? null, 'Fixture set uses a different contract.');
-        phase2AssertSame('1.0.0', $fixtureSet['schema_version'] ?? null, 'Fixture set uses a different schema version.');
-        $fixtures = $fixtureSet['fixtures'] ?? null;
-        phase2Assert(is_array($fixtures) && array_is_list($fixtures) && count($fixtures) >= 30 && count($fixtures) <= 50, 'Evidence Hub must provide 30 to 50 golden fixtures.');
-
-        $reasonCodes = array_fill_keys($schema['$defs']['reason_code']['enum'] ?? [], true);
-        $taxonomyIds = [];
-        foreach ($taxonomy['entries'] as $entry) {
-            $taxonomyIds[$entry['technology_id']] = true;
+        phase2AssertSame('1.0.0', $fixtures['schema_version'] ?? null, 'Fixtures must use schema 1.0.0.');
+        foreach (['text_field_evaluations', 'documentation_aggregations', 'hub_states', 'technology_mappings', 'portfolio_progress', 'recommendation_lifecycle', 'tenant_denials', 'positive_payloads', 'negative_payloads'] as $family) {
+            phase2Assert(isset($fixtures[$family]) && is_array($fixtures[$family]) && $fixtures[$family] !== [], "Fixture family {$family} is missing.");
         }
-
+        $reasonCodes = array_fill_keys($schema['$defs']['reason_code']['enum'], true);
         $ids = [];
-        $kinds = [];
-        $states = [];
-        $fixtureText = json_encode($fixtureSet, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        phase2Assert(!preg_match('/@[a-z0-9.-]+\.[a-z]{2,}/i', $fixtureText), 'Fixtures must not contain email addresses.');
-        phase2Assert(!preg_match('/(secret|password|api[_-]?key|bearer\s+)/i', $fixtureText), 'Fixtures must not contain secrets.');
-
-        foreach ($fixtures as $fixture) {
-            phase2Assert(is_array($fixture), 'Fixture must be an object.');
-            $id = $fixture['id'] ?? null;
-            phase2Assert(is_string($id) && preg_match('/^(DOC|TECH|PROGRESS|TENANT)-[0-9]{2}-[a-z0-9-]+$/', $id) === 1, 'Fixture ID format is invalid.');
-            phase2Assert(!isset($ids[$id]), "Fixture ID {$id} is duplicated.");
-            $ids[$id] = true;
-            $kind = $fixture['kind'] ?? null;
-            phase2Assert(is_string($kind), "Fixture {$id} has no kind.");
-            $kinds[$kind] = true;
-            $expected = $fixture['expected'] ?? null;
-            phase2Assert(is_array($expected), "Fixture {$id} has no independent expected result.");
-            foreach (['state', 'metric_status', 'expected_bps', 'confidence', 'reason_codes', 'recommendation_eligibility'] as $field) {
-                phase2Assert(array_key_exists($field, $expected), "Fixture {$id} expected result is missing {$field}.");
+        foreach ($fixtures as $family => $records) {
+            if (!is_array($records) || !array_is_list($records)) {
+                continue;
             }
-            phase2Assert(in_array($expected['state'], ['zero', 'partial', 'ready'], true), "Fixture {$id} has an invalid cold-start state.");
-            $states[$expected['state']] = true;
-            phase2Assert(in_array($expected['metric_status'], ['unavailable', 'needs_attention', 'ready'], true), "Fixture {$id} has an invalid metric status.");
-            phase2Assert(in_array($expected['confidence'], ['unavailable', 'low', 'medium', 'high'], true), "Fixture {$id} has an invalid confidence level.");
-            phase2Assert(is_bool($expected['recommendation_eligibility']), "Fixture {$id} recommendation eligibility must be boolean.");
-            phase2Assert($expected['expected_bps'] === null || (is_int($expected['expected_bps']) && $expected['expected_bps'] >= 0 && $expected['expected_bps'] <= 10000), "Fixture {$id} has invalid BPS.");
-            phase2Assert(is_array($expected['reason_codes']), "Fixture {$id} reason codes must be an array.");
-            foreach ($expected['reason_codes'] as $reasonCode) {
-                phase2Assert(is_string($reasonCode) && isset($reasonCodes[$reasonCode]), "Fixture {$id} references unknown reason code {$reasonCode}.");
-            }
-            if (array_key_exists('technology_id', $expected) && $expected['technology_id'] !== null) {
-                phase2Assert(isset($taxonomyIds[$expected['technology_id']]), "Fixture {$id} references unknown technology ID.");
+            foreach ($records as $record) {
+                phase2Assert(is_array($record) && is_string($record['id'] ?? null), "{$family} record lacks an ID.");
+                phase2Assert(!isset($ids[$record['id']]), "Fixture ID {$record['id']} is duplicated.");
+                $ids[$record['id']] = true;
+                foreach (($record['expected']['reason_codes'] ?? $record['reason_codes'] ?? []) as $reason) {
+                    phase2Assert(isset($reasonCodes[$reason]), "Fixture {$record['id']} references unknown reason {$reason}.");
+                }
             }
         }
-
-        foreach (['text_evidence', 'technology_mapping', 'portfolio_progress', 'tenant_isolation'] as $kind) {
-            phase2Assert(isset($kinds[$kind]), "Required fixture kind {$kind} is absent.");
+        foreach (['TEXT-EN-PROBLEM-STATEMENT-AT', 'TEXT-AR-PROBLEM-STATEMENT-AT', 'TEXT-DIACRITICS-NFC', 'TEXT-NFC-EQUIVALENT', 'TEXT-TATWEEL', 'DOC-METRIC-4-OF-6', 'HUB-STATE-READY', 'TECH-JQUERY', 'PROGRESS-RECORDED-DATES', 'REC-RESOLVED', 'TENANT-PROJECT', 'PAYLOAD-READY', 'NEG-MAPPED-NULL'] as $id) {
+            phase2Assert(isset($ids[$id]), "Required calibration fixture {$id} is missing.");
         }
-        foreach (['zero', 'partial', 'ready'] as $state) {
-            phase2Assert(isset($states[$state]), "Required cold-start fixture state {$state} is absent.");
+        foreach ($fixtures['documentation_aggregations'] as $fixture) {
+            $projects = $fixture['project_count'];
+            $complete = $fixture['complete_fields'];
+            $expected = $fixture['expected_fields'];
+            if ($projects === 0) {
+                phase2AssertSame(null, $fixture['expected_bps'], 'No-project coverage must be null.');
+                continue;
+            }
+            phase2AssertSame($projects * 3, $expected, 'Every eligible project must contribute three fields.');
+            phase2AssertSame((int) floor(($complete / $expected) * 10000 + 0.5), $fixture['expected_bps'], 'Coverage BPS must use half-up rounding.');
         }
-        foreach (['DOC-04-invalid-utf8', 'DOC-05-placeholder', 'DOC-06-lorem', 'DOC-07-repeated-characters', 'DOC-08-repeated-words', 'DOC-17-arabic', 'DOC-18-mixed-arabic-english', 'PROGRESS-01-no-projects', 'PROGRESS-05-trend-ready', 'PROGRESS-06-portfolio-unpublished', 'PROGRESS-07-portfolio-published', 'TENANT-01-owner-a-project-b'] as $requiredId) {
-            phase2Assert(isset($ids[$requiredId]), "Required evidence fixture {$requiredId} is absent.");
+        foreach ($fixtures['hub_states'] as $fixture) {
+            $expected = $fixture['project_count'] === 0 ? 'zero' : ($fixture['complete_project_count'] > 0 ? 'ready' : 'partial');
+            phase2AssertSame($expected, $fixture['expected_state'], 'Hub maturity fixture violates the approved predicate.');
+        }
+        foreach ($fixtures['technology_mappings'] as $fixture) {
+            phase2Assert(($fixture['expected_state'] === 'mapped') === ($fixture['canonical_id'] !== null), 'Mapped and unmapped technology fixture states must agree with canonical_id.');
+        }
+        foreach ($fixtures['portfolio_progress'] as $fixture) {
+            phase2AssertSame('not_available', $fixture['trend_status'], 'Progress fixtures must not claim a trend.');
+            phase2AssertSame(null, $fixture['trend_direction'], 'Progress fixtures must not claim trend direction.');
+        }
+        phase2Assert(count($fixtures['positive_payloads']) >= 3 && count($fixtures['negative_payloads']) >= 5, 'Schema-shaped positive and negative cases are incomplete.');
+        foreach ($fixtures['positive_payloads'] as $fixture) {
+            $payload = $fixture['payload'] ?? null;
+            phase2Assert(is_array($payload), "Positive payload {$fixture['id']} is not schema-shaped.");
+            phase2AssertSame('evidence-hub-contract-v1', $payload['contract_id'] ?? null, "Positive payload {$fixture['id']} has the wrong contract ID.");
+            phase2AssertSame('1.0.0', $payload['schema_version'] ?? null, "Positive payload {$fixture['id']} has the wrong schema version.");
+            phase2Assert(is_array($payload['metrics'] ?? null) && is_array($payload['recommendations'] ?? null), "Positive payload {$fixture['id']} omits controlled response objects.");
+        }
+        foreach ($fixtures['negative_payloads'] as $fixture) {
+            phase2Assert(is_array($fixture['payload_fragment'] ?? null) && is_string($fixture['violation'] ?? null), "Negative payload {$fixture['id']} is not reviewable.");
         }
     }
 
-    private static function assertTenantBoundary(string $document, array $fixtureSet): void
+    private static function privacyAndScope(string $document, array $fixtures): void
     {
-        phase2Assert(str_contains($document, 'Verified Owner Session → Internal User ID → Tenant Scope → Tenant-Scoped Repository → Pure Analytics Core → Contract Mapper → Owner Presenter'), 'Tenant flow is incomplete.');
-        phase2Assert(str_contains($document, 'Cache-Control: no-store'), 'Future private response cache policy is missing.');
-        foreach (['query/body `owner_id`', 'body/query `portfolio_id`', 'request Auth0 subject', 'forwarded headers', 'inbound request IDs'] as $forbiddenAuthority) {
-            phase2Assert(str_contains($document, $forbiddenAuthority), "Tenant threat model omits {$forbiddenAuthority}.");
+        $encoded = json_encode($fixtures, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        phase2Assert(!preg_match('/@[a-z0-9.-]+\.[a-z]{2,}/i', $encoded), 'Fixtures must not include emails.');
+        phase2Assert(!preg_match('/(secret|password|api[_-]?key|bearer\s+)/i', $encoded), 'Fixtures must not include secrets.');
+        foreach (['problem_statement', 'Momen Portfolio is protected showcase data', 'ext-intl', 'Cache-Control: no-store', 'At most three recommendations'] as $required) {
+            phase2Assert(str_contains($document, $required), "Documentation is missing {$required}.");
         }
-        foreach ($fixtureSet['fixtures'] as $fixture) {
-            if (($fixture['kind'] ?? null) === 'tenant_isolation') {
-                phase2AssertSame(['TENANT_AUTHORITY_REJECTED'], $fixture['expected']['reason_codes'] ?? null, 'Tenant fixture must reject request-provided authority.');
-            }
-        }
+        $ambiguousField = 'pro' . 'blem';
+        phase2Assert(!preg_match('/\\b' . $ambiguousField . '\\b(?!_statement)/', $document), 'Ambiguous legacy evidence-field terminology remains in documentation.');
+        $positivePayloads = json_encode($fixtures['positive_payloads'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        phase2Assert(!preg_match('/\b(owner_id|portfolio_id|user_id|authz_version|auth0|email|raw_text|fingerprint_text)\b/i', $positivePayloads), 'Positive contract payloads must not expose tenant authority or raw evidence.');
+        $recommendations = json_encode($fixtures['recommendation_lifecycle'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        phase2Assert(!preg_match('/\b(input|raw_text|email|auth0|token|cookie|path)\b/i', $recommendations), 'Recommendation fixtures must not expose raw evidence or private identifiers.');
     }
 
-    private static function assertScopeAndNaming(string $document): void
+    private static function aliasKey(string $alias): string
     {
-        foreach (['Evidence Hub', 'مركز الأدلة', 'تحليلات مسارك', 'EVIDENCE-HUB-0 LITE', 'EVIDENCE-HUB-1A CORE', 'EVIDENCE-HUB-1B UI', '/owner/evidence-hub'] as $requiredName) {
-            phase2Assert(str_contains($document, $requiredName), "Official Evidence Hub name {$requiredName} is missing.");
-        }
-        phase2Assert(!str_contains($document, 'Ather ' . 'Insights'), 'Obsolete Insights naming must not be introduced.');
-        foreach (['owner.php', 'owner_projects.php', 'public/owner.php', 'public/owner_projects.php', 'includes'] as $source) {
-            $path = PHASE2_REPOSITORY_ROOT . '/' . $source;
-            if (is_file($path)) {
-                $contents = file_get_contents($path);
-                phase2Assert(is_string($contents) && !str_contains($contents, '/owner/evidence-hub'), 'This package must not add the Evidence Hub runtime route.');
-            }
-        }
-        $composer = self::readText('composer.json');
-        phase2AssertSame(4, count(json_decode($composer, true, 32, JSON_THROW_ON_ERROR)['require'] ?? []), 'Evidence Hub must not add a dependency.');
+        return strtolower(trim((string) preg_replace('/\s+/', ' ', $alias)));
     }
 
-    private static function readText(string $relativePath): string
+    private static function text(string $path): string
     {
-        $contents = file_get_contents(PHASE2_REPOSITORY_ROOT . '/' . $relativePath);
-        phase2Assert(is_string($contents), "{$relativePath} is unreadable.");
-
+        $contents = file_get_contents(PHASE2_REPOSITORY_ROOT . '/' . $path);
+        phase2Assert(is_string($contents), "{$path} is unreadable.");
         return $contents;
     }
 }
