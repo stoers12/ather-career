@@ -115,6 +115,7 @@ final class EvidenceHubContractTest
             'lorem ipsum', 'lorem ipsum dolor sit amet', 'todo', 'tbd', 'coming soon', 'test', 'placeholder', 'n/a',
             'لاحقاً', 'لاحقا', 'قريباً', 'قريبا', 'تجريبي', 'اختبار', 'غير متوفر',
         ], $fixtures['placeholder_vocabulary'] ?? null, 'Frozen placeholder vocabulary changed.');
+        phase2AssertSame([], $fixtures['text_fixture_execution']['descriptive_text_cases'] ?? null, 'Frozen TEXT fixtures must remain executable.');
 
         $reasonCodes = array_fill_keys($schema['$defs']['reason_code']['enum'], true);
         self::assertReasonCodes($fixtures, $reasonCodes, 'fixtures');
@@ -162,7 +163,7 @@ final class EvidenceHubContractTest
                 }
             }
         }
-        foreach (['TEXT-CONCISE-OUTCOME-EN', 'TEXT-CONCISE-OUTCOME-AR', 'TEXT-EMOJI-PADDING', 'TEXT-NFC-COMPOSED', 'TEXT-NFC-DECOMPOSED', 'TEXT-TATWEEL-REMOVED', 'TEXT-DIACRITIC-TOKEN-IDENTITY', 'TEXT-WHITESPACE-NORMALIZED', 'TEXT-ALLOW-TAB-LF-CR', 'TEXT-REJECT-C0', 'TEXT-REJECT-C1', 'TEXT-REJECT-ZWSP', 'TEXT-REJECT-WORD-JOINER', 'TEXT-REJECT-BOM', 'TEXT-REJECT-BIDI-OVERRIDE', 'TEXT-REJECT-BIDI-ISOLATE', 'TEXT-ALLOW-ZWNJ', 'TEXT-ALLOW-ZWJ', 'TEXT-MAX-PROBLEM', 'TEXT-MAX-PLUS-ONE-PROBLEM', 'TEXT-MAX-ROLE', 'TEXT-MAX-PLUS-ONE-ROLE', 'TEXT-MAX-OUTCOME', 'TEXT-MAX-PLUS-ONE-OUTCOME', 'TEXT-REPETITION-5900-BPS', 'TEXT-REPETITION-6000-BPS', 'TEXT-REPETITION-6100-BPS', 'REC-ACTIVE', 'REC-SNOOZED', 'REC-DISMISSED', 'REC-RESOLVED', 'REC-SUPERSEDED'] as $required) {
+        foreach (['TEXT-CONCISE-OUTCOME-EN', 'TEXT-CONCISE-OUTCOME-AR', 'TEXT-MIXED-DIGITS', 'TEXT-ARABIC-PUNCTUATION', 'TEXT-EMOJI-PADDING', 'TEXT-PUNCTUATION-PADDING', 'TEXT-NFC-COMPOSED', 'TEXT-NFC-DECOMPOSED', 'TEXT-TATWEEL-REMOVED', 'TEXT-DIACRITIC-TOKEN-IDENTITY', 'TEXT-WHITESPACE-NORMALIZED', 'TEXT-ALLOW-TAB-LF-CR', 'TEXT-REJECT-C0', 'TEXT-REJECT-C1', 'TEXT-REJECT-ZWSP', 'TEXT-REJECT-WORD-JOINER', 'TEXT-REJECT-BOM', 'TEXT-REJECT-BIDI-OVERRIDE', 'TEXT-REJECT-BIDI-ISOLATE', 'TEXT-ALLOW-ZWNJ', 'TEXT-ALLOW-ZWJ', 'TEXT-PLACEHOLDER-EN-NORMALIZED', 'TEXT-PLACEHOLDER-EN-EXACT', 'TEXT-PLACEHOLDER-AR', 'TEXT-PLACEHOLDER-AR-EXACT', 'TEXT-PLACEHOLDER-EMBEDDED', 'TEXT-MAX-PROBLEM', 'TEXT-MAX-PLUS-ONE-PROBLEM', 'TEXT-MAX-ROLE', 'TEXT-MAX-PLUS-ONE-ROLE', 'TEXT-MAX-OUTCOME', 'TEXT-MAX-PLUS-ONE-OUTCOME', 'TEXT-REPETITION-5900-BPS', 'TEXT-REPETITION-6000-BPS', 'TEXT-REPETITION-6100-BPS', 'TEXT-REPETITION-TATWEEL', 'TEXT-REPETITION-DIACRITIC', 'REC-ACTIVE', 'REC-SNOOZED', 'REC-DISMISSED', 'REC-RESOLVED', 'REC-SUPERSEDED'] as $required) {
             phase2Assert(isset($ids[$required]), "Required frozen calibration fixture {$required} is missing.");
         }
 
@@ -192,7 +193,7 @@ final class EvidenceHubContractTest
         foreach ($fixtures['repetition_cases'] as $case) {
             $facts = $case['calculated'] ?? [];
             $expected = (($facts['dominant_token_count'] ?? 0) * 10000 >= ($facts['useful_tokens'] ?? 0) * 6000) && ($facts['useful_tokens'] ?? 0) >= 5;
-            phase2AssertSame($expected, in_array('REPETITION_SUSPECTED', $case['expected_reason_codes'] ?? [], true), "Repetition integer boundary failed for {$case['id']}.");
+            phase2AssertSame($expected, in_array('REPETITION_SUSPECTED', $case['expected']['reason_codes'] ?? [], true), "Repetition integer boundary failed for {$case['id']}.");
         }
         self::coverage($fixtures['documentation_aggregations']);
         self::maturity($fixtures['hub_states']);
