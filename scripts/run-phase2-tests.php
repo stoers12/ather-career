@@ -40,6 +40,7 @@ require_once __DIR__ . '/../tests/phase2/cases/ResponsiveAccessibilityStaticTest
 require_once __DIR__ . '/../tests/phase2/cases/FrontendPerformanceResilienceStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/StaticArchitectureGuardTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/TenantAuthorizationStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractTest.php';
 
 $environment = null;
 $failures = [];
@@ -76,6 +77,7 @@ $tests = [
     'synthetic fixture contract and test authentication carrier' => [FixtureContractTest::class, 'run'],
     'static architecture guards' => [StaticArchitectureGuardTest::class, 'run'],
     'tenant authorization static contract' => [TenantAuthorizationStaticTest::class, 'run'],
+    'Evidence Hub contracts, taxonomy, fixtures, and tenant isolation' => [EvidenceHubContractTest::class, 'run'],
 ];
 
 try {

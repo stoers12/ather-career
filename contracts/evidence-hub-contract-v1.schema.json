@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ather-career.example/contracts/evidence-hub-contract-v1.schema.json",
+  "title": "Evidence Hub private response contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_id", "schema_version", "cold_start", "metrics", "recommendations"],
+  "properties": {
+    "contract_id": { "const": "evidence-hub-contract-v1" },
+    "schema_version": { "const": "1.0.0" },
+    "cold_start": { "$ref": "#/$defs/cold_start" },
+    "metrics": { "$ref": "#/$defs/metrics" },
+    "recommendations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/recommendation" }
+    }
+  },
+  "$defs": {
+    "basis_points": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "reason_code": {
+      "type": "string",
+      "enum": [
+        "NO_PROJECTS", "NO_ELIGIBLE_EVIDENCE_FIELDS", "FIELD_NOT_AVAILABLE", "NON_SCALAR_INPUT",
+        "INVALID_UTF8", "EMPTY_NORMALIZED_VALUE", "PROHIBITED_CONTROL_CHARACTER", "MAXIMUM_LENGTH_EXCEEDED",
+        "PLACEHOLDER_CONFIRMED", "GRAPHEME_THRESHOLD_NOT_MET", "LOW_TOKEN_COUNT", "LOW_DISTINCT_TOKEN_COUNT", "REPETITION_SUSPECTED",
+        "LOW_INFORMATION_SUSPECTED", "TEXT_COMPLETE", "TECHNOLOGY_MAPPED", "TECHNOLOGY_UNMAPPED",
+        "TECHNOLOGY_MANUAL_REVIEW", "TECHNOLOGY_DEPRECATED", "TECHNOLOGY_MERGED", "HISTORY_INSUFFICIENT",
+        "HISTORY_TIMESTAMP_UNAVAILABLE", "TENANT_AUTHORITY_REJECTED", "RECOMMENDATION_SNOOZED",
+        "RECOMMENDATION_DISMISSED", "RECOMMENDATION_SUPERSEDED"
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/reason_code" }
+    },
+    "evidence_confidence": {
+      "type": "string",
+      "enum": ["unavailable", "low", "medium", "high"],
+      "description": "Evidence sufficiency only; never probability of competence."
+    },
+    "cold_start": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "version"],
+      "properties": {
+        "state": { "type": "string", "enum": ["zero", "partial", "ready"] },
+        "version": { "const": "1.0.0" }
+      }
+    },
+    "documentation_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "version", "coverage_bps", "evidence_confidence", "reason_codes"],
+      "properties": {
+        "status": { "type": "string", "enum": ["unavailable", "needs_attention", "ready"] },
+        "version": { "const": "1.0.0" },
+        "coverage_bps": { "$ref": "#/$defs/basis_points" },
+        "evidence_confidence": { "$ref": "#/$defs/evidence_confidence" },
+        "reason_codes": { "$ref": "#/$defs/reason_codes" }
+      }
+    },
+    "technology_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_label", "mapping_state", "taxonomy_version"],
+      "properties": {
+        "raw_label": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "mapping_state": { "type": "string", "enum": ["mapped", "unmapped", "manual_review", "deprecated", "merged"] },
+        "taxonomy_version": { "const": "v1" },
+        "technology_id": { "type": ["string", "null"], "pattern": "^tech\\.[a-z0-9-]+$" },
+        "canonical_key": { "type": ["string", "null"], "pattern": "^[a-z0-9-]+$" },
+        "display_name": { "type": ["string", "null"], "maxLength": 60 },
+        "category": { "type": ["string", "null"], "enum": ["language", "framework", "runtime", "database", "tool", null] },
+        "replaced_by_id": { "type": ["string", "null"], "pattern": "^tech\\.[a-z0-9-]+$" }
+      }
+    },
+    "technology_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "version", "evidence_confidence", "reason_codes", "mappings"],
+      "properties": {
+        "status": { "type": "string", "enum": ["unavailable", "needs_attention", "ready"] },
+        "version": { "const": "1.0.0" },
+        "evidence_confidence": { "$ref": "#/$defs/evidence_confidence" },
+        "reason_codes": { "$ref": "#/$defs/reason_codes" },
+        "mappings": { "type": "array", "items": { "$ref": "#/$defs/technology_mapping" } }
+      }
+    },
+    "progress_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "version", "state", "evidence_confidence", "reason_codes"],
+      "properties": {
+        "status": { "type": "string", "enum": ["unavailable", "needs_attention", "ready"] },
+        "version": { "const": "1.0.0" },
+        "state": { "type": "string", "enum": ["no_projects", "incomplete_first_project", "single_project", "emerging_patterns", "trend_ready"] },
+        "evidence_confidence": { "$ref": "#/$defs/evidence_confidence" },
+        "reason_codes": { "$ref": "#/$defs/reason_codes" }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project_documentation_coverage", "technology_evidence_map", "portfolio_progress"],
+      "properties": {
+        "project_documentation_coverage": { "$ref": "#/$defs/documentation_metric" },
+        "technology_evidence_map": { "$ref": "#/$defs/technology_metric" },
+        "portfolio_progress": { "$ref": "#/$defs/progress_metric" }
+      }
+    },
+    "recommendation_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["route", "entity_ref"],
+      "properties": {
+        "route": { "type": "string", "enum": ["owner_evidence_hub"] },
+        "entity_ref": { "type": "string", "pattern": "^(portfolio|project):[a-z0-9][a-z0-9_-]{0,63}$" }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recommendation_key", "rule_version", "evidence_fingerprint", "lifecycle_state", "reason_codes", "priority", "target", "snoozed_until"],
+      "properties": {
+        "recommendation_key": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" },
+        "rule_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "evidence_fingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "lifecycle_state": { "type": "string", "enum": ["active", "snoozed", "dismissed", "resolved", "superseded"] },
+        "reason_codes": { "$ref": "#/$defs/reason_codes" },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "target": { "$ref": "#/$defs/recommendation_target" },
+        "snoozed_until": { "type": ["string", "null"], "format": "date-time" }
+      }
+    }
+  }
+}
