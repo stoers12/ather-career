@@ -44,6 +44,13 @@ final class EvidenceHubContractTest
         phase2Assert(is_array($trendDirection) && array_key_exists('const', $trendDirection), 'v1 trend direction must be explicit.');
         phase2AssertSame(null, $trendDirection['const'], 'v1 trend direction must remain null.');
         phase2AssertSame(3, $schema['properties']['recommendations']['maxItems'] ?? null, 'Visible recommendations must be capped at three.');
+        $recommendation = $schema['$defs']['recommendation'] ?? [];
+        phase2Assert(in_array('recommendation_key', $recommendation['required'] ?? [], true), 'Recommendation key must be required.');
+        phase2AssertSame('^[a-f0-9]{64}$', $recommendation['properties']['recommendation_key']['pattern'] ?? null, 'Recommendation key must be a lowercase SHA-256 digest.');
+        phase2AssertSame('active', $recommendation['properties']['lifecycle_state']['const'] ?? null, 'Visible recommendations must be active.');
+        phase2Assert(array_key_exists('const', $recommendation['properties']['snoozed_until'] ?? []) && $recommendation['properties']['snoozed_until']['const'] === null, 'Visible active recommendations cannot be snoozed.');
+        phase2AssertSame(['add_first_project', 'complete_project_evidence', 'review_unmapped_technology', 'complete_portfolio_publication'], $recommendation['properties']['rule_id']['enum'] ?? null, 'Recommendation v1 catalog must be exact.');
+        phase2Assert(in_array('PORTFOLIO_NOT_PUBLISHED', $schema['$defs']['reason_code']['enum'] ?? [], true), 'Publication recommendation reason must be controlled.');
         phase2AssertSame(['mapped', 'unmapped'], $schema['$defs']['technology_mapping']['properties']['mapping_state']['enum'] ?? null, 'Technology v1 must not expose manual review.');
         phase2Assert(in_array('TECHNOLOGY_STORAGE_INVALID', $schema['$defs']['reason_code']['enum'] ?? [], true), 'Malformed technology storage needs a stable reason code.');
         foreach (['technology_occurrence_count', 'mapped_occurrence_count', 'unmapped_occurrence_count', 'distinct_technology_count', 'distinct_mapped_technology_count', 'distinct_unmapped_technology_count', 'invalid_technology_storage_project_count'] as $field) {
@@ -204,7 +211,26 @@ final class EvidenceHubContractTest
         self::maturity($fixtures['hub_states']);
         self::technologyStorage($fixtures['technology_storage_cases'], $fixtures['technology_aggregations']);
         self::recommendations($fixtures['recommendation_lifecycle'], $fixtures['recommendation_fingerprints']);
+        self::recommendationV1($fixtures['recommendation_contract_v1'] ?? null);
         phase2Assert(count($fixtures['positive_payloads']) >= 3 && count($fixtures['negative_payloads']) >= 5, 'Schema-shaped positive and negative cases are incomplete.');
+    }
+
+    private static function recommendationV1(mixed $contract): void
+    {
+        phase2Assert(is_array($contract), 'Recommendation v1 contract fixtures are missing.');
+        $catalog = $contract['rule_catalog'] ?? null;
+        phase2Assert(is_array($catalog) && count($catalog) === 4, 'Recommendation v1 must freeze exactly four rules.');
+        phase2AssertSame(['add_first_project', 'complete_project_evidence', 'review_unmapped_technology', 'complete_portfolio_publication'], array_column($catalog, 'rule_id'), 'Recommendation rule order changed.');
+        phase2AssertSame([1, 2, 3, 4], array_column($catalog, 'priority_rank'), 'Recommendation priority ranks changed.');
+        $identity = $contract['identity_cases'][0] ?? null;
+        phase2Assert(is_array($identity), 'Recommendation identity fixture is missing.');
+        phase2AssertSame($identity['expected_sha256'] ?? null, hash('sha256', self::canonicalJson($identity['canonical_input'] ?? [])), 'Recommendation key fixture is not independent canonical SHA-256.');
+        foreach ($contract['publication_cases'] ?? [] as $case) {
+            phase2AssertSame(($case['has_projects'] && !$case['portfolio_published'] && $case['publication_prerequisites_met']), $case['expected'], 'Publication eligibility must use only frozen prerequisites.');
+        }
+        $visibility = $contract['visibility_cases'][0] ?? [];
+        phase2AssertSame(3, $visibility['expected_visible_count'] ?? null, 'Hidden candidates must not consume visible slots.');
+        phase2AssertSame([1, 2, 3], $visibility['expected_display_orders'] ?? null, 'Visible display order must be dense.');
     }
 
     /** @param array<int, mixed> $storageCases @param array<int, mixed> $aggregationCases */

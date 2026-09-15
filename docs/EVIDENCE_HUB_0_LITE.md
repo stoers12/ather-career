@@ -83,6 +83,12 @@ Portfolio Progress exposes Owner-only facts: project count, projects with comple
 
 ## Recommendations
 
+EVIDENCE-HUB-1C.0 freezes four future private rules only: `add_first_project` (rank 1), `complete_project_evidence` (rank 2), `review_unmapped_technology` (rank 3), and `complete_portfolio_publication` (rank 4). This is pre-endpoint contract clarification: no runtime, persistence, route, or UI exists. A visible response contains active items only; filtering precedes the three-item cap, then ordering is priority, rule ID, opaque target reference, and recommendation key, with dense display order.
+
+`recommendation_key` is the lowercase SHA-256 of canonical UTF-8 JSON containing exactly rule ID, target type, and opaque target reference. It is stable across predicate and rule-version changes. `evidence_fingerprint` separately hashes exactly rule ID, rule version, target type, target reference, and allow-listed predicate facts; it changes with relevant facts or rule version. A changed fingerprint/version supersedes an old disposition and exposes the current active item. Snoozed and dismissed dispositions never consume visible slots.
+
+Publication is eligible only for an Owner with projects, an unpublished Portfolio, and existing publication prerequisites: canonical non-reserved slug and a trimmed professional full name. It is independent of maturity, coverage, technology, competence, and quality. The future boundary is Owner Session → Internal User ID → Tenant Scope → Owner-scoped Adapter → Pure Recommendation Core → Contract Mapper → Owner Presenter; opaque targets select resources and never authorize access.
+
 At most three recommendations are visible. Rules order by stable priority, then `rule_id`, then opaque target reference: add first project; complete missing project evidence; correct/review unmapped technology; complete Portfolio publication setup when eligible. Actions are allow-listed and each names the predicate it is intended to resolve.
 
 `active` means predicate true with no suppressing disposition; `snoozed` applies until expiry; `dismissed` applies for the same fingerprint/rule version; `resolved` means predicate false; `superseded` means fingerprint or rule version changed. Only snoozed and dismissed are future persisted dispositions.
