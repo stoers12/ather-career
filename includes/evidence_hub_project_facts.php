@@ -5,12 +5,13 @@ declare(strict_types=1);
 require_once __DIR__ . '/authorization.php';
 require_once __DIR__ . '/project_technologies.php';
 
-/** @return list<array{project_ref: int, problem_statement: mixed, personal_role: mixed, measurable_outcome: mixed, created_at: string, technologies: list<string>}> */
+/** @return list<array{project_ref: int, problem_statement: mixed, personal_role: mixed, measurable_outcome: mixed, recorded_at_epoch_seconds: int, technology_storage_state: string, technology_storage_reason_codes: list<string>, technologies: list<string>}> */
 function loadAuthorizedEvidenceHubProjectFacts(PDO $database, AuthorizedPortfolioContext $context): array
 {
+    $recordedAtEpochExpression = evidenceHubProjectRecordedAtEpochExpression($database);
     $statement = $database->prepare(
         'SELECT projects.id, projects.problem_statement, projects.personal_role, projects.measurable_outcome,
-                projects.created_at, projects.technologies
+                ' . $recordedAtEpochExpression . ' AS recorded_at_epoch_seconds, projects.technologies
          FROM projects
          JOIN portfolios ON portfolios.id = projects.portfolio_id
          WHERE projects.portfolio_id = :authorized_portfolio_id
@@ -25,20 +26,52 @@ function loadAuthorizedEvidenceHubProjectFacts(PDO $database, AuthorizedPortfoli
     $facts = [];
     foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $record) {
         $projectRef = authorizationPositiveInteger($record['id'] ?? null);
-        if ($projectRef === null || !is_string($record['created_at'] ?? null)) {
+        $recordedAtEpochSeconds = evidenceHubProjectRecordedAtEpochSeconds($record['recorded_at_epoch_seconds'] ?? null);
+        if ($projectRef === null || $recordedAtEpochSeconds === null) {
             throw new RuntimeException('Evidence Hub project facts are invalid.');
         }
+        $technologyStorage = parseProjectTechnologiesStorage($record['technologies'] ?? null);
         $facts[] = [
             'project_ref' => $projectRef,
             'problem_statement' => $record['problem_statement'] ?? null,
             'personal_role' => $record['personal_role'] ?? null,
             'measurable_outcome' => $record['measurable_outcome'] ?? null,
-            'created_at' => $record['created_at'],
-            'technologies' => projectTechnologiesFromStorage($record['technologies'] ?? null),
+            'recorded_at_epoch_seconds' => $recordedAtEpochSeconds,
+            'technology_storage_state' => $technologyStorage['storage_state'],
+            'technology_storage_reason_codes' => $technologyStorage['reason_codes'],
+            'technologies' => $technologyStorage['labels'],
         ];
     }
 
     return $facts;
+}
+
+function evidenceHubProjectRecordedAtEpochExpression(PDO $database): string
+{
+    return match ($database->getAttribute(PDO::ATTR_DRIVER_NAME)) {
+        // MySQL TIMESTAMP retains an absolute instant; UNIX_TIMESTAMP preserves it
+        // regardless of the session timezone used to display the column.
+        'mysql' => 'UNIX_TIMESTAMP(projects.created_at)',
+        // The isolated SQLite harness must make its instant explicit too; it
+        // cannot rely on SQLite's interpretation of a timezone-less string.
+        'sqlite' => "CASE WHEN projects.created_at GLOB '*Z' OR projects.created_at GLOB '*[+-][0-9][0-9]:[0-9][0-9]' THEN CAST(strftime('%s', projects.created_at) AS INTEGER) ELSE NULL END",
+        default => throw new RuntimeException('Evidence Hub project timestamp storage is unsupported.'),
+    };
+}
+
+function evidenceHubProjectRecordedAtEpochSeconds(mixed $value): ?int
+{
+    if (is_int($value)) {
+        return $value >= 0 ? $value : null;
+    }
+    if (!is_string($value) || preg_match('/^(?:0|[1-9][0-9]*)$/D', $value) !== 1) {
+        return null;
+    }
+    if (strlen($value) > strlen((string) PHP_INT_MAX) || (strlen($value) === strlen((string) PHP_INT_MAX) && $value > (string) PHP_INT_MAX)) {
+        return null;
+    }
+
+    return (int) $value;
 }
 
 function loadAuthorizedEvidenceHubPublicationState(PDO $database, AuthorizedPortfolioContext $context): string

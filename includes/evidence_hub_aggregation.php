@@ -6,8 +6,13 @@ require_once __DIR__ . '/evidence_text_evaluator.php';
 
 const EVIDENCE_HUB_CONTRACT_VERSION = '1.0.0';
 
-/** @param array{project_ref: int, problem_statement: mixed, personal_role: mixed, measurable_outcome: mixed, created_at: string, technologies: list<string>} $project
- * @return array{project_ref: int, created_at: string, technologies: list<string>, field_evaluations: array<string, array<string, mixed>>, expected_evidence_fields: int, complete_evidence_fields: int, project_has_complete_evidence: bool}
+final class EvidenceHubAggregationInvariantException extends RuntimeException
+{
+}
+
+/**
+ * @param array{project_ref: int, problem_statement: mixed, personal_role: mixed, measurable_outcome: mixed, recorded_at_epoch_seconds: int, technology_storage_state: string, technology_storage_reason_codes: list<string>, technologies: list<string>} $project
+ * @return array<string, mixed>
  */
 function evaluateEvidenceHubProjectDocumentation(array $project): array
 {
@@ -33,7 +38,9 @@ function evaluateEvidenceHubProjectDocumentation(array $project): array
 
     return [
         'project_ref' => $project['project_ref'],
-        'created_at' => $project['created_at'],
+        'recorded_at_epoch_seconds' => $project['recorded_at_epoch_seconds'],
+        'technology_storage_state' => $project['technology_storage_state'],
+        'technology_storage_reason_codes' => $project['technology_storage_reason_codes'],
         'technologies' => $project['technologies'],
         'field_evaluations' => $evaluations,
         'expected_evidence_fields' => 3,
@@ -42,11 +49,71 @@ function evaluateEvidenceHubProjectDocumentation(array $project): array
     ];
 }
 
+/**
+ * Counts are derived from the exact three frozen fields, never accepted from a
+ * caller as authority. This prevents malformed internal facts from producing a
+ * misleading Owner metric.
+ *
+ * @param array<string, mixed> $project
+ * @return array{complete_evidence_fields: int, project_has_complete_evidence: bool, reason_codes: list<string>}
+ */
+function validateEvidenceHubProjectDocumentationFacts(array $project): array
+{
+    $evaluations = $project['field_evaluations'] ?? null;
+    if (!is_array($evaluations) || array_is_list($evaluations)) {
+        throw new EvidenceHubAggregationInvariantException('Evidence Hub project field evaluations are invalid.');
+    }
+    $fields = evidenceTextFieldNames();
+    if (count($evaluations) !== count($fields) || array_diff(array_keys($evaluations), $fields) !== [] || array_diff($fields, array_keys($evaluations)) !== []) {
+        throw new EvidenceHubAggregationInvariantException('Evidence Hub project evidence fields are incomplete.');
+    }
+
+    $complete = 0;
+    $reasonCodes = [];
+    foreach ($fields as $field) {
+        $evaluation = $evaluations[$field] ?? null;
+        if (!is_array($evaluation) || ($evaluation['evidence_field'] ?? null) !== $field) {
+            throw new EvidenceHubAggregationInvariantException('Evidence Hub project evidence field identity is invalid.');
+        }
+        $state = $evaluation['evidence_status'] ?? null;
+        if (!is_string($state) || !in_array($state, ['unavailable', 'needs_attention', 'complete'], true)) {
+            throw new EvidenceHubAggregationInvariantException('Evidence Hub project evidence state is invalid.');
+        }
+        $fieldReasonCodes = $evaluation['reason_codes'] ?? null;
+        if (!is_array($fieldReasonCodes) || !array_is_list($fieldReasonCodes)) {
+            throw new EvidenceHubAggregationInvariantException('Evidence Hub project reason codes are invalid.');
+        }
+        foreach ($fieldReasonCodes as $reasonCode) {
+            if (!is_string($reasonCode)) {
+                throw new EvidenceHubAggregationInvariantException('Evidence Hub project reason code is invalid.');
+            }
+            $reasonCodes[$reasonCode] = true;
+        }
+        if ($state === 'complete') {
+            ++$complete;
+        }
+    }
+
+    if (($project['expected_evidence_fields'] ?? null) !== 3 || ($project['complete_evidence_fields'] ?? null) !== $complete || !is_bool($project['project_has_complete_evidence'] ?? null) || $project['project_has_complete_evidence'] !== ($complete === 3)) {
+        throw new EvidenceHubAggregationInvariantException('Evidence Hub project evidence counts are inconsistent.');
+    }
+    ksort($reasonCodes, SORT_STRING);
+
+    return [
+        'complete_evidence_fields' => $complete,
+        'project_has_complete_evidence' => $complete === 3,
+        'reason_codes' => array_keys($reasonCodes),
+    ];
+}
+
 /** @param list<array<string, mixed>> $projects
  * @return array{status: string, version: string, project_count: int, expected_evidence_field_count: int, complete_evidence_field_count: int, projects_with_complete_evidence: int, coverage_bps: int|null, evidence_confidence: string, reason_codes: list<string>}
  */
 function aggregateEvidenceHubDocumentationCoverage(array $projects): array
 {
+    if (!array_is_list($projects)) {
+        throw new EvidenceHubAggregationInvariantException('Evidence Hub project facts must be a list.');
+    }
     $projectCount = count($projects);
     if ($projectCount === 0) {
         return [
@@ -61,22 +128,31 @@ function aggregateEvidenceHubDocumentationCoverage(array $projects): array
             'reason_codes' => ['NO_PROJECTS'],
         ];
     }
+
     $expected = $projectCount * 3;
     $complete = 0;
     $completeProjects = 0;
     $reasonCodes = [];
     foreach ($projects as $project) {
-        $complete += (int) $project['complete_evidence_fields'];
-        if ($project['project_has_complete_evidence'] === true) {
+        if (!is_array($project)) {
+            throw new EvidenceHubAggregationInvariantException('Evidence Hub project facts must be arrays.');
+        }
+        $validated = validateEvidenceHubProjectDocumentationFacts($project);
+        $complete += $validated['complete_evidence_fields'];
+        if ($validated['project_has_complete_evidence']) {
             ++$completeProjects;
         }
-        foreach ($project['field_evaluations'] as $evaluation) {
-            foreach ($evaluation['reason_codes'] as $reasonCode) {
-                $reasonCodes[$reasonCode] = true;
-            }
+        foreach ($validated['reason_codes'] as $reasonCode) {
+            $reasonCodes[$reasonCode] = true;
         }
     }
+    if ($expected !== $projectCount * 3 || $complete < 0 || $complete > $expected) {
+        throw new EvidenceHubAggregationInvariantException('Evidence Hub coverage totals are invalid.');
+    }
     $coverage = intdiv($complete * 10000 + intdiv($expected, 2), $expected);
+    if ($coverage < 0 || $coverage > 10000) {
+        throw new EvidenceHubAggregationInvariantException('Evidence Hub coverage basis points are invalid.');
+    }
     ksort($reasonCodes, SORT_STRING);
 
     return [
@@ -95,11 +171,17 @@ function aggregateEvidenceHubDocumentationCoverage(array $projects): array
 /** @param list<array<string, mixed>> $projects */
 function evidenceHubMaturityState(array $projects): string
 {
+    if (!array_is_list($projects)) {
+        throw new EvidenceHubAggregationInvariantException('Evidence Hub project facts must be a list.');
+    }
     if ($projects === []) {
         return 'zero';
     }
     foreach ($projects as $project) {
-        if ($project['project_has_complete_evidence'] === true) {
+        if (!is_array($project)) {
+            throw new EvidenceHubAggregationInvariantException('Evidence Hub project facts must be arrays.');
+        }
+        if (validateEvidenceHubProjectDocumentationFacts($project)['project_has_complete_evidence']) {
             return 'ready';
         }
     }
@@ -114,6 +196,9 @@ function summarizeEvidenceHubPortfolioProgress(array $projects, string $publicat
 {
     if (!in_array($publicationState, ['published', 'unpublished', 'not_configured'], true)) {
         throw new InvalidArgumentException('Evidence Hub publication state is invalid.');
+    }
+    if (!array_is_list($projects)) {
+        throw new EvidenceHubAggregationInvariantException('Evidence Hub project facts must be a list.');
     }
     if ($projects === []) {
         return [
@@ -130,20 +215,38 @@ function summarizeEvidenceHubPortfolioProgress(array $projects, string $publicat
             'reason_codes' => ['HISTORY_NOT_TRACKED'],
         ];
     }
-    $recorded = array_map(static fn (array $project): DateTimeImmutable => evidenceHubRecordedAt($project['created_at']), $projects);
-    usort($recorded, static fn (DateTimeImmutable $left, DateTimeImmutable $right): int => $left <=> $right);
-    $first = $recorded[0];
-    $latest = $recorded[array_key_last($recorded)];
-    $completeProjects = count(array_filter($projects, static fn (array $project): bool => $project['project_has_complete_evidence'] === true));
+
+    $epochs = [];
+    $completeProjects = 0;
+    foreach ($projects as $project) {
+        if (!is_array($project)) {
+            throw new EvidenceHubAggregationInvariantException('Evidence Hub project facts must be arrays.');
+        }
+        $validated = validateEvidenceHubProjectDocumentationFacts($project);
+        $epoch = $project['recorded_at_epoch_seconds'] ?? null;
+        if (!is_int($epoch) || $epoch < 0) {
+            throw new EvidenceHubAggregationInvariantException('Evidence Hub project recorded instant is invalid.');
+        }
+        $epochs[] = $epoch;
+        if ($validated['project_has_complete_evidence']) {
+            ++$completeProjects;
+        }
+    }
+    sort($epochs, SORT_NUMERIC);
+    $firstEpoch = $epochs[0];
+    $latestEpoch = $epochs[array_key_last($epochs)];
+    if ($latestEpoch < $firstEpoch) {
+        throw new EvidenceHubAggregationInvariantException('Evidence Hub project instant range is invalid.');
+    }
 
     return [
         'status' => 'ready',
         'version' => EVIDENCE_HUB_CONTRACT_VERSION,
         'project_count' => count($projects),
         'projects_with_complete_evidence' => $completeProjects,
-        'first_project_recorded_at' => $first->format('Y-m-d\TH:i:s\Z'),
-        'latest_project_recorded_at' => $latest->format('Y-m-d\TH:i:s\Z'),
-        'recorded_activity_span_days' => intdiv($latest->getTimestamp() - $first->getTimestamp(), 86400),
+        'first_project_recorded_at' => evidenceHubUtcTimestamp($firstEpoch),
+        'latest_project_recorded_at' => evidenceHubUtcTimestamp($latestEpoch),
+        'recorded_activity_span_days' => evidenceHubRecordedActivitySpanDays($firstEpoch, $latestEpoch),
         'portfolio_publication_state' => $publicationState,
         'trend_status' => 'not_available',
         'trend_direction' => null,
@@ -151,19 +254,20 @@ function summarizeEvidenceHubPortfolioProgress(array $projects, string $publicat
     ];
 }
 
-function evidenceHubRecordedAt(mixed $timestamp): DateTimeImmutable
+function evidenceHubUtcTimestamp(int $epochSeconds): string
 {
-    if (!is_string($timestamp)) {
-        throw new RuntimeException('Evidence Hub project timestamp is invalid.');
-    }
-    $utc = new DateTimeZone('UTC');
-    $recorded = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $timestamp, $utc);
-    if ($recorded === false || DateTimeImmutable::getLastErrors() !== false) {
-        $recorded = DateTimeImmutable::createFromFormat('!Y-m-d\TH:i:s\Z', $timestamp, $utc);
-    }
-    if ($recorded === false || DateTimeImmutable::getLastErrors() !== false) {
-        throw new RuntimeException('Evidence Hub project timestamp is invalid.');
+    if ($epochSeconds < 0) {
+        throw new EvidenceHubAggregationInvariantException('Evidence Hub project recorded instant is invalid.');
     }
 
-    return $recorded;
+    return (new DateTimeImmutable('@' . $epochSeconds))->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\\TH:i:s\\Z');
+}
+
+function evidenceHubRecordedActivitySpanDays(int $firstEpochSeconds, int $latestEpochSeconds): int
+{
+    if ($firstEpochSeconds < 0 || $latestEpochSeconds < $firstEpochSeconds) {
+        throw new EvidenceHubAggregationInvariantException('Evidence Hub project instant range is invalid.');
+    }
+
+    return intdiv($latestEpochSeconds - $firstEpochSeconds, 86400);
 }

@@ -45,6 +45,11 @@ final class EvidenceHubContractTest
         phase2AssertSame(null, $trendDirection['const'], 'v1 trend direction must remain null.');
         phase2AssertSame(3, $schema['properties']['recommendations']['maxItems'] ?? null, 'Visible recommendations must be capped at three.');
         phase2AssertSame(['mapped', 'unmapped'], $schema['$defs']['technology_mapping']['properties']['mapping_state']['enum'] ?? null, 'Technology v1 must not expose manual review.');
+        phase2Assert(in_array('TECHNOLOGY_STORAGE_INVALID', $schema['$defs']['reason_code']['enum'] ?? [], true), 'Malformed technology storage needs a stable reason code.');
+        foreach (['technology_occurrence_count', 'mapped_occurrence_count', 'unmapped_occurrence_count', 'distinct_technology_count', 'distinct_mapped_technology_count', 'distinct_unmapped_technology_count', 'invalid_technology_storage_project_count'] as $field) {
+            phase2Assert(in_array($field, $schema['$defs']['technology_metric']['required'] ?? [], true), "Technology summary {$field} must be required.");
+            phase2AssertSame(0, $schema['$defs']['technology_metric']['properties'][$field]['minimum'] ?? null, "Technology summary {$field} must be non-negative.");
+        }
         phase2Assert(str_contains((string) ($schema['$defs']['confidence']['description'] ?? ''), 'never competence probability'), 'Confidence meaning is unsafe.');
     }
 
@@ -155,7 +160,7 @@ final class EvidenceHubContractTest
         }
         phase2AssertSame(6, count($fixtures['threshold_boundary_matrix'] ?? []), 'Every field must have Arabic and English boundary coverage.');
 
-        foreach (['text_policy_cases', 'repetition_cases', 'documentation_aggregations', 'hub_states', 'technology_mappings', 'portfolio_progress', 'recommendation_lifecycle', 'recommendation_fingerprints', 'tenant_denials', 'positive_payloads', 'negative_payloads'] as $family) {
+        foreach (['text_policy_cases', 'repetition_cases', 'documentation_aggregations', 'hub_states', 'technology_mappings', 'portfolio_progress', 'technology_storage_cases', 'technology_aggregations', 'recommendation_lifecycle', 'recommendation_fingerprints', 'tenant_denials', 'positive_payloads', 'negative_payloads'] as $family) {
             phase2Assert(isset($fixtures[$family]) && is_array($fixtures[$family]) && $fixtures[$family] !== [], "Fixture family {$family} is missing.");
             foreach ($fixtures[$family] as $record) {
                 if (is_array($record) && array_key_exists('id', $record)) {
@@ -197,8 +202,36 @@ final class EvidenceHubContractTest
         }
         self::coverage($fixtures['documentation_aggregations']);
         self::maturity($fixtures['hub_states']);
+        self::technologyStorage($fixtures['technology_storage_cases'], $fixtures['technology_aggregations']);
         self::recommendations($fixtures['recommendation_lifecycle'], $fixtures['recommendation_fingerprints']);
         phase2Assert(count($fixtures['positive_payloads']) >= 3 && count($fixtures['negative_payloads']) >= 5, 'Schema-shaped positive and negative cases are incomplete.');
+    }
+
+    /** @param array<int, mixed> $storageCases @param array<int, mixed> $aggregationCases */
+    private static function technologyStorage(array $storageCases, array $aggregationCases): void
+    {
+        $ids = [];
+        foreach ($storageCases as $case) {
+            phase2Assert(is_array($case) && is_string($case['id'] ?? null), 'Technology storage fixture is invalid.');
+            $ids[$case['id']] = true;
+            phase2Assert(in_array($case['expected_storage_state'] ?? null, ['valid', 'invalid'], true), "{$case['id']} storage state is invalid.");
+            phase2Assert(is_array($case['expected_reason_codes'] ?? null) && is_array($case['expected_labels'] ?? null), "{$case['id']} storage facts are incomplete.");
+            if (($case['expected_storage_state'] ?? null) === 'invalid') {
+                phase2AssertSame(['TECHNOLOGY_STORAGE_INVALID'], $case['expected_reason_codes'], "{$case['id']} invalid storage reason changed.");
+                phase2AssertSame([], $case['expected_labels'], "{$case['id']} must not retain partial labels.");
+            }
+        }
+        foreach ($aggregationCases as $case) {
+            phase2Assert(is_array($case) && is_array($case['storage_case_ids'] ?? null), 'Technology aggregation fixture is invalid.');
+            foreach ($case['storage_case_ids'] as $storageId) {
+                phase2Assert(isset($ids[$storageId]), "{$case['id']} references an unknown technology storage fixture.");
+            }
+            foreach (['technology_occurrence_count', 'mapped_occurrence_count', 'unmapped_occurrence_count', 'distinct_technology_count', 'distinct_mapped_technology_count', 'distinct_unmapped_technology_count', 'invalid_technology_storage_project_count'] as $field) {
+                phase2Assert(is_int($case[$field] ?? null) && $case[$field] >= 0, "{$case['id']} {$field} must be a non-negative integer.");
+            }
+            phase2AssertSame($case['technology_occurrence_count'], $case['mapped_occurrence_count'] + $case['unmapped_occurrence_count'], "{$case['id']} occurrence invariant changed.");
+            phase2AssertSame($case['distinct_technology_count'], $case['distinct_mapped_technology_count'] + $case['distinct_unmapped_technology_count'], "{$case['id']} distinct invariant changed.");
+        }
     }
 
     /** @param array<string, bool> $ids */

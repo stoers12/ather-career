@@ -72,47 +72,74 @@ function projectTechnologiesToStorage(array $technologies): ?string
     return json_encode(array_values($technologies), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 }
 
-/** @return list<string> */
+/**
+ * This preserves the established public reader behavior while allowing private
+ * Evidence Hub aggregation to distinguish an empty collection from corruption.
+ *
+ * @return list<string>
+ */
 function projectTechnologiesFromStorage(mixed $stored): array
 {
+    return parseProjectTechnologiesStorage($stored)['labels'];
+}
+
+/**
+ * @return array{storage_state: 'valid'|'invalid', reason_codes: list<string>, labels: list<string>}
+ */
+function parseProjectTechnologiesStorage(mixed $stored): array
+{
     if ($stored === null || $stored === '') {
-        return [];
+        return projectTechnologyStorageValidResult([]);
     }
     if (!is_string($stored)) {
-        return [];
+        return projectTechnologyStorageInvalidResult();
     }
 
     try {
         $decoded = json_decode($stored, true, 16, JSON_THROW_ON_ERROR);
     } catch (JsonException) {
-        return [];
+        return projectTechnologyStorageInvalidResult();
     }
     if (!is_array($decoded) || !array_is_list($decoded) || count($decoded) > PROJECT_TECHNOLOGIES_MAXIMUM) {
-        return [];
+        return projectTechnologyStorageInvalidResult();
     }
 
     $technologies = [];
     $seen = [];
     foreach ($decoded as $label) {
         if (!is_string($label) || trim($label) !== $label || $label === '') {
-            return [];
+            return projectTechnologyStorageInvalidResult();
         }
 
         $length = utf8CharacterLength($label);
         if ($length === null || $length > PROJECT_TECHNOLOGY_MAX_LENGTH) {
-            return [];
+            return projectTechnologyStorageInvalidResult();
         }
 
         $comparisonKey = function_exists('mb_strtolower') ? mb_strtolower($label, 'UTF-8') : strtolower($label);
         if (isset($seen[$comparisonKey])) {
-            return [];
+            return projectTechnologyStorageInvalidResult();
         }
 
         $seen[$comparisonKey] = true;
         $technologies[] = $label;
     }
 
-    return $technologies;
+    return projectTechnologyStorageValidResult($technologies);
+}
+
+/** @param list<string> $labels
+ * @return array{storage_state: 'valid', reason_codes: list<string>, labels: list<string>}
+ */
+function projectTechnologyStorageValidResult(array $labels): array
+{
+    return ['storage_state' => 'valid', 'reason_codes' => [], 'labels' => $labels];
+}
+
+/** @return array{storage_state: 'invalid', reason_codes: list<string>, labels: list<string>} */
+function projectTechnologyStorageInvalidResult(): array
+{
+    return ['storage_state' => 'invalid', 'reason_codes' => ['TECHNOLOGY_STORAGE_INVALID'], 'labels' => []];
 }
 
 /** @param list<string> $technologies */

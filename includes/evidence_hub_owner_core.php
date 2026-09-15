@@ -18,6 +18,10 @@ function buildAuthorizedEvidenceHubOwnerCore(PDO $database, AuthorizedPortfolioC
         'documentation_coverage' => $coverage,
         'maturity' => ['state' => evidenceHubMaturityState($projects), 'version' => EVIDENCE_HUB_CONTRACT_VERSION],
         'portfolio_progress' => summarizeEvidenceHubPortfolioProgress($projects, loadAuthorizedEvidenceHubPublicationState($database, $context)),
-        'technology_evidence_map' => summarizeEvidenceHubTechnologies(array_column($projects, 'technologies'), $taxonomy),
+        'technology_evidence_map' => summarizeEvidenceHubTechnologies(array_map(static fn (array $project): array => [
+            'storage_state' => $project['technology_storage_state'],
+            'reason_codes' => $project['technology_storage_reason_codes'],
+            'labels' => $project['technologies'],
+        ], $projects), $taxonomy),
     ];
 }
