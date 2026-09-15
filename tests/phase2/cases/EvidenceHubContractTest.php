@@ -167,7 +167,7 @@ final class EvidenceHubContractTest
         }
         phase2AssertSame(6, count($fixtures['threshold_boundary_matrix'] ?? []), 'Every field must have Arabic and English boundary coverage.');
 
-        foreach (['text_policy_cases', 'repetition_cases', 'documentation_aggregations', 'hub_states', 'technology_mappings', 'portfolio_progress', 'technology_storage_cases', 'technology_aggregations', 'recommendation_lifecycle', 'recommendation_fingerprints', 'tenant_denials', 'positive_payloads', 'negative_payloads'] as $family) {
+        foreach (['text_policy_cases', 'repetition_cases', 'documentation_aggregations', 'hub_states', 'technology_mappings', 'portfolio_progress', 'technology_storage_cases', 'technology_aggregations', 'recommendation_lifecycle', 'recommendation_fingerprints', 'recommendation_keys', 'recommendation_key_rejections', 'recommendation_fingerprint_rejections', 'recommendation_identity_separation', 'tenant_denials', 'positive_payloads', 'negative_payloads'] as $family) {
             phase2Assert(isset($fixtures[$family]) && is_array($fixtures[$family]) && $fixtures[$family] !== [], "Fixture family {$family} is missing.");
             foreach ($fixtures[$family] as $record) {
                 if (is_array($record) && array_key_exists('id', $record)) {
@@ -178,6 +178,8 @@ final class EvidenceHubContractTest
         foreach (['TEXT-CONCISE-OUTCOME-EN', 'TEXT-CONCISE-OUTCOME-AR', 'TEXT-MIXED-DIGITS', 'TEXT-ARABIC-PUNCTUATION', 'TEXT-EMOJI-PADDING', 'TEXT-PUNCTUATION-PADDING', 'TEXT-NFC-COMPOSED', 'TEXT-NFC-DECOMPOSED', 'TEXT-TATWEEL-REMOVED', 'TEXT-DIACRITIC-TOKEN-IDENTITY', 'TEXT-WHITESPACE-NORMALIZED', 'TEXT-ALLOW-TAB-LF-CR', 'TEXT-REJECT-C0', 'TEXT-REJECT-C1', 'TEXT-REJECT-ZWSP', 'TEXT-REJECT-WORD-JOINER', 'TEXT-REJECT-BOM', 'TEXT-REJECT-BIDI-OVERRIDE', 'TEXT-REJECT-BIDI-ISOLATE', 'TEXT-ALLOW-ZWNJ', 'TEXT-ALLOW-ZWJ', 'TEXT-PLACEHOLDER-EN-NORMALIZED', 'TEXT-PLACEHOLDER-EN-EXACT', 'TEXT-PLACEHOLDER-AR', 'TEXT-PLACEHOLDER-AR-EXACT', 'TEXT-PLACEHOLDER-EMBEDDED', 'TEXT-MAX-PROBLEM', 'TEXT-MAX-PLUS-ONE-PROBLEM', 'TEXT-MAX-ROLE', 'TEXT-MAX-PLUS-ONE-ROLE', 'TEXT-MAX-OUTCOME', 'TEXT-MAX-PLUS-ONE-OUTCOME', 'TEXT-REPETITION-5900-BPS', 'TEXT-REPETITION-6000-BPS', 'TEXT-REPETITION-6100-BPS', 'TEXT-REPETITION-TATWEEL', 'TEXT-REPETITION-DIACRITIC', 'REC-ACTIVE', 'REC-SNOOZED', 'REC-DISMISSED', 'REC-RESOLVED', 'REC-SUPERSEDED'] as $required) {
             phase2Assert(isset($ids[$required]), "Required frozen calibration fixture {$required} is missing.");
         }
+
+        self::recommendationFixtureFamilies($fixtures);
 
         foreach ($fixtures['text_policy_cases'] as $case) {
             foreach (($case['expected']['reason_codes'] ?? []) as $reason) {
@@ -212,6 +214,13 @@ final class EvidenceHubContractTest
         self::technologyStorage($fixtures['technology_storage_cases'], $fixtures['technology_aggregations']);
         self::recommendations($fixtures['recommendation_lifecycle'], $fixtures['recommendation_fingerprints']);
         self::recommendationV1($fixtures['recommendation_contract_v1'] ?? null);
+        self::recommendationIdentityFixtures(
+            $fixtures['recommendation_keys'],
+            $fixtures['recommendation_key_rejections'],
+            $fixtures['recommendation_fingerprints'],
+            $fixtures['recommendation_fingerprint_rejections'],
+            $fixtures['recommendation_identity_separation'],
+        );
         phase2Assert(count($fixtures['positive_payloads']) >= 3 && count($fixtures['negative_payloads']) >= 5, 'Schema-shaped positive and negative cases are incomplete.');
     }
 
@@ -318,24 +327,522 @@ final class EvidenceHubContractTest
         }
         $byId = [];
         foreach ($fingerprints as $fixture) {
+            phase2Assert(is_array($fixture) && is_string($fixture['id'] ?? null), 'Recommendation fingerprint fixture IDs are required.');
+            phase2Assert(!isset($byId[$fixture['id']]), "Duplicate recommendation fingerprint fixture {$fixture['id']}.");
             $byId[$fixture['id']] = $fixture;
-            if (isset($fixture['canonical_input'])) {
-                $input = $fixture['canonical_input'];
-                phase2AssertSame(['predicate_facts', 'rule_id', 'rule_version', 'target_ref', 'target_type'], array_keys($input), 'Fingerprint input keys must be canonical and allow-listed.');
-                $allowedFacts = match ($input['rule_id']) {
-                    'add_first_project' => ['has_projects'],
-                    'complete_project_evidence' => ['field_completeness_states', 'reason_codes', 'target_ref'],
-                    'review_unmapped_technology' => ['mapping_state', 'normalized_unmapped_label_digest', 'target_ref'],
-                    'complete_portfolio_publication' => ['has_projects', 'portfolio_published', 'publication_prerequisites_met'],
-                    default => [],
-                };
-                phase2Assert($allowedFacts !== [] && array_diff(array_keys($input['predicate_facts']), $allowedFacts) === [], 'Fingerprint predicate facts are not allow-listed.');
-                phase2AssertSame($fixture['expected_sha256'] ?? null, self::fingerprint($fixture['canonical_input']), 'Fingerprint fixture hash is not canonical or stable.');
+        }
+        phase2AssertSame(['raw_evidence_text', 'raw_technology_label', 'email', 'auth0_subject', 'cookie', 'token', 'filesystem_path', 'showcase_identity', 'database_id'], $byId['REC-FINGERPRINT-EXCLUSIONS']['prohibited_field_names'] ?? null, 'Fingerprint exclusions changed.');
+    }
+
+    /** @param array<string, mixed> $fixtures */
+    private static function recommendationFixtureFamilies(array $fixtures): void
+    {
+        foreach ([
+            'recommendation_keys' => 11,
+            'recommendation_key_rejections' => 33,
+            'recommendation_fingerprint_rejections' => 45,
+            'recommendation_identity_separation' => 5,
+        ] as $family => $expectedCount) {
+            $records = $fixtures[$family] ?? null;
+            phase2Assert(is_array($records) && array_is_list($records) && $records !== [], "{$family} must be a non-empty list.");
+            phase2AssertSame($expectedCount, count($records), "{$family} count changed.");
+        }
+
+        $fingerprints = $fixtures['recommendation_fingerprints'] ?? null;
+        phase2Assert(is_array($fingerprints) && array_is_list($fingerprints) && $fingerprints !== [], 'recommendation_fingerprints must be a non-empty list.');
+        $positiveFingerprints = array_values(array_filter(
+            $fingerprints,
+            static fn (mixed $fixture): bool => is_array($fixture) && array_key_exists('canonical_input', $fixture),
+        ));
+        phase2AssertSame(19, count($positiveFingerprints), 'Positive recommendation_fingerprints count changed.');
+    }
+
+    /** @param array<int, mixed> $keys @param array<int, mixed> $keyRejections @param array<int, mixed> $fingerprints @param array<int, mixed> $fingerprintRejections @param array<int, mixed> $separations */
+    private static function recommendationIdentityFixtures(array $keys, array $keyRejections, array $fingerprints, array $fingerprintRejections, array $separations): void
+    {
+        $keyById = self::executeRecommendationKeys($keys);
+        self::executeRecommendationKeyRejections($keyRejections);
+        $fingerprintById = self::executeRecommendationFingerprints($fingerprints);
+        self::executeRecommendationFingerprintRejections($fingerprintRejections);
+        self::executeRecommendationSeparations($separations, $keyById, $fingerprintById);
+    }
+
+    /** @param array<int, mixed> $keys @return array<string, array<string, mixed>> */
+    private static function executeRecommendationKeys(array $keys): array
+    {
+        phase2AssertSame(11, count($keys), 'Recommendation-key positive fixture count changed.');
+        $byId = [];
+        foreach ($keys as $fixture) {
+            $id = self::requireFixtureFields($fixture, ['canonical_input', 'canonical_json', 'expected_sha256'], 'recommendation_keys');
+            phase2Assert(!isset($byId[$id]), "{$id}: duplicate recommendation-key fixture.");
+            phase2Assert(is_string($fixture['canonical_json']), "{$id}: canonical_json must be a string.");
+            phase2Assert(is_string($fixture['expected_sha256']), "{$id}: expected_sha256 must be a string.");
+            phase2Assert(preg_match('/^[a-f0-9]{64}$/D', $fixture['expected_sha256']) === 1, "{$id}: expected_sha256 format mismatch.");
+            self::validateRecommendationKeyInput($fixture['canonical_input']);
+            $canonicalJson = self::canonicalJson($fixture['canonical_input']);
+            phase2AssertSame($canonicalJson, $fixture['canonical_json'], "{$id}: canonical_json mismatch.");
+            phase2AssertSame($fixture['expected_sha256'], self::recommendationKey($fixture['canonical_input']), "{$id}: recommendation_key hash mismatch.");
+            $byId[$id] = $fixture;
+        }
+        self::assertFixtureHashComparisons($byId, 'recommendation_key');
+        return $byId;
+    }
+
+    /** @param array<int, mixed> $fixtures */
+    private static function executeRecommendationKeyRejections(array $fixtures): void
+    {
+        phase2AssertSame(33, count($fixtures), 'Recommendation-key rejection fixture count changed.');
+        $executed = 0;
+        foreach ($fixtures as $fixture) {
+            $id = self::requireFixtureFields($fixture, ['input', 'expected_rejection'], 'recommendation_key_rejections');
+            phase2Assert(is_string($fixture['expected_rejection']) && $fixture['expected_rejection'] !== '', "{$id}: expected_rejection is required.");
+            self::expectRecommendationRejection($id, $fixture['expected_rejection'], fn (): string => self::recommendationKey($fixture['input']));
+            ++$executed;
+        }
+        phase2AssertSame(33, $executed, 'Not all recommendation-key rejection fixtures executed.');
+        self::expectRecommendationRejection(
+            'REC-KEY-DIRECT-INVALID-UTF8',
+            'invalid_utf8',
+            static fn (): string => self::recommendationKey([
+                'rule_id' => 'add_first_project',
+                'target_ref' => "opaque-target-\xC3\x28",
+                'target_type' => 'hub',
+            ]),
+        );
+    }
+
+    /** @param array<int, mixed> $fingerprints @return array<string, array<string, mixed>> */
+    private static function executeRecommendationFingerprints(array $fingerprints): array
+    {
+        $positive = array_values(array_filter(
+            $fingerprints,
+            static fn (mixed $fixture): bool => is_array($fixture) && array_key_exists('canonical_input', $fixture),
+        ));
+        phase2AssertSame(19, count($positive), 'Positive recommendation_fingerprints count changed.');
+        $byId = [];
+        foreach ($positive as $fixture) {
+            $id = self::requireFixtureFields($fixture, ['canonical_input', 'canonical_json', 'expected_sha256'], 'recommendation_fingerprints');
+            phase2Assert(!isset($byId[$id]), "{$id}: duplicate recommendation-fingerprint fixture.");
+            phase2Assert(is_string($fixture['canonical_json']), "{$id}: canonical_json must be a string.");
+            phase2Assert(is_string($fixture['expected_sha256']), "{$id}: expected_sha256 must be a string.");
+            phase2Assert(preg_match('/^[a-f0-9]{64}$/D', $fixture['expected_sha256']) === 1, "{$id}: expected_sha256 format mismatch.");
+            self::validateRecommendationFingerprintInput($fixture['canonical_input']);
+            $canonicalJson = self::canonicalJson($fixture['canonical_input']);
+            phase2AssertSame($canonicalJson, $fixture['canonical_json'], "{$id}: canonical_json mismatch.");
+            phase2AssertSame($fixture['expected_sha256'], self::fingerprint($fixture['canonical_input']), "{$id}: evidence_fingerprint hash mismatch.");
+            $byId[$id] = $fixture;
+        }
+        self::assertFixtureHashComparisons($byId, 'evidence_fingerprint');
+        foreach ([
+            ['REC-FINGERPRINT-STABLE', 'REC-FINGERPRINT-IDENTICAL-INPUT', true],
+            ['REC-FINGERPRINT-STABLE', 'REC-FINGERPRINT-SHUFFLED-TOP-LEVEL', true],
+            ['REC-FINGERPRINT-COMPLETE-STABLE', 'REC-FINGERPRINT-SHUFFLED-PREDICATE', true],
+            ['REC-FINGERPRINT-STABLE', 'REC-FINGERPRINT-RELEVANT-CHANGE', false],
+            ['REC-FINGERPRINT-STABLE', 'REC-FINGERPRINT-RULE-VERSION-CHANGE', false],
+            ['REC-FINGERPRINT-STABLE', 'REC-FINGERPRINT-RULE-ID-CHANGE', false],
+            ['REC-FINGERPRINT-STABLE', 'REC-FINGERPRINT-TARGET-TYPE-CHANGE', false],
+            ['REC-FINGERPRINT-STABLE', 'REC-FINGERPRINT-TARGET-REF-CHANGE', false],
+            ['REC-FINGERPRINT-COMPLETE-STABLE', 'REC-FINGERPRINT-COMPLETE-FIELD-CHANGE', false],
+            ['REC-FINGERPRINT-COMPLETE-STABLE', 'REC-FINGERPRINT-COMPLETE-REASON-CHANGE', false],
+            ['REC-FINGERPRINT-UNMAPPED-STABLE', 'REC-FINGERPRINT-UNMAPPED-CHANGE', false],
+            ['REC-FINGERPRINT-PUBLICATION-STABLE', 'REC-FINGERPRINT-PUBLISHED-CHANGE', false],
+            ['REC-FINGERPRINT-PUBLICATION-STABLE', 'REC-FINGERPRINT-PREREQUISITE-CHANGE', false],
+            ['REC-FINGERPRINT-STABLE', 'REC-FINGERPRINT-IRRELEVANT-CHANGE', true],
+        ] as [$left, $right, $same]) {
+            self::assertFixtureHashRelation($byId, $left, $right, $same, 'evidence_fingerprint');
+        }
+        return $byId;
+    }
+
+    /** @param array<int, mixed> $fixtures */
+    private static function executeRecommendationFingerprintRejections(array $fixtures): void
+    {
+        phase2AssertSame(45, count($fixtures), 'Recommendation-fingerprint rejection fixture count changed.');
+        $executed = 0;
+        foreach ($fixtures as $fixture) {
+            $id = self::requireFixtureFields($fixture, ['input', 'expected_rejection'], 'recommendation_fingerprint_rejections');
+            phase2Assert(is_string($fixture['expected_rejection']) && $fixture['expected_rejection'] !== '', "{$id}: expected_rejection is required.");
+            self::expectRecommendationRejection($id, $fixture['expected_rejection'], static function () use ($fixture): void {
+                self::validateRecommendationFingerprintInput($fixture['input']);
+            });
+            ++$executed;
+        }
+        phase2AssertSame(45, $executed, 'Not all recommendation-fingerprint rejection fixtures executed.');
+        $invalidUtf8 = "\xC3\x28";
+        self::expectRecommendationRejection(
+            'REC-FP-DIRECT-TOP-LEVEL-INVALID-UTF8',
+            'invalid_utf8',
+            static function () use ($invalidUtf8): void {
+                self::validateRecommendationFingerprintInput([
+                    'predicate_facts' => ['has_projects' => false],
+                    'rule_id' => 'add_first_project',
+                    'rule_version' => $invalidUtf8,
+                    'target_ref' => 'hub_home',
+                    'target_type' => 'hub',
+                ]);
+            },
+        );
+        self::expectRecommendationRejection(
+            'REC-FP-DIRECT-NESTED-INVALID-UTF8',
+            'invalid_utf8',
+            static function () use ($invalidUtf8): void {
+                self::validateRecommendationFingerprintInput([
+                    'predicate_facts' => [
+                        'field_completeness_states' => [
+                            'problem_statement' => $invalidUtf8,
+                            'personal_role' => 'complete',
+                            'measurable_outcome' => 'complete',
+                        ],
+                        'reason_codes' => ['FIELD_NOT_AVAILABLE'],
+                    ],
+                    'rule_id' => 'complete_project_evidence',
+                    'rule_version' => '1.0.0',
+                    'target_ref' => 'opaque-project-alpha',
+                    'target_type' => 'project',
+                ]);
+            },
+        );
+    }
+
+    /** @param array<int, mixed> $separations @param array<string, array<string, mixed>> $keys @param array<string, array<string, mixed>> $fingerprints */
+    private static function executeRecommendationSeparations(array $separations, array $keys, array $fingerprints): void
+    {
+        phase2AssertSame(5, count($separations), 'Recommendation identity separation fixture count changed.');
+        $executed = 0;
+        foreach ($separations as $fixture) {
+            $id = self::requireFixtureFields($fixture, ['base_key_fixture_id', 'variant_key_fixture_id', 'base_fingerprint_fixture_id', 'variant_fingerprint_fixture_id', 'expected_recommendation_key_equal', 'expected_evidence_fingerprint_equal'], 'recommendation_identity_separation');
+            foreach (['base_key_fixture_id', 'variant_key_fixture_id', 'base_fingerprint_fixture_id', 'variant_fingerprint_fixture_id'] as $reference) {
+                phase2Assert(is_string($fixture[$reference]) && $fixture[$reference] !== '', "{$id}: {$reference} is required.");
+            }
+            phase2Assert(is_bool($fixture['expected_recommendation_key_equal']), "{$id}: key equality expectation is required.");
+            phase2Assert(is_bool($fixture['expected_evidence_fingerprint_equal']), "{$id}: fingerprint equality expectation is required.");
+            phase2Assert(array_key_exists($fixture['base_key_fixture_id'], $keys), "{$id}: missing base key fixture reference.");
+            phase2Assert(array_key_exists($fixture['variant_key_fixture_id'], $keys), "{$id}: missing variant key fixture reference.");
+            phase2Assert(array_key_exists($fixture['base_fingerprint_fixture_id'], $fingerprints), "{$id}: missing base fingerprint fixture reference.");
+            phase2Assert(array_key_exists($fixture['variant_fingerprint_fixture_id'], $fingerprints), "{$id}: missing variant fingerprint fixture reference.");
+            phase2AssertSame($fixture['expected_recommendation_key_equal'], hash_equals($keys[$fixture['base_key_fixture_id']]['expected_sha256'], $keys[$fixture['variant_key_fixture_id']]['expected_sha256']), "{$id}: recommendation_key equality mismatch.");
+            phase2AssertSame($fixture['expected_evidence_fingerprint_equal'], hash_equals($fingerprints[$fixture['base_fingerprint_fixture_id']]['expected_sha256'], $fingerprints[$fixture['variant_fingerprint_fixture_id']]['expected_sha256']), "{$id}: evidence_fingerprint equality mismatch.");
+            ++$executed;
+        }
+        phase2AssertSame(5, $executed, 'Not all recommendation identity separation fixtures executed.');
+    }
+
+    /** @param array<string, array<string, mixed>> $fixtures */
+    private static function assertFixtureHashComparisons(array $fixtures, string $label): void
+    {
+        foreach ($fixtures as $id => $fixture) {
+            foreach (['expected_same_as' => true, 'expected_different_from' => false] as $comparison => $expected) {
+                if (!array_key_exists($comparison, $fixture)) {
+                    continue;
+                }
+                phase2Assert(is_string($fixture[$comparison]) && $fixture[$comparison] !== '', "{$id}: {$comparison} reference is required.");
+                phase2Assert(array_key_exists($fixture[$comparison], $fixtures), "{$id}: {$comparison} reference is missing.");
+                phase2AssertSame($expected, hash_equals($fixture['expected_sha256'], $fixtures[$fixture[$comparison]]['expected_sha256']), "{$id}: {$label} comparison mismatch.");
             }
         }
-        phase2AssertSame(self::fingerprint($byId['REC-FINGERPRINT-STABLE']['canonical_input']), self::fingerprint($byId['REC-FINGERPRINT-IRRELEVANT-CHANGE']['canonical_input']), 'Irrelevant facts must not affect the fingerprint.');
-        phase2Assert(self::fingerprint($byId['REC-FINGERPRINT-STABLE']['canonical_input']) !== self::fingerprint($byId['REC-FINGERPRINT-RELEVANT-CHANGE']['canonical_input']), 'Relevant predicate change must supersede the fingerprint.');
-        phase2AssertSame(['raw_evidence_text', 'raw_technology_label', 'email', 'auth0_subject', 'cookie', 'token', 'filesystem_path', 'showcase_identity', 'database_id'], $byId['REC-FINGERPRINT-EXCLUSIONS']['prohibited_field_names'] ?? null, 'Fingerprint exclusions changed.');
+    }
+
+    /** @param array<string, array<string, mixed>> $fixtures */
+    private static function assertFixtureHashRelation(array $fixtures, string $left, string $right, bool $same, string $label): void
+    {
+        phase2Assert(array_key_exists($left, $fixtures) && array_key_exists($right, $fixtures), "{$left}: {$label} comparison fixture is missing.");
+        phase2AssertSame($same, hash_equals($fixtures[$left]['expected_sha256'], $fixtures[$right]['expected_sha256']), "{$left}: {$label} comparison with {$right} mismatch.");
+    }
+
+    /** @param array<string, mixed> $fixture @param list<string> $required */
+    private static function requireFixtureFields(mixed $fixture, array $required, string $family): string
+    {
+        phase2Assert(is_array($fixture) && !array_is_list($fixture), "{$family} fixture must be an object.");
+        phase2Assert(array_key_exists('id', $fixture) && is_string($fixture['id']) && $fixture['id'] !== '', "{$family} fixture id is required.");
+        $id = $fixture['id'];
+        foreach ($required as $field) {
+            phase2Assert(array_key_exists($field, $fixture), "{$id}: required fixture field {$field} is missing.");
+        }
+        return $id;
+    }
+
+    private static function expectRecommendationRejection(string $id, string $expected, callable $operation): void
+    {
+        try {
+            $operation();
+        } catch (RuntimeException $exception) {
+            phase2AssertSame($expected, $exception->getMessage(), "{$id}: rejection category mismatch.");
+            return;
+        }
+        phase2Assert(false, "{$id}: input was accepted; expected {$expected}.");
+    }
+
+    private static function recommendationKey(mixed $input): string
+    {
+        self::validateRecommendationKeyInput($input);
+        return hash('sha256', self::canonicalJson($input));
+    }
+
+    private static function validateRecommendationKeyInput(mixed $input): void
+    {
+        self::assertNoIdentityFloat($input);
+        self::assertIdentityUtf8($input);
+        self::assertNoProhibitedIdentityFields($input, 'unauthorized_property');
+        if (!is_array($input) || array_is_list($input)) {
+            self::rejectRecommendation('closed_object_required');
+        }
+        $required = ['rule_id', 'target_ref', 'target_type'];
+        foreach ($required as $field) {
+            if (!array_key_exists($field, $input)) {
+                self::rejectRecommendation('missing_' . $field);
+            }
+        }
+        foreach (array_keys($input) as $field) {
+            if (in_array($field, $required, true)) {
+                continue;
+            }
+            self::rejectRecommendation(in_array($field, ['predicate_facts', 'rule_version'], true) ? 'unauthorized_property' : 'unknown_property');
+        }
+        self::validateRecommendationRuleId($input['rule_id']);
+        self::validateOpaqueTargetRef($input['target_ref']);
+        self::validateRecommendationTargetType($input['target_type']);
+    }
+
+    private static function validateRecommendationFingerprintInput(mixed $input): void
+    {
+        self::assertNoIdentityFloat($input);
+        self::assertIdentityUtf8($input);
+        self::assertNoProhibitedIdentityFields($input, 'private_field_forbidden');
+        if (!is_array($input) || array_is_list($input)) {
+            self::rejectRecommendation('closed_object_required');
+        }
+        $required = ['predicate_facts', 'rule_id', 'rule_version', 'target_ref', 'target_type'];
+        foreach ($required as $field) {
+            if (!array_key_exists($field, $input)) {
+                self::rejectRecommendation('missing_' . $field);
+            }
+        }
+        foreach (array_keys($input) as $field) {
+            if (!in_array($field, $required, true)) {
+                self::rejectRecommendation('unknown_top_level_property');
+            }
+        }
+        self::validateRecommendationRuleId($input['rule_id']);
+        self::validateRuleVersion($input['rule_version']);
+        self::validateOpaqueTargetRef($input['target_ref']);
+        self::validateRecommendationTargetType($input['target_type']);
+
+        $facts = $input['predicate_facts'];
+        if (!is_array($facts) || (array_is_list($facts) && $facts !== [])) {
+            self::rejectRecommendation('predicate_facts_must_be_object');
+        }
+        if ($facts === []) {
+            self::rejectRecommendation('missing_required_predicate_key');
+        }
+        $rule = $input['rule_id'];
+        $allowed = match ($rule) {
+            'add_first_project' => ['has_projects'],
+            'complete_project_evidence' => ['field_completeness_states', 'reason_codes'],
+            'review_unmapped_technology' => ['mapping_state', 'normalized_unmapped_label_digest'],
+            'complete_portfolio_publication' => ['has_projects', 'portfolio_published', 'publication_prerequisites_met'],
+        };
+        $factKeys = array_keys($facts);
+        if (in_array('target_ref', $factKeys, true)) {
+            self::rejectRecommendation('target_ref_forbidden_in_predicate_facts');
+        }
+        foreach ([
+            ['has_projects'],
+            ['field_completeness_states', 'reason_codes'],
+            ['mapping_state', 'normalized_unmapped_label_digest'],
+            ['has_projects', 'portfolio_published', 'publication_prerequisites_met'],
+        ] as $otherAllowed) {
+            if ($otherAllowed !== $allowed && self::sameKeySet($factKeys, $otherAllowed)) {
+                self::rejectRecommendation('predicate_facts_belong_to_different_rule');
+            }
+        }
+        if (array_diff($factKeys, $allowed) !== []) {
+            self::rejectRecommendation('unknown_predicate_key');
+        }
+        if (array_diff($allowed, $factKeys) !== []) {
+            self::rejectRecommendation('missing_required_predicate_key');
+        }
+
+        match ($rule) {
+            'add_first_project' => self::validateBooleanFact($facts['has_projects']),
+            'complete_project_evidence' => self::validateCompleteProjectFacts($facts),
+            'review_unmapped_technology' => self::validateUnmappedTechnologyFacts($facts),
+            'complete_portfolio_publication' => self::validatePublicationFacts($facts),
+        };
+    }
+
+    private static function validateRecommendationRuleId(mixed $value): void
+    {
+        if (is_array($value)) {
+            self::rejectRecommendation('nested_object_forbidden');
+        }
+        if (!is_string($value)) {
+            self::rejectRecommendation('rule_id_must_be_string');
+        }
+        if ($value === '') {
+            self::rejectRecommendation('empty_rule_id');
+        }
+        if (preg_match('/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/D', $value) !== 1) {
+            self::rejectRecommendation('malformed_rule_id');
+        }
+        if (!in_array($value, ['add_first_project', 'complete_project_evidence', 'review_unmapped_technology', 'complete_portfolio_publication'], true)) {
+            self::rejectRecommendation('unsupported_rule_id');
+        }
+    }
+
+    private static function validateRuleVersion(mixed $value): void
+    {
+        if (is_array($value)) {
+            self::rejectRecommendation('nested_object_forbidden');
+        }
+        if (!is_string($value)) {
+            self::rejectRecommendation('rule_version_must_be_string');
+        }
+        if (preg_match('/^\d+\.\d+\.\d+$/D', $value) !== 1) {
+            self::rejectRecommendation('malformed_rule_version');
+        }
+    }
+
+    private static function validateOpaqueTargetRef(mixed $value): void
+    {
+        if (is_array($value)) {
+            self::rejectRecommendation('nested_object_forbidden');
+        }
+        if (!is_string($value)) {
+            self::rejectRecommendation('target_ref_must_be_string');
+        }
+        if ($value === '') {
+            self::rejectRecommendation('empty_target_ref');
+        }
+        if (preg_match('/^(?:hub_home|opaque-[a-z0-9]+(?:-[a-z0-9]+)*)$/D', $value) !== 1) {
+            self::rejectRecommendation('malformed_target_ref');
+        }
+    }
+
+    private static function validateRecommendationTargetType(mixed $value): void
+    {
+        if (is_array($value)) {
+            self::rejectRecommendation('nested_object_forbidden');
+        }
+        if (!is_string($value)) {
+            self::rejectRecommendation('target_type_must_be_string');
+        }
+        if ($value === '') {
+            self::rejectRecommendation('empty_target_type');
+        }
+        if (!in_array($value, ['hub', 'project', 'technology', 'portfolio'], true)) {
+            self::rejectRecommendation('unsupported_target_type');
+        }
+    }
+
+    private static function validateBooleanFact(mixed $value): void
+    {
+        if (!is_bool($value)) {
+            self::rejectRecommendation('boolean_required');
+        }
+    }
+
+    /** @param array<string, mixed> $facts */
+    private static function validateCompleteProjectFacts(array $facts): void
+    {
+        $states = $facts['field_completeness_states'];
+        if (!is_array($states) || array_is_list($states) || !self::sameKeySet(array_keys($states), ['problem_statement', 'personal_role', 'measurable_outcome'])) {
+            self::rejectRecommendation('field_completeness_states_shape');
+        }
+        foreach (['problem_statement', 'personal_role', 'measurable_outcome'] as $field) {
+            if (!is_string($states[$field]) || !in_array($states[$field], ['unavailable', 'needs_attention', 'complete'], true)) {
+                self::rejectRecommendation('field_completeness_state_invalid');
+            }
+        }
+        self::validateReasonCodes($facts['reason_codes']);
+    }
+
+    /** @param array<string, mixed> $facts */
+    private static function validateUnmappedTechnologyFacts(array $facts): void
+    {
+        if ($facts['mapping_state'] !== 'unmapped') {
+            self::rejectRecommendation('mapping_state_must_be_unmapped');
+        }
+        if (!is_string($facts['normalized_unmapped_label_digest']) || preg_match('/^[a-f0-9]{64}$/D', $facts['normalized_unmapped_label_digest']) !== 1) {
+            self::rejectRecommendation('normalized_unmapped_label_digest_invalid');
+        }
+    }
+
+    /** @param array<string, mixed> $facts */
+    private static function validatePublicationFacts(array $facts): void
+    {
+        foreach (['has_projects', 'portfolio_published', 'publication_prerequisites_met'] as $field) {
+            self::validateBooleanFact($facts[$field]);
+        }
+    }
+
+    private static function validateReasonCodes(mixed $value): void
+    {
+        if (!is_array($value) || !array_is_list($value)) {
+            self::rejectRecommendation('reason_codes_must_be_list');
+        }
+        $allowed = ['FIELD_NOT_AVAILABLE', 'GRAPHEME_THRESHOLD_NOT_MET', 'USEFUL_TOKEN_THRESHOLD_NOT_MET', 'DISTINCT_TOKEN_THRESHOLD_NOT_MET', 'REPETITION_SUSPECTED', 'PLACEHOLDER_CONFIRMED'];
+        foreach ($value as $reason) {
+            if (!is_string($reason) || !in_array($reason, $allowed, true)) {
+                self::rejectRecommendation('reason_code_not_controlled');
+            }
+        }
+        if (count($value) !== count(array_unique($value, SORT_STRING))) {
+            self::rejectRecommendation('reason_codes_must_be_unique');
+        }
+    }
+
+    /** @param list<int|string> $left @param list<int|string> $right */
+    private static function sameKeySet(array $left, array $right): bool
+    {
+        sort($left, SORT_STRING);
+        sort($right, SORT_STRING);
+        return $left === $right;
+    }
+
+    private static function assertNoIdentityFloat(mixed $value): void
+    {
+        if (is_float($value)) {
+            self::rejectRecommendation('floating_point_forbidden');
+        }
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                self::assertNoIdentityFloat($item);
+            }
+        }
+    }
+
+    private static function assertIdentityUtf8(mixed $value): void
+    {
+        if (is_string($value) && @preg_match('//u', $value) !== 1) {
+            self::rejectRecommendation('invalid_utf8');
+        }
+        if (is_array($value)) {
+            foreach ($value as $key => $item) {
+                if (is_string($key) && @preg_match('//u', $key) !== 1) {
+                    self::rejectRecommendation('invalid_utf8');
+                }
+                self::assertIdentityUtf8($item);
+            }
+        }
+    }
+
+    private static function assertNoProhibitedIdentityFields(mixed $value, string $category): void
+    {
+        $prohibited = ['raw_evidence_text', 'raw_technology_label', 'normalized_technology_label', 'email', 'auth0_subject', 'cookie', 'token', 'filesystem_path', 'private_media_path', 'showcase_identity', 'database_id', 'owner_id', 'user_id', 'portfolio_id', 'project_id'];
+        if (!is_array($value)) {
+            return;
+        }
+        foreach ($value as $key => $item) {
+            if (is_string($key) && in_array($key, $prohibited, true)) {
+                self::rejectRecommendation($category);
+            }
+            self::assertNoProhibitedIdentityFields($item, $category);
+        }
+    }
+
+    private static function rejectRecommendation(string $category): void
+    {
+        throw new RuntimeException($category);
     }
 
     /** @param array<string, mixed> $value */
