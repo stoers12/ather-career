@@ -6,6 +6,8 @@ final class EvidenceHubContractTest
 {
     public static function run(TestEnvironment $environment): void
     {
+        require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_recommendations.php';
+
         $schema = self::json('contracts/evidence-hub-contract-v1.schema.json');
         $taxonomy = self::json('contracts/evidence-hub-taxonomy-v1.json');
         $fixtures = self::json('tests/phase2/fixtures/evidence-hub-golden-fixtures.json');
@@ -181,6 +183,7 @@ final class EvidenceHubContractTest
 
         self::recommendationFixtureFamilies($fixtures);
         self::recommendationDispositionStorage($fixtures['recommendation_disposition_storage'] ?? null, $ids);
+        self::recommendationCore($fixtures['recommendation_core'] ?? null, $fixtures, $ids);
 
         foreach ($fixtures['text_policy_cases'] as $case) {
             foreach (($case['expected']['reason_codes'] ?? []) as $reason) {
@@ -418,6 +421,126 @@ final class EvidenceHubContractTest
             static fn (mixed $fixture): bool => is_array($fixture) && array_key_exists('canonical_input', $fixture),
         ));
         phase2AssertSame(19, count($positiveFingerprints), 'Positive recommendation_fingerprints count changed.');
+    }
+
+    /** @param array<string, mixed> $fixtures @param array<string, bool> $ids */
+    private static function recommendationCore(mixed $core, array $fixtures, array &$ids): void
+    {
+        phase2Assert(is_array($core), 'Recommendation core fixtures are missing.');
+        $material = $core['synthetic_hmac_material'] ?? null;
+        phase2Assert(is_string($material) && $material !== '', 'Recommendation core HMAC material is required.');
+
+        $factsById = [];
+        $factSets = $core['fact_sets'] ?? null;
+        phase2Assert(is_array($factSets) && array_is_list($factSets), 'Recommendation core fact sets must be a list.');
+        phase2AssertSame(5, count($factSets), 'Recommendation core fact-set count changed.');
+        foreach ($factSets as $factSet) {
+            $id = self::requireFixtureFields($factSet, ['facts'], 'recommendation_core.fact_sets');
+            self::uniqueId($ids, $id);
+            phase2Assert(is_array($factSet['facts']) && !array_is_list($factSet['facts']), "{$id}: scoped facts must be an object.");
+            $factsById[$id] = $factSet['facts'];
+        }
+
+        $opaqueTargetCases = $core['opaque_target_cases'] ?? null;
+        phase2Assert(is_array($opaqueTargetCases) && array_is_list($opaqueTargetCases), 'Recommendation core opaque-target cases must be a list.');
+        phase2AssertSame(3, count($opaqueTargetCases), 'Recommendation core opaque-target case count changed.');
+        $opaqueReferences = [];
+        foreach ($opaqueTargetCases as $case) {
+            $id = self::requireFixtureFields($case, ['tenant_scope_ref', 'target_type', 'target_identity', 'expected_target_ref'], 'recommendation_core.opaque_target_cases');
+            self::uniqueId($ids, $id);
+            foreach (['tenant_scope_ref', 'target_type', 'target_identity', 'expected_target_ref'] as $field) {
+                phase2Assert(is_string($case[$field]) && $case[$field] !== '', "{$id}: {$field} is required.");
+            }
+            phase2Assert(preg_match('/^[a-z][a-z0-9_]{7,63}$/D', $case['expected_target_ref']) === 1, "{$id}: expected target reference must satisfy the schema.");
+            $actual = evidenceHubOpaqueTargetRef($material, $case['tenant_scope_ref'], $case['target_type'], $case['target_identity']);
+            phase2AssertSame($case['expected_target_ref'], $actual, "{$id}: opaque target reference changed.");
+            phase2AssertSame($actual, evidenceHubOpaqueTargetRef($material, $case['tenant_scope_ref'], $case['target_type'], $case['target_identity']), "{$id}: opaque target reference is not repeatable.");
+            phase2Assert(!str_contains($actual, $case['target_identity']), "{$id}: opaque target reference leaks its target identity.");
+            $opaqueReferences[] = $actual;
+        }
+        phase2AssertSame(3, count(array_unique($opaqueReferences, SORT_STRING)), 'Opaque target references must separate tenant and target type domains.');
+
+        $cases = $core['cases'] ?? null;
+        phase2Assert(is_array($cases) && array_is_list($cases), 'Recommendation core cases must be a list.');
+        phase2AssertSame(12, count($cases), 'Recommendation core case count changed.');
+        $executed = 0;
+        foreach ($cases as $case) {
+            $id = self::requireFixtureFields($case, ['facts_fixture_id', 'dispositions', 'calculation_time_epoch_seconds', 'expected_recommendations'], 'recommendation_core.cases');
+            self::uniqueId($ids, $id);
+            phase2Assert(is_string($case['facts_fixture_id']) && isset($factsById[$case['facts_fixture_id']]), "{$id}: scoped fact set is missing.");
+            phase2Assert(is_array($case['dispositions']) && array_is_list($case['dispositions']), "{$id}: dispositions must be a list.");
+            phase2Assert(is_int($case['calculation_time_epoch_seconds']) && $case['calculation_time_epoch_seconds'] >= 0, "{$id}: calculation time must be a non-negative UTC epoch.");
+            phase2Assert(is_array($case['expected_recommendations']) && array_is_list($case['expected_recommendations']), "{$id}: expected recommendations must be a list.");
+            $actual = buildEvidenceHubRecommendations($factsById[$case['facts_fixture_id']], $case['dispositions'], $case['calculation_time_epoch_seconds'], $material);
+            phase2AssertSame($case['expected_recommendations'], $actual, "{$id}: deterministic recommendation output changed.");
+            phase2AssertSame($actual, buildEvidenceHubRecommendations($factsById[$case['facts_fixture_id']], $case['dispositions'], $case['calculation_time_epoch_seconds'], $material), "{$id}: recommendation output is not repeatable.");
+            foreach ($actual as $recommendation) {
+                phase2AssertSame(['rule_id', 'rule_version', 'recommendation_key', 'evidence_fingerprint', 'lifecycle_state', 'priority_rank', 'display_order', 'reason_codes', 'target', 'snoozed_until'], array_keys($recommendation), "{$id}: recommendation shape changed.");
+                phase2AssertSame('active', $recommendation['lifecycle_state'], "{$id}: core must emit active visible recommendations only.");
+                phase2AssertSame(null, $recommendation['snoozed_until'], "{$id}: core must not manufacture a stored snooze state.");
+                phase2Assert(preg_match('/^[a-f0-9]{64}$/D', $recommendation['recommendation_key']) === 1, "{$id}: recommendation key must be a SHA-256 digest.");
+                phase2Assert(preg_match('/^[a-f0-9]{64}$/D', $recommendation['evidence_fingerprint']) === 1, "{$id}: evidence fingerprint must be a SHA-256 digest.");
+                phase2Assert(preg_match('/^[a-z][a-z0-9_]{7,63}$/D', $recommendation['target']['opaque_target_ref']) === 1, "{$id}: opaque target reference must satisfy the schema.");
+            }
+            ++$executed;
+        }
+        phase2AssertSame(12, $executed, 'Not all recommendation core fixtures executed.');
+
+        phase2AssertSame(1768435200, evidenceHubRecommendationSnoozeUntil(1767225600), 'Recommendation snooze duration must remain exactly fourteen UTC days.');
+        self::executeRecommendationCoreIdentityCompatibility($fixtures);
+    }
+
+    /** @param array<string, mixed> $fixtures */
+    private static function executeRecommendationCoreIdentityCompatibility(array $fixtures): void
+    {
+        foreach ($fixtures['recommendation_keys'] as $fixture) {
+            $id = self::requireFixtureFields($fixture, ['canonical_input', 'expected_sha256'], 'recommendation_core.recommendation_keys');
+            phase2AssertSame($fixture['expected_sha256'], evidenceHubRecommendationKey($fixture['canonical_input']), "{$id}: core recommendation-key contract changed.");
+        }
+        foreach ($fixtures['recommendation_key_rejections'] as $fixture) {
+            $id = self::requireFixtureFields($fixture, ['input', 'expected_rejection'], 'recommendation_core.recommendation_key_rejections');
+            self::expectRecommendationRejection($id, $fixture['expected_rejection'], static fn (): string => evidenceHubRecommendationKey($fixture['input']));
+        }
+        foreach ($fixtures['recommendation_fingerprints'] as $fixture) {
+            if (!is_array($fixture) || !array_key_exists('canonical_input', $fixture)) {
+                continue;
+            }
+            $id = self::requireFixtureFields($fixture, ['canonical_input', 'expected_sha256'], 'recommendation_core.recommendation_fingerprints');
+            phase2AssertSame($fixture['expected_sha256'], evidenceHubEvidenceFingerprint($fixture['canonical_input']), "{$id}: core evidence-fingerprint contract changed.");
+        }
+        foreach ($fixtures['recommendation_fingerprint_rejections'] as $fixture) {
+            $id = self::requireFixtureFields($fixture, ['input', 'expected_rejection'], 'recommendation_core.recommendation_fingerprint_rejections');
+            self::expectRecommendationRejection($id, $fixture['expected_rejection'], static function () use ($fixture): void {
+                evidenceHubEvidenceFingerprint($fixture['input']);
+            });
+        }
+        self::expectRecommendationRejection(
+            'REC-CORE-KEY-DIRECT-INVALID-UTF8',
+            'invalid_utf8',
+            static fn (): string => evidenceHubRecommendationKey([
+                'rule_id' => 'add_first_project',
+                'target_ref' => "opaque-target-\xC3\x28",
+                'target_type' => 'hub',
+            ]),
+        );
+        self::expectRecommendationRejection(
+            'REC-CORE-FINGERPRINT-DIRECT-RECURSIVE-FLOAT',
+            'floating_point_forbidden',
+            static fn (): string => evidenceHubEvidenceFingerprint([
+                'predicate_facts' => [
+                    'field_completeness_states' => [
+                        'problem_statement' => 1.5,
+                        'personal_role' => 'complete',
+                        'measurable_outcome' => 'complete',
+                    ],
+                    'reason_codes' => ['FIELD_NOT_AVAILABLE'],
+                ],
+                'rule_id' => 'complete_project_evidence',
+                'rule_version' => '1.0.0',
+                'target_ref' => 'opaque-project-alpha',
+                'target_type' => 'project',
+            ]),
+        );
     }
 
     /** @param array<int, mixed> $keys @param array<int, mixed> $keyRejections @param array<int, mixed> $fingerprints @param array<int, mixed> $fingerprintRejections @param array<int, mixed> $separations */
