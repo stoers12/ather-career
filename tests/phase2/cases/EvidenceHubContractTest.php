@@ -180,6 +180,7 @@ final class EvidenceHubContractTest
         }
 
         self::recommendationFixtureFamilies($fixtures);
+        self::recommendationDispositionStorage($fixtures['recommendation_disposition_storage'] ?? null, $ids);
 
         foreach ($fixtures['text_policy_cases'] as $case) {
             foreach (($case['expected']['reason_codes'] ?? []) as $reason) {
@@ -222,6 +223,68 @@ final class EvidenceHubContractTest
             $fixtures['recommendation_identity_separation'],
         );
         phase2Assert(count($fixtures['positive_payloads']) >= 3 && count($fixtures['negative_payloads']) >= 5, 'Schema-shaped positive and negative cases are incomplete.');
+    }
+
+    /** @param array<string, bool> $ids */
+    private static function recommendationDispositionStorage(mixed $storage, array &$ids): void
+    {
+        phase2Assert(is_array($storage), 'Recommendation disposition storage fixtures are missing.');
+        phase2AssertSame('recommendation_dispositions', $storage['table'] ?? null, 'Disposition table name changed.');
+        phase2AssertSame(['portfolio_id', 'recommendation_key', 'rule_version', 'evidence_fingerprint', 'disposition', 'snoozed_until'], $storage['columns'] ?? null, 'Disposition storage columns changed.');
+        phase2AssertSame(['portfolio_id', 'recommendation_key'], $storage['primary_key'] ?? null, 'Disposition primary key must be tenant-scoped current state.');
+        phase2AssertSame([
+            'column' => 'portfolio_id',
+            'references_table' => 'portfolios',
+            'references_column' => 'id',
+            'on_update' => 'RESTRICT',
+            'on_delete' => 'RESTRICT',
+        ], $storage['foreign_key'] ?? null, 'Disposition foreign key must remain restrictive.');
+        phase2AssertSame([
+            'recommendation_key' => ['length' => 64, 'character_set' => 'ascii', 'collation' => 'ascii_bin'],
+            'evidence_fingerprint' => ['length' => 64, 'character_set' => 'ascii', 'collation' => 'ascii_bin'],
+        ], $storage['hash_columns'] ?? null, 'Disposition hashes must remain ASCII binary-safe SHA-256 values.');
+        phase2AssertSame(['snoozed', 'dismissed'], $storage['allowed_dispositions'] ?? null, 'Disposition values changed.');
+
+        $policy = $storage['snooze_policy'] ?? null;
+        phase2Assert(is_array($policy), 'Disposition snooze policy is missing.');
+        phase2AssertSame([14, 1209600, 'UTC'], [$policy['days'] ?? null, $policy['seconds'] ?? null, $policy['timezone'] ?? null], 'Disposition snooze policy must be fourteen UTC days.');
+        phase2Assert(is_string($policy['injected_at'] ?? null) && is_string($policy['expected_snoozed_until'] ?? null), 'Disposition snooze timestamps are missing.');
+        phase2Assert(preg_match('/Z$/D', $policy['injected_at']) === 1 && preg_match('/Z$/D', $policy['expected_snoozed_until']) === 1, 'Disposition snooze timestamps must be UTC.');
+        $injectedAt = new DateTimeImmutable($policy['injected_at']);
+        $expectedUntil = new DateTimeImmutable($policy['expected_snoozed_until']);
+        phase2AssertSame($policy['seconds'], $expectedUntil->getTimestamp() - $injectedAt->getTimestamp(), 'Disposition snoozed_until must be injected UTC time plus exactly fourteen days.');
+        phase2AssertSame($policy['expected_snoozed_until'], $injectedAt->add(new DateInterval('P14D'))->format('Y-m-d\\TH:i:s\\Z'), 'Disposition snooze calendar policy changed.');
+
+        $matchingCases = $storage['matching_cases'] ?? null;
+        phase2Assert(is_array($matchingCases) && array_is_list($matchingCases) && count($matchingCases) === 3, 'Disposition matching fixtures are incomplete.');
+        foreach ($matchingCases as $case) {
+            phase2Assert(is_array($case), 'Disposition matching fixture is invalid.');
+            self::uniqueId($ids, $case['id'] ?? null);
+            foreach (['stored_recommendation_key', 'stored_evidence_fingerprint', 'candidate_recommendation_key', 'candidate_evidence_fingerprint'] as $field) {
+                phase2Assert(is_string($case[$field] ?? null) && preg_match('/^[a-f0-9]{64}$/D', $case[$field]) === 1, "{$case['id']}: {$field} must be a lowercase SHA-256 value.");
+            }
+            $expectedSuppressed = ($case['stored_recommendation_key'] === $case['candidate_recommendation_key'])
+                && ($case['stored_rule_version'] === $case['candidate_rule_version'])
+                && ($case['stored_evidence_fingerprint'] === $case['candidate_evidence_fingerprint']);
+            phase2AssertSame($expectedSuppressed, $case['expected_suppressed'] ?? null, "{$case['id']}: disposition match must require key, rule version, and fingerprint.");
+        }
+
+        phase2AssertSame([
+            'context_type' => 'AuthorizedPortfolioContext',
+            'list_predicate' => 'portfolio_id = :authorized_portfolio_id',
+            'item_predicate' => 'portfolio_id = :authorized_portfolio_id AND recommendation_key = :recommendation_key',
+            'write_portfolio_source' => 'authorized_portfolio_id',
+            'forbidden_request_authority' => ['owner_id', 'user_id', 'auth0', '$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_SERVER'],
+        ], $storage['tenant_scope'] ?? null, 'Disposition repository tenant scope changed.');
+        $crossTenantCases = $storage['cross_tenant_denial_cases'] ?? null;
+        phase2Assert(is_array($crossTenantCases) && array_is_list($crossTenantCases) && count($crossTenantCases) === 2, 'Disposition cross-tenant denial fixtures are incomplete.');
+        foreach ($crossTenantCases as $case) {
+            phase2Assert(is_array($case), 'Disposition cross-tenant denial fixture is invalid.');
+            self::uniqueId($ids, $case['id'] ?? null);
+            phase2AssertSame(false, $case['expected_found'] ?? $case['expected_allowed'] ?? null, "{$case['id']}: cross-tenant disposition access must be denied.");
+            phase2Assert(($case['authorized_portfolio_id'] ?? null) !== ($case['stored_portfolio_id'] ?? $case['target_portfolio_id'] ?? null), "{$case['id']}: denial fixture must use a foreign portfolio.");
+        }
+        phase2AssertSame(['personal_data', 'project_text', 'target_ref', 'target_id', 'project_id', 'rule_id', 'raw_evidence', 'raw_technology_label', 'owner_id', 'user_id'], $storage['forbidden_stored_fields'] ?? null, 'Disposition storage privacy exclusions changed.');
     }
 
     private static function recommendationV1(mixed $contract): void

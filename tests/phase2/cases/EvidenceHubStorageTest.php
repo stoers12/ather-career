@@ -19,6 +19,8 @@ final class EvidenceHubStorageTest
     {
         $migration = self::read('database/migrations/010_project_evidence_fields.sql');
         $rollback = self::read('database/rollback/010_project_evidence_fields.sql');
+        $dispositionMigration = self::read('database/migrations/011_recommendation_dispositions.sql');
+        $dispositionRollback = self::read('database/rollback/011_recommendation_dispositions.sql');
         $scopedData = self::read('includes/portfolio_scoped_data.php');
         $evaluator = self::read('includes/evidence_text_evaluator.php');
         $publicJson = self::read('includes/public_lifecycle.php');
@@ -29,6 +31,30 @@ final class EvidenceHubStorageTest
             phase2Assert(str_contains($migration, $column), 'Evidence migration does not add the approved nullable field.');
         }
         phase2Assert(str_contains($rollback, 'DROP COLUMN measurable_outcome') && str_contains($rollback, 'DROP COLUMN personal_role') && str_contains($rollback, 'DROP COLUMN problem_statement'), 'Disposable rollback companion is incomplete.');
+        foreach ([
+            'CREATE TABLE recommendation_dispositions',
+            'portfolio_id INT UNSIGNED NOT NULL',
+            'recommendation_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL',
+            'rule_version VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL',
+            'evidence_fingerprint CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL',
+            'disposition VARCHAR(9) CHARACTER SET ascii COLLATE ascii_bin NOT NULL',
+            'snoozed_until TIMESTAMP NULL DEFAULT NULL',
+            'PRIMARY KEY (portfolio_id, recommendation_key)',
+            "CHECK (recommendation_key REGEXP '^[a-f0-9]{64}$')",
+            "CHECK (evidence_fingerprint REGEXP '^[a-f0-9]{64}$')",
+            "CHECK (disposition IN ('snoozed', 'dismissed'))",
+            "CHECK ((disposition = 'snoozed' AND snoozed_until IS NOT NULL) OR (disposition = 'dismissed' AND snoozed_until IS NULL))",
+            'FOREIGN KEY (portfolio_id) REFERENCES portfolios (id)',
+            'ON UPDATE RESTRICT ON DELETE RESTRICT',
+        ] as $required) {
+            phase2Assert(str_contains($dispositionMigration, $required), "Disposition migration is missing {$required}.");
+        }
+        foreach (['personal_data', 'project_text', 'target_ref', 'target_id', 'project_id', 'rule_id', 'raw_evidence', 'raw_technology_label', 'owner_id', 'user_id'] as $forbiddenStoredField) {
+            phase2Assert(!str_contains($dispositionMigration, $forbiddenStoredField), "Disposition migration stores forbidden {$forbiddenStoredField}.");
+        }
+        phase2Assert(preg_match('/\\b(active|resolved|superseded)\\b/i', $dispositionMigration) !== 1, 'Disposition migration must not persist derived lifecycle states.');
+        $rollbackSql = preg_replace('/^\\s*--.*$/m', '', $dispositionRollback);
+        phase2Assert(is_string($rollbackSql) && trim($rollbackSql) === 'DROP TABLE recommendation_dispositions;', 'Disposition rollback may only drop the new table.');
         phase2Assert(str_contains($scopedData, 'projectEvidenceStorageValues') && str_contains($scopedData, 'listAuthorizedProjectEvidence'), 'Private evidence persistence boundary is missing.');
         foreach (['owner_id', 'portfolio_id', 'user_id', 'auth0', '$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_SERVER'] as $forbiddenAuthority) {
             phase2Assert(!str_contains($evaluator, $forbiddenAuthority), "Evaluator accepts forbidden tenant authority {$forbiddenAuthority}.");
