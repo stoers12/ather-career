@@ -402,6 +402,19 @@
     "visibility_cases":[{"id":"REC-VISIBILITY-FILTER-BEFORE-CAP","candidate_states":["snoozed","dismissed","active","active","active"],"expected_visible_count":3,"expected_display_orders":[1,2,3]}],
     "publication_cases":[{"id":"REC-PUBLICATION-ELIGIBLE","has_projects":true,"portfolio_published":false,"publication_prerequisites_met":true,"expected":true},{"id":"REC-PUBLICATION-MISSING-PREREQUISITE","has_projects":true,"portfolio_published":false,"publication_prerequisites_met":false,"expected":false}]
   },
+  "recommendation_repository_mapper": {
+    "snooze": {"id":"REC-R3-SNOOZE-EXACT-UTC","injected_epoch_seconds":1767225600,"expected_snoozed_until_epoch_seconds":1768435200},
+    "repository_cases": [
+      {"id":"REC-R3-SAME-TENANT-CURRENT-STATE","expected_row_count":1},
+      {"id":"REC-R3-CROSS-TENANT-DENIAL","expected_allowed":false},
+      {"id":"REC-R3-SUPERSEDED-NOT-SUPPRESSED","expected_visible":true}
+    ],
+    "mapper_negative_input_cases": [
+      {"id":"REC-R3-MAPPER-MISSING-METRIC","missing_field":"documentation_coverage"},
+      {"id":"REC-R3-MAPPER-MISSING-RECOMMENDATION-KEY","missing_field":"recommendation_key"},
+      {"id":"REC-R3-MAPPER-UNKNOWN-RECOMMENDATION-LIFECYCLE","field":"lifecycle_state","value":"dismissed"}
+    ]
+  },
   "negative_payloads": [
     {"id":"NEG-EXTRA-FIELD","payload_fragment":{"owner_id":"forbidden"},"violation":"controlled object contains owner_id"},
     {"id":"NEG-UNAVAILABLE-BPS","payload_fragment":{"status":"unavailable","coverage_bps":0},"violation":"unavailable documentation contains numeric coverage_bps"},

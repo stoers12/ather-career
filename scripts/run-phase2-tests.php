@@ -44,6 +44,8 @@ require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceTextEvaluationTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubStorageTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubAggregationTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubRecommendationDispositionTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractMapperTest.php';
 
 $environment = null;
 $failures = [];
@@ -84,6 +86,8 @@ $tests = [
     'Evidence Hub deterministic Unicode text evaluation' => [EvidenceTextEvaluationTest::class, 'run'],
     'Evidence Hub private storage and migration contract' => [EvidenceHubStorageTest::class, 'run'],
     'Evidence Hub Owner aggregation and technology mapping core' => [EvidenceHubAggregationTest::class, 'run'],
+    'Evidence Hub tenant-scoped recommendation disposition repository' => [EvidenceHubRecommendationDispositionTest::class, 'run'],
+    'Evidence Hub frozen contract mapper' => [EvidenceHubContractMapperTest::class, 'run'],
 ];
 
 try {
