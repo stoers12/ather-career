@@ -104,6 +104,21 @@ The fingerprint is SHA-256 of canonical UTF-8 JSON containing only `rule_id`, `r
 
 The future pure core receives opaque `target_ref` from an Owner-scoped adapter; this package neither designs nor implements that adapter.
 
+## Stable target-reference key
+
+Evidence Hub opaque target references use the dedicated
+`EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY` configuration value. The value must be
+exactly 64 hexadecimal characters and decodes to 32 bytes; whitespace, padding,
+fallbacks, per-request generation, and reuse of Auth0/session/database
+credentials are forbidden. The configuration boundary fails closed without
+including key material in exceptions, logs, serialized data, or responses.
+
+The key is injected into the existing pure recommendation core; the core never
+reads environment state. Rotating the key changes target references, so stored
+dispositions no longer suppress the newly referenced eligible recommendations,
+which intentionally makes them reappear. Rotation, migration, or dual-key
+support requires separate Owner approval and is not implemented here.
+
 ## Tenant isolation
 
 Required flow: **Verified Owner Session → Internal User ID → Tenant Scope → Tenant-Scoped Repository → Pure Analytics Core → Contract Mapper → Owner Presenter**. Controllers never accept tenant authority from request `owner_id`, `portfolio_id`, `user_id`, `authz_version`, Auth0 subject, headers, or request IDs. Project resources require the resolved authenticated Owner scope. Future private responses use `Cache-Control: no-store` and never expose analytics publicly.

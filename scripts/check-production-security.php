@@ -9,6 +9,7 @@ require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/storage.php';
 require_once __DIR__ . '/../includes/auth0_oidc.php';
 require_once __DIR__ . '/../includes/public_url.php';
+require_once __DIR__ . '/../includes/evidence_hub_configuration.php';
 
 function productionSecurityDirectiveIsEnabled(string $name): bool
 {
@@ -17,6 +18,11 @@ function productionSecurityDirectiveIsEnabled(string $name): bool
 
 $failures = [];
 $failures = array_merge($failures, auth0ProductionConfigurationFailures());
+try {
+    evidenceHubOpaqueTargetHmacKeyFromEnvironment();
+} catch (EvidenceHubHmacConfigurationException) {
+    $failures[] = 'Evidence Hub HMAC key is missing or invalid.';
+}
 
 try {
     publicBaseUrl();

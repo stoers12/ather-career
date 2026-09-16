@@ -5,7 +5,8 @@ This runbook is for the current single-host Docker Compose deployment. It does n
 ## Prerequisites and configuration
 
 - Docker Engine with Compose v2 and host access restricted to operators.
-- Copy `.env.example` to a host-only `.env`; set unique database credentials, the Auth0 configuration, and `SESSION_COOKIE_SECURE=true`.
+- Copy `.env.example` to a host-only `.env`; set unique database credentials, the Auth0 configuration, the stable Evidence Hub target-reference key, and `SESSION_COOKIE_SECURE=true`.
+- `EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY` must be exactly 64 hexadecimal characters (32 decoded bytes). It is read only at the application configuration boundary; do not place it in source control, logs, requests, sessions, or payloads. A missing or invalid value fails closed for Evidence Hub and fails the production security check.
 - Keep `.env` and `backups/` outside Git and outside the public document root.
 - Use a short read-only/maintenance window for backup, migration, and restore operations.
 
