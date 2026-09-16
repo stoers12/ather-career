@@ -1,0 +1,9 @@
+{
+  "calculation_time_epoch_seconds": 1767225600,
+  "opaque_target_hmac_key_hex": "00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f",
+  "expected_visible_rule_ids": [
+    "complete_project_evidence",
+    "complete_project_evidence",
+    "complete_project_evidence"
+  ]
+}

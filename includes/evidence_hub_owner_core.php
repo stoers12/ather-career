@@ -10,15 +10,30 @@ require_once __DIR__ . '/evidence_hub_contract_mapper.php';
 /** @return array{documentation_coverage: array<string, mixed>, maturity: array{state: string, version: string}, portfolio_progress: array<string, mixed>, technology_evidence_map: array<string, mixed>} */
 function buildAuthorizedEvidenceHubOwnerCore(PDO $database, AuthorizedPortfolioContext $context): array
 {
-    $rawProjects = loadAuthorizedEvidenceHubProjectFacts($database, $context);
-    $projects = array_map('evaluateEvidenceHubProjectDocumentation', $rawProjects);
+    return buildEvidenceHubOwnerCoreFromEvaluatedProjects(
+        loadAuthorizedEvidenceHubOwnerEvaluatedProjects($database, $context),
+        loadAuthorizedEvidenceHubPublicationState($database, $context),
+    );
+}
+
+/** @return list<array<string, mixed>> */
+function loadAuthorizedEvidenceHubOwnerEvaluatedProjects(PDO $database, AuthorizedPortfolioContext $context): array
+{
+    return array_map('evaluateEvidenceHubProjectDocumentation', loadAuthorizedEvidenceHubProjectFacts($database, $context));
+}
+
+/** @param list<array<string, mixed>> $projects
+ * @return array{documentation_coverage: array<string, mixed>, maturity: array{state: string, version: string}, portfolio_progress: array<string, mixed>, technology_evidence_map: array<string, mixed>}
+ */
+function buildEvidenceHubOwnerCoreFromEvaluatedProjects(array $projects, string $publicationState): array
+{
     $coverage = aggregateEvidenceHubDocumentationCoverage($projects);
     $taxonomy = loadEvidenceHubTechnologyTaxonomy();
 
     return [
         'documentation_coverage' => $coverage,
         'maturity' => ['state' => evidenceHubMaturityState($projects), 'version' => EVIDENCE_HUB_CONTRACT_VERSION],
-        'portfolio_progress' => summarizeEvidenceHubPortfolioProgress($projects, loadAuthorizedEvidenceHubPublicationState($database, $context)),
+        'portfolio_progress' => summarizeEvidenceHubPortfolioProgress($projects, $publicationState),
         'technology_evidence_map' => summarizeEvidenceHubTechnologies(array_map(static fn (array $project): array => [
             'storage_state' => $project['technology_storage_state'],
             'reason_codes' => $project['technology_storage_reason_codes'],

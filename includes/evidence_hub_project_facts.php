@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/authorization.php';
 require_once __DIR__ . '/project_technologies.php';
+require_once __DIR__ . '/public_lifecycle.php';
 
 /** @return list<array{project_ref: int, problem_statement: mixed, personal_role: mixed, measurable_outcome: mixed, recorded_at_epoch_seconds: int, technology_storage_state: string, technology_storage_reason_codes: list<string>, technologies: list<string>}> */
 function loadAuthorizedEvidenceHubProjectFacts(PDO $database, AuthorizedPortfolioContext $context): array
@@ -96,4 +97,38 @@ function loadAuthorizedEvidenceHubPublicationState(PDO $database, AuthorizedPort
     }
 
     return (int) ($record['is_published'] ?? 0) === 1 ? 'published' : 'unpublished';
+}
+
+/** @return array{portfolio_published: bool, publication_prerequisites_met: bool} */
+function loadAuthorizedEvidenceHubRecommendationPublicationFacts(PDO $database, AuthorizedPortfolioContext $context): array
+{
+    $statement = $database->prepare(
+        'SELECT portfolios.public_slug, portfolios.is_published, personal_info.full_name
+         FROM portfolios
+         LEFT JOIN personal_info ON personal_info.portfolio_id = portfolios.id
+         WHERE portfolios.id = :authorized_portfolio_id
+           AND portfolios.owner_user_id = :authorized_user_id
+         LIMIT 1'
+    );
+    $statement->execute([
+        'authorized_portfolio_id' => $context->portfolioId,
+        'authorized_user_id' => $context->userId,
+    ]);
+    $record = $statement->fetch(PDO::FETCH_ASSOC);
+    if ($record === false) {
+        throw new AuthorizationDeniedException('Portfolio authorization failed.');
+    }
+
+    $publicSlug = is_string($record['public_slug'] ?? null) ? $record['public_slug'] : null;
+    $normalizedSlug = normalizePublicSlug($publicSlug);
+    $fullName = $record['full_name'] ?? null;
+
+    return [
+        'portfolio_published' => (int) ($record['is_published'] ?? 0) === 1,
+        'publication_prerequisites_met' => $normalizedSlug !== null
+            && $normalizedSlug === $publicSlug
+            && !in_array($normalizedSlug, PUBLIC_SLUG_RESERVED, true)
+            && is_string($fullName)
+            && trim($fullName) !== '',
+    ];
 }

@@ -19,12 +19,22 @@ function buildEvidenceHubRecommendations(
     if ($calculationTimeEpochSeconds < 0) {
         evidenceHubRecommendationReject('calculation_time_invalid');
     }
+
+    return filterEvidenceHubRecommendationCandidates(
+        buildEvidenceHubRecommendationCandidates($scopedFacts, $opaqueTargetHmacMaterial),
+        $dispositions,
+        $calculationTimeEpochSeconds,
+    );
+}
+
+/** @return list<array<string, mixed>> */
+function buildEvidenceHubRecommendationCandidates(array $scopedFacts, string $opaqueTargetHmacMaterial): array
+{
     if ($opaqueTargetHmacMaterial === '') {
         evidenceHubRecommendationReject('opaque_hmac_material_required');
     }
 
     $facts = evidenceHubValidateRecommendationFacts($scopedFacts);
-    $dispositionByKey = evidenceHubValidateRecommendationDispositions($dispositions);
     $candidates = [];
 
     if ($facts['projects'] === []) {
@@ -95,6 +105,18 @@ function buildEvidenceHubRecommendations(
         );
     }
 
+    return $candidates;
+}
+
+/** @param list<array<string, mixed>> $candidates @param list<array<string, mixed>> $dispositions
+ * @return list<array<string, mixed>>
+ */
+function filterEvidenceHubRecommendationCandidates(array $candidates, array $dispositions, int $calculationTimeEpochSeconds): array
+{
+    if ($calculationTimeEpochSeconds < 0) {
+        evidenceHubRecommendationReject('calculation_time_invalid');
+    }
+    $dispositionByKey = evidenceHubValidateRecommendationDispositions($dispositions);
     $visible = [];
     foreach ($candidates as $candidate) {
         $disposition = $dispositionByKey[$candidate['recommendation_key']] ?? null;
