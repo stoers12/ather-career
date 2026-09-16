@@ -144,3 +144,14 @@ The EVIDENCE-HUB-1B.1 internal core loads only Owner-scoped private project fact
 | Tenant denial | validated Owner scope | reject request authority | `TENANT_AUTHORITY_REJECTED` | `TENANT-*` | none | private denial |
 
 EVIDENCE-HUB-1B UI, recommendations/dispositions, snapshots, AI, external services, queues, and public analytics remain deferred.
+# Evidence Hub Owner route
+
+The private, read-only Evidence Hub is available at `/owner/evidence-hub`.
+It derives its Owner and Portfolio scope solely from the validated server
+session, produces the frozen contract server-side, and renders no client-side
+recommendation calculations. The route accepts only GET and HEAD; there are
+no action mutations in this release.
+
+`EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY` remains required. Missing or invalid
+configuration makes the route return a generic unavailable response without
+revealing configuration data.

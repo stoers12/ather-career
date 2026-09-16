@@ -48,6 +48,7 @@ require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubRecommendationDisposit
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractMapperTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubConfigurationTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubOwnerRecommendationOrchestrationTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubOwnerRoutePresenterTest.php';
 
 $environment = null;
 $failures = [];
@@ -92,6 +93,7 @@ $tests = [
     'Evidence Hub frozen contract mapper' => [EvidenceHubContractMapperTest::class, 'run'],
     'Evidence Hub stable HMAC configuration boundary' => [EvidenceHubConfigurationTest::class, 'run'],
     'Evidence Hub Owner recommendation orchestration and full candidate resolution' => [EvidenceHubOwnerRecommendationOrchestrationTest::class, 'run'],
+    'Evidence Hub protected Owner route and read-only presenter' => [EvidenceHubOwnerRoutePresenterTest::class, 'run'],
 ];
 
 try {

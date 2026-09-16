@@ -23,14 +23,14 @@ function ownerLayoutStart(string $title, string $activePage): void
     <meta name="robots" content="noindex,nofollow">
     <title><?php echo ownerEscapeHtml($title); ?> - My Portfolio</title>
     <link rel="icon" type="image/png" href="/assets/images/ather-navbar-logo.png">
-    <link rel="stylesheet" href="<?php echo versionedAssetUrl('style.css'); ?>">
-    <link rel="stylesheet" href="<?php echo versionedAssetUrl('admin.css'); ?>">
-    <script src="<?php echo versionedAssetUrl('admin.js'); ?>" defer></script>
+    <link rel="stylesheet" href="/<?php echo versionedAssetUrl('style.css'); ?>">
+    <link rel="stylesheet" href="/<?php echo versionedAssetUrl('admin.css'); ?>">
+    <script src="/<?php echo versionedAssetUrl('admin.js'); ?>" defer></script>
 </head>
 <body>
 <div class="admin-layout">
     <?php ownerNavigation($activePage); ?>
-    <main class="admin-content" id="main-content">
+    <main class="admin-content" id="main-content" tabindex="-1">
         <section>
     <?php
 }
@@ -38,17 +38,18 @@ function ownerLayoutStart(string $title, string $activePage): void
 function ownerNavigation(string $activePage): void
 {
     $links = [
-        'dashboard' => ['owner.php', 'Dashboard'],
-        'profile' => ['owner_profile.php', 'Personal info'],
-        'projects' => ['owner_projects.php', 'Projects'],
-        'experiences' => ['owner_experiences.php', 'Experience'],
-        'messages' => ['owner_messages.php', 'Messages'],
-        'publication' => ['owner_publication.php', 'Publication'],
+        'dashboard' => ['/owner.php', 'Dashboard'],
+        'profile' => ['/owner_profile.php', 'Personal info'],
+        'projects' => ['/owner_projects.php', 'Projects'],
+        'experiences' => ['/owner_experiences.php', 'Experience'],
+        'messages' => ['/owner_messages.php', 'Messages'],
+        'evidence_hub' => ['/owner/evidence-hub', 'Evidence Hub'],
+        'publication' => ['/owner_publication.php', 'Publication'],
     ];
     ?>
     <a class="skip-link admin-skip-link" href="#main-content">Skip to main content</a>
     <aside class="admin-sidebar">
-        <a class="admin-brand" href="owner.php"><span class="brand-mark">P</span><span>Portfolio Owner</span></a>
+        <a class="admin-brand" href="/owner.php"><span class="brand-mark">P</span><span>Portfolio Owner</span></a>
         <nav aria-label="Owner navigation">
             <span class="nav-group-label">Workspace</span>
             <?php foreach ($links as $key => [$href, $label]): ?>
@@ -56,8 +57,8 @@ function ownerNavigation(string $activePage): void
             <?php endforeach; ?>
         </nav>
         <div class="sidebar-footer">
-            <a href="owner_preview.php">Private Preview</a>
-            <form class="sidebar-logout-form" method="POST" action="owner_logout.php" data-owner-form>
+            <a href="/owner_preview.php">Private Preview</a>
+            <form class="sidebar-logout-form" method="POST" action="/owner_logout.php" data-owner-form>
                 <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
                 <button class="sidebar-logout-button" type="submit" data-pending-label="Signing out…">Logout</button>
             </form>

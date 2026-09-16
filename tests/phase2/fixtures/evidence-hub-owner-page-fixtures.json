@@ -1,0 +1,13 @@
+{
+  "canonical_path": "/owner/evidence-hub",
+  "escaped_mapped_display": "<script>synthetic-display</script>",
+  "unmapped_raw_label": "PRIVATE_UNMAPPED_TECHNOLOGY_MARKER",
+  "forbidden_markers": [
+    "PRIVATE_PROJECT_EVIDENCE_MARKER",
+    "PRIVATE_UNMAPPED_TECHNOLOGY_MARKER",
+    "recommendation_key",
+    "evidence_fingerprint",
+    "target_ref",
+    "resource_associations"
+  ]
+}

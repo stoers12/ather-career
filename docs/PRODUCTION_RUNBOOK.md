@@ -58,3 +58,10 @@ replaces the live database/media volumes automatically.
 - `docker compose stop`/`start` and normal container recreation preserve named volumes. **`docker compose down -v` deletes DB, upload, and rate-limit volumes and is destructive.**
 
 Owner PHP sessions are container-local and may be lost when web is recreated. Minimum operating checks are web liveness, database connectivity, `docker compose ps`, host disk capacity, Docker log growth, and successful backup completion.
+# Evidence Hub Owner route
+
+After configuring the stable Evidence Hub HMAC key, verify the protected
+read-only route at `/owner/evidence-hub` through an authenticated Owner
+session. A configuration failure must remain a generic unavailable response;
+do not log or expose key material. The path is canonical without a trailing
+slash and private responses use `Cache-Control: no-store`.
