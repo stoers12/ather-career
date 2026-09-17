@@ -72,6 +72,7 @@ function storeAuthorizedEvidenceHubRecommendationDisposition(
     );
     $statement->execute([
         'authorized_portfolio_id' => $context->portfolioId,
+        'authorized_portfolio_id_insert' => $context->portfolioId,
         'authorized_user_id' => $context->userId,
         'recommendation_key' => $current['recommendation_key'],
         'rule_version' => $current['rule_version'],
@@ -121,7 +122,7 @@ function evidenceHubRecommendationDispositionWriteSql(PDO $database): string
         'mysql' => 'INSERT INTO recommendation_dispositions (
                         portfolio_id, recommendation_key, rule_version, evidence_fingerprint, disposition, snoozed_until
                     ) SELECT
-                        :authorized_portfolio_id, :recommendation_key, :rule_version, :evidence_fingerprint, :disposition, :snoozed_until
+                        :authorized_portfolio_id_insert, :recommendation_key, :rule_version, :evidence_fingerprint, :disposition, :snoozed_until
                     FROM portfolios
                     WHERE portfolios.id = :authorized_portfolio_id
                       AND portfolios.owner_user_id = :authorized_user_id
@@ -133,7 +134,7 @@ function evidenceHubRecommendationDispositionWriteSql(PDO $database): string
         'sqlite' => 'INSERT INTO recommendation_dispositions (
                          portfolio_id, recommendation_key, rule_version, evidence_fingerprint, disposition, snoozed_until
                      ) SELECT
-                         :authorized_portfolio_id, :recommendation_key, :rule_version, :evidence_fingerprint, :disposition, :snoozed_until
+                         :authorized_portfolio_id_insert, :recommendation_key, :rule_version, :evidence_fingerprint, :disposition, :snoozed_until
                      FROM portfolios
                      WHERE portfolios.id = :authorized_portfolio_id
                        AND portfolios.owner_user_id = :authorized_user_id
@@ -170,8 +171,7 @@ function evidenceHubValidateCurrentRecommendationForDisposition(array $recommend
         || !is_int($recommendation['priority_rank'])
         || $recommendation['priority_rank'] !== evidenceHubRecommendationPriority($ruleId)
         || !is_int($recommendation['display_order'])
-        || $recommendation['display_order'] < 1
-        || $recommendation['display_order'] > 3
+        || $recommendation['display_order'] < 0
         || !is_array($recommendation['reason_codes'])
         || !array_is_list($recommendation['reason_codes'])
         || !is_string($recommendation['recommendation_key'])

@@ -27,14 +27,14 @@ final class EvidenceHubOwnerRoutePresenterTest
         $canonical = $fixtures['canonical_path'];
         phase2Assert(is_string($canonical), 'Owner page fixture canonical path is invalid.');
 
-        foreach (['startOwnerSession();', "httpRegisterExceptionBoundary('owner_evidence_hub.php')", "httpRequireMethod(['GET', 'HEAD'])", 'requireOwnerPortfolioContext($database)', 'buildConfiguredAuthorizedEvidenceHubOwnerRecommendationState'] as $required) {
+        foreach (['startOwnerSession();', "httpRegisterExceptionBoundary('owner_evidence_hub.php')", "httpRequireMethod(['GET', 'HEAD', 'POST'])", 'requireOwnerPortfolioContext($database)', 'buildConfiguredAuthorizedEvidenceHubOwnerRecommendationState'] as $required) {
             phase2Assert(str_contains($route, $required), "Protected Evidence Hub route is missing {$required}.");
         }
         phase2Assert(str_contains($route, "httpRedirect('{$canonical}', 302)"), 'Trailing-slash canonicalization does not target the no-slash route.');
         phase2Assert(str_contains($route, "'Cache-Control: no-store'"), 'Protected Evidence Hub canonical redirect is cacheable.');
         phase2Assert(str_contains($route, "=== 'HEAD'") && str_contains($route, 'exit;'), 'HEAD handling does not terminate before rendering a response body.');
-        phase2Assert(!preg_match('/\$_(?:GET|POST|REQUEST|COOKIE)\b/', $route), 'Protected Evidence Hub route accepts request input.');
-        phase2Assert(!str_contains($route, 'target_ref') && !str_contains($route, 'recommendation_key') && !str_contains($route, 'evidence_fingerprint'), 'Protected Evidence Hub route accepts client recommendation authority.');
+        phase2Assert(!preg_match('/\$_(?:GET|REQUEST|COOKIE)\b/', $route), 'Protected Evidence Hub route accepts request input outside its protected action boundary.');
+        phase2Assert(!str_contains($route, "\$_POST['recommendation_key']") && !str_contains($route, "\$_POST['rule_version']") && !str_contains($route, "\$_POST['evidence_fingerprint']") && !str_contains($route, "\$_POST['target_ref']"), 'Protected Evidence Hub route accepts client recommendation authority.');
         phase2AssertSame("<?php\n\nrequire dirname(__DIR__) . '/app/owner_evidence_hub.php';\n", str_replace("\r\n", "\n", self::read('public/owner_evidence_hub.php')), 'Production wrapper diverged from the root handler convention.');
         foreach ([$productionVhost, $developmentVhost] as $vhost) {
             phase2Assert(str_contains($vhost, '^/owner/evidence-hub/?$') && str_contains($vhost, '/owner_evidence_hub.php'), 'Apache route rewrite is missing or accepts a different path.');

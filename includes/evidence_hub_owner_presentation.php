@@ -6,7 +6,7 @@ require_once __DIR__ . '/evidence_hub_contract_mapper.php';
 require_once __DIR__ . '/owner_layout.php';
 
 /** @param array<string, mixed> $contract */
-function renderEvidenceHubOwnerPresentation(array $contract): void
+function renderEvidenceHubOwnerPresentation(array $contract, array $actionTokens = [], string $feedback = ''): void
 {
     try {
         evidenceHubContractAssertFrozenV1($contract);
@@ -71,16 +71,26 @@ function renderEvidenceHubOwnerPresentation(array $contract): void
 
 <section aria-labelledby="evidence-hub-recommendations-title">
     <h2 id="evidence-hub-recommendations-title" class="section-heading">Current actions</h2>
+    <?php if ($feedback !== ''): ?>
+        <p class="status-message" role="status" aria-live="polite" tabindex="-1" id="evidence-hub-action-feedback"><?php echo ownerEscapeHtml($feedback); ?></p>
+    <?php endif; ?>
     <?php if ($contract['recommendations'] === []): ?>
         <div class="empty-state admin-empty"><strong>No current actions</strong><span>Your current evidence does not need an action right now.</span></div>
     <?php else: ?>
         <div class="admin-project-grid">
-            <?php foreach ($contract['recommendations'] as $recommendation): ?>
+            <?php foreach ($contract['recommendations'] as $index => $recommendation): ?>
                 <?php $action = evidenceHubOwnerRecommendationPresentationAction($recommendation['rule_id']); ?>
+                <?php $tokens = $actionTokens[$index] ?? null; ?>
                 <article aria-label="Evidence Hub recommendation">
                     <h3><?php echo ownerEscapeHtml($action['title']); ?></h3>
                     <p><?php echo ownerEscapeHtml($action['description']); ?></p>
                     <a class="button-secondary" href="<?php echo ownerEscapeHtml($action['href']); ?>"><?php echo ownerEscapeHtml($action['label']); ?></a>
+                    <?php if ($recommendation['lifecycle_state'] === 'active' && is_array($tokens) && isset($tokens['snooze'], $tokens['dismiss']) && is_string($tokens['snooze']) && is_string($tokens['dismiss'])): ?>
+                        <div class="form-actions evidence-hub-recommendation-actions" aria-label="Recommendation actions">
+                            <form method="POST" action="/owner/evidence-hub"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><input type="hidden" name="action" value="snooze"><input type="hidden" name="action_token" value="<?php echo ownerEscapeHtml($tokens['snooze']); ?>"><button class="button-secondary" type="submit">Snooze for 14 days</button></form>
+                            <form method="POST" action="/owner/evidence-hub"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><input type="hidden" name="action" value="dismiss"><input type="hidden" name="action_token" value="<?php echo ownerEscapeHtml($tokens['dismiss']); ?>"><button class="button-danger" type="submit">Dismiss recommendation</button></form>
+                        </div>
+                    <?php endif; ?>
                 </article>
             <?php endforeach; ?>
         </div>
