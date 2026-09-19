@@ -22,12 +22,15 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
     private array $fixture;
     /** @var list<string> */
     private array $privateMarkers = [];
+    /** @var null|Closure(string):void */
+    private ?Closure $ownerASessionConsumer = null;
 
-    public static function run(): void
+    public static function run(?callable $ownerASessionConsumer = null): void
     {
         require_once PHASE2_REPOSITORY_ROOT . '/includes/owner_session.php';
         require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_recommendations.php';
         $test = new self();
+        $test->ownerASessionConsumer = $ownerASessionConsumer === null ? null : Closure::fromCallable($ownerASessionConsumer);
         $test->configure();
         $test->seed();
         $test->anonymousRouteContract();
@@ -327,6 +330,11 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
         session_save_path($this->sessionDirectory); ini_set('session.use_strict_mode', '0'); session_name('portfolio_owner_session'); session_id($id); session_start();
         $_SESSION = [INTERNAL_USER_SESSION_KEY => ['internal_user_id' => $identity, 'authz_version' => 1, 'authenticated_at' => time(), 'last_activity_at' => time()]];
         session_write_close(); ini_set('session.use_strict_mode', '1');
+        if ($owner === 'a' && $this->ownerASessionConsumer !== null) {
+            $consumer = $this->ownerASessionConsumer;
+            $this->ownerASessionConsumer = null;
+            $consumer($id);
+        }
         return $id;
     }
 

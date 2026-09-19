@@ -14,16 +14,16 @@ final class EvidenceHubRecommendationDispositionMySqlTest
         }
         $database = self::database();
         $database->exec("SET time_zone = '+00:00'");
-        self::seed($database);
-        self::repositoryAndConstraints($database);
+        self::repositoryAndConstraints($database, self::seed($database));
     }
 
-    private static function repositoryAndConstraints(PDO $database): void
+    /** @param array{user_a:int,user_b:int,portfolio_a:int,portfolio_b:int} $fixture */
+    private static function repositoryAndConstraints(PDO $database, array $fixture): void
     {
         $now = 1767225600;
-        $ownerA = self::context(1, 10);
-        $ownerB = self::context(2, 20);
-        $foreign = self::context(1, 20);
+        $ownerA = self::context($fixture['user_a'], $fixture['portfolio_a']);
+        $ownerB = self::context($fixture['user_b'], $fixture['portfolio_b']);
+        $foreign = self::context($fixture['user_a'], $fixture['portfolio_b']);
         $candidate = self::currentRecommendation('a');
 
         $database->exec("SET time_zone = '+05:30'");
@@ -31,7 +31,9 @@ final class EvidenceHubRecommendationDispositionMySqlTest
         $stored = listAuthorizedEvidenceHubRecommendationDispositions($database, $ownerA);
         phase2AssertSame(1, count($stored), 'MySQL same-tenant repository write was not readable.');
         phase2AssertSame(1768435200, $stored[0]['snoozed_until'], 'MySQL snooze expiry was not exactly fourteen injected UTC days.');
-        phase2AssertSame('1768435200', (string) $database->query('SELECT UNIX_TIMESTAMP(snoozed_until) FROM recommendation_dispositions WHERE portfolio_id = 10')->fetchColumn(), 'MySQL stored an offset-dependent snooze expiry.');
+        $expiry = $database->prepare('SELECT UNIX_TIMESTAMP(snoozed_until) FROM recommendation_dispositions WHERE portfolio_id = :portfolio_id');
+        $expiry->execute(['portfolio_id' => $fixture['portfolio_a']]);
+        phase2AssertSame('1768435200', (string) $expiry->fetchColumn(), 'MySQL stored an offset-dependent snooze expiry.');
 
         storeAuthorizedEvidenceHubRecommendationDisposition($database, $ownerA, $candidate, 'dismissed', $now);
         $replaced = listAuthorizedEvidenceHubRecommendationDispositions($database, $ownerA);
@@ -52,17 +54,18 @@ final class EvidenceHubRecommendationDispositionMySqlTest
             storeAuthorizedEvidenceHubRecommendationDisposition($database, $foreign, self::currentRecommendation('d'), 'dismissed', $now);
         }, 'MySQL foreign context write was accepted.');
 
-        self::assertConstraint(static function () use ($database): void {
-            $database->exec("INSERT INTO recommendation_dispositions (portfolio_id, recommendation_key, rule_version, evidence_fingerprint, disposition, snoozed_until) VALUES (10, REPEAT('a', 64), '1.0.0', REPEAT('b', 64), 'active', NULL)");
+        self::assertConstraint(static function () use ($database, $fixture): void {
+            $database->prepare("INSERT INTO recommendation_dispositions (portfolio_id, recommendation_key, rule_version, evidence_fingerprint, disposition, snoozed_until) VALUES (:portfolio_id, REPEAT('a', 64), '1.0.0', REPEAT('b', 64), 'active', NULL)")->execute(['portfolio_id' => $fixture['portfolio_a']]);
         }, 'MySQL accepted a derived lifecycle state.');
-        self::assertConstraint(static function () use ($database): void {
-            $database->exec("INSERT INTO recommendation_dispositions (portfolio_id, recommendation_key, rule_version, evidence_fingerprint, disposition, snoozed_until) VALUES (10, REPEAT('c', 64), '1.0.0', REPEAT('d', 64), 'snoozed', NULL)");
+        self::assertConstraint(static function () use ($database, $fixture): void {
+            $database->prepare("INSERT INTO recommendation_dispositions (portfolio_id, recommendation_key, rule_version, evidence_fingerprint, disposition, snoozed_until) VALUES (:portfolio_id, REPEAT('c', 64), '1.0.0', REPEAT('d', 64), 'snoozed', NULL)")->execute(['portfolio_id' => $fixture['portfolio_a']]);
         }, 'MySQL accepted a snooze without an expiry.');
-        self::assertConstraint(static function () use ($database): void {
-            $database->exec("INSERT INTO recommendation_dispositions (portfolio_id, recommendation_key, rule_version, evidence_fingerprint, disposition, snoozed_until) VALUES (10, REPEAT('e', 64), '1.0.0', REPEAT('f', 64), 'dismissed', '2026-01-15 00:00:00')");
+        self::assertConstraint(static function () use ($database, $fixture): void {
+            $database->prepare("INSERT INTO recommendation_dispositions (portfolio_id, recommendation_key, rule_version, evidence_fingerprint, disposition, snoozed_until) VALUES (:portfolio_id, REPEAT('e', 64), '1.0.0', REPEAT('f', 64), 'dismissed', '2026-01-15 00:00:00')")->execute(['portfolio_id' => $fixture['portfolio_a']]);
         }, 'MySQL accepted a dismissal with an expiry.');
-        self::assertConstraint(static function () use ($database): void {
-            $database->exec("INSERT INTO recommendation_dispositions (portfolio_id, recommendation_key, rule_version, evidence_fingerprint, disposition, snoozed_until) VALUES (999, REPEAT('1', 64), '1.0.0', REPEAT('2', 64), 'dismissed', NULL)");
+        $unownedPortfolioId = (int) $database->query('SELECT MAX(id) + 1 FROM portfolios')->fetchColumn();
+        self::assertConstraint(static function () use ($database, $unownedPortfolioId): void {
+            $database->prepare("INSERT INTO recommendation_dispositions (portfolio_id, recommendation_key, rule_version, evidence_fingerprint, disposition, snoozed_until) VALUES (:portfolio_id, REPEAT('1', 64), '1.0.0', REPEAT('2', 64), 'dismissed', NULL)")->execute(['portfolio_id' => $unownedPortfolioId]);
         }, 'MySQL accepted an unowned disposition portfolio.');
 
         $facts = self::recommendationFacts('needs_attention');
@@ -75,15 +78,24 @@ final class EvidenceHubRecommendationDispositionMySqlTest
         phase2AssertSame($currentRecommendation['recommendation_key'], $changed[0]['recommendation_key'], 'MySQL supersession changed recommendation identity.');
     }
 
-    private static function seed(PDO $database): void
+    /** @return array{user_a:int,user_b:int,portfolio_a:int,portfolio_b:int} */
+    private static function seed(PDO $database): array
     {
-        $users = $database->prepare('INSERT INTO users (id, oidc_issuer, oidc_subject, account_status, authz_version) VALUES (:id, :issuer, :subject, \'active\', 1)');
-        foreach ([1 => 'r3-synthetic-user-a', 2 => 'r3-synthetic-user-b'] as $id => $subject) {
-            $users->execute(['id' => $id, 'issuer' => 'r3-test', 'subject' => $subject]);
+        $users = $database->prepare('INSERT INTO users (oidc_issuer, oidc_subject, account_status, authz_version) VALUES (:issuer, :subject, \'active\', 1)');
+        $userIds = [];
+        foreach (['r3-synthetic-user-a', 'r3-synthetic-user-b'] as $subject) {
+            $users->execute(['issuer' => 'r3-test', 'subject' => $subject]);
+            $userIds[] = (int) $database->lastInsertId();
         }
-        $portfolios = $database->prepare('INSERT INTO portfolios (id, owner_user_id) VALUES (:id, :owner_user_id)');
-        $portfolios->execute(['id' => 10, 'owner_user_id' => 1]);
-        $portfolios->execute(['id' => 20, 'owner_user_id' => 2]);
+        phase2Assert($userIds[0] > 0 && $userIds[1] > 0 && $userIds[0] !== $userIds[1], 'MySQL generated User identities are invalid.');
+        $portfolios = $database->prepare('INSERT INTO portfolios (owner_user_id) VALUES (:owner_user_id)');
+        $portfolioIds = [];
+        foreach ($userIds as $userId) {
+            $portfolios->execute(['owner_user_id' => $userId]);
+            $portfolioIds[] = (int) $database->lastInsertId();
+        }
+        phase2Assert($portfolioIds[0] > 0 && $portfolioIds[1] > 0 && $portfolioIds[0] !== $portfolioIds[1], 'MySQL generated Portfolio identities are invalid.');
+        return ['user_a' => $userIds[0], 'user_b' => $userIds[1], 'portfolio_a' => $portfolioIds[0], 'portfolio_b' => $portfolioIds[1]];
     }
 
     private static function database(): PDO

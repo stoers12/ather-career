@@ -54,10 +54,11 @@ if (PHP_SAPI !== 'cli' && ($_GET['assert'] ?? null) === '1') {
 window.addEventListener('load', () => {
     const failures = [];
     const evidence = document.querySelector('a[href="/owner/evidence-hub"]');
-    const recommendation = document.querySelector('[aria-label="Evidence Hub recommendation"] a');
+    const recommendation = document.querySelector('[aria-label="توصية مركز الأدلة"] a');
     const skip = document.querySelector('.admin-skip-link');
     if (evidence?.getAttribute('aria-current') !== 'page') failures.push('active-navigation');
     if (recommendation?.getAttribute('href') !== '/owner_projects.php?add=1') failures.push('generic-action');
+    if (document.documentElement.dir !== 'rtl') failures.push('rtl');
     if (document.documentElement.scrollWidth > innerWidth) failures.push('reflow');
     skip?.focus();
     skip?.click();

@@ -27,8 +27,14 @@ const withinStepTimeout = (operation, label) => new Promise((resolve, reject) =>
     const timer = setTimeout(() => reject(new Error(`${label} timed out`)), stepTimeout);
     operation.then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });
 });
+const recommendationName = 'توصية مركز الأدلة';
+const snoozeName = 'تأجيل 14 يومًا';
+const dismissName = 'تجاهل التوصية';
+const snoozeRecommendationTitle = 'راجِع الأدلة التقنية';
+const dismissRecommendationTitle = 'استكمل نشر ملف الأعمال';
 const actionForm = (scope, action) => scope.locator(`form[action="${routePath}"]:has(input[type="hidden"][name="action"][value="${action}"])`);
-const actionableCards = page => page.locator(`article[aria-label="Evidence Hub recommendation"]:has(form[action="${routePath}"])`);
+const actionableCards = page => page.getByRole('article', { name: recommendationName }).filter({ has: page.locator(`form[action="${routePath}"]`) });
+const recommendationCard = (page, title) => page.getByRole('article', { name: recommendationName }).filter({ has: page.getByRole('heading', { name: title }) });
 const routePathFromLocation = location => {
     if (typeof location !== 'string') return '';
     try { return new URL(location, baseUrl).pathname; } catch { return ''; }
@@ -72,9 +78,19 @@ const watchdog = setTimeout(async () => {
         const initialCount = await initialCards.count();
         console.log(`ACTIONABLE_CANDIDATE_COUNT=${initialCount}`);
         expectState(initialCount >= 2, 'fixture-two-actionable-candidates', `expected at least two actionable recommendations; received ${initialCount}`);
-        const snoozeForm = actionForm(initialCards.nth(0), 'snooze');
+
+        mark('no-javascript');
+        const noJsContext = await context.browser().newContext({ javaScriptEnabled: false });
+        await noJsContext.addCookies([{ name: 'portfolio_owner_session', value: sessionCookie, url: baseUrl, httpOnly: true }]);
+        const noJs = await noJsContext.newPage();
+        await noJs.goto(`${baseUrl}${routePath}`, { waitUntil: 'domcontentloaded', timeout: stepTimeout });
+        expectState(await noJs.locator(`form[action="${routePath}"]`).count() > 0, 'no-javascript-forms', 'no-JavaScript action forms were unavailable');
+        await noJsContext.close();
+
+        mark('snooze-form-present');
+        const snoozeForm = actionForm(recommendationCard(page, snoozeRecommendationTitle), 'snooze');
         expectState(await snoozeForm.count() === 1, 'snooze-form-present', 'expected snooze form was not found');
-        const snoozeControl = snoozeForm.getByRole('button', { name: 'Snooze for 14 days' });
+        const snoozeControl = snoozeForm.getByRole('button', { name: snoozeName });
         expectState(await snoozeControl.count() === 1, 'snooze-control-present', 'expected snooze control was not found');
         expectState(await snoozeControl.isVisible(), 'snooze-control-visible', 'expected snooze control was not visible');
         expectState(await snoozeControl.isEnabled(), 'snooze-control-enabled', 'expected snooze control was disabled');
@@ -92,7 +108,7 @@ const watchdog = setTimeout(async () => {
         const snoozeNavigationResponse = await snoozeNavigation;
         expectState(snoozeNavigationResponse?.status() === 200, 'snooze-navigation-status', `expected 200; received ${snoozeNavigationResponse?.status() ?? 'none'}`);
         expectState(currentPathname(page) === routePath, 'snooze-prg-complete', 'expected route pathname after redirect');
-        expectState(await page.getByRole('status').textContent() === 'Recommendation snoozed for 14 days.', 'snooze-feedback-visible', 'expected snooze feedback was not visible');
+        expectState(await page.getByRole('status').textContent() === 'تم تأجيل التوصية لمدة 14 يومًا.', 'snooze-feedback-visible', 'expected Arabic Snooze feedback was not visible');
 
         mark('dismiss-candidate-remains');
         const postSnoozeCards = actionableCards(page);
@@ -101,11 +117,11 @@ const watchdog = setTimeout(async () => {
         expectState(postSnoozeCount === initialCount - 1, 'dismiss-candidate-remains', `expected ${initialCount - 1} remaining actionable recommendations; received ${postSnoozeCount}`);
 
         mark('dismiss-form-present');
-        const dismissForm = actionForm(postSnoozeCards.nth(0), 'dismiss');
+        const dismissForm = actionForm(recommendationCard(page, dismissRecommendationTitle), 'dismiss');
         expectState(await dismissForm.count() === 1, 'dismiss-form-present', 'expected dismiss form was not found');
         const dismissTokenInput = dismissForm.locator('input[type="hidden"][name="action_token"]');
         expectState(await dismissTokenInput.count() === 1 && await dismissTokenInput.inputValue() !== '', 'dismiss-fresh-token-present', 'expected fresh dismiss token was not available');
-        const dismissControl = dismissForm.getByRole('button', { name: 'Dismiss recommendation' });
+        const dismissControl = dismissForm.getByRole('button', { name: dismissName });
         expectState(await dismissControl.count() === 1, 'dismiss-control-present', 'expected dismiss control was not found');
 
         mark('dismiss-control-visible');
@@ -128,7 +144,7 @@ const watchdog = setTimeout(async () => {
         expectState(currentPathname(page) === routePath, 'dismiss-prg-complete', 'expected route pathname after redirect');
 
         mark('dismiss-feedback-visible');
-        expectState(await page.getByRole('status').textContent() === 'Recommendation dismissed.', 'dismiss-feedback-visible', 'expected dismiss feedback was not visible');
+        expectState(await page.getByRole('status').textContent() === 'تم تجاهل التوصية.', 'dismiss-feedback-visible', 'expected Arabic Dismiss feedback was not visible');
         mark('dismiss-recommendation-removed');
         const postDismissCount = await actionableCards(page).count();
         console.log(`POST_DISMISS_ACTIONABLE_CANDIDATE_COUNT=${postDismissCount}`);
@@ -143,13 +159,6 @@ const watchdog = setTimeout(async () => {
         expectState(!/recommendation_key|evidence_fingerprint|opaque_target_ref|action_token|[a-f0-9]{64}/i.test(text), 'visible-disclosure', 'response leaked recommendation internals');
         expectState(errors.length === 0, 'browser-errors', `expected no browser errors; received ${errors.length}`);
 
-        mark('no-javascript');
-        const noJsContext = await context.browser().newContext({ javaScriptEnabled: false });
-        await noJsContext.addCookies([{ name: 'portfolio_owner_session', value: sessionCookie, url: baseUrl, httpOnly: true }]);
-        const noJs = await noJsContext.newPage();
-        await noJs.goto(`${baseUrl}${routePath}`, { waitUntil: 'domcontentloaded', timeout: stepTimeout });
-        expectState(await noJs.locator(`form[action="${routePath}"]`).count() > 0, 'no-javascript-forms', 'no-JavaScript action forms were unavailable');
-        await noJsContext.close();
         if (watchdogTimedOut) fail('watchdog', 'step watchdog timed out');
         console.log('PASS Evidence Hub R4 real Edge actions');
     } catch (error) {

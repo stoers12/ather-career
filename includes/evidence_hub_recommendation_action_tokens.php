@@ -158,5 +158,5 @@ function takeEvidenceHubRecommendationActionFeedback(): string
 {
     $message = $_SESSION[EVIDENCE_HUB_RECOMMENDATION_ACTION_FEEDBACK_SESSION_KEY] ?? '';
     unset($_SESSION[EVIDENCE_HUB_RECOMMENDATION_ACTION_FEEDBACK_SESSION_KEY]);
-    return is_string($message) && in_array($message, ['Recommendation snoozed for 14 days.', 'Recommendation dismissed.'], true) ? $message : '';
+    return is_string($message) && in_array($message, ['تم تأجيل التوصية لمدة 14 يومًا.', 'تم تجاهل التوصية.'], true) ? $message : '';
 }

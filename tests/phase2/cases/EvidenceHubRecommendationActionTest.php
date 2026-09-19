@@ -30,6 +30,7 @@ final class EvidenceHubRecommendationActionTest
         $record = consumeEvidenceHubRecommendationActionToken($ownerA, 'dismiss', $token);
         phase2Assert(is_array($record) && $record['recommendation_key'] === $candidate['recommendation_key'], 'Same-tenant action token did not resolve its server binding.');
         phase2AssertSame(null, consumeEvidenceHubRecommendationActionToken($ownerA, 'dismiss', $token), 'Consumed action token was replayed.');
+        self::feedbackContract();
         self::presentationAndRouteContracts();
     }
 
@@ -50,18 +51,41 @@ final class EvidenceHubRecommendationActionTest
         foreach (['csrf_token', 'action_token', "['snooze', 'dismiss']", 'consumeEvidenceHubRecommendationActionToken', 'executeAuthorizedEvidenceHubRecommendationAction', "httpRedirect('/owner/evidence-hub', 303)"] as $required) {
             phase2Assert(str_contains($route, $required), "Protected action route is missing {$required}.");
         }
+        foreach (['مركز الأدلة', 'تم تأجيل التوصية لمدة 14 يومًا.', 'تم تجاهل التوصية.', 'لم تعد التوصية متاحة. أعد تحميل مركز الأدلة.', 'إجراء التوصية غير صالح.'] as $required) {
+            phase2Assert(str_contains($route, $required), "Protected action route is missing Arabic Evidence Hub copy {$required}.");
+        }
         phase2Assert(is_file(PHASE2_REPOSITORY_ROOT . '/tests/phase2/support/evidence-hub-owner-actions-visual.cjs'), 'R4 real-browser action support is missing.');
         phase2Assert(!str_contains($route, 'target_ref') && !str_contains($route, 'snoozed_until'), 'Action route accepts prohibited client recommendation fields.');
         $contract = self::contractWithRecommendation();
         $_SESSION = ['csrf_token' => str_repeat('c', 64)];
         ob_start();
-        renderEvidenceHubOwnerPresentation($contract, [['snooze' => str_repeat('A', 43), 'dismiss' => str_repeat('B', 43)]], 'Recommendation dismissed.');
+        renderEvidenceHubOwnerPresentation($contract, [['snooze' => str_repeat('A', 43), 'dismiss' => str_repeat('B', 43)]], 'تم تجاهل التوصية.');
         $html = (string) ob_get_clean();
-        foreach (['name="csrf_token"', 'name="action" value="snooze"', 'name="action_token"', 'Snooze for 14 days', 'Dismiss recommendation', 'Recommendation dismissed.'] as $required) {
+        foreach (['name="csrf_token"', 'name="action" value="snooze"', 'name="action_token"', 'تأجيل 14 يومًا', 'تجاهل التوصية', 'تم تجاهل التوصية.'] as $required) {
             phase2Assert(str_contains($html, $required), "Action presenter is missing {$required}.");
         }
         foreach ([str_repeat('a', 64), str_repeat('b', 64), 'opaque_target_ref', 'recommendation_key', 'evidence_fingerprint'] as $forbidden) {
             phase2Assert(!str_contains($html, $forbidden), "Action presenter disclosed {$forbidden}.");
+        }
+    }
+
+    private static function feedbackContract(): void
+    {
+        $snooze = 'تم تأجيل التوصية لمدة 14 يومًا.';
+        $dismiss = 'تم تجاهل التوصية.';
+
+        $_SESSION = [];
+        setEvidenceHubRecommendationActionFeedback($snooze);
+        phase2AssertSame($snooze, takeEvidenceHubRecommendationActionFeedback(), 'Arabic Snooze feedback was not accepted.');
+        phase2AssertSame('', takeEvidenceHubRecommendationActionFeedback(), 'Feedback was not consumed exactly once.');
+
+        setEvidenceHubRecommendationActionFeedback($dismiss);
+        phase2AssertSame($dismiss, takeEvidenceHubRecommendationActionFeedback(), 'Arabic Dismiss feedback was not accepted.');
+
+        foreach (['Recommendation snoozed for 14 days.', 'Recommendation dismissed.', 'arbitrary feedback'] as $invalid) {
+            setEvidenceHubRecommendationActionFeedback($invalid);
+            phase2AssertSame('', takeEvidenceHubRecommendationActionFeedback(), "Non-contract feedback was accepted: {$invalid}");
+            phase2Assert(!isset($_SESSION[EVIDENCE_HUB_RECOMMENDATION_ACTION_FEEDBACK_SESSION_KEY]), 'Rejected feedback was not consumed from the session.');
         }
     }
 

@@ -18,7 +18,7 @@ httpRequireMethod(['GET', 'HEAD', 'POST']);
 
 if (evidenceHubOwnerRouteHasTrailingSlash()) {
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
-        httpAbortHtml(409, 'Recommendation is no longer available. Reload Evidence Hub.');
+        httpAbortHtml(409, 'لم تعد التوصية متاحة. أعد تحميل مركز الأدلة.');
     }
     header('Cache-Control: no-store');
     httpRedirect('/owner/evidence-hub', 302);
@@ -35,9 +35,9 @@ try {
         $request = evidenceHubOwnerRecommendationActionRequest();
         $tokenRecord = consumeEvidenceHubRecommendationActionToken($context, $request['action'], $request['action_token']);
         if ($tokenRecord === null || !executeAuthorizedEvidenceHubRecommendationAction($database, $context, $tokenRecord, time())) {
-            httpAbortHtml(409, 'Recommendation is no longer available. Reload Evidence Hub.');
+            httpAbortHtml(409, 'لم تعد التوصية متاحة. أعد تحميل مركز الأدلة.');
         }
-        setEvidenceHubRecommendationActionFeedback($request['action'] === 'snooze' ? 'Recommendation snoozed for 14 days.' : 'Recommendation dismissed.');
+        setEvidenceHubRecommendationActionFeedback($request['action'] === 'snooze' ? 'تم تأجيل التوصية لمدة 14 يومًا.' : 'تم تجاهل التوصية.');
         header('Cache-Control: no-store');
         httpRedirect('/owner/evidence-hub', 303);
     }
@@ -69,7 +69,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'HEAD') {
     exit;
 }
 
-ownerLayoutStart('Evidence Hub', 'evidence_hub');
+ownerLayoutStart('مركز الأدلة', 'evidence_hub');
 if ($error !== '' || !is_array($contract)) {
     renderEvidenceHubOwnerSafeError();
 } else {
@@ -82,12 +82,12 @@ function evidenceHubOwnerRecommendationActionRequest(): array
     requireValidCsrfToken($_POST['csrf_token'] ?? null);
     $expected = ['csrf_token', 'action', 'action_token'];
     if (!is_array($_POST) || array_is_list($_POST) || array_diff(array_keys($_POST), $expected) !== [] || array_diff($expected, array_keys($_POST)) !== []) {
-        httpAbortHtml(422, 'Invalid recommendation action.');
+        httpAbortHtml(422, 'إجراء التوصية غير صالح.');
     }
     $action = $_POST['action'];
     $token = $_POST['action_token'];
     if (!is_string($action) || !in_array($action, ['snooze', 'dismiss'], true) || !is_string($token)) {
-        httpAbortHtml(422, 'Invalid recommendation action.');
+        httpAbortHtml(422, 'إجراء التوصية غير صالح.');
     }
     return ['action' => $action, 'action_token' => $token];
 }
