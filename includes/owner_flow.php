@@ -14,7 +14,7 @@ function ownerAuthorizationDenied(): never
 
 function ownerAuthenticationRequired(): never
 {
-    httpRedirect('owner_login.php');
+    httpRedirect('/owner_login.php');
 }
 
 function requireOwnerAuthenticatedUser(PDO $database): AuthenticatedUserContext
@@ -53,7 +53,7 @@ function requireOwnerPortfolioContext(PDO $database): AuthorizedPortfolioContext
 
     try {
         if (!ownerHasPortfolio($database, $user)) {
-            httpRedirect('owner_onboarding.php');
+            httpRedirect('/owner_onboarding.php');
         }
 
         return requireOwnedPortfolioContext($database);

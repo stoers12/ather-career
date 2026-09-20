@@ -114,7 +114,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
     {
         $response = $this->request('GET', self::ROUTE);
         $this->assertPrivate($response, 303);
-        self::assertSame('owner_login.php', $response['headers']['location'] ?? '', 'anonymous route redirect changed');
+        self::assertSame('/owner_login.php', $response['headers']['location'] ?? '', 'anonymous route redirect must use the canonical origin-relative login target');
         $this->positiveAssertions += 3;
         $this->pass('anonymous route contract');
     }

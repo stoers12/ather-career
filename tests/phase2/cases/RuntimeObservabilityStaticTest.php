@@ -59,7 +59,7 @@ final class RuntimeObservabilityStaticTest
                 && str_contains($compose, 'start_period:')
                 && str_contains($compose, 'stop_grace_period:'), 'Web/database healthcheck timing or shutdown grace configuration is incomplete.');
         }
-        phase2Assert(str_contains($developmentCompose, 'http://127.0.0.1/public/health.php')
+        phase2Assert(str_contains($developmentCompose, 'http://127.0.0.1/health.php')
             && str_contains($productionCompose, 'http://127.0.0.1/health.php')
             && !preg_match('/auth0|oauth|https?:\/\/[^"\']*(?:auth0|oauth)/i', $developmentCompose . $productionCompose), 'Web healthchecks are not local liveness probes.');
         phase2Assert(str_contains($ownerCompose, 'condition: service_healthy')
