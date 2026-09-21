@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 /**
- * Focused production-route integration test. It runs inside the disposable
- * application container so its session writer and Apache share PHP session
- * storage. Docker lifecycle remains outside this test.
+ * Focused production-route integration test. It is an HTTP client only:
+ * Apache creates the authenticated sessions and curl retains them in the
+ * task-owned cookie jars. Docker lifecycle remains outside this test.
  */
 final class EvidenceHubRecommendationActionHttpMySqlTest
 {
@@ -14,7 +14,8 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private PDO $database;
     private string $baseUrl;
-    private string $sessionDirectory;
+    /** @var array{a:string,b:string,invalid:string} */
+    private array $cookieJars;
     private int $positiveAssertions = 0;
     private int $negativeAssertions = 0;
     private int $disclosureAssertions = 0;
@@ -22,18 +23,22 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
     private array $fixture;
     /** @var list<string> */
     private array $privateMarkers = [];
-    /** @var null|Closure(string):void */
-    private ?Closure $ownerASessionConsumer = null;
-
-    public static function run(?callable $ownerASessionConsumer = null): void
+    public static function seedSyntheticOwners(): void
     {
-        require_once PHASE2_REPOSITORY_ROOT . '/includes/owner_session.php';
         require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_recommendations.php';
         $test = new self();
-        $test->ownerASessionConsumer = $ownerASessionConsumer === null ? null : Closure::fromCallable($ownerASessionConsumer);
-        $test->configure();
+        $test->configure(false);
         $test->seed();
+    }
+
+    public static function run(): void
+    {
+        require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_recommendations.php';
+        $test = new self();
+        $test->configure(true);
+        $test->loadFixture();
         $test->anonymousRouteContract();
+        $test->fabricatedCookieDenial();
         $test->authenticatedRouteContract();
         $test->staleRejection(false);
         $test->validSnooze();
@@ -52,9 +57,9 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
         fwrite(STDOUT, "HTTP_DISCLOSURE_ASSERTIONS={$test->disclosureAssertions}\n");
     }
 
-    private function configure(): void
+    private function configure(bool $requireCookieJars): void
     {
-        foreach (['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'EVIDENCE_HUB_HTTP_ACTION_BASE_URL', 'EVIDENCE_HUB_HTTP_ACTION_SESSION_DIR'] as $name) {
+        foreach (['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'EVIDENCE_HUB_HTTP_ACTION_SUBJECT_A', 'EVIDENCE_HUB_HTTP_ACTION_SUBJECT_B'] as $name) {
             $value = getenv($name);
             if (!is_string($value) || $value === '') {
                 throw new RuntimeException('HTTP action test configuration is incomplete.');
@@ -64,13 +69,23 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
         if (preg_match('/^ather_career_test_[a-f0-9]{24}$/', $databaseName) !== 1) {
             throw new RuntimeException('HTTP action test refuses a non-disposable database.');
         }
-        $this->baseUrl = rtrim((string) getenv('EVIDENCE_HUB_HTTP_ACTION_BASE_URL'), '/');
-        if ($this->baseUrl !== 'http://127.0.0.1') {
+        $this->baseUrl = rtrim((string) (getenv('EVIDENCE_HUB_HTTP_ACTION_BASE_URL') ?: ''), '/');
+        if ($requireCookieJars && $this->baseUrl !== 'http://127.0.0.1') {
             throw new RuntimeException('HTTP action test requires the isolated loopback Apache route.');
         }
-        $this->sessionDirectory = (string) getenv('EVIDENCE_HUB_HTTP_ACTION_SESSION_DIR');
-        if (!is_dir($this->sessionDirectory) || !is_writable($this->sessionDirectory)) {
-            throw new RuntimeException('HTTP action test session storage is unavailable.');
+        if ($requireCookieJars) {
+            $this->cookieJars = [];
+            foreach (['a', 'b', 'invalid'] as $owner) {
+                $name = 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_' . strtoupper($owner);
+                $jar = getenv($name);
+                if (!is_string($jar) || !str_starts_with($jar, '/tmp/bridge/') || !is_file($jar) || !is_readable($jar) || !is_writable($jar)) {
+                    throw new RuntimeException('HTTP action test cookie jar is unavailable.');
+                }
+                $this->cookieJars[$owner] = $jar;
+            }
+            if (!is_executable('/usr/bin/curl')) {
+                throw new RuntimeException('HTTP action test requires the maintained curl client.');
+            }
         }
         $this->database = new PDO(
             'mysql:host=' . getenv('DB_HOST') . ';port=' . getenv('DB_PORT') . ';dbname=' . $databaseName . ';charset=utf8mb4',
@@ -91,9 +106,11 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
         $suffix = bin2hex(random_bytes(8));
         $this->fixture = ['user_a' => $firstUser, 'portfolio_a' => $firstPortfolio, 'user_b' => $secondUser, 'portfolio_b' => $secondPortfolio];
         $this->privateMarkers = ['h1-owner-a-' . $suffix, 'h1-owner-b-' . $suffix, 'h1-' . $suffix . '@invalid.example', 'Synthetic.', (string) $firstUser, (string) $firstPortfolio, '/var/lib/ather-career/storage'];
+        $issuer = getenv('EXPECTED_OIDC_ISSUER');
+        if (!is_string($issuer) || $issuer === '') throw new RuntimeException('synthetic Web-SAPI issuer is unavailable');
         $users = $this->database->prepare('INSERT INTO users (id, oidc_issuer, oidc_subject, account_status, authz_version) VALUES (:id, :issuer, :subject, \'active\', 1)');
-        foreach ([$firstUser => 'h1-owner-a-' . $suffix, $secondUser => 'h1-owner-b-' . $suffix] as $id => $subject) {
-            $users->execute(['id' => $id, 'issuer' => 'https://issuer.invalid/h1', 'subject' => $subject]);
+        foreach ([$firstUser => (string) getenv('EVIDENCE_HUB_HTTP_ACTION_SUBJECT_A'), $secondUser => (string) getenv('EVIDENCE_HUB_HTTP_ACTION_SUBJECT_B')] as $id => $subject) {
+            $users->execute(['id' => $id, 'issuer' => $issuer, 'subject' => $subject]);
         }
         $portfolios = $this->database->prepare('INSERT INTO portfolios (id, owner_user_id, public_slug, is_published) VALUES (:id, :owner_user_id, :slug, 0)');
         $portfolios->execute(['id' => $firstPortfolio, 'owner_user_id' => $firstUser, 'slug' => 'h1-a-' . $suffix]);
@@ -110,6 +127,26 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
         }
     }
 
+    private function loadFixture(): void
+    {
+        $issuer = getenv('EXPECTED_OIDC_ISSUER');
+        if (!is_string($issuer) || $issuer === '') throw new RuntimeException('synthetic Web-SAPI issuer is unavailable');
+        $users = $this->database->prepare('SELECT id, oidc_subject FROM users WHERE oidc_issuer = :issuer AND oidc_subject IN (:subject_a, :subject_b) ORDER BY id');
+        $users->execute(['issuer' => $issuer, 'subject_a' => (string) getenv('EVIDENCE_HUB_HTTP_ACTION_SUBJECT_A'), 'subject_b' => (string) getenv('EVIDENCE_HUB_HTTP_ACTION_SUBJECT_B')]);
+        $rows = $users->fetchAll(PDO::FETCH_ASSOC);
+        if (count($rows) !== 2) throw new RuntimeException('synthetic Web-SAPI owners are unavailable');
+        $ids = [];
+        foreach ($rows as $row) $ids[(string) $row['oidc_subject']] = (int) $row['id'];
+        $userA = $ids[(string) getenv('EVIDENCE_HUB_HTTP_ACTION_SUBJECT_A')] ?? 0;
+        $userB = $ids[(string) getenv('EVIDENCE_HUB_HTTP_ACTION_SUBJECT_B')] ?? 0;
+        $portfolio = $this->database->prepare('SELECT id FROM portfolios WHERE owner_user_id = :user_id LIMIT 1');
+        $portfolio->execute(['user_id' => $userA]); $portfolioA = (int) $portfolio->fetchColumn();
+        $portfolio->execute(['user_id' => $userB]); $portfolioB = (int) $portfolio->fetchColumn();
+        if ($userA < 1 || $userB < 1 || $portfolioA < 1 || $portfolioB < 1) throw new RuntimeException('synthetic Web-SAPI portfolios are unavailable');
+        $this->fixture = ['user_a' => $userA, 'portfolio_a' => $portfolioA, 'user_b' => $userB, 'portfolio_b' => $portfolioB];
+        $this->privateMarkers = [(string) getenv('EVIDENCE_HUB_HTTP_ACTION_SUBJECT_A'), (string) getenv('EVIDENCE_HUB_HTTP_ACTION_SUBJECT_B'), 'Synthetic.', (string) $userA, (string) $portfolioA, '/var/lib/ather-career/storage'];
+    }
+
     private function anonymousRouteContract(): void
     {
         $response = $this->request('GET', self::ROUTE);
@@ -119,9 +156,18 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
         $this->pass('anonymous route contract');
     }
 
+    private function fabricatedCookieDenial(): void
+    {
+        $response = $this->request('GET', self::ROUTE, [], $this->ownerJar('invalid'));
+        $this->assertPrivate($response, 303);
+        self::assertSame('/owner_login.php', $response['headers']['location'] ?? '', 'fabricated cookie bypassed the owner login boundary');
+        $this->negativeAssertions += 2;
+        $this->pass('fabricated-cookie denial');
+    }
+
     private function authenticatedRouteContract(): void
     {
-        $session = $this->ownerSession('a');
+        $session = $this->ownerJar('a');
         $get = $this->request('GET', self::ROUTE, [], $session);
         $this->assertPrivate($get, 200);
         $this->form($get['body'], 'snooze');
@@ -140,7 +186,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private function validSnooze(): void
     {
-        $session = $this->ownerSession('a');
+        $session = $this->ownerJar('a');
         $form = $this->form($this->request('GET', self::ROUTE, [], $session)['body'], 'snooze');
         $candidate = $this->firstCurrentCandidate();
         $before = time();
@@ -158,7 +204,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private function validDismiss(): void
     {
-        $session = $this->ownerSession('a');
+        $session = $this->ownerJar('a');
         $form = $this->form($this->request('GET', self::ROUTE, [], $session)['body'], 'dismiss');
         $candidate = $this->firstCurrentCandidate();
         $response = $this->request('POST', self::ROUTE, $form['fields'], $session);
@@ -174,7 +220,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private function invalidCsrf(): void
     {
-        $session = $this->ownerSession('a');
+        $session = $this->ownerJar('a');
         $form = $this->form($this->request('GET', self::ROUTE, [], $session)['body'], 'snooze');
         $fields = $form['fields']; $fields['csrf_token'] = str_repeat('0', 64);
         $this->reject('invalid CSRF', $this->request('POST', self::ROUTE, $fields, $session), $this->tenantRowCount('a'), 403);
@@ -182,7 +228,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private function invalidRequestShape(): void
     {
-        $session = $this->ownerSession('a');
+        $session = $this->ownerJar('a');
         $form = $this->form($this->request('GET', self::ROUTE, [], $session)['body'], 'snooze');
         $missing = $form['fields']; unset($missing['action_token']);
         $this->reject('invalid request shape', $this->request('POST', self::ROUTE, $missing, $session), $this->tenantRowCount('a'), 422, false);
@@ -197,7 +243,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private function invalidToken(): void
     {
-        $session = $this->ownerSession('a');
+        $session = $this->ownerJar('a');
         $form = $this->form($this->request('GET', self::ROUTE, [], $session)['body'], 'snooze');
         $malformed = $form['fields']; $malformed['action_token'] = 'invalid';
         $this->reject('invalid token', $this->request('POST', self::ROUTE, $malformed, $session), $this->tenantRowCount('a'), 409, false);
@@ -208,7 +254,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private function replayRejection(): void
     {
-        $session = $this->ownerSession('a');
+        $session = $this->ownerJar('a');
         $form = $this->form($this->request('GET', self::ROUTE, [], $session)['body'], 'snooze');
         $this->assertPrg($this->request('POST', self::ROUTE, $form['fields'], $session));
         $this->reject('replay rejection', $this->request('POST', self::ROUTE, $form['fields'], $session), $this->tenantRowCount('a'));
@@ -216,7 +262,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private function staleRejection(bool $emit = true): void
     {
-        $session = $this->ownerSession('a');
+        $session = $this->ownerJar('a');
         $form = $this->form($this->request('GET', self::ROUTE, [], $session)['body'], 'snooze');
         $this->database->prepare('UPDATE projects SET problem_statement = :value WHERE portfolio_id = :portfolio_id')->execute(['value' => 'changed', 'portfolio_id' => $this->fixture['portfolio_a']]);
         $this->reject('stale rejection', $this->request('POST', self::ROUTE, $form['fields'], $session), $this->tenantRowCount('a'), 409, $emit);
@@ -224,7 +270,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private function wrongActionRejection(): void
     {
-        $session = $this->ownerSession('a');
+        $session = $this->ownerJar('a');
         foreach ([['snooze', 'dismiss'], ['dismiss', 'snooze']] as [$issued, $submitted]) {
             $form = $this->form($this->request('GET', self::ROUTE, [], $session)['body'], $issued);
             $fields = $form['fields']; $fields['action'] = $submitted;
@@ -235,9 +281,9 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private function wrongContextRejection(): void
     {
-        $ownerA = $this->ownerSession('a');
+        $ownerA = $this->ownerJar('a');
         $form = $this->form($this->request('GET', self::ROUTE, [], $ownerA)['body'], 'snooze');
-        $ownerB = $this->ownerSession('b');
+        $ownerB = $this->ownerJar('b');
         $ownerBForm = $this->form($this->request('GET', self::ROUTE, [], $ownerB)['body'], 'snooze');
         $fields = $form['fields']; $fields['csrf_token'] = $ownerBForm['fields']['csrf_token'];
         $this->reject('wrong-context rejection', $this->request('POST', self::ROUTE, $fields, $ownerB), $this->tenantRowCount('a'));
@@ -245,9 +291,9 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private function crossTenantDenial(): void
     {
-        $ownerA = $this->ownerSession('a');
+        $ownerA = $this->ownerJar('a');
         $form = $this->form($this->request('GET', self::ROUTE, [], $ownerA)['body'], 'dismiss');
-        $ownerB = $this->ownerSession('b');
+        $ownerB = $this->ownerJar('b');
         $ownerBForm = $this->form($this->request('GET', self::ROUTE, [], $ownerB)['body'], 'dismiss');
         $fields = $form['fields']; $fields['csrf_token'] = $ownerBForm['fields']['csrf_token'];
         $beforeA = $this->tenantRowCount('a'); $beforeB = $this->tenantRowCount('b');
@@ -261,7 +307,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
 
     private function contextualDisclosure(): void
     {
-        $session = $this->ownerSession('a');
+        $session = $this->ownerJar('a');
         $response = $this->request('GET', self::ROUTE, [], $session);
         $forms = $this->forms($response['body']);
         $candidate = $this->firstCurrentCandidate();
@@ -269,7 +315,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
         foreach ($forms as $form) {
             $this->assertTokenContext($response['body'], $form['fields']['action_token']);
         }
-        foreach (array_merge($this->privateMarkers, [$candidate['recommendation_key'], $candidate['evidence_fingerprint'], $candidate['target_ref'], (string) getenv('EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY'), (string) getenv('DB_PASSWORD'), $session]) as $forbidden) {
+        foreach (array_merge($this->privateMarkers, [$candidate['recommendation_key'], $candidate['evidence_fingerprint'], $candidate['target_ref'], (string) getenv('EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY'), (string) getenv('DB_PASSWORD')]) as $forbidden) {
             self::assert($forbidden === '' || !str_contains($response['body'], $forbidden), 'private fixture data was rendered');
         }
         $this->disclosureAssertions += count($forms) + count($this->privateMarkers) + 6;
@@ -277,24 +323,29 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
     }
 
     /** @return array{status:int,headers:array<string,string>,body:string} */
-    private function request(string $method, string $path, array $fields = [], ?string $session = null): array
+    private function request(string $method, string $path, array $fields = [], ?string $jar = null): array
     {
-        $headers = ['Accept: text/html'];
-        if ($session !== null) $headers[] = 'Cookie: portfolio_owner_session=' . $session;
-        $options = ['method' => $method, 'ignore_errors' => true, 'max_redirects' => 0, 'timeout' => 10, 'header' => implode("\r\n", $headers)];
-        if ($fields !== []) {
-            $options['header'] .= "\r\nContent-Type: application/x-www-form-urlencoded";
-            $options['content'] = http_build_query($fields, '', '&', PHP_QUERY_RFC3986);
-        }
-        $body = file_get_contents($this->baseUrl . $path, false, stream_context_create(['http' => $options]));
-        $raw = $http_response_header ?? [];
-        if (!is_array($raw) || !isset($raw[0]) || preg_match('/\s(\d{3})\s/', $raw[0], $match) !== 1) throw new RuntimeException('HTTP action test did not receive an HTTP response.');
+        $headerPath = tempnam(sys_get_temp_dir(), 'evidence-hub-http-header-');
+        $bodyPath = tempnam(sys_get_temp_dir(), 'evidence-hub-http-body-');
+        if ($headerPath === false || $bodyPath === false) throw new RuntimeException('HTTP action test response files are unavailable.');
+        $command = ['/usr/bin/curl', '--silent', '--show-error', '--request', $method, '--header', 'Accept: text/html', '--max-redirs', '0', '--connect-timeout', '10', '--dump-header', $headerPath, '--output', $bodyPath, '--write-out', '%{http_code}'];
+        if ($jar !== null) array_push($command, '--cookie', $jar, '--cookie-jar', $jar);
+        if ($fields !== []) array_push($command, '--header', 'Content-Type: application/x-www-form-urlencoded', '--data', http_build_query($fields, '', '&', PHP_QUERY_RFC3986));
+        $process = proc_open(array_merge($command, [$this->baseUrl . $path]), [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        if (!is_resource($process)) { @unlink($headerPath); @unlink($bodyPath); throw new RuntimeException('HTTP action curl client could not start.'); }
+        $status = trim((string) stream_get_contents($pipes[1]));
+        $error = trim((string) stream_get_contents($pipes[2]));
+        fclose($pipes[1]); fclose($pipes[2]); $exit = proc_close($process);
+        $raw = file($headerPath, FILE_IGNORE_NEW_LINES);
+        $body = file_get_contents($bodyPath);
+        @unlink($headerPath); @unlink($bodyPath);
+        if ($exit !== 0 || !preg_match('/^\d{3}$/', $status)) throw new RuntimeException('HTTP action test curl request failed' . ($error === '' ? '.' : '.'));
         $parsed = [];
-        foreach (array_slice($raw, 1) as $header) {
+        foreach (array_slice(is_array($raw) ? $raw : [], 1) as $header) {
             $pair = explode(':', $header, 2);
             if (count($pair) === 2) $parsed[strtolower(trim($pair[0]))] = trim($pair[1]);
         }
-        return ['status' => (int) $match[1], 'headers' => $parsed, 'body' => is_string($body) ? $body : ''];
+        return ['status' => (int) $status, 'headers' => $parsed, 'body' => is_string($body) ? $body : ''];
     }
 
     /** @return array{fields:array{csrf_token:string,action:string,action_token:string},token_hash:string} */
@@ -322,20 +373,10 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
         return $result;
     }
 
-    private function ownerSession(string $owner): string
+    private function ownerJar(string $owner): string
     {
-        $id = bin2hex(random_bytes(16));
-        $identity = $owner === 'a' ? $this->fixture['user_a'] : $this->fixture['user_b'];
-        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
-        session_save_path($this->sessionDirectory); ini_set('session.use_strict_mode', '0'); session_name('portfolio_owner_session'); session_id($id); session_start();
-        $_SESSION = [INTERNAL_USER_SESSION_KEY => ['internal_user_id' => $identity, 'authz_version' => 1, 'authenticated_at' => time(), 'last_activity_at' => time()]];
-        session_write_close(); ini_set('session.use_strict_mode', '1');
-        if ($owner === 'a' && $this->ownerASessionConsumer !== null) {
-            $consumer = $this->ownerASessionConsumer;
-            $this->ownerASessionConsumer = null;
-            $consumer($id);
-        }
-        return $id;
+        if (!array_key_exists($owner, $this->cookieJars)) throw new RuntimeException('HTTP action test selected an unknown cookie jar.');
+        return $this->cookieJars[$owner];
     }
 
     /** @return array{recommendation_key:string,rule_version:string,evidence_fingerprint:string,target_ref:string} */
