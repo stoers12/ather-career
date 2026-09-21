@@ -61,7 +61,7 @@ final class EvidenceHubRecommendationActionTest
         ob_start();
         renderEvidenceHubOwnerPresentation($contract, [['snooze' => str_repeat('A', 43), 'dismiss' => str_repeat('B', 43)]], 'تم تجاهل التوصية.');
         $html = (string) ob_get_clean();
-        foreach (['name="csrf_token"', 'name="action" value="snooze"', 'name="action_token"', 'تأجيل 14 يومًا', 'تجاهل التوصية', 'تم تجاهل التوصية.'] as $required) {
+        foreach (['name="csrf_token"', 'name="action" value="snooze"', 'name="action_token"', 'تأجيل 14 يومًا', 'تجاهل التوصية', 'تم تجاهل التوصية.', 'evidence-hub-snooze', 'evidence-hub-dismiss'] as $required) {
             phase2Assert(str_contains($html, $required), "Action presenter is missing {$required}.");
         }
         foreach ([str_repeat('a', 64), str_repeat('b', 64), 'opaque_target_ref', 'recommendation_key', 'evidence_fingerprint'] as $forbidden) {

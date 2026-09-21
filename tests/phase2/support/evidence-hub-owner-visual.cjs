@@ -34,16 +34,24 @@ async function assertNoBrowserErrors(errors, label) {
 
 (async () => {
     const browser = await chromium.launchPersistentContext(browserProfile, { headless: true, executablePath: edgeExecutable });
+    const pageAtViewport = async viewport => {
+        const page = await browser.newPage();
+        await page.setViewportSize(viewport);
+        return page;
+    };
     try {
         for (const width of [1440, 768, 360]) {
-            const page = await browser.newPage({ viewport: { width, height: 1000 } });
+            const page = await pageAtViewport({ width, height: 1000 });
             const errors = captureBrowserErrors(page);
             await page.goto(visualUrl('actions'));
             await page.getByText('تغطية التوثيق', { exact: true }).waitFor();
             await page.getByRole('heading', { name: 'خريطة الأدلة التقنية' }).waitFor();
             await page.getByRole('heading', { name: 'تقدم ملف الأعمال' }).waitFor();
             assert.equal(await page.getByText('جاهزية الملف', { exact: true }).isVisible(), true, `${width}: portfolio status section`);
-            assert.equal(await page.getByRole('link', { name: 'مركز الأدلة' }).getAttribute('aria-current'), 'page', `${width}: active navigation state`);
+            const activeNavigation = width >= 1101
+                ? page.getByRole('link', { name: 'مركز الأدلة' })
+                : page.locator('#evidence-hub-mobile-drawer a[href="/owner/evidence-hub"]');
+            assert.equal(await activeNavigation.getAttribute('aria-current'), 'page', `${width}: active navigation state`);
             assert.equal(await page.getByRole('article', { name: 'توصية مركز الأدلة' }).getByRole('link', { name: 'إضافة مشروع' }).getAttribute('href'), '/owner_projects.php?add=1', `${width}: authorized add-project destination`);
             assert.equal(await page.locator('[aria-label="توصية مركز الأدلة"]').count(), 1, `${width}: recommendation semantics`);
             assert.equal(await page.locator('html').getAttribute('dir'), 'rtl', `${width}: Arabic RTL document`);
@@ -61,12 +69,14 @@ async function assertNoBrowserErrors(errors, label) {
             await page.close();
         }
 
-        const noJavaScript = await browser.newPage({ viewport: { width: 360, height: 1000 }, javaScriptEnabled: false });
+        const noJavaScriptBrowser = await chromium.launch({ headless: true, executablePath: edgeExecutable });
+        const noJavaScriptContext = await noJavaScriptBrowser.newContext({ viewport: { width: 360, height: 1000 }, javaScriptEnabled: false });
+        const noJavaScript = await noJavaScriptContext.newPage();
         await noJavaScript.goto(visualUrl('actions'));
         assert.equal(await noJavaScript.getByRole('article', { name: 'توصية مركز الأدلة' }).getByRole('link', { name: 'إضافة مشروع' }).isVisible(), true, 'no-JavaScript: recommendation navigation remains usable');
-        await noJavaScript.close();
+        await noJavaScriptBrowser.close();
 
-        const navigation = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+        const navigation = await pageAtViewport({ width: 1440, height: 1000 });
         const navigationErrors = captureBrowserErrors(navigation);
         await navigation.goto(visualUrl('actions'));
         await navigation.locator('#evidence-hub-sidebar-toggle').click();
@@ -79,8 +89,8 @@ async function assertNoBrowserErrors(errors, label) {
         await assertNoBrowserErrors(navigationErrors, 'navigation');
         await navigation.close();
 
-        for (const viewport of [{ width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 320, height: 568 }]) {
-            const drawer = await browser.newPage({ viewport });
+        for (const viewport of [{ width: 1100, height: 768 }, { width: 1024, height: 768 }, { width: 390, height: 844 }, { width: 320, height: 568 }]) {
+            const drawer = await pageAtViewport(viewport);
             const drawerErrors = captureBrowserErrors(drawer);
             await drawer.goto(visualUrl('actions'));
             const opener = drawer.locator('#evidence-hub-mobile-toggle');
@@ -90,18 +100,18 @@ async function assertNoBrowserErrors(errors, label) {
             assert.equal(await backdrop.isVisible(), false, `${viewport.width}: backdrop starts hidden`);
             await opener.click();
             assert.equal(await opener.getAttribute('aria-expanded'), 'true', `${viewport.width}: opener expands drawer`);
-            assert.equal(await close.isFocused(), true, `${viewport.width}: focus moves to close control`);
+            assert.equal(await close.evaluate(node => node === document.activeElement), true, `${viewport.width}: focus moves to close control`);
             assert.equal(await backdrop.isVisible(), true, `${viewport.width}: backdrop opens`);
             assert.equal(await drawer.locator('body').evaluate(node => node.classList.contains('evidence-hub-mobile-scroll-lock')), true, `${viewport.width}: background scroll locks`);
             await close.click();
-            assert.equal(await opener.isFocused(), true, `${viewport.width}: close restores opener focus`);
+            assert.equal(await opener.evaluate(node => node === document.activeElement), true, `${viewport.width}: close restores opener focus`);
             assert.equal(await drawer.locator('body').evaluate(node => node.classList.contains('evidence-hub-mobile-scroll-lock')), false, `${viewport.width}: close releases scroll lock`);
             await opener.click();
             await backdrop.click({ position: { x: 2, y: 2 } });
-            assert.equal(await opener.isFocused(), true, `${viewport.width}: backdrop restores opener focus`);
+            assert.equal(await opener.evaluate(node => node === document.activeElement), true, `${viewport.width}: backdrop restores opener focus`);
             await opener.click();
             await drawer.keyboard.press('Escape');
-            assert.equal(await opener.isFocused(), true, `${viewport.width}: Escape restores opener focus`);
+            assert.equal(await opener.evaluate(node => node === document.activeElement), true, `${viewport.width}: Escape restores opener focus`);
             await opener.click();
             await drawer.locator('#evidence-hub-mobile-drawer a').first().evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
             await drawer.locator('#evidence-hub-mobile-drawer a').first().click();
@@ -119,7 +129,7 @@ async function assertNoBrowserErrors(errors, label) {
             await drawer.close();
         }
 
-        const reducedMotion = await browser.newPage({ viewport: { width: 768, height: 1000 } });
+        const reducedMotion = await pageAtViewport({ width: 768, height: 1000 });
         const reducedMotionErrors = captureBrowserErrors(reducedMotion);
         await reducedMotion.emulateMedia({ reducedMotion: 'reduce' });
         await reducedMotion.goto(visualUrl('partial'));
@@ -128,17 +138,32 @@ async function assertNoBrowserErrors(errors, label) {
         await assertNoBrowserErrors(reducedMotionErrors, 'reduced motion');
         await reducedMotion.close();
 
-        const desktop = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+        const desktop = await pageAtViewport({ width: 1440, height: 1000 });
         const desktopErrors = captureBrowserErrors(desktop);
         await desktop.goto(visualUrl('actions'));
+        await desktop.evaluate(() => localStorage.setItem('ather.evidenceHub.sidebarCollapsed', 'false'));
+        await desktop.reload();
         assert.equal(await desktop.locator('#evidence-hub-mobile-backdrop').isVisible(), false, 'desktop: backdrop does not intercept input');
         assert.equal(await desktop.locator('body').evaluate(node => !node.classList.contains('evidence-hub-mobile-scroll-lock')), true, 'desktop: body remains scrollable');
         await desktop.locator('#evidence-hub-sidebar-toggle').click();
         assert.equal(await desktop.locator('body').evaluate(node => node.classList.contains('evidence-hub-sidebar-collapsed')), true, 'desktop: collapse remains independent');
+        await desktop.waitForFunction(() => Math.round(document.querySelector('.evidence-hub-sidebar').getBoundingClientRect().width) === 82);
+        assert.equal(await desktop.locator('.evidence-hub-sidebar').evaluate(node => Math.round(node.getBoundingClientRect().width)), 82, 'desktop: collapsed rail is 82px');
+        assert.equal(await desktop.locator('#evidence-hub-sidebar-toggle').evaluate(node => Math.round(node.getBoundingClientRect().width)), 44, 'desktop: collapse control is 44px');
+        assert.equal(await desktop.locator('#evidence-hub-sidebar-toggle').getAttribute('aria-label'), 'توسيع الشريط الجانبي', 'desktop: collapse label changes');
+        await desktop.locator('#evidence-hub-theme-toggle').click();
+        assert.equal(await desktop.locator('body').getAttribute('data-evidence-hub-theme'), 'dark', 'desktop: theme switches on the Evidence Hub root');
+        assert.equal(await desktop.locator('#evidence-hub-theme-toggle').getAttribute('aria-pressed'), 'true', 'desktop: dark theme is programmatically exposed');
+        assert.equal(await desktop.locator('#evidence-hub-theme-toggle').getAttribute('aria-label'), 'تفعيل المظهر الفاتح', 'desktop: theme label changes');
+        await desktop.setViewportSize({ width: 1101, height: 1000 });
+        assert.equal(await desktop.locator('#evidence-hub-mobile-drawer').evaluate(node => !node.inert), true, '1101: desktop rail is never inert');
+        await desktop.setViewportSize({ width: 1100, height: 1000 });
+        assert.equal(await desktop.locator('#evidence-hub-mobile-toggle').isVisible(), true, '1100: mobile drawer authority is active');
+        assert.equal(await desktop.locator('#evidence-hub-mobile-drawer').evaluate(node => node.inert), true, '1100: closed mobile drawer is inert');
         await assertNoBrowserErrors(desktopErrors, 'desktop');
         await desktop.close();
 
-        const safeError = await browser.newPage();
+        const safeError = await pageAtViewport({ width: 1440, height: 1000 });
         const safeErrorErrors = captureBrowserErrors(safeError);
         await safeError.goto(visualUrl('error'));
         assert.equal(await safeError.getByRole('alert').textContent(), 'مركز الأدلة غير متاح مؤقتًا.يرجى المحاولة لاحقًا.', 'safe error state');

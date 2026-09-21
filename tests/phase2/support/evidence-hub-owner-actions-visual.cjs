@@ -1,4 +1,4 @@
-const { chromium } = require('playwright');
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
 const baseUrl = process.env.EVIDENCE_HUB_ACTION_TEST_URL;
 const edgeExecutable = process.env.EVIDENCE_HUB_EDGE_EXECUTABLE;
@@ -92,6 +92,7 @@ const watchdog = setTimeout(async () => {
         expectState(await snoozeForm.count() === 1, 'snooze-form-present', 'expected snooze form was not found');
         const snoozeControl = snoozeForm.getByRole('button', { name: snoozeName });
         expectState(await snoozeControl.count() === 1, 'snooze-control-present', 'expected snooze control was not found');
+        expectState(await snoozeControl.evaluate(node => node.classList.contains('evidence-hub-snooze')), 'snooze-secondary-hierarchy', 'Snooze control lost its secondary presentation role');
         expectState(await snoozeControl.isVisible(), 'snooze-control-visible', 'expected snooze control was not visible');
         expectState(await snoozeControl.isEnabled(), 'snooze-control-enabled', 'expected snooze control was disabled');
         await snoozeControl.focus();
@@ -123,6 +124,7 @@ const watchdog = setTimeout(async () => {
         expectState(await dismissTokenInput.count() === 1 && await dismissTokenInput.inputValue() !== '', 'dismiss-fresh-token-present', 'expected fresh dismiss token was not available');
         const dismissControl = dismissForm.getByRole('button', { name: dismissName });
         expectState(await dismissControl.count() === 1, 'dismiss-control-present', 'expected dismiss control was not found');
+        expectState(await dismissControl.evaluate(node => node.classList.contains('evidence-hub-dismiss')), 'dismiss-destructive-hierarchy', 'Dismiss control lost its destructive presentation role');
 
         mark('dismiss-control-visible');
         expectState(await dismissControl.isVisible(), 'dismiss-control-visible', 'expected dismiss control was not visible');

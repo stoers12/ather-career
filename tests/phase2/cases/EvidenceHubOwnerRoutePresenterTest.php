@@ -131,17 +131,19 @@ final class EvidenceHubOwnerRoutePresenterTest
         $layout = self::read('includes/owner_layout.php');
         $presentation = self::read('includes/evidence_hub_owner_presentation.php');
         $javascript = self::read('evidence_hub.js');
-        foreach (['dir="rtl"', 'lang="ar"', 'مركز الأدلة', 'إدارة المشاريع', 'evidence-hub-sidebar-toggle', 'evidence-hub-mobile-toggle', 'evidence-hub-mobile-drawer', 'evidence_hub.css', 'evidence_hub.js'] as $required) {
+        foreach (['dir="rtl"', 'lang="ar"', 'مركز الأدلة', 'إدارة المشاريع', 'evidence-hub-sidebar-toggle', 'evidence-hub-mobile-toggle', 'evidence-hub-mobile-drawer', 'evidence-hub-theme-toggle', 'data-sidebar-tooltip', 'evidence_hub.css', 'evidence_hub.js'] as $required) {
             phase2Assert(str_contains($layout . $presentation, $required), "Production Evidence Hub shell is missing {$required}.");
         }
-        phase2Assert(str_contains($javascript, 'ather.evidenceHub.sidebarCollapsed'), 'Evidence Hub sidebar preference key is missing.');
+        foreach (['ather.evidenceHub.sidebarCollapsed', 'ather.evidenceHub.theme', "window.matchMedia('(max-width: 1100px)')", 'setTheme', 'setMobileDrawer'] as $required) {
+            phase2Assert(str_contains($javascript, $required), "Evidence Hub visual state contract is missing {$required}.");
+        }
         foreach (['evidence-hub-mobile-close', 'إغلاق القائمة', 'evidence-hub-mobile-backdrop', 'aria-controls="evidence-hub-mobile-drawer"'] as $required) {
             phase2Assert(str_contains($layout, $required), "Evidence Hub mobile drawer structure is missing {$required}.");
         }
         foreach (['تحرير الأدلة', '>النشاط<'] as $forbidden) {
             phase2Assert(!str_contains($layout . $presentation, $forbidden), "Production Evidence Hub shell contains forbidden {$forbidden}.");
         }
-        foreach (['evidence-hub-status', 'evidence-hub-documentation', 'evidence-hub-technology', 'evidence-hub-progress', 'evidence-hub-recommendations', 'dir="ltr"', 'csrf_token', 'action_token', 'name="action" value="snooze"', 'name="action" value="dismiss"'] as $required) {
+        foreach (['evidence-hub-status', 'evidence-hub-documentation', 'evidence-hub-technology', 'evidence-hub-progress', 'evidence-hub-recommendations', 'dir="ltr"', 'csrf_token', 'action_token', 'name="action" value="snooze"', 'name="action" value="dismiss"', 'evidence-hub-snooze', 'evidence-hub-dismiss'] as $required) {
             phase2Assert(str_contains($presentation, $required), "Production Evidence Hub presentation is missing {$required}.");
         }
         foreach (['recommendation_key', 'evidence_fingerprint', 'opaque_target_ref', 'raw_label', 'canonical_key', 'tenant_scope_ref', 'portfolio_target_identity'] as $forbidden) {
@@ -152,9 +154,10 @@ final class EvidenceHubOwnerRoutePresenterTest
         }
         $css = self::read('evidence_hub.css');
         phase2Assert(str_contains($css, 'unicode-bidi:isolate'), 'Evidence Hub numeric bidi isolation is missing.');
-        foreach (['256px', '82px', '@media (max-width:799px)', 'prefers-reduced-motion', '[data-bidi-number]', '44px', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock'] as $required) {
+        foreach (['256px', '82px', '@media (max-width: 1100px)', 'prefers-reduced-motion', '[data-bidi-number]', '44px', 'data-evidence-hub-theme="dark"', 'data-sidebar-tooltip', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock'] as $required) {
             phase2Assert(str_contains($css, $required), "Evidence Hub presentation CSS is missing {$required}.");
         }
+        phase2Assert(!str_contains($css . $javascript, '799px'), 'Evidence Hub retains a stale 799px responsive authority.');
         foreach (['setMobileDrawer', 'mobileReturnFocus', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock'] as $required) {
             phase2Assert(str_contains($javascript, $required), "Evidence Hub mobile drawer state is missing {$required}.");
         }
