@@ -13,6 +13,79 @@ final class Auth0OidcException extends RuntimeException
     }
 }
 
+const AUTH0_TOKEN_VALIDATION_SAFE_REASONS = [
+    'token_transport_failed',
+    'token_http_rejected',
+    'token_http_invalid_request',
+    'token_http_invalid_client',
+    'token_http_invalid_grant',
+    'token_http_unauthorized_client',
+    'token_http_unsupported_grant_type',
+    'token_http_invalid_scope',
+    'token_http_rejected_other',
+    'token_response_invalid',
+    'jwks_fetch_failed',
+    'jwt_signature_failed',
+    'issuer_failed',
+    'audience_failed',
+    'nonce_failed',
+    'expiry_failed',
+];
+
+const AUTH0_TOKEN_HTTP_ERROR_REASONS = [
+    'invalid_request' => 'token_http_invalid_request',
+    'invalid_client' => 'token_http_invalid_client',
+    'invalid_grant' => 'token_http_invalid_grant',
+    'unauthorized_client' => 'token_http_unauthorized_client',
+    'unsupported_grant_type' => 'token_http_unsupported_grant_type',
+    'invalid_scope' => 'token_http_invalid_scope',
+];
+
+function auth0TokenValidationSafeReason(string $reason): string
+{
+    return in_array($reason, AUTH0_TOKEN_VALIDATION_SAFE_REASONS, true) ? $reason : 'token_validation_failed';
+}
+
+function auth0TokenHttpRejectionReason(mixed $providerError): string
+{
+    return is_string($providerError) && array_key_exists($providerError, AUTH0_TOKEN_HTTP_ERROR_REASONS)
+        ? AUTH0_TOKEN_HTTP_ERROR_REASONS[$providerError]
+        : 'token_http_rejected_other';
+}
+
+function auth0TokenValidationFailure(string $reason): Auth0OidcException
+{
+    return new Auth0OidcException(auth0TokenValidationSafeReason($reason));
+}
+
+function auth0TokenValidationExceptionReason(Throwable $exception, string $stage): string
+{
+    if ($stage === 'jwks') {
+        return is_a($exception, 'Auth0\\SDK\\Exception\\NetworkException')
+            ? 'jwks_fetch_failed'
+            : 'jwt_signature_failed';
+    }
+    if ($stage !== 'claims' || !is_a($exception, 'Auth0\\SDK\\Exception\\InvalidTokenException')) {
+        return 'token_validation_failed';
+    }
+
+    $message = $exception->getMessage();
+    if (str_contains($message, 'Issuer (iss) claim')) {
+        return 'issuer_failed';
+    }
+    if (str_contains($message, 'Audience (aud) claim') || str_contains($message, 'Authorized Party (azp) claim')) {
+        return 'audience_failed';
+    }
+    if (str_contains($message, 'Nonce (nonce) claim')) {
+        return 'nonce_failed';
+    }
+    if (str_contains($message, 'Expiration Time (exp)')) {
+        return 'expiry_failed';
+    }
+
+    return 'token_validation_failed';
+}
+
 final readonly class Auth0OidcConfiguration
 {
     public function __construct(
@@ -192,17 +265,35 @@ function validateAuth0AuthorizationCode(Auth0OidcConfiguration $configuration, s
     $discovery = auth0Discovery($configuration);
     try {
         $client = new GuzzleHttp\Client(['timeout' => 8.0, 'connect_timeout' => 3.0, 'http_errors' => false]);
-        $response = $client->post($discovery['token_endpoint'], ['form_params' => [
-            'grant_type' => 'authorization_code',
-            'client_id' => $configuration->clientId,
-            'client_secret' => $configuration->clientSecret,
-            'redirect_uri' => $configuration->redirectUri,
-            'code' => $code,
-            'code_verifier' => $verifier,
-        ]]);
-        $payload = json_decode((string) $response->getBody(), true, 32, JSON_THROW_ON_ERROR);
-        if ($response->getStatusCode() !== 200 || !is_array($payload) || !is_string($payload['id_token'] ?? null)) {
-            throw new RuntimeException();
+        try {
+            $response = $client->post($discovery['token_endpoint'], ['form_params' => [
+                'grant_type' => 'authorization_code',
+                'client_id' => $configuration->clientId,
+                'client_secret' => $configuration->clientSecret,
+                'redirect_uri' => $configuration->redirectUri,
+                'code' => $code,
+                'code_verifier' => $verifier,
+            ]]);
+        } catch (Throwable) {
+            throw auth0TokenValidationFailure('token_transport_failed');
+        }
+        if ($response->getStatusCode() !== 200) {
+            $providerError = null;
+            try {
+                $responsePayload = json_decode((string) $response->getBody(), true, 32, JSON_THROW_ON_ERROR);
+                $providerError = is_array($responsePayload) ? ($responsePayload['error'] ?? null) : null;
+            } catch (Throwable) {
+                $providerError = null;
+            }
+            throw auth0TokenValidationFailure(auth0TokenHttpRejectionReason($providerError));
+        }
+        try {
+            $payload = json_decode((string) $response->getBody(), true, 32, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            throw auth0TokenValidationFailure('token_response_invalid');
+        }
+        if (!is_array($payload) || !is_string($payload['id_token'] ?? null)) {
+            throw auth0TokenValidationFailure('token_response_invalid');
         }
         $sdkConfiguration = new Auth0\SDK\Configuration\SdkConfiguration([
             'strategy' => Auth0\SDK\Configuration\SdkConfiguration::STRATEGY_NONE,
@@ -214,11 +305,22 @@ function validateAuth0AuthorizationCode(Auth0OidcConfiguration $configuration, s
             'tokenJwksUri' => $discovery['jwks_uri'],
         ]);
         $token = new Auth0\SDK\Token($sdkConfiguration, $payload['id_token'], Auth0\SDK\Token::TYPE_ID_TOKEN);
-        $token->verify()->validate($configuration->issuer, [$configuration->clientId], null, $nonce);
+        try {
+            $token->verify();
+        } catch (Throwable $exception) {
+            throw auth0TokenValidationFailure(auth0TokenValidationExceptionReason($exception, 'jwks'));
+        }
+        try {
+            $token->validate($configuration->issuer, [$configuration->clientId], null, $nonce);
+        } catch (Throwable $exception) {
+            throw auth0TokenValidationFailure(auth0TokenValidationExceptionReason($exception, 'claims'));
+        }
         $issuer = $token->getIssuer();
         $subject = $token->getSubject();
+    } catch (Auth0OidcException $exception) {
+        throw $exception;
     } catch (Throwable) {
-        throw new Auth0OidcException('token_validation_failed');
+        throw auth0TokenValidationFailure('token_validation_failed');
     }
     if (!is_string($issuer) || !hash_equals($configuration->issuer, $issuer)) {
         throw new Auth0OidcException('issuer_mismatch');
