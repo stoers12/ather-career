@@ -210,8 +210,12 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         [IO.File]::WriteAllLines($invalidJar, [string[]]$invalidLines, [Text.UTF8Encoding]::new($false))
         Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_TEST=1', '-e', 'EVIDENCE_HUB_HTTP_ACTION_BASE_URL=http://127.0.0.1', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_INVALID=/tmp/bridge/fabricated.cookiejar', $web, 'php', 'scripts/run-evidence-hub-http-action-test.php'))
         if ($null -ne $Playwright) {
-            $env:PLAYWRIGHT_MODULE = $Playwright.Module; $env:EVIDENCE_HUB_EDGE_EXECUTABLE = $Chromium; $env:EVIDENCE_HUB_BROWSER_PROFILE = $profile; $env:EVIDENCE_HUB_VISUAL_BASE_URL = "http://127.0.0.1:$port"
+            $sessionLine = Get-Content -LiteralPath $ownerAJar | Where-Object { $_ -match '(^|\t)portfolio_owner_session\t' -or $_ -match '^#HttpOnly_.*\tportfolio_owner_session\t' } | Select-Object -First 1
+            if (-not [string]::IsNullOrWhiteSpace($sessionLine)) { $actionSession = ($sessionLine -split "`t")[-1] } else { $actionSession = '' }
+            if ([string]::IsNullOrWhiteSpace($actionSession)) { Fail-Gate 'action visual session' 'Owner A native cookie jar did not contain an application session.' }
+            $env:PLAYWRIGHT_MODULE = $Playwright.Module; $env:EVIDENCE_HUB_EDGE_EXECUTABLE = $Chromium; $env:EVIDENCE_HUB_BROWSER_PROFILE = $profile; $env:EVIDENCE_HUB_VISUAL_BASE_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_TEST_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_SESSION_COOKIE = $actionSession
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-visual.cjs'), $screenshots)
+            Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs'))
         }
     } finally {
         & docker exec $web rm -rf $bootstrapState 2>$null | Out-Null
@@ -268,14 +272,18 @@ function Invoke-FocusedTwoOwnerGate {
     $temporary = Join-Path ([IO.Path]::GetTempPath()) ("ather-evidence-hub-focused-" + [guid]::NewGuid().ToString('N'))
     $manifest = Join-Path $temporary 'source.manifest'
     $image = "ather-evidence-hub-focused-$([guid]::NewGuid().ToString('N'))"
+    $playwright = $null
     New-Item -ItemType Directory -Path $temporary | Out-Null
     try {
         New-SourceManifest $resolvedRoot $manifest | Out-Null
         Invoke-Tool 'docker' @('build', '--pull=false', '-f', (Join-Path $resolvedRoot 'Dockerfile'), '-t', $image, $resolvedRoot)
         Assert-CurrentSourceIdentity $resolvedRoot $image 'development' $manifest
-        Invoke-RequiredMySqlAndBrowserGates $resolvedRoot $image $null '' $temporary
+        $playwright = New-TemporaryPlaywright $resolvedRoot
+        $chromium = Get-Chromium1208Executable
+        Invoke-RequiredMySqlAndBrowserGates $resolvedRoot $image $playwright $chromium $temporary
         Write-Host 'FOCUSED_TWO_OWNER_GATE_PASSED'
     } finally {
+        if ($playwright) { Remove-Item -LiteralPath $playwright.Directory -Recurse -Force -ErrorAction SilentlyContinue }
         Remove-Item -LiteralPath $temporary -Recurse -Force -ErrorAction SilentlyContinue
         & docker image rm -f $image 2>$null | Out-Null
     }
