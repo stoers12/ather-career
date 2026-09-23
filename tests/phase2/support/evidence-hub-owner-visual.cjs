@@ -40,8 +40,14 @@ async function assertNoBrowserErrors(errors, label) {
         return page;
     };
     try {
-        for (const width of [1440, 768, 360]) {
-            const page = await pageAtViewport({ width, height: 1000 });
+        const visualViewports = [
+            { width: 1440, height: 900 }, { width: 1280, height: 800 }, { width: 1100, height: 768 },
+            { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 },
+            { width: 360, height: 800 }, { width: 320, height: 568 }
+        ];
+        for (const viewport of visualViewports) {
+            const { width } = viewport;
+            const page = await pageAtViewport(viewport);
             const errors = captureBrowserErrors(page);
             await page.goto(visualUrl('actions'));
             await page.getByText('تغطية التوثيق', { exact: true }).waitFor();
@@ -86,6 +92,21 @@ async function assertNoBrowserErrors(errors, label) {
         assert.equal(await navigation.locator('body').evaluate(node => node.classList.contains('evidence-hub-mobile-open')), true, 'mobile: drawer opens');
         await navigation.keyboard.press('Escape');
         assert.equal(await navigation.locator('body').evaluate(node => node.classList.contains('evidence-hub-mobile-open')), false, 'mobile: drawer closes with Escape');
+        await navigation.setViewportSize({ width: 1440, height: 900 });
+        await navigation.goto(visualUrl('actions'));
+        await navigation.locator('.admin-content').screenshot({ path: path.join(output, 'desktop-collapsed.png') });
+        await navigation.locator('#evidence-hub-theme-toggle').focus();
+        await navigation.screenshot({ path: path.join(output, 'collapsed-tooltip.png') });
+        await navigation.locator('#evidence-hub-sidebar-toggle').click();
+        await navigation.locator('#evidence-hub-theme-toggle').click();
+        await navigation.locator('.admin-content').screenshot({ path: path.join(output, 'desktop-dark.png') });
+        await navigation.locator('#evidence-hub-sidebar-toggle').focus();
+        await navigation.locator('.admin-content').screenshot({ path: path.join(output, 'keyboard-focus.png') });
+        await navigation.setViewportSize({ width: 390, height: 844 });
+        await navigation.locator('#evidence-hub-mobile-toggle').click();
+        await navigation.screenshot({ path: path.join(output, 'mobile-drawer.png') });
+        await navigation.setViewportSize({ width: 1440, height: 900 });
+        if (await navigation.locator('body').getAttribute('data-evidence-hub-theme') === 'dark') await navigation.locator('#evidence-hub-theme-toggle').click();
         await assertNoBrowserErrors(navigationErrors, 'navigation');
         await navigation.close();
 

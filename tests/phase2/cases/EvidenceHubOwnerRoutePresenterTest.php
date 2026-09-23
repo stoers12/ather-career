@@ -105,6 +105,9 @@ final class EvidenceHubOwnerRoutePresenterTest
         });
         phase2Assert(str_contains($recommendationHtml, 'href="/owner_projects.php?add=1"'), 'Project recommendation does not use the generic authorized management screen.');
         phase2Assert(str_contains($recommendationHtml, 'name="csrf_token"') && str_contains($recommendationHtml, 'name="action_token" value="synthetic-snooze-token"') && str_contains($recommendationHtml, 'name="action_token" value="synthetic-dismiss-token"'), 'Secure recommendation forms are not retained by the presentation.');
+        foreach (['evidence-hub-recommendation-topline', 'evidence-hub-recommendation-category', 'evidence-hub-recommendation-footer', 'evidence-hub-recommendation-icon', '<svg class="evidence-hub-icon"'] as $required) {
+            phase2Assert(str_contains($recommendationHtml, $required), "Recommendation hierarchy is missing {$required}.");
+        }
         phase2Assert(!str_contains($recommendationHtml, $recommendations[0]['recommendation_key']) && !str_contains($recommendationHtml, $recommendations[0]['evidence_fingerprint']) && !str_contains($recommendationHtml, $recommendations[0]['target']['opaque_target_ref']), 'Recommendation internals leaked into the presentation.');
 
         $error = self::render(static function (): void { renderEvidenceHubOwnerSafeError(); });
@@ -143,7 +146,7 @@ final class EvidenceHubOwnerRoutePresenterTest
         foreach (['تحرير الأدلة', '>النشاط<'] as $forbidden) {
             phase2Assert(!str_contains($layout . $presentation, $forbidden), "Production Evidence Hub shell contains forbidden {$forbidden}.");
         }
-        foreach (['evidence-hub-status', 'evidence-hub-documentation', 'evidence-hub-technology', 'evidence-hub-progress', 'evidence-hub-recommendations', 'dir="ltr"', 'csrf_token', 'action_token', 'name="action" value="snooze"', 'name="action" value="dismiss"', 'evidence-hub-snooze', 'evidence-hub-dismiss'] as $required) {
+        foreach (['evidence-hub-status', 'evidence-hub-documentation', 'evidence-hub-technology', 'evidence-hub-progress', 'evidence-hub-recommendations', 'evidence-hub-hero-state', 'evidence-hub-coverage-kpi', 'evidence-hub-recommendation-topline', 'evidence-hub-recommendation-footer', 'dir="ltr"', 'csrf_token', 'action_token', 'name="action" value="snooze"', 'name="action" value="dismiss"', 'evidence-hub-snooze', 'evidence-hub-dismiss'] as $required) {
             phase2Assert(str_contains($presentation, $required), "Production Evidence Hub presentation is missing {$required}.");
         }
         foreach (['recommendation_key', 'evidence_fingerprint', 'opaque_target_ref', 'raw_label', 'canonical_key', 'tenant_scope_ref', 'portfolio_target_identity'] as $forbidden) {
@@ -154,7 +157,7 @@ final class EvidenceHubOwnerRoutePresenterTest
         }
         $css = self::read('evidence_hub.css');
         phase2Assert(str_contains($css, 'unicode-bidi:isolate'), 'Evidence Hub numeric bidi isolation is missing.');
-        foreach (['256px', '82px', '@media (max-width: 1100px)', 'prefers-reduced-motion', '[data-bidi-number]', '44px', 'data-evidence-hub-theme="dark"', 'data-sidebar-tooltip', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock'] as $required) {
+        foreach (['--eh-canvas', '--eh-primary', '--eh-danger', '256px', '82px', '@media (max-width: 1100px)', 'prefers-reduced-motion', '[data-bidi-number]', '44px', 'data-evidence-hub-theme="dark"', 'data-sidebar-tooltip', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock', 'evidence-hub-recommendation-card--documentation', 'evidence-hub-technology-card--review'] as $required) {
             phase2Assert(str_contains($css, $required), "Evidence Hub presentation CSS is missing {$required}.");
         }
         phase2Assert(!str_contains($css . $javascript, '799px'), 'Evidence Hub retains a stale 799px responsive authority.');
