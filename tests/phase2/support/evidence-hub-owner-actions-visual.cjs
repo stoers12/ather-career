@@ -27,11 +27,11 @@ const withinStepTimeout = (operation, label) => new Promise((resolve, reject) =>
     const timer = setTimeout(() => reject(new Error(`${label} timed out`)), stepTimeout);
     operation.then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });
 });
-const recommendationName = 'توصية مركز الأدلة';
-const snoozeName = 'تأجيل 14 يومًا';
-const dismissName = 'تجاهل التوصية';
-const snoozeRecommendationTitle = 'راجِع الأدلة التقنية';
-const dismissRecommendationTitle = 'استكمل نشر ملف الأعمال';
+const recommendationName = 'Evidence Hub recommendation';
+const snoozeName = 'Snooze for 14 days';
+const dismissName = 'Dismiss';
+const snoozeRecommendationTitle = 'Review technology evidence';
+const dismissRecommendationTitle = 'Complete portfolio publishing';
 const actionForm = (scope, action) => scope.locator(`form[action="${routePath}"]:has(input[type="hidden"][name="action"][value="${action}"])`);
 const actionableCards = page => page.getByRole('article', { name: recommendationName }).filter({ has: page.locator(`form[action="${routePath}"]`) });
 const recommendationCard = (page, title) => page.getByRole('article', { name: recommendationName }).filter({ has: page.getByRole('heading', { name: title }) });
@@ -95,6 +95,11 @@ const watchdog = setTimeout(async () => {
         expectState(await snoozeControl.evaluate(node => node.classList.contains('evidence-hub-snooze')), 'snooze-secondary-hierarchy', 'Snooze control lost its secondary presentation role');
         expectState(await snoozeControl.isVisible(), 'snooze-control-visible', 'expected snooze control was not visible');
         expectState(await snoozeControl.isEnabled(), 'snooze-control-enabled', 'expected snooze control was disabled');
+        const snoozeTone = await snoozeControl.evaluate(node => ({
+            color: getComputedStyle(node).color,
+            background: getComputedStyle(node).backgroundColor,
+            border: getComputedStyle(node).borderColor,
+        }));
         await snoozeControl.focus();
         expectState(await page.evaluate(() => document.activeElement?.tagName === 'BUTTON'), 'snooze-control-focus', 'expected snooze control did not receive focus');
 
@@ -109,7 +114,7 @@ const watchdog = setTimeout(async () => {
         const snoozeNavigationResponse = await snoozeNavigation;
         expectState(snoozeNavigationResponse?.status() === 200, 'snooze-navigation-status', `expected 200; received ${snoozeNavigationResponse?.status() ?? 'none'}`);
         expectState(currentPathname(page) === routePath, 'snooze-prg-complete', 'expected route pathname after redirect');
-        expectState(await page.getByRole('status').textContent() === 'تم تأجيل التوصية لمدة 14 يومًا.', 'snooze-feedback-visible', 'expected Arabic Snooze feedback was not visible');
+        expectState(await page.getByRole('status').textContent() === 'Recommendation snoozed for 14 days.', 'snooze-feedback-visible', 'expected Snooze feedback was not visible');
 
         mark('dismiss-candidate-remains');
         const postSnoozeCards = actionableCards(page);
@@ -125,6 +130,12 @@ const watchdog = setTimeout(async () => {
         const dismissControl = dismissForm.getByRole('button', { name: dismissName });
         expectState(await dismissControl.count() === 1, 'dismiss-control-present', 'expected dismiss control was not found');
         expectState(await dismissControl.evaluate(node => node.classList.contains('evidence-hub-dismiss')), 'dismiss-destructive-hierarchy', 'Dismiss control lost its destructive presentation role');
+        const dismissTone = await dismissControl.evaluate(node => ({
+            color: getComputedStyle(node).color,
+            background: getComputedStyle(node).backgroundColor,
+            border: getComputedStyle(node).borderColor,
+        }));
+        expectState(snoozeTone.color !== dismissTone.color && snoozeTone.border !== dismissTone.border, 'dismiss-destructive-visual-tone', 'Dismiss control is not visually distinct from secondary Snooze');
 
         mark('dismiss-control-visible');
         expectState(await dismissControl.isVisible(), 'dismiss-control-visible', 'expected dismiss control was not visible');
@@ -146,7 +157,7 @@ const watchdog = setTimeout(async () => {
         expectState(currentPathname(page) === routePath, 'dismiss-prg-complete', 'expected route pathname after redirect');
 
         mark('dismiss-feedback-visible');
-        expectState(await page.getByRole('status').textContent() === 'تم تجاهل التوصية.', 'dismiss-feedback-visible', 'expected Arabic Dismiss feedback was not visible');
+        expectState(await page.getByRole('status').textContent() === 'Recommendation dismissed.', 'dismiss-feedback-visible', 'expected Dismiss feedback was not visible');
         mark('dismiss-recommendation-removed');
         const postDismissCount = await actionableCards(page).count();
         console.log(`POST_DISMISS_ACTIONABLE_CANDIDATE_COUNT=${postDismissCount}`);

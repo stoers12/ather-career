@@ -7,6 +7,7 @@
     var mobileToggle = document.getElementById('evidence-hub-mobile-toggle');
     var mobileClose = document.getElementById('evidence-hub-mobile-close');
     var themeToggle = document.getElementById('evidence-hub-theme-toggle');
+    var mainContent = document.getElementById('main-content');
     var mobileQuery = window.matchMedia('(max-width: 1100px)');
     var sidebarKey = 'ather.evidenceHub.sidebarCollapsed';
     var themeKey = 'ather.evidenceHub.theme';
@@ -20,7 +21,7 @@
     function setPanelState(collapsed) {
         var closeIcon = desktopToggle.querySelector('[data-evidence-hub-panel-state="close"]');
         var openIcon = desktopToggle.querySelector('[data-evidence-hub-panel-state="open"]');
-        var label = collapsed ? 'توسيع الشريط الجانبي' : 'طي الشريط الجانبي';
+        var label = collapsed ? 'Expand navigation' : 'Collapse navigation';
         desktopToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
         desktopToggle.setAttribute('aria-label', label);
         desktopToggle.setAttribute('data-sidebar-tooltip', label);
@@ -38,14 +39,18 @@
         var dark = value === 'dark';
         root.setAttribute('data-evidence-hub-theme', value);
         themeToggle.setAttribute('aria-pressed', dark ? 'true' : 'false');
-        themeToggle.setAttribute('aria-label', dark ? 'تفعيل المظهر الفاتح' : 'تفعيل المظهر الداكن');
-        themeToggle.setAttribute('data-sidebar-tooltip', dark ? 'تفعيل المظهر الفاتح' : 'تفعيل المظهر الداكن');
+        themeToggle.setAttribute('aria-label', dark ? 'Enable light theme' : 'Enable dark theme');
+        themeToggle.setAttribute('data-sidebar-tooltip', dark ? 'Enable light theme' : 'Enable dark theme');
         if (persist) safeSet(themeKey, value);
     }
     function setMobileDrawer(open, restoreFocus) {
         var active = Boolean(open && isMobile());
         root.classList.toggle('evidence-hub-mobile-open', active);
         root.classList.toggle('evidence-hub-mobile-scroll-lock', active);
+        if (mainContent) {
+            mainContent.inert = active;
+            if (active) mainContent.setAttribute('aria-hidden', 'true'); else mainContent.removeAttribute('aria-hidden');
+        }
         mobileToggle.setAttribute('aria-expanded', active ? 'true' : 'false');
         backdrop.hidden = !active;
         backdrop.setAttribute('aria-hidden', active ? 'false' : 'true');

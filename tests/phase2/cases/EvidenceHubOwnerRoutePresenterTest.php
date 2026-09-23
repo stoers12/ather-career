@@ -63,10 +63,10 @@ final class EvidenceHubOwnerRoutePresenterTest
         phase2Assert(is_string($mappedDisplay) && is_string($unmappedRawLabel), 'Owner page presentation fixture is invalid.');
 
         $empty = self::render(static function () use ($zero): void { renderEvidenceHubOwnerPresentation($zero); });
-        phase2Assert(str_contains($empty, 'لا توجد مشاريع بعد') && str_contains($empty, 'لا توجد توصيات حالية'), 'Empty or no-action state is not rendered from the frozen contract.');
+        phase2Assert(str_contains($empty, 'No projects yet') && str_contains($empty, 'All recommendations reviewed'), 'Empty or no-action state is not rendered from the frozen contract.');
 
         $partialHtml = self::render(static function () use ($partial): void { renderEvidenceHubOwnerPresentation($partial); });
-        phase2Assert(str_contains($partialHtml, 'تغطية التوثيق') && str_contains($partialHtml, 'تقدم ملف الأعمال'), 'Partial contract metrics are not rendered.');
+        phase2Assert(str_contains($partialHtml, 'Documentation quality') && str_contains($partialHtml, 'Portfolio progress'), 'Partial contract metrics are not rendered.');
 
         $ready['metrics']['technology_evidence_map']['mappings'][0]['display_name'] = $mappedDisplay;
         $ready['metrics']['technology_evidence_map']['mappings'][] = [
@@ -89,7 +89,12 @@ final class EvidenceHubOwnerRoutePresenterTest
         $rendered = self::render(static function () use ($ready): void { renderEvidenceHubOwnerPresentation($ready); });
         phase2Assert(str_contains($rendered, '&lt;script&gt;synthetic-display&lt;/script&gt;'), 'Mapped technology display text is not escaped.');
         phase2Assert(!str_contains($rendered, $unmappedRawLabel), 'Unmapped raw technology label was disclosed.');
-        phase2Assert(str_contains($rendered, 'تقنية تحتاج مراجعة'), 'Unmapped technology has no generic safe wording.');
+        phase2Assert(str_contains($rendered, 'Technology needs review'), 'Unmapped technology has no generic safe wording.');
+
+        $arabicAuthoredContent = 'مشروع توثيق البيانات';
+        $ready['metrics']['technology_evidence_map']['mappings'][0]['display_name'] = $arabicAuthoredContent;
+        $arabicRendered = self::render(static function () use ($ready): void { renderEvidenceHubOwnerPresentation($ready); });
+        phase2Assert(str_contains($arabicRendered, '<strong dir="auto">' . $arabicAuthoredContent . '</strong>'), 'User-authored Arabic portfolio content was not preserved independently from English application chrome.');
 
         $recommendations = buildEvidenceHubRecommendations([
             'tenant_scope_ref' => 'route_presenter_tenant',
@@ -105,13 +110,13 @@ final class EvidenceHubOwnerRoutePresenterTest
         });
         phase2Assert(str_contains($recommendationHtml, 'href="/owner_projects.php?add=1"'), 'Project recommendation does not use the generic authorized management screen.');
         phase2Assert(str_contains($recommendationHtml, 'name="csrf_token"') && str_contains($recommendationHtml, 'name="action_token" value="synthetic-snooze-token"') && str_contains($recommendationHtml, 'name="action_token" value="synthetic-dismiss-token"'), 'Secure recommendation forms are not retained by the presentation.');
-        foreach (['evidence-hub-recommendation-topline', 'evidence-hub-recommendation-category', 'evidence-hub-recommendation-footer', 'evidence-hub-recommendation-icon', '<svg class="evidence-hub-icon"'] as $required) {
+        foreach (['evidence-hub-recommendation-topline', 'evidence-hub-recommendation-copy', 'evidence-hub-recommendation-context', 'evidence-hub-recommendation-category', 'evidence-hub-recommendation-footer', 'evidence-hub-recommendation-icon', '<svg class="evidence-hub-icon"'] as $required) {
             phase2Assert(str_contains($recommendationHtml, $required), "Recommendation hierarchy is missing {$required}.");
         }
         phase2Assert(!str_contains($recommendationHtml, $recommendations[0]['recommendation_key']) && !str_contains($recommendationHtml, $recommendations[0]['evidence_fingerprint']) && !str_contains($recommendationHtml, $recommendations[0]['target']['opaque_target_ref']), 'Recommendation internals leaked into the presentation.');
 
         $error = self::render(static function (): void { renderEvidenceHubOwnerSafeError(); });
-        phase2Assert(str_contains($error, 'مركز الأدلة غير متاح مؤقتًا.'), 'Safe error state is unavailable.');
+        phase2Assert(str_contains($error, 'Evidence Hub is temporarily unavailable.'), 'Safe error state is unavailable.');
         foreach ($fixtures['forbidden_markers'] as $forbidden) {
             phase2Assert(!str_contains($rendered . $recommendationHtml . $error, $forbidden), "Owner presentation disclosed forbidden {$forbidden} data.");
         }
@@ -124,7 +129,7 @@ final class EvidenceHubOwnerRoutePresenterTest
         foreach (["'evidence_hub' => ['/owner/evidence-hub', 'Evidence Hub']", 'aria-current="page"', 'href="#main-content"'] as $required) {
             phase2Assert(str_contains($layout, $required), "Owner navigation accessibility is missing {$required}.");
         }
-        foreach (['aria-labelledby="evidence-hub-status-title"', 'aria-labelledby="evidence-hub-technology-title"', 'aria-labelledby="evidence-hub-recommendations-title"', 'aria-label="توصية مركز الأدلة"', 'ownerEscapeHtml'] as $required) {
+        foreach (['aria-labelledby="evidence-hub-status-title"', 'aria-labelledby="evidence-hub-technology-title"', 'aria-labelledby="evidence-hub-recommendations-title"', 'aria-label="Evidence Hub recommendation"', 'ownerEscapeHtml'] as $required) {
             phase2Assert(str_contains($presentation, $required), "Evidence Hub presenter accessibility or escaping is missing {$required}.");
         }
     }
@@ -134,21 +139,23 @@ final class EvidenceHubOwnerRoutePresenterTest
         $layout = self::read('includes/owner_layout.php');
         $presentation = self::read('includes/evidence_hub_owner_presentation.php');
         $javascript = self::read('evidence_hub.js');
-        foreach (['dir="rtl"', 'lang="ar"', 'مركز الأدلة', 'إدارة المشاريع', 'evidence-hub-sidebar-toggle', 'evidence-hub-mobile-toggle', 'evidence-hub-mobile-drawer', 'evidence-hub-theme-toggle', 'data-sidebar-tooltip', 'evidence_hub.css', 'evidence_hub.js'] as $required) {
+        foreach (['dir="ltr"', 'lang="en"', 'Evidence Hub', 'Project Management', 'evidence-hub-sidebar-toggle', 'evidence-hub-mobile-toggle', 'evidence-hub-mobile-drawer', 'evidence-hub-theme-toggle', 'data-sidebar-tooltip', 'evidence_hub.css', 'evidence_hub.js'] as $required) {
             phase2Assert(str_contains($layout . $presentation, $required), "Production Evidence Hub shell is missing {$required}.");
         }
         foreach (['ather.evidenceHub.sidebarCollapsed', 'ather.evidenceHub.theme', "window.matchMedia('(max-width: 1100px)')", 'setTheme', 'setMobileDrawer'] as $required) {
             phase2Assert(str_contains($javascript, $required), "Evidence Hub visual state contract is missing {$required}.");
         }
-        foreach (['evidence-hub-mobile-close', 'إغلاق القائمة', 'evidence-hub-mobile-backdrop', 'aria-controls="evidence-hub-mobile-drawer"'] as $required) {
+        foreach (['evidence-hub-mobile-close', 'Close navigation', 'evidence-hub-mobile-backdrop', 'aria-controls="evidence-hub-mobile-drawer"'] as $required) {
             phase2Assert(str_contains($layout, $required), "Evidence Hub mobile drawer structure is missing {$required}.");
         }
-        foreach (['تحرير الأدلة', '>النشاط<'] as $forbidden) {
-            phase2Assert(!str_contains($layout . $presentation, $forbidden), "Production Evidence Hub shell contains forbidden {$forbidden}.");
-        }
+        phase2Assert(!preg_match('/[\x{0600}-\x{06FF}]/u', $layout . $presentation), 'Production Evidence Hub shell contains active Arabic application chrome.');
         foreach (['evidence-hub-status', 'evidence-hub-documentation', 'evidence-hub-technology', 'evidence-hub-progress', 'evidence-hub-recommendations', 'evidence-hub-hero-state', 'evidence-hub-coverage-kpi', 'evidence-hub-recommendation-topline', 'evidence-hub-recommendation-footer', 'dir="ltr"', 'csrf_token', 'action_token', 'name="action" value="snooze"', 'name="action" value="dismiss"', 'evidence-hub-snooze', 'evidence-hub-dismiss'] as $required) {
             phase2Assert(str_contains($presentation, $required), "Production Evidence Hub presentation is missing {$required}.");
         }
+        foreach (['<html lang="en" dir="ltr">', 'Evidence Hub — My Portfolio', 'Open navigation', 'Close navigation', 'Enable dark theme'] as $required) {
+            phase2Assert(str_contains($layout, $required), "English-only Owner shell is missing {$required}.");
+        }
+        phase2Assert(!str_contains($layout, 'language selector') && !str_contains($layout, 'lang="ar"') && !str_contains($layout, 'dir="rtl"'), 'Owner shell retains an Arabic activation path.');
         foreach (['recommendation_key', 'evidence_fingerprint', 'opaque_target_ref', 'raw_label', 'canonical_key', 'tenant_scope_ref', 'portfolio_target_identity'] as $forbidden) {
             phase2Assert(!str_contains($presentation, $forbidden), "Production Evidence Hub presentation exposes {$forbidden}.");
         }
@@ -157,11 +164,13 @@ final class EvidenceHubOwnerRoutePresenterTest
         }
         $css = self::read('evidence_hub.css');
         phase2Assert(str_contains($css, 'unicode-bidi:isolate'), 'Evidence Hub numeric bidi isolation is missing.');
-        foreach (['--eh-canvas', '--eh-primary', '--eh-danger', '256px', '82px', '@media (max-width: 1100px)', 'prefers-reduced-motion', '[data-bidi-number]', '44px', 'data-evidence-hub-theme="dark"', 'data-sidebar-tooltip', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock', 'evidence-hub-recommendation-card--documentation', 'evidence-hub-technology-card--review'] as $required) {
+        foreach (['--eh-canvas', '--eh-primary', '--eh-danger', '232px', '82px', '@media (max-width: 1100px)', 'prefers-reduced-motion', '[data-bidi-number]', '44px', 'data-evidence-hub-theme="dark"', 'data-sidebar-tooltip', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock', 'grid-template-columns: 1fr;', 'evidence-hub-recommendation-card--documentation', 'evidence-hub-technology-card--review'] as $required) {
             phase2Assert(str_contains($css, $required), "Evidence Hub presentation CSS is missing {$required}.");
         }
         phase2Assert(!str_contains($css . $javascript, '799px'), 'Evidence Hub retains a stale 799px responsive authority.');
-        foreach (['setMobileDrawer', 'mobileReturnFocus', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock'] as $required) {
+        phase2Assert(str_contains($css, 'grid-template-columns: 232px minmax(0, 1fr)') && str_contains($css, 'border-right: 1px solid'), 'Evidence Hub rail is not authored as a left-side LTR rail.');
+        phase2Assert(!str_contains($css, 'grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;'), 'Evidence Hub retains the rejected two-column recommendation layout.');
+        foreach (['setMobileDrawer', 'mobileReturnFocus', 'mainContent.inert', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock'] as $required) {
             phase2Assert(str_contains($javascript, $required), "Evidence Hub mobile drawer state is missing {$required}.");
         }
         phase2Assert(!preg_match('/https?:\\/\\/|@import\\s+url/i', $css . $javascript), 'Evidence Hub production assets must remain local-only with no CDN.');
