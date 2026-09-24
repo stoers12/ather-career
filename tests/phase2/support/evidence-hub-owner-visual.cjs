@@ -237,6 +237,7 @@ const captureBrowserErrors = page => {
         await safe.goto(visualUrl('error'));
         assert.equal(await safe.getByRole('alert').textContent(), 'Evidence Hub is temporarily unavailable.Please try again shortly.', 'safe error is English');
         await safe.close();
+        await require('./owner-sidebar-visual.cjs')(browser, baseUrl, output);
         console.log('PASS Evidence Hub R4 English/LTR visual contract');
     } finally {
         await browser.close();

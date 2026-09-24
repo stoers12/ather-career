@@ -89,11 +89,11 @@ function ownerNavigation(string $activePage): void
 function ownerEvidenceHubNavigation(): void
 {
     $primaryLinks = [
-        'evidence_hub' => ['/owner/evidence-hub', 'Evidence Hub'],
+        'dashboard' => ['/owner.php', 'Dashboard'],
         'projects' => ['/owner_projects.php', 'Project Management'],
+        'evidence_hub' => ['/owner/evidence-hub', 'Evidence Hub'],
     ];
     $capabilityLinks = [
-        'dashboard' => ['/owner.php', 'Dashboard'],
         'profile' => ['/owner_profile.php', 'Personal Information'],
         'experiences' => ['/owner_experiences.php', 'Experience'],
         'messages' => ['/owner_messages.php', 'Messages'],
@@ -124,9 +124,9 @@ function ownerEvidenceHubNavigation(): void
         <nav aria-label="Evidence Hub navigation">
             <span class="nav-group-label evidence-hub-sidebar-label">Workspace</span>
             <?php foreach ($primaryLinks as $key => [$href, $label]): ?>
-                <a class="<?php echo $key === 'evidence_hub' ? 'active' : ''; ?>" href="<?php echo $href; ?>"<?php echo $key === 'evidence_hub' ? ' aria-current="page"' : ''; ?> data-sidebar-tooltip="<?php echo ownerEscapeHtml($label); ?>"><?php echo evidenceHubOwnerIcon($key === 'evidence_hub' ? 'layout-dashboard' : 'folder-kanban'); ?><span class="evidence-hub-sidebar-label"><?php echo ownerEscapeHtml($label); ?></span></a>
+                <a class="<?php echo $key === 'evidence_hub' ? 'active' : ''; ?>" href="<?php echo $href; ?>"<?php echo $key === 'evidence_hub' ? ' aria-current="page"' : ''; ?> data-sidebar-tooltip="<?php echo ownerEscapeHtml($label); ?>"><?php echo evidenceHubOwnerIcon(match ($key) { 'dashboard' => 'home', 'projects' => 'folder-kanban', default => 'layout-dashboard' }); ?><span class="evidence-hub-sidebar-label"><?php echo ownerEscapeHtml($label); ?></span></a>
             <?php endforeach; ?>
-            <span class="nav-group-label evidence-hub-sidebar-label">Owner Tools</span>
+            <span class="nav-group-label evidence-hub-sidebar-label">Portfolio</span>
             <?php foreach ($capabilityLinks as $key => [$href, $label]): ?>
                 <a href="<?php echo $href; ?>" data-sidebar-tooltip="<?php echo ownerEscapeHtml($label); ?>"><?php echo evidenceHubOwnerIcon($capabilityIcons[$key]); ?><span class="evidence-hub-sidebar-label"><?php echo ownerEscapeHtml($label); ?></span></a>
             <?php endforeach; ?>
@@ -147,8 +147,8 @@ function evidenceHubOwnerIcon(string $name): string
 {
     $paths = [
         'menu' => '<path d="M4 6h16M4 12h16M4 18h16"/>',
-        'panel-left-close' => '<rect width="18" height="18" x="3" y="3" rx="3"/><path d="M9 3v18m6-12-3 3 3 3"/>',
-        'panel-left-open' => '<rect width="18" height="18" x="3" y="3" rx="3"/><path d="M9 3v18m3-6 3 3-3 3"/>',
+        'panel-left-close' => '<path d="m14 6-6 6 6 6"/>',
+        'panel-left-open' => '<path d="m10 6 6 6-6 6"/>',
         'layout-dashboard' => '<rect width="7" height="8" x="3" y="3" rx="2"/><rect width="7" height="5" x="14" y="3" rx="2"/><rect width="7" height="8" x="14" y="13" rx="2"/><rect width="7" height="5" x="3" y="16" rx="2"/>',
         'folder-kanban' => '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H10l2 2h5.5A2.5 2.5 0 0 1 20 9.5v8A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5Z"/><path d="M8 11v4m4-4v2m4-2v4"/>',
         'home' => '<path d="m4 10 8-6 8 6v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1Z"/>',

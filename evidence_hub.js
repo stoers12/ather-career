@@ -29,6 +29,7 @@
         if (openIcon) openIcon.hidden = !collapsed;
     }
     function setCollapsed(collapsed, persist) {
+        hideSidebarTooltip();
         var value = Boolean(collapsed);
         root.classList.toggle('evidence-hub-sidebar-collapsed', value);
         setPanelState(value);
@@ -44,6 +45,7 @@
         if (persist) safeSet(themeKey, value);
     }
     function setMobileDrawer(open, restoreFocus) {
+        hideSidebarTooltip();
         var active = Boolean(open && isMobile());
         root.classList.toggle('evidence-hub-mobile-open', active);
         root.classList.toggle('evidence-hub-mobile-scroll-lock', active);
@@ -52,6 +54,7 @@
             if (active) mainContent.setAttribute('aria-hidden', 'true'); else mainContent.removeAttribute('aria-hidden');
         }
         mobileToggle.setAttribute('aria-expanded', active ? 'true' : 'false');
+        mobileToggle.inert = active;
         backdrop.hidden = !active;
         backdrop.setAttribute('aria-hidden', active ? 'false' : 'true');
         if (isMobile()) {
@@ -77,6 +80,47 @@
         if (!isVisible(focused) && isVisible(desktopToggle)) desktopToggle.focus();
     }
 
+    // A viewport-positioned tooltip lives outside the scrolling navigation region.
+    var sidebarTooltip = document.createElement('div');
+    sidebarTooltip.id = 'owner-sidebar-tooltip';
+    sidebarTooltip.className = 'owner-sidebar-tooltip';
+    sidebarTooltip.setAttribute('role', 'tooltip');
+    sidebarTooltip.hidden = true;
+    root.appendChild(sidebarTooltip);
+    var tooltipTrigger = null;
+    function hideSidebarTooltip() {
+        if (!sidebarTooltip) return;
+        sidebarTooltip.hidden = true;
+        if (tooltipTrigger) tooltipTrigger.removeAttribute('aria-describedby');
+        tooltipTrigger = null;
+    }
+    function showSidebarTooltip(trigger) {
+        hideSidebarTooltip();
+        if (!trigger || isMobile() || !root.classList.contains('evidence-hub-sidebar-collapsed')) return;
+        tooltipTrigger = trigger;
+        sidebarTooltip.textContent = trigger.getAttribute('data-sidebar-tooltip');
+        sidebarTooltip.hidden = false;
+        var bounds = trigger.getBoundingClientRect();
+        sidebarTooltip.style.left = (sidebar.getBoundingClientRect().right + 8) + 'px';
+        sidebarTooltip.style.top = Math.max(8, Math.min(window.innerHeight - sidebarTooltip.offsetHeight - 8, bounds.top + (bounds.height - sidebarTooltip.offsetHeight) / 2)) + 'px';
+        trigger.setAttribute('aria-describedby', sidebarTooltip.id);
+    }
+    sidebar.querySelectorAll('[data-sidebar-tooltip]').forEach(function (trigger) {
+        trigger.addEventListener('mouseenter', function () { showSidebarTooltip(trigger); });
+        trigger.addEventListener('mouseleave', hideSidebarTooltip);
+        trigger.addEventListener('focus', function () { showSidebarTooltip(trigger); });
+        trigger.addEventListener('blur', hideSidebarTooltip);
+    });
+    sidebar.querySelector('nav').addEventListener('scroll', hideSidebarTooltip);
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') hideSidebarTooltip();
+        if (event.key !== 'Tab' || !isMobile() || !root.classList.contains('evidence-hub-mobile-open')) return;
+        var controls = Array.from(sidebar.querySelectorAll('a, button')).filter(isVisible);
+        var first = controls[0];
+        var last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
     root.classList.add('evidence-hub-js');
     setTheme(safeGet(themeKey), false);
     setCollapsed(safeGet(sidebarKey) === 'true', false);
