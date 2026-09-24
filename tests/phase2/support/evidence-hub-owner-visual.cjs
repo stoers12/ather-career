@@ -15,7 +15,16 @@ fs.mkdirSync(output, { recursive: true });
 
 const recommendationName = 'Evidence Hub recommendation';
 const visualUrl = variant => `${baseUrl}/tests/phase2/support/evidence-hub-owner-visual.php?variant=${encodeURIComponent(variant)}`;
-const noOverflow = page => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+const noOverflow = page => page.evaluate(() => {
+    const viewport = innerWidth;
+    const closedDrawer = document.querySelector('#evidence-hub-mobile-drawer');
+    if (document.body.scrollWidth > viewport + 1 || scrollX !== 0) return false;
+    return [...document.body.querySelectorAll('*')].every(node => {
+        if (closedDrawer?.inert && node.closest('#evidence-hub-mobile-drawer')) return true;
+        const box = node.getBoundingClientRect();
+        return box.left >= -1 && box.right <= viewport + 1;
+    });
+});
 const shellText = page => page.evaluate(() => {
     const clone = document.body.cloneNode(true);
     clone.querySelectorAll('[dir="auto"]').forEach(node => node.remove());
@@ -53,6 +62,13 @@ const captureBrowserErrors = page => {
             assert.equal(await page.locator('html').getAttribute('dir'), 'ltr', `${viewport.width}: document direction`);
             assert.equal(/[\u0600-\u06ff]/u.test(await shellText(page)), false, `${viewport.width}: no Arabic application chrome`);
             assert.equal(await page.getByRole('option', { name: /arabic/i }).count(), 0, `${viewport.width}: no Arabic language option`);
+            const topbar = page.locator('.evidence-hub-topbar');
+            const topbarBox = await topbar.boundingBox();
+            assert.ok(topbarBox && Math.round(topbarBox.height) >= 60 && Math.round(topbarBox.height) <= 64, `${viewport.width}: distinct 60–64px application top bar`);
+            assert.equal(await page.locator('#evidence-hub-theme-toggle').isVisible(), true, `${viewport.width}: theme control is reachable in application chrome`);
+            assert.equal(await page.locator('.evidence-hub-presentation .evidence-hub-topbar-breadcrumb, .evidence-hub-presentation .evidence-hub-context-bar').count(), 0, `${viewport.width}: breadcrumb is not duplicated in editorial content`);
+            assert.equal(await page.locator('.evidence-hub-hero').getByRole('link', { name: 'Manage projects' }).count(), 0, `${viewport.width}: intro has no global Manage projects action`);
+            assert.equal(await page.getByRole('heading', { name: 'Evidence overview' }).count(), 1, `${viewport.width}: overview heading is not duplicated`);
             const active = page.locator('#evidence-hub-mobile-drawer a[href="/owner/evidence-hub"]');
             assert.equal(await active.getAttribute('aria-current'), 'page', `${viewport.width}: active Evidence Hub navigation`);
             const card = page.getByRole('article', { name: recommendationName }).first();
@@ -98,13 +114,20 @@ const captureBrowserErrors = page => {
         assert.ok(overviewBox && recommendationsHeadingBox && recommendationsHeadingBox.y - (overviewBox.y + overviewBox.height) <= 64, 'desktop: no excessive gap before recommendations');
         const recommendationGrid = await desktop.locator('.evidence-hub-recommendation-grid').evaluate(node => getComputedStyle(node).gridTemplateColumns);
         assert.equal(recommendationGrid.split(' ').length, 1, 'desktop: recommendations use full-width rows');
+        const accent = desktop.locator('.evidence-hub-recommendation-accent').first();
+        const accentBox = await accent.boundingBox();
+        assert.ok(accentBox && Math.round(accentBox.width) === 4 && firstCardBox && Math.abs(Math.round(accentBox.height) - Math.round(firstCardBox.height)) <= 2, 'desktop: recommendation row has a full-height 4px semantic accent');
+        const categoryBox = await desktop.locator('.evidence-hub-recommendation-category').first().boundingBox();
+        const iconBox = await desktop.locator('.evidence-hub-recommendation-icon').first().boundingBox();
+        const titleBox = await desktop.getByRole('article', { name: recommendationName }).first().getByRole('heading').boundingBox();
+        assert.ok(categoryBox && iconBox && titleBox && categoryBox.x > iconBox.x + iconBox.width && categoryBox.y < titleBox.y, 'desktop: category is connected in the metadata row, not detached below the icon');
         const primaryBackground = await desktop.locator('.evidence-hub-primary-cta').first().evaluate(node => getComputedStyle(node).backgroundColor);
         assert.notEqual(primaryBackground, 'rgb(37, 99, 235)', 'desktop: evidence actions do not inherit the shared blue primary');
         await desktop.locator('.admin-content').screenshot({ path: path.join(output, 'desktop-expanded-light.png') });
         await desktop.locator('#evidence-hub-sidebar-toggle').click();
         assert.equal(await desktop.locator('body').evaluate(node => node.classList.contains('evidence-hub-sidebar-collapsed')), true, 'desktop: rail collapses');
-        await desktop.waitForFunction(() => Math.round(document.querySelector('.evidence-hub-sidebar').getBoundingClientRect().width) === 82);
-        assert.equal(Math.round((await rail.boundingBox()).width), 82, 'desktop: collapsed rail is 82px');
+        await desktop.waitForFunction(() => Math.round(document.querySelector('.evidence-hub-sidebar').getBoundingClientRect().width) === 78);
+        assert.equal(Math.round((await rail.boundingBox()).width), 78, 'desktop: collapsed rail is 78px');
         await desktop.locator('#evidence-hub-theme-toggle').focus();
         await desktop.screenshot({ path: path.join(output, 'desktop-collapsed-tooltip.png') });
         assert.equal(await desktop.locator('#evidence-hub-sidebar-toggle').getAttribute('aria-label'), 'Expand navigation', 'desktop: collapsed rail label');
@@ -122,6 +145,37 @@ const captureBrowserErrors = page => {
         assert.equal(await desktop.locator('#evidence-hub-mobile-drawer').evaluate(node => node.inert), true, '1100: closed mobile drawer is inert');
         assertNoBrowserErrors(desktopErrors, 'desktop');
         await desktop.close();
+
+        const contexts = await pageAt({ width: 1440, height: 900 });
+        await contexts.goto(visualUrl('contexts'));
+        const documentationCard = contexts.getByRole('article', { name: recommendationName }).filter({ has: contexts.getByRole('heading', { name: 'Complete project evidence' }) });
+        const technologyCard = contexts.getByRole('article', { name: recommendationName }).filter({ has: contexts.getByRole('heading', { name: 'Review technology evidence' }) });
+        const publishingCard = contexts.getByRole('article', { name: recommendationName }).filter({ has: contexts.getByRole('heading', { name: 'Prepare your portfolio for publishing' }) });
+        assert.equal(await documentationCard.getByText('Project evidence', { exact: true }).count(), 1, 'context: documentation recommendation uses Project evidence');
+        assert.equal(await technologyCard.getByText('Technology mapping', { exact: true }).count(), 1, 'context: technology recommendation uses Technology mapping');
+        assert.equal(await technologyCard.getByText('Project evidence', { exact: true }).count(), 0, 'context: technology recommendation does not incorrectly use Project evidence');
+        assert.equal(await publishingCard.getByText('Publishing readiness', { exact: true }).count(), 2, 'context: publishing recommendation metadata is publishing readiness');
+        assert.equal(await publishingCard.getByText('Project evidence', { exact: true }).count(), 0, 'context: publishing recommendation does not incorrectly use Project evidence');
+        await contexts.screenshot({ path: path.join(output, 'recommendation-contexts.png') });
+        await contexts.close();
+
+        const oneTechnology = await pageAt({ width: 1440, height: 900 });
+        await oneTechnology.goto(visualUrl('ready'));
+        await oneTechnology.waitForFunction(() => {
+            const grid = document.querySelector('.evidence-hub-technology-grid')?.getBoundingClientRect();
+            const card = document.querySelector('.evidence-hub-technology-card')?.getBoundingClientRect();
+            return Boolean(grid && card && Math.abs(grid.width - card.width) <= 1);
+        });
+        const oneTechnologyGrid = await oneTechnology.locator('.evidence-hub-technology-grid').boundingBox();
+        const oneTechnologyCard = await oneTechnology.locator('.evidence-hub-technology-card').boundingBox();
+        assert.ok(oneTechnologyGrid && oneTechnologyCard && Math.abs(Math.round(oneTechnologyGrid.width) - Math.round(oneTechnologyCard.width)) <= 1, 'technology: one mapping uses a full-width compact row');
+        await oneTechnology.close();
+
+        const multipleTechnology = await pageAt({ width: 1440, height: 900 });
+        await multipleTechnology.goto(visualUrl('multiple'));
+        const multipleColumns = await multipleTechnology.locator('.evidence-hub-technology-grid').evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length);
+        assert.ok(multipleColumns >= 2, 'technology: multiple mappings use available row width');
+        await multipleTechnology.close();
 
         for (const viewport of [{ width: 1100, height: 768 }, { width: 390, height: 844 }, { width: 360, height: 800 }, { width: 320, height: 568 }]) {
             const page = await pageAt(viewport);
@@ -142,8 +196,19 @@ const captureBrowserErrors = page => {
             assert.equal(await page.locator('#main-content').evaluate(node => !node.inert && !node.hasAttribute('aria-hidden')), true, `${viewport.width}: main content is restored after Escape`);
             await opener.click();
             await page.mouse.click(viewport.width - 2, 2);
+            await page.waitForFunction(() => {
+                const drawer = document.querySelector('#evidence-hub-mobile-drawer');
+                return drawer?.inert === true && drawer.getBoundingClientRect().right <= 0;
+            });
             assert.equal(await opener.evaluate(node => node === document.activeElement), true, `${viewport.width}: backdrop restores focus`);
-            assert.equal(await noOverflow(page), true, `${viewport.width}: drawer has no horizontal overflow`);
+            const drawerReflow = await page.evaluate(() => ({
+                body: { clientWidth: document.body.clientWidth, scrollWidth: document.body.scrollWidth, width: document.body.getBoundingClientRect().width, classes: document.body.className, overflowX: getComputedStyle(document.body).overflowX },
+                innerWidth,
+                scrollX,
+                rightmost: [...document.querySelectorAll('*')].map(node => { const box = node.getBoundingClientRect(); return { tag: node.tagName, className: typeof node.className === 'string' ? node.className : '', id: node.id, position: getComputedStyle(node).position, left: Math.round(box.left), right: Math.round(box.right), width: Math.round(box.width) }; }).filter(node => node.right > innerWidth + 1).sort((a, b) => b.right - a.right).slice(0, 8),
+            }));
+            console.log(`DRAWER_REFLOW_${viewport.width}=${JSON.stringify(drawerReflow)}`);
+            assert.equal(drawerReflow.body.scrollWidth <= drawerReflow.innerWidth && drawerReflow.scrollX === 0 && drawerReflow.rightmost.length === 0, true, `${viewport.width}: drawer has no horizontal overflow`);
             if (viewport.width === 390) {
                 await opener.click();
                 await page.screenshot({ path: path.join(output, 'mobile-drawer.png') });

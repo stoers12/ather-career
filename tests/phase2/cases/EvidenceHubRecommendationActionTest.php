@@ -64,6 +64,8 @@ final class EvidenceHubRecommendationActionTest
         foreach (['name="csrf_token"', 'name="action" value="snooze"', 'name="action_token"', 'Snooze for 14 days', 'Dismiss', 'Recommendation dismissed.', 'evidence-hub-snooze', 'evidence-hub-dismiss'] as $required) {
             phase2Assert(str_contains($html, $required), "Action presenter is missing {$required}.");
         }
+        phase2Assert(str_contains($html, '<button class="evidence-hub-dismiss" type="submit">'), 'Dismiss is no longer rendered as an interactive button surface.');
+        phase2Assert(str_contains($html, 'evidence-hub-recommendation-accent') && str_contains($html, 'evidence-hub-recommendation-metadata'), 'Action presenter is missing recommendation hierarchy semantics.');
         foreach ([str_repeat('a', 64), str_repeat('b', 64), 'opaque_target_ref', 'recommendation_key', 'evidence_fingerprint'] as $forbidden) {
             phase2Assert(!str_contains($html, $forbidden), "Action presenter disclosed {$forbidden}.");
         }

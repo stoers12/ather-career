@@ -31,7 +31,7 @@ const recommendationName = 'Evidence Hub recommendation';
 const snoozeName = 'Snooze for 14 days';
 const dismissName = 'Dismiss';
 const snoozeRecommendationTitle = 'Review technology evidence';
-const dismissRecommendationTitle = 'Complete portfolio publishing';
+const dismissRecommendationTitle = 'Prepare your portfolio for publishing';
 const actionForm = (scope, action) => scope.locator(`form[action="${routePath}"]:has(input[type="hidden"][name="action"][value="${action}"])`);
 const actionableCards = page => page.getByRole('article', { name: recommendationName }).filter({ has: page.locator(`form[action="${routePath}"]`) });
 const recommendationCard = (page, title) => page.getByRole('article', { name: recommendationName }).filter({ has: page.getByRole('heading', { name: title }) });
@@ -135,7 +135,7 @@ const watchdog = setTimeout(async () => {
             background: getComputedStyle(node).backgroundColor,
             border: getComputedStyle(node).borderColor,
         }));
-        expectState(snoozeTone.color !== dismissTone.color && snoozeTone.border !== dismissTone.border, 'dismiss-destructive-visual-tone', 'Dismiss control is not visually distinct from secondary Snooze');
+        expectState(snoozeTone.color !== dismissTone.color && snoozeTone.border !== dismissTone.border && dismissTone.background !== 'rgba(0, 0, 0, 0)', 'dismiss-destructive-visual-tone', 'Dismiss control is not a distinct soft-destructive button surface.');
 
         mark('dismiss-control-visible');
         expectState(await dismissControl.isVisible(), 'dismiss-control-visible', 'expected dismiss control was not visible');

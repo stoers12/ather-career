@@ -38,6 +38,14 @@ function ownerLayoutStart(string $title, string $activePage): void
 <div class="admin-layout<?php echo $isEvidenceHub ? ' evidence-hub-layout' : ''; ?>">
     <?php ownerNavigation($activePage); ?>
     <main class="admin-content" id="main-content" tabindex="-1">
+        <?php if ($isEvidenceHub): ?>
+        <header class="evidence-hub-topbar" aria-label="Evidence Hub application chrome">
+            <div class="evidence-hub-topbar-inner">
+                <nav class="evidence-hub-topbar-breadcrumb" aria-label="Breadcrumb"><span>Owner workspace</span><span aria-hidden="true">/</span><strong>Evidence Hub</strong></nav>
+                <button class="evidence-hub-topbar-theme" id="evidence-hub-theme-toggle" type="button" aria-pressed="false" aria-label="Enable dark theme"><?php echo evidenceHubOwnerIcon('moon'); ?><span class="visually-hidden">Theme</span></button>
+            </div>
+        </header>
+        <?php endif; ?>
         <section>
     <?php
 }
@@ -125,7 +133,6 @@ function ownerEvidenceHubNavigation(): void
         </nav>
         <div class="sidebar-footer">
             <a href="/owner_preview.php" data-sidebar-tooltip="Private preview"><?php echo evidenceHubOwnerIcon('eye'); ?><span class="evidence-hub-sidebar-label">Private preview</span></a>
-            <button class="evidence-hub-theme-toggle" id="evidence-hub-theme-toggle" type="button" aria-pressed="false" aria-label="Enable dark theme" data-sidebar-tooltip="Enable dark theme"><?php echo evidenceHubOwnerIcon('moon'); ?><span class="evidence-hub-sidebar-label">Theme</span></button>
             <form class="sidebar-logout-form" method="POST" action="/owner_logout.php" data-owner-form>
                 <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
                 <button class="sidebar-logout-button" type="submit" data-pending-label="Signing out…" data-sidebar-tooltip="Sign out"><?php echo evidenceHubOwnerIcon('log-out'); ?><span class="evidence-hub-sidebar-label">Sign out</span></button>

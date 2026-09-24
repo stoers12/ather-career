@@ -67,6 +67,10 @@ final class EvidenceHubOwnerRoutePresenterTest
 
         $partialHtml = self::render(static function () use ($partial): void { renderEvidenceHubOwnerPresentation($partial); });
         phase2Assert(str_contains($partialHtml, 'Documentation quality') && str_contains($partialHtml, 'Portfolio progress'), 'Partial contract metrics are not rendered.');
+        phase2Assert(str_contains($partialHtml, '1 of 3 evidence fields completed'), 'Documentation field totals are not rendered in natural English.');
+        phase2AssertSame('1 technology needs review', evidenceHubOwnerCountPhrase(1, 'technology needs review', 'technologies need review'), 'Singular technology grammar is incorrect.');
+        phase2AssertSame('2 technologies need review', evidenceHubOwnerCountPhrase(2, 'technology needs review', 'technologies need review'), 'Plural technology grammar is incorrect.');
+        phase2AssertSame('1 project with complete evidence', evidenceHubOwnerCountPhrase(1, 'project with complete evidence', 'projects with complete evidence'), 'Singular project grammar is incorrect.');
 
         $ready['metrics']['technology_evidence_map']['mappings'][0]['display_name'] = $mappedDisplay;
         $ready['metrics']['technology_evidence_map']['mappings'][] = [
@@ -110,9 +114,16 @@ final class EvidenceHubOwnerRoutePresenterTest
         });
         phase2Assert(str_contains($recommendationHtml, 'href="/owner_projects.php?add=1"'), 'Project recommendation does not use the generic authorized management screen.');
         phase2Assert(str_contains($recommendationHtml, 'name="csrf_token"') && str_contains($recommendationHtml, 'name="action_token" value="synthetic-snooze-token"') && str_contains($recommendationHtml, 'name="action_token" value="synthetic-dismiss-token"'), 'Secure recommendation forms are not retained by the presentation.');
-        foreach (['evidence-hub-recommendation-topline', 'evidence-hub-recommendation-copy', 'evidence-hub-recommendation-context', 'evidence-hub-recommendation-category', 'evidence-hub-recommendation-footer', 'evidence-hub-recommendation-icon', '<svg class="evidence-hub-icon"'] as $required) {
+        foreach (['evidence-hub-recommendation-accent', 'evidence-hub-recommendation-copy', 'evidence-hub-recommendation-metadata', 'evidence-hub-recommendation-context', 'evidence-hub-recommendation-category', 'evidence-hub-recommendation-footer', 'evidence-hub-recommendation-icon', '<svg class="evidence-hub-icon"'] as $required) {
             phase2Assert(str_contains($recommendationHtml, $required), "Recommendation hierarchy is missing {$required}.");
         }
+        phase2Assert(str_contains($recommendationHtml, 'Project evidence'), 'Documentation recommendation context is missing.');
+        $technologyAction = evidenceHubOwnerRecommendationPresentationAction('review_unmapped_technology');
+        $publicationAction = evidenceHubOwnerRecommendationPresentationAction('complete_portfolio_publication');
+        phase2AssertSame('Technology mapping', $technologyAction['context'], 'Technology recommendation context is incorrect.');
+        phase2AssertSame('Publishing readiness', $publicationAction['context'], 'Publishing recommendation context is incorrect.');
+        phase2AssertSame('Prepare your portfolio for publishing', $publicationAction['title'], 'Publishing recommendation title is not concise English.');
+        phase2AssertSame('Review technology', $technologyAction['label'], 'Technology recommendation action label is incorrect.');
         phase2Assert(!str_contains($recommendationHtml, $recommendations[0]['recommendation_key']) && !str_contains($recommendationHtml, $recommendations[0]['evidence_fingerprint']) && !str_contains($recommendationHtml, $recommendations[0]['target']['opaque_target_ref']), 'Recommendation internals leaked into the presentation.');
 
         $error = self::render(static function (): void { renderEvidenceHubOwnerSafeError(); });
@@ -149,9 +160,11 @@ final class EvidenceHubOwnerRoutePresenterTest
             phase2Assert(str_contains($layout, $required), "Evidence Hub mobile drawer structure is missing {$required}.");
         }
         phase2Assert(!preg_match('/[\x{0600}-\x{06FF}]/u', $layout . $presentation), 'Production Evidence Hub shell contains active Arabic application chrome.');
-        foreach (['evidence-hub-status', 'evidence-hub-documentation', 'evidence-hub-technology', 'evidence-hub-progress', 'evidence-hub-recommendations', 'evidence-hub-hero-state', 'evidence-hub-coverage-kpi', 'evidence-hub-recommendation-topline', 'evidence-hub-recommendation-footer', 'dir="ltr"', 'csrf_token', 'action_token', 'name="action" value="snooze"', 'name="action" value="dismiss"', 'evidence-hub-snooze', 'evidence-hub-dismiss'] as $required) {
+        foreach (['evidence-hub-status', 'evidence-hub-documentation', 'evidence-hub-technology', 'evidence-hub-progress', 'evidence-hub-recommendations', 'evidence-hub-readiness-panel', 'evidence-hub-coverage-kpi', 'evidence-hub-recommendation-accent', 'evidence-hub-recommendation-metadata', 'evidence-hub-recommendation-footer', 'dir="ltr"', 'csrf_token', 'action_token', 'name="action" value="snooze"', 'name="action" value="dismiss"', 'evidence-hub-snooze', 'evidence-hub-dismiss'] as $required) {
             phase2Assert(str_contains($presentation, $required), "Production Evidence Hub presentation is missing {$required}.");
         }
+        phase2Assert(!str_contains($presentation, 'evidence-hub-context-bar') && !str_contains($presentation, 'evidence-hub-project-link'), 'Evidence Hub retains duplicate breadcrumb or global intro action markup.');
+        phase2Assert(str_contains($layout, 'evidence-hub-topbar') && str_contains($layout, 'evidence-hub-topbar-breadcrumb') && str_contains($layout, 'evidence-hub-topbar-theme'), 'Owner shell is missing the application top bar.');
         foreach (['<html lang="en" dir="ltr">', 'Evidence Hub — My Portfolio', 'Open navigation', 'Close navigation', 'Enable dark theme'] as $required) {
             phase2Assert(str_contains($layout, $required), "English-only Owner shell is missing {$required}.");
         }
@@ -164,7 +177,7 @@ final class EvidenceHubOwnerRoutePresenterTest
         }
         $css = self::read('evidence_hub.css');
         phase2Assert(str_contains($css, 'unicode-bidi:isolate'), 'Evidence Hub numeric bidi isolation is missing.');
-        foreach (['--eh-canvas', '--eh-primary', '--eh-danger', '232px', '82px', '@media (max-width: 1100px)', 'prefers-reduced-motion', '[data-bidi-number]', '44px', 'data-evidence-hub-theme="dark"', 'data-sidebar-tooltip', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock', 'grid-template-columns: 1fr;', 'evidence-hub-recommendation-card--documentation', 'evidence-hub-technology-card--review'] as $required) {
+        foreach (['--eh-canvas', '--eh-primary', '--eh-danger', '232px', '78px', 'evidence-hub-topbar', '@media (max-width: 1100px)', 'prefers-reduced-motion', '[data-bidi-number]', '44px', 'data-evidence-hub-theme="dark"', 'data-sidebar-tooltip', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock', 'grid-template-columns: 1fr;', 'evidence-hub-recommendation-accent', 'evidence-hub-technology-grid--count-1'] as $required) {
             phase2Assert(str_contains($css, $required), "Evidence Hub presentation CSS is missing {$required}.");
         }
         phase2Assert(!str_contains($css . $javascript, '799px'), 'Evidence Hub retains a stale 799px responsive authority.');
