@@ -71,6 +71,11 @@ const captureBrowserErrors = page => {
             assert.equal(await page.getByRole('heading', { name: 'Evidence overview' }).count(), 1, `${viewport.width}: overview heading is not duplicated`);
             const active = page.locator('#evidence-hub-mobile-drawer a[href="/owner/evidence-hub"]');
             assert.equal(await active.getAttribute('aria-current'), 'page', `${viewport.width}: active Evidence Hub navigation`);
+            const activeNavigationColors = await active.evaluate(node => ({
+                link: getComputedStyle(node).color,
+                label: getComputedStyle(node.querySelector('.evidence-hub-sidebar-label')).color,
+            }));
+            assert.equal(activeNavigationColors.label, activeNavigationColors.link, `${viewport.width}: active navigation text uses the green selected-state color`);
             const card = page.getByRole('article', { name: recommendationName }).first();
             assert.equal(await card.count(), 1, `${viewport.width}: semantic recommendation row`);
             assert.equal(await card.getByRole('link', { name: 'Add project' }).getAttribute('href'), '/owner_projects.php?add=1', `${viewport.width}: authorized add-project route`);

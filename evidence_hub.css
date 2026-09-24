@@ -118,6 +118,7 @@ body.evidence-hub-page .evidence-hub-sidebar nav a:hover,
 body.evidence-hub-page .evidence-hub-sidebar .sidebar-footer > a:hover,
 body.evidence-hub-page .evidence-hub-sidebar .sidebar-footer button:hover { color: #e7f6ef; background: rgba(183, 231, 207, .12); }
 body.evidence-hub-page .evidence-hub-sidebar nav a.active { color: #124631; background: #d8f3e7; border-color: #b7e7cf; box-shadow: inset 4px 0 0 #278a5d; font-weight: 800; }
+body.evidence-hub-page .evidence-hub-sidebar nav a > .evidence-hub-sidebar-label { color: inherit; }
 body.evidence-hub-page .evidence-hub-sidebar .evidence-hub-icon { width: 24px; height: 24px; flex: 0 0 24px; }
 body.evidence-hub-page .evidence-hub-sidebar .sidebar-footer { display: grid; gap: 3px; margin-top: auto; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, .11); }
 body.evidence-hub-page .evidence-hub-sidebar .sidebar-logout-form { margin: 0; }
