@@ -12,9 +12,10 @@ function ownerEscapeHtml(string $value): string
 
 require_once __DIR__ . '/owner_form_feedback.php';
 
-function ownerLayoutStart(string $title, string $activePage): void
+function ownerLayoutStart(string $title, string $activePage, bool $themeCapable = false): void
 {
     $isEvidenceHub = $activePage === 'evidence_hub';
+    $isEvidenceHubOverview = $isEvidenceHub && $title === 'Evidence Hub';
     ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -35,14 +36,19 @@ function ownerLayoutStart(string $title, string $activePage): void
     <?php endif; ?>
 </head>
 <body<?php echo $isEvidenceHub ? ' class="evidence-hub-page"' : ''; ?>>
+<?php if ($themeCapable): ?>
+<script src="/<?php echo versionedAssetUrl('owner_theme.js'); ?>"></script>
+<?php endif; ?>
 <div class="admin-layout<?php echo $isEvidenceHub ? ' evidence-hub-layout' : ''; ?>">
     <?php ownerNavigation($activePage); ?>
     <main class="admin-content" id="main-content" tabindex="-1">
         <?php if ($isEvidenceHub): ?>
         <header class="evidence-hub-topbar" aria-label="Evidence Hub application chrome">
             <div class="evidence-hub-topbar-inner">
-                <nav class="evidence-hub-topbar-breadcrumb" aria-label="Breadcrumb"><span>Owner workspace</span><span aria-hidden="true">/</span><strong>Evidence Hub</strong></nav>
-                <button class="evidence-hub-topbar-theme" id="evidence-hub-theme-toggle" type="button" aria-pressed="false" aria-label="Enable dark theme"><?php echo evidenceHubOwnerIcon('moon'); ?><span class="visually-hidden">Theme</span></button>
+                <span class="evidence-hub-topbar-context">Evidence Hub</span>
+                <?php if ($isEvidenceHubOverview): ?>
+                <nav class="evidence-hub-section-nav" aria-label="Evidence Hub sections"><a href="#next-steps">Next steps</a><a href="#overview">Overview</a><a href="#project-evidence">Project evidence</a><a href="#technologies">Technologies</a><a href="#progress">Progress</a></nav>
+                <?php endif; ?>
             </div>
         </header>
         <?php endif; ?>
@@ -88,54 +94,56 @@ function ownerNavigation(string $activePage): void
 
 function ownerEvidenceHubNavigation(): void
 {
-    $primaryLinks = [
-        'dashboard' => ['/owner.php', 'Dashboard'],
-        'projects' => ['/owner_projects.php', 'Project Management'],
-        'evidence_hub' => ['/owner/evidence-hub', 'Evidence Hub'],
-    ];
-    $capabilityLinks = [
-        'profile' => ['/owner_profile.php', 'Personal Information'],
-        'experiences' => ['/owner_experiences.php', 'Experience'],
-        'messages' => ['/owner_messages.php', 'Messages'],
-        'publication' => ['/owner_publication.php', 'Publishing'],
-    ];
-    $capabilityIcons = [
-        'dashboard' => 'home',
-        'profile' => 'user',
-        'experiences' => 'briefcase',
-        'messages' => 'message',
-        'publication' => 'send',
+    $dashboardHref = '/owner.php';
+    $workspaceLinks = [
+        ['overview', 'Overview', 'layout-dashboard', null],
+        ['projects', 'Projects', 'folder-kanban', null],
+        ['evidence_hub', 'Evidence Hub', 'blocks', '/owner/evidence-hub'],
+        ['credentials', 'Credentials', 'badge-check', null],
     ];
     ?>
     <a class="skip-link admin-skip-link" href="#main-content">Skip to main content</a>
-    <button class="evidence-hub-mobile-toggle" id="evidence-hub-mobile-toggle" type="button" aria-controls="evidence-hub-mobile-drawer" aria-expanded="false" aria-label="Open navigation">
+    <button class="evidence-hub-mobile-toggle" id="evidence-hub-mobile-toggle" type="button" aria-controls="evidence-hub-mobile-drawer" aria-expanded="false" aria-label="Open navigation" data-sidebar-tooltip="Open navigation">
         <span class="visually-hidden">Open navigation</span><?php echo evidenceHubOwnerIcon('menu'); ?>
     </button>
     <aside class="admin-sidebar evidence-hub-sidebar" id="evidence-hub-mobile-drawer" aria-label="Owner navigation">
         <div class="evidence-hub-sidebar-head">
-            <a class="admin-brand" href="/owner.php" aria-label="Return to Dashboard"><span class="brand-mark">A</span><span class="evidence-hub-sidebar-label">Ather</span></a>
-            <button class="evidence-hub-sidebar-toggle" id="evidence-hub-sidebar-toggle" type="button" aria-controls="evidence-hub-mobile-drawer" aria-expanded="true" aria-label="Collapse navigation" data-sidebar-tooltip="Collapse navigation">
+            <a class="admin-brand evidence-hub-brand" href="<?php echo ownerEscapeHtml($dashboardHref); ?>" aria-label="Ather — Evidence Hub" data-sidebar-tooltip="Ather — Evidence Hub">
+                <img class="evidence-hub-brand-logo" src="/assets/images/ather-navbar-logo.png" alt="" width="880" height="155" decoding="async">
+                <span class="evidence-hub-brand-copy"><small>Evidence Hub</small></span>
+            </a>
+            <a class="evidence-hub-sidebar-back" href="<?php echo ownerEscapeHtml($dashboardHref); ?>" aria-label="Back to dashboard" data-sidebar-tooltip="Back to dashboard" data-sidebar-tooltip-always="true">
+                <?php echo evidenceHubOwnerIcon('arrow-left'); ?><span class="visually-hidden">Back to dashboard</span>
+            </a>
+            <button class="evidence-hub-sidebar-toggle" id="evidence-hub-sidebar-toggle" type="button" aria-controls="evidence-hub-mobile-drawer" aria-expanded="true" aria-label="Collapse navigation" data-sidebar-tooltip="Collapse navigation" data-sidebar-tooltip-always="true">
                 <span class="visually-hidden">Collapse navigation</span><span data-evidence-hub-panel-state="close"><?php echo evidenceHubOwnerIcon('panel-left-close'); ?></span><span data-evidence-hub-panel-state="open" hidden><?php echo evidenceHubOwnerIcon('panel-left-open'); ?></span>
             </button>
-            <button class="evidence-hub-mobile-close" id="evidence-hub-mobile-close" type="button" aria-label="Close navigation">
+            <button class="evidence-hub-mobile-close" id="evidence-hub-mobile-close" type="button" aria-label="Close navigation" data-sidebar-tooltip="Close navigation">
                 <?php echo evidenceHubOwnerIcon('x'); ?>
             </button>
         </div>
-        <nav aria-label="Evidence Hub navigation">
-            <span class="nav-group-label evidence-hub-sidebar-label">Workspace</span>
-            <?php foreach ($primaryLinks as $key => [$href, $label]): ?>
-                <a class="<?php echo $key === 'evidence_hub' ? 'active' : ''; ?>" href="<?php echo $href; ?>"<?php echo $key === 'evidence_hub' ? ' aria-current="page"' : ''; ?> data-sidebar-tooltip="<?php echo ownerEscapeHtml($label); ?>"><?php echo evidenceHubOwnerIcon(match ($key) { 'dashboard' => 'home', 'projects' => 'folder-kanban', default => 'layout-dashboard' }); ?><span class="evidence-hub-sidebar-label"><?php echo ownerEscapeHtml($label); ?></span></a>
-            <?php endforeach; ?>
-            <span class="nav-group-label evidence-hub-sidebar-label">Portfolio</span>
-            <?php foreach ($capabilityLinks as $key => [$href, $label]): ?>
-                <a href="<?php echo $href; ?>" data-sidebar-tooltip="<?php echo ownerEscapeHtml($label); ?>"><?php echo evidenceHubOwnerIcon($capabilityIcons[$key]); ?><span class="evidence-hub-sidebar-label"><?php echo ownerEscapeHtml($label); ?></span></a>
+        <nav aria-label="Evidence Hub workspace">
+            <span class="nav-group-label evidence-hub-sidebar-label">WORKSPACE</span>
+            <?php foreach ($workspaceLinks as [$key, $label, $icon, $href]): ?>
+                <?php if ($href !== null): ?>
+                <a class="<?php echo $key === 'evidence_hub' ? 'active' : ''; ?>" href="<?php echo ownerEscapeHtml($href); ?>" aria-current="page" data-sidebar-tooltip="<?php echo ownerEscapeHtml($label); ?>">
+                    <?php echo evidenceHubOwnerIcon($icon); ?><span class="evidence-hub-sidebar-label"><?php echo ownerEscapeHtml($label); ?></span>
+                </a>
+                <?php else: ?>
+                <button class="evidence-hub-future-link" type="button" aria-disabled="true" tabindex="0" title="Coming soon" data-sidebar-tooltip="Coming soon" data-sidebar-tooltip-always="true">
+                    <?php echo evidenceHubOwnerIcon($icon); ?><span class="evidence-hub-sidebar-label"><?php echo ownerEscapeHtml($label); ?></span>
+                </button>
+                <?php endif; ?>
             <?php endforeach; ?>
         </nav>
-        <div class="sidebar-footer">
-            <a href="/owner_preview.php" data-sidebar-tooltip="Private preview"><?php echo evidenceHubOwnerIcon('eye'); ?><span class="evidence-hub-sidebar-label">Private preview</span></a>
+        <div class="sidebar-footer evidence-hub-sidebar-footer">
+            <div class="evidence-hub-owner-context" tabindex="0" data-sidebar-tooltip="Portfolio owner — Private workspace" data-sidebar-tooltip-always="true">
+                <?php echo evidenceHubOwnerIcon('user-round'); ?>
+                <span class="evidence-hub-owner-context-copy"><span>Portfolio owner</span><span class="evidence-hub-private-workspace"><?php echo evidenceHubOwnerIcon('lock-keyhole'); ?><span>Private workspace</span></span></span>
+            </div>
             <form class="sidebar-logout-form" method="POST" action="/owner_logout.php" data-owner-form>
                 <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
-                <button class="sidebar-logout-button" type="submit" data-pending-label="Signing out…" data-sidebar-tooltip="Sign out"><?php echo evidenceHubOwnerIcon('log-out'); ?><span class="evidence-hub-sidebar-label">Sign out</span></button>
+                <button class="sidebar-logout-button evidence-hub-sign-out" type="submit" data-pending-label="Logging out…" aria-label="Log out" data-sidebar-tooltip="Log out" data-sidebar-tooltip-always="true"><?php echo evidenceHubOwnerIcon('log-out'); ?><span class="evidence-hub-sidebar-label">Log out</span></button>
             </form>
         </div>
     </aside>
@@ -145,19 +153,31 @@ function ownerEvidenceHubNavigation(): void
 
 function evidenceHubOwnerIcon(string $name): string
 {
+    /*
+     * Lucide icon paths, Copyright (c) 2022 Lucide Contributors.
+     * Permission to use, copy, modify, and/or distribute this software for any
+     * purpose with or without fee is hereby granted, provided that this notice
+     * and the permission notice appear in all copies. THE SOFTWARE IS PROVIDED
+     * "AS IS" AND THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES AND LIABILITY.
+     */
     $paths = [
         'menu' => '<path d="M4 6h16M4 12h16M4 18h16"/>',
-        'panel-left-close' => '<path d="m14 6-6 6 6 6"/>',
-        'panel-left-open' => '<path d="m10 6 6 6-6 6"/>',
+        'arrow-left' => '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+        'panel-left-close' => '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18m7-6-3-3 3-3"/>',
+        'panel-left-open' => '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18m6-6 3-3-3-3"/>',
+        'blocks' => '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+        'badge-check' => '<path d="M3.85 8.62a4 4 0 0 1 4.77-4.77 4 4 0 0 1 6.76 0 4 4 0 0 1 4.77 4.77 4 4 0 0 1 0 6.76 4 4 0 0 1-4.77 4.77 4 4 0 0 1-6.76 0 4 4 0 0 1-4.77-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
         'layout-dashboard' => '<rect width="7" height="8" x="3" y="3" rx="2"/><rect width="7" height="5" x="14" y="3" rx="2"/><rect width="7" height="8" x="14" y="13" rx="2"/><rect width="7" height="5" x="3" y="16" rx="2"/>',
         'folder-kanban' => '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H10l2 2h5.5A2.5 2.5 0 0 1 20 9.5v8A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5Z"/><path d="M8 11v4m4-4v2m4-2v4"/>',
         'home' => '<path d="m4 10 8-6 8 6v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1Z"/>',
         'user' => '<circle cx="12" cy="8" r="3"/><path d="M5 20c.6-4 2.9-6 7-6s6.4 2 7 6"/>',
+        'user-round' => '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+        'lock-keyhole' => '<circle cx="12" cy="16" r="1"/><rect x="3" y="10" width="18" height="11" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/>',
         'briefcase' => '<rect width="16" height="12" x="4" y="7" rx="2"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7m-11 5h16m-10 0h4"/>',
         'message' => '<path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4 3v-3H7.5A2.5 2.5 0 0 1 5 12.5Z"/><path d="M9 9h6"/>',
         'send' => '<path d="m20 4-7.5 16-2.5-7.5L4 10Z"/><path d="M10 12.5 20 4"/>',
         'eye' => '<path d="M3 12s3.2-5 9-5 9 5 9 5-3.2 5-9 5-9-5-9-5Z"/><circle cx="12" cy="12" r="2.5"/>',
-        'log-out' => '<path d="m11 16 4-4-4-4m4 4H4"/><path d="M20 18V6a2 2 0 0 0-2-2h-5"/>',
+        'log-out' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
         'moon' => '<path d="M19.5 15.2A8 8 0 0 1 8.8 4.5 8 8 0 1 0 19.5 15.2Z"/>',
         'x' => '<path d="M18 6 6 18M6 6l12 12"/>',
         'spark' => '<path d="m12 3 1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6Z"/><path d="m18 17 .7 2.3L21 20l-2.3.7L18 23l-.7-2.3L15 20l2.3-.7Z"/>',

@@ -73,13 +73,13 @@ function Invoke-RequiredGateRegistryChallenges([string[]]$Registry) {
 
 function Assert-CurrentSourceIdentity([string]$Root, [string]$Image, [string]$Layout, [string]$Manifest) {
     if (-not (Test-Path -LiteralPath (Join-Path $Root 'database/migrations/011_recommendation_dispositions.sql'))) { Fail-Gate 'source identity' 'migration 011 is absent from verification source' }
-    foreach ($path in @('owner_evidence_hub.php', 'evidence_hub.css', 'evidence_hub.js', 'database/migrate.php')) {
+    foreach ($path in @('owner_evidence_hub.php', 'evidence_hub.css', 'evidence_hub.js', 'owner_theme.js', 'database/migrate.php')) {
         if (-not (Test-Path -LiteralPath (Join-Path $Root $path))) { Fail-Gate 'source identity' "required source path $path is absent" }
     }
     $containerRoot = if ($Layout -eq 'production') { '/var/www/app' } else { '/var/www/html' }
-    $check = "set -eu; cd $containerRoot; sha256sum -c /audit/source.manifest; test -f database/migrations/011_recommendation_dispositions.sql; test -f owner_evidence_hub.php; test -f evidence_hub.css; test -f evidence_hub.js"
+    $check = "set -eu; cd $containerRoot; sha256sum -c /audit/source.manifest; test -f database/migrations/011_recommendation_dispositions.sql; test -f owner_evidence_hub.php; test -f evidence_hub.css; test -f evidence_hub.js; test -f owner_theme.js"
     if ($Layout -eq 'development') { $check += '; test "$(readlink -f /var/www/app)" = /var/www/html' }
-    if ($Layout -eq 'production') { $check += '; test -f /var/www/public/evidence_hub.css; test -f /var/www/public/evidence_hub.js' }
+    if ($Layout -eq 'production') { $check += '; test -f /var/www/public/evidence_hub.css; test -f /var/www/public/evidence_hub.js; test -f /var/www/public/owner_theme.js' }
     & docker run --rm --entrypoint sh -v "${Root}:/verification-source:ro" -v "${Manifest}:/audit/source.manifest:ro" $Image -lc $check
     if ($LASTEXITCODE -ne 0) { Fail-Gate 'source identity' 'container-visible application source differs from the intended verification source' }
 }
@@ -167,7 +167,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @($Image, 'database/production-ownership-bootstrap.php'))
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @($Image, 'database/migrate.php'))
         $repeat = & docker run --rm --network $network --entrypoint php @baseEnvironment $Image database/migrate.php 2>&1
-        if ($LASTEXITCODE -ne 0 -or ($repeat -join "`n") -notmatch 'No pending migrations\.') { Fail-Gate 'migration repeat' 'No pending migrations. was not reported after migration 011' }
+        if ($LASTEXITCODE -ne 0 -or ($repeat -join "`n") -notmatch 'No pending migrations\.') { Fail-Gate 'migration repeat' 'No pending migrations. was not reported after migration 012' }
         Invoke-Tool 'docker' @('exec', '-e', "MYSQL_PWD=$databasePassword", $database, 'mysql', '-u', 'root', '-e', "CREATE DATABASE $timestampDatabaseName")
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', "DB_NAME=$timestampDatabaseName", '-e', 'DB_USER=root', '-e', "DB_PASSWORD=$databasePassword", '-e', 'EVIDENCE_HUB_TIMESTAMP_MYSQL_TEST=1', $Image, 'scripts/run-evidence-hub-mysql-timestamp-test.php'))
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_R3_MYSQL_TEST=1', $Image, 'scripts/run-evidence-hub-mysql-disposition-test.php'))
@@ -217,6 +217,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-visual.cjs'), $screenshots)
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs'))
         }
+        Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', $web, 'php', 'scripts/check-evidence-edit-http.php'))
     } finally {
         & docker exec $web rm -rf $bootstrapState 2>$null | Out-Null
         Remove-Item -LiteralPath $ownerAJar,$ownerBJar,$invalidJar -Force -ErrorAction SilentlyContinue

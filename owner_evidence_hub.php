@@ -9,7 +9,9 @@ require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/owner_layout.php';
 require_once __DIR__ . '/includes/evidence_hub_owner_presentation.php';
+require_once __DIR__ . '/includes/evidence_hub_owner_page_presentation.php';
 require_once __DIR__ . '/includes/evidence_hub_owner_recommendations.php';
+require_once __DIR__ . '/includes/evidence_hub_owner_page_model.php';
 require_once __DIR__ . '/includes/evidence_hub_recommendation_action_tokens.php';
 
 startOwnerSession();
@@ -25,6 +27,7 @@ if (evidenceHubOwnerRouteHasTrailingSlash()) {
 }
 
 $contract = null;
+$pageModel = null;
 $actionTokens = [];
 $feedback = '';
 $error = '';
@@ -43,7 +46,12 @@ try {
     }
     $state = buildConfiguredAuthorizedEvidenceHubOwnerRecommendationState($database, $context, time());
     $contract = $state['contract'];
+    $pageModel = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state);
     $feedback = takeEvidenceHubRecommendationActionFeedback();
+    if (($_SESSION['owner_evidence_saved'] ?? null) === true) {
+        unset($_SESSION['owner_evidence_saved']);
+        $feedback = 'Project evidence saved.';
+    }
     foreach ($contract['recommendations'] as $recommendation) {
         $resolved = resolveAuthorizedEvidenceHubOwnerRecommendation($state, $recommendation['recommendation_key']);
         if (!is_array($resolved)) {
@@ -62,6 +70,10 @@ try {
     reportApplicationError($exception, 'owner_evidence_hub.php', 'owner_evidence_hub_load');
     http_response_code(503);
     $error = 'Evidence Hub is temporarily unavailable.';
+} catch (RuntimeException $exception) {
+    reportApplicationError($exception, 'owner_evidence_hub.php', 'owner_evidence_hub_presentation');
+    http_response_code(503);
+    $error = 'Evidence Hub is temporarily unavailable.';
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'HEAD') {
@@ -69,11 +81,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'HEAD') {
     exit;
 }
 
-ownerLayoutStart('Evidence Hub', 'evidence_hub');
-if ($error !== '' || !is_array($contract)) {
+ownerLayoutStart('Evidence Hub', 'evidence_hub', true);
+if ($error !== '' || !is_array($contract) || !is_array($pageModel)) {
     renderEvidenceHubOwnerSafeError();
 } else {
-    renderEvidenceHubOwnerPresentation($contract, $actionTokens, $feedback);
+    renderEvidenceHubOwnerPage($contract, $pageModel, $actionTokens, $feedback);
 }
 
 /** @return array{action:string, action_token:string} */

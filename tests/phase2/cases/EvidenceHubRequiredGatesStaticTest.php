@@ -22,7 +22,7 @@ final class EvidenceHubRequiredGatesStaticTest
             'Production Compose must require the externally supplied Evidence Hub opaque-target HMAC key.'
         );
         phase2Assert(!preg_match('/(?m)^\s*EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY:(?!\s*\$\{)[^\r\n]+/', $compose), 'Production Compose contains an Evidence Hub HMAC default.');
-        phase2Assert(str_contains($dockerfile, '/var/www/app/evidence_hub.css') && str_contains($dockerfile, '/var/www/app/evidence_hub.js'), 'Production image does not publish the Evidence Hub CSS and JavaScript assets.');
+        phase2Assert(str_contains($dockerfile, '/var/www/app/evidence_hub.css') && str_contains($dockerfile, '/var/www/app/evidence_hub.js') && str_contains($dockerfile, '/var/www/app/owner_theme.js'), 'Production image does not publish the Evidence Hub and Owner theme assets.');
 
         foreach ([
             'EvidenceHubRecommendationActionHttpMySqlTest',

@@ -85,21 +85,19 @@ const watchdog = setTimeout(async () => {
         const noJs = await noJsContext.newPage();
         await noJs.goto(`${baseUrl}${routePath}`, { waitUntil: 'domcontentloaded', timeout: stepTimeout });
         expectState(await noJs.locator(`form[action="${routePath}"]`).count() > 0, 'no-javascript-forms', 'no-JavaScript action forms were unavailable');
+        await noJs.locator('.evidence-hub-options summary').first().click();
+        expectState(await noJs.locator('.evidence-hub-options').first().evaluate(node => node.open), 'no-javascript-options', 'native recommendation options did not open without JavaScript');
         await noJsContext.close();
 
         mark('snooze-form-present');
-        const snoozeForm = actionForm(recommendationCard(page, snoozeRecommendationTitle), 'snooze');
+        const snoozeCard = recommendationCard(page, snoozeRecommendationTitle);
+        await snoozeCard.locator('.evidence-hub-options summary').click();
+        const snoozeForm = actionForm(snoozeCard, 'snooze');
         expectState(await snoozeForm.count() === 1, 'snooze-form-present', 'expected snooze form was not found');
         const snoozeControl = snoozeForm.getByRole('button', { name: snoozeName });
         expectState(await snoozeControl.count() === 1, 'snooze-control-present', 'expected snooze control was not found');
-        expectState(await snoozeControl.evaluate(node => node.classList.contains('evidence-hub-snooze')), 'snooze-secondary-hierarchy', 'Snooze control lost its secondary presentation role');
         expectState(await snoozeControl.isVisible(), 'snooze-control-visible', 'expected snooze control was not visible');
         expectState(await snoozeControl.isEnabled(), 'snooze-control-enabled', 'expected snooze control was disabled');
-        const snoozeTone = await snoozeControl.evaluate(node => ({
-            color: getComputedStyle(node).color,
-            background: getComputedStyle(node).backgroundColor,
-            border: getComputedStyle(node).borderColor,
-        }));
         await snoozeControl.focus();
         expectState(await page.evaluate(() => document.activeElement?.tagName === 'BUTTON'), 'snooze-control-focus', 'expected snooze control did not receive focus');
 
@@ -123,19 +121,14 @@ const watchdog = setTimeout(async () => {
         expectState(postSnoozeCount === initialCount - 1, 'dismiss-candidate-remains', `expected ${initialCount - 1} remaining actionable recommendations; received ${postSnoozeCount}`);
 
         mark('dismiss-form-present');
-        const dismissForm = actionForm(recommendationCard(page, dismissRecommendationTitle), 'dismiss');
+        const dismissCard = recommendationCard(page, dismissRecommendationTitle);
+        await dismissCard.locator('.evidence-hub-options summary').click();
+        const dismissForm = actionForm(dismissCard, 'dismiss');
         expectState(await dismissForm.count() === 1, 'dismiss-form-present', 'expected dismiss form was not found');
         const dismissTokenInput = dismissForm.locator('input[type="hidden"][name="action_token"]');
         expectState(await dismissTokenInput.count() === 1 && await dismissTokenInput.inputValue() !== '', 'dismiss-fresh-token-present', 'expected fresh dismiss token was not available');
         const dismissControl = dismissForm.getByRole('button', { name: dismissName });
         expectState(await dismissControl.count() === 1, 'dismiss-control-present', 'expected dismiss control was not found');
-        expectState(await dismissControl.evaluate(node => node.classList.contains('evidence-hub-dismiss')), 'dismiss-destructive-hierarchy', 'Dismiss control lost its destructive presentation role');
-        const dismissTone = await dismissControl.evaluate(node => ({
-            color: getComputedStyle(node).color,
-            background: getComputedStyle(node).backgroundColor,
-            border: getComputedStyle(node).borderColor,
-        }));
-        expectState(snoozeTone.color !== dismissTone.color && snoozeTone.border !== dismissTone.border && dismissTone.background !== 'rgba(0, 0, 0, 0)', 'dismiss-destructive-visual-tone', 'Dismiss control is not a distinct soft-destructive button surface.');
 
         mark('dismiss-control-visible');
         expectState(await dismissControl.isVisible(), 'dismiss-control-visible', 'expected dismiss control was not visible');

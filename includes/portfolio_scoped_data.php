@@ -362,11 +362,63 @@ function updateAuthorizedProject(
     }
 
     $evidenceValues = projectEvidenceStorageValues($evidenceFields);
+    $technologyValue = projectTechnologiesToStorage($technologies);
+    $existingStatement = $database->prepare(
+        'SELECT projects.title, projects.category, projects.description, projects.github_url,
+                projects.image_path, projects.technologies, projects.problem_statement,
+                projects.personal_role, projects.measurable_outcome
+         FROM projects
+         JOIN portfolios ON portfolios.id = projects.portfolio_id
+         WHERE projects.id = :resource_id
+           AND projects.portfolio_id = :authorized_portfolio_id
+           AND portfolios.owner_user_id = :authorized_user_id
+         LIMIT 1'
+    );
+    $existingStatement->execute([
+        'resource_id' => $projectId,
+        'authorized_portfolio_id' => $context->portfolioId,
+        'authorized_user_id' => $context->userId,
+    ]);
+    $existing = $existingStatement->fetch(PDO::FETCH_ASSOC);
+    if ($existing === false) {
+        return false;
+    }
+    $newValues = [
+        'title' => $title,
+        'category' => $category,
+        'description' => $description,
+        'github_url' => $githubUrl,
+        'image_path' => $imagePath,
+        'technologies' => $technologyValue,
+        ...$evidenceValues,
+    ];
+    $changed = false;
+    foreach ($newValues as $field => $value) {
+        if ($field === 'technologies') {
+            $storedTechnologies = parseProjectTechnologiesStorage($existing['technologies'] ?? null);
+            if ($storedTechnologies['storage_state'] !== 'valid' || $storedTechnologies['labels'] !== $technologies) {
+                $changed = true;
+            }
+            continue;
+        }
+        if ($existing[$field] !== $value) {
+            $changed = true;
+            break;
+        }
+    }
+    if (!$changed) {
+        return true;
+    }
+
     $evidenceAssignments = array_map(static fn (string $field): string => "{$field} = :{$field}", array_keys($evidenceValues));
+    $timestampExpression = $database->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
+        ? "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')"
+        : 'CURRENT_TIMESTAMP(6)';
     $statement = $database->prepare(
         'UPDATE projects
          SET title = :title, category = :category, description = :description,
-             github_url = :github_url, image_path = :image_path, technologies = :technologies' .
+             github_url = :github_url, image_path = :image_path, technologies = :technologies,
+             updated_at = ' . $timestampExpression .
              ($evidenceAssignments === [] ? '' : ', ' . implode(', ', $evidenceAssignments)) . '
          WHERE id = :resource_id
            AND portfolio_id = :authorized_portfolio_id'
@@ -377,7 +429,7 @@ function updateAuthorizedProject(
         'description' => $description,
         'github_url' => $githubUrl,
         'image_path' => $imagePath,
-        'technologies' => projectTechnologiesToStorage($technologies),
+        'technologies' => $technologyValue,
         ...$evidenceValues,
         'resource_id' => $projectId,
         'authorized_portfolio_id' => $context->portfolioId,

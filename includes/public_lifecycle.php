@@ -151,6 +151,7 @@ function publishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $contex
 {
     runDatabaseTransaction($database, static function () use ($database, $context): void {
         $state = ownedPublicLifecycleState($database, $context);
+        $publicationChanged = $state['is_published'] !== 1;
         $slug = normalizePublicSlug($state['public_slug']);
         if ($slug === null || $slug !== $state['public_slug'] || in_array($slug, PUBLIC_SLUG_RESERVED, true)) {
             throw new PublicLifecycleValidationException('Set a valid public slug before publishing.');
@@ -182,12 +183,20 @@ function publishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $contex
         if ($statement->rowCount() !== 1 && ownedPublicLifecycleState($database, $context)['is_published'] !== 1) {
             throw new RuntimeException('Portfolio publication could not be saved.');
         }
+        if ($publicationChanged) {
+            $projects = $database->prepare(
+                'UPDATE projects SET updated_at = CURRENT_TIMESTAMP(6)
+                 WHERE portfolio_id = :authorized_portfolio_id'
+            );
+            $projects->execute(['authorized_portfolio_id' => $context->portfolioId]);
+        }
     });
 }
 
 function unpublishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $context): void
 {
     runDatabaseTransaction($database, static function () use ($database, $context): void {
+        $publicationChanged = ownedPublicLifecycleState($database, $context)['is_published'] === 1;
         $statement = $database->prepare(
             'UPDATE portfolios
              SET is_published = 0
@@ -200,6 +209,13 @@ function unpublishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $cont
         ]);
         if ($statement->rowCount() !== 1 && ownedPublicLifecycleState($database, $context)['is_published'] !== 0) {
             throw new RuntimeException('Portfolio unpublication could not be saved.');
+        }
+        if ($publicationChanged) {
+            $projects = $database->prepare(
+                'UPDATE projects SET updated_at = CURRENT_TIMESTAMP(6)
+                 WHERE portfolio_id = :authorized_portfolio_id'
+            );
+            $projects->execute(['authorized_portfolio_id' => $context->portfolioId]);
         }
     });
 }

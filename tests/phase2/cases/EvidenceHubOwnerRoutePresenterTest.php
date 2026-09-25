@@ -137,7 +137,7 @@ final class EvidenceHubOwnerRoutePresenterTest
     {
         $layout = self::read('includes/owner_layout.php');
         $presentation = self::read('includes/evidence_hub_owner_presentation.php');
-        foreach (["'evidence_hub' => ['/owner/evidence-hub', 'Evidence Hub']", 'aria-current="page"', 'href="#main-content"'] as $required) {
+        foreach (["['evidence_hub', 'Evidence Hub', 'blocks', '/owner/evidence-hub']", 'aria-current="page"', 'href="#main-content"', 'Back to dashboard'] as $required) {
             phase2Assert(str_contains($layout, $required), "Owner navigation accessibility is missing {$required}.");
         }
         foreach (['aria-labelledby="evidence-hub-status-title"', 'aria-labelledby="evidence-hub-technology-title"', 'aria-labelledby="evidence-hub-recommendations-title"', 'aria-label="Evidence Hub recommendation"', 'ownerEscapeHtml'] as $required) {
@@ -150,12 +150,20 @@ final class EvidenceHubOwnerRoutePresenterTest
         $layout = self::read('includes/owner_layout.php');
         $presentation = self::read('includes/evidence_hub_owner_presentation.php');
         $javascript = self::read('evidence_hub.js');
-        foreach (['dir="ltr"', 'lang="en"', 'Evidence Hub', 'Project Management', 'evidence-hub-sidebar-toggle', 'evidence-hub-mobile-toggle', 'evidence-hub-mobile-drawer', 'evidence-hub-theme-toggle', 'data-sidebar-tooltip', 'evidence_hub.css', 'evidence_hub.js'] as $required) {
+        foreach (['dir="ltr"', 'lang="en"', 'WORKSPACE', 'Overview', 'Projects', 'Evidence Hub', 'Credentials', 'Coming soon', 'Portfolio owner', 'Private workspace', '/owner.php', '/owner_logout.php', 'evidence-hub-sidebar-toggle', 'evidence-hub-mobile-toggle', 'evidence-hub-mobile-drawer', 'evidence-hub-section-nav', 'data-sidebar-tooltip', 'evidence_hub.css', 'evidence_hub.js'] as $required) {
             phase2Assert(str_contains($layout . $presentation, $required), "Production Evidence Hub shell is missing {$required}.");
         }
-        foreach (['ather.evidenceHub.sidebarCollapsed', 'ather.evidenceHub.theme', "window.matchMedia('(max-width: 1100px)')", 'setTheme', 'setMobileDrawer'] as $required) {
+        foreach (['ather.evidenceHub.sidebarCollapsed', "window.matchMedia('(max-width: 1100px)')", 'setMobileDrawer'] as $required) {
             phase2Assert(str_contains($javascript, $required), "Evidence Hub visual state contract is missing {$required}.");
         }
+        $ownerTheme = self::read('owner_theme.js');
+        foreach (['ather.evidenceHub.theme', "window.matchMedia('(prefers-color-scheme: dark)')", 'data-evidence-hub-theme', "addEventListener('change'", "value === 'light' || value === 'dark'"] as $required) {
+            phase2Assert(str_contains($ownerTheme, $required), "Shared Owner theme resolver is missing {$required}.");
+        }
+        phase2Assert(str_contains($layout, 'bool $themeCapable = false') && str_contains($layout, 'if ($themeCapable)') && str_contains($layout, "versionedAssetUrl('owner_theme.js')") && str_contains($layout, "versionedAssetUrl('admin.js')"), 'Shared Owner layout must load its theme resolver only for explicit theme-capable pages.');
+        phase2Assert(strpos($layout, "versionedAssetUrl('owner_theme.js')") > strpos($layout, '<body') && strpos($layout, "versionedAssetUrl('owner_theme.js')") < strpos($layout, '<div class="admin-layout'), 'Owner theme must resolve before workspace content.');
+        phase2Assert(str_contains(self::read('owner_evidence_hub.php'), "ownerLayoutStart('Evidence Hub', 'evidence_hub', true)") && str_contains(self::read('owner_project_evidence.php'), "ownerLayoutStart('Edit project evidence', 'evidence_hub', true)"), 'Evidence Hub and its editor must explicitly opt in to dark theme capability.');
+        phase2Assert(str_contains(self::read('owner.php'), "ownerLayoutStart('Owner Dashboard', 'dashboard')"), 'Legacy Owner pages must retain the default Light-only capability.');
         foreach (['evidence-hub-mobile-close', 'Close navigation', 'evidence-hub-mobile-backdrop', 'aria-controls="evidence-hub-mobile-drawer"'] as $required) {
             phase2Assert(str_contains($layout, $required), "Evidence Hub mobile drawer structure is missing {$required}.");
         }
@@ -164,15 +172,15 @@ final class EvidenceHubOwnerRoutePresenterTest
             phase2Assert(str_contains($presentation, $required), "Production Evidence Hub presentation is missing {$required}.");
         }
         phase2Assert(!str_contains($presentation, 'evidence-hub-context-bar') && !str_contains($presentation, 'evidence-hub-project-link'), 'Evidence Hub retains duplicate breadcrumb or global intro action markup.');
-        phase2Assert(str_contains($layout, 'evidence-hub-topbar') && str_contains($layout, 'evidence-hub-topbar-breadcrumb') && str_contains($layout, 'evidence-hub-topbar-theme'), 'Owner shell is missing the application top bar.');
-        foreach (['<html lang="en" dir="ltr">', 'Evidence Hub — My Portfolio', 'Open navigation', 'Close navigation', 'Enable dark theme'] as $required) {
+        phase2Assert(str_contains($layout, 'evidence-hub-topbar') && str_contains($layout, 'evidence-hub-topbar-context') && str_contains($layout, 'evidence-hub-section-nav') && !str_contains($layout, 'evidence-hub-topbar-theme') && !str_contains($layout, 'evidence-hub-topbar-breadcrumb'), 'Owner shell is missing the unified Evidence Hub Navbar or retains the visible theme control.');
+        foreach (['<html lang="en" dir="ltr">', 'Evidence Hub — My Portfolio', 'Open navigation', 'Close navigation'] as $required) {
             phase2Assert(str_contains($layout, $required), "English-only Owner shell is missing {$required}.");
         }
         phase2Assert(!str_contains($layout, 'language selector') && !str_contains($layout, 'lang="ar"') && !str_contains($layout, 'dir="rtl"'), 'Owner shell retains an Arabic activation path.');
         foreach (['recommendation_key', 'evidence_fingerprint', 'opaque_target_ref', 'raw_label', 'canonical_key', 'tenant_scope_ref', 'portfolio_target_identity'] as $forbidden) {
             phase2Assert(!str_contains($presentation, $forbidden), "Production Evidence Hub presentation exposes {$forbidden}.");
         }
-        foreach (['evidence_hub.css', 'evidence_hub.js'] as $asset) {
+        foreach (['evidence_hub.css', 'evidence_hub.js', 'owner_theme.js'] as $asset) {
             phase2Assert(is_file(PHASE2_REPOSITORY_ROOT . '/' . $asset), "Production-local Evidence Hub asset {$asset} is missing.");
         }
         $css = self::read('evidence_hub.css');

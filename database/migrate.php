@@ -24,6 +24,8 @@ const OWNERSHIP_CONTRACT_MIGRATION_VERSION = '004';
 const OWNERSHIP_CONTRACT_MIGRATION_NAME = 'ownership_contract';
 const PUBLIC_LIFECYCLE_MIGRATION_VERSION = '005';
 const PUBLIC_LIFECYCLE_MIGRATION_NAME = 'public_lifecycle';
+const PROJECT_UPDATED_AT_MIGRATION_VERSION = '012';
+const PROJECT_UPDATED_AT_MIGRATION_NAME = 'project_updated_at';
 
 function migrationFailure(string $message, ?string $version = null): never
 {
@@ -667,6 +669,26 @@ function executePublicLifecycleMigration(PDO $database): void
     ensureExpectedIndex($database, 'portfolios', 'uq_portfolios_public_slug', ['public_slug'], true);
 }
 
+function executeProjectUpdatedAtMigration(PDO $database): void
+{
+    $definition = fetchColumnDefinition($database, 'projects', 'updated_at');
+    if ($definition === null) {
+        $database->exec('ALTER TABLE projects ADD COLUMN updated_at TIMESTAMP(6) NULL DEFAULT NULL');
+        $definition = requireColumnDefinition($database, 'projects', 'updated_at', 'timestamp(6)', 'YES');
+    }
+    if ($definition['type'] !== 'timestamp(6)' || !in_array($definition['nullable'], ['YES', 'NO'], true)
+        || str_contains((string) $definition['extra'], 'on update')) {
+        throw new RuntimeException('Migration 012 found an incompatible projects.updated_at definition.');
+    }
+
+    // A retry after interrupted DDL preserves every already populated timestamp.
+    $database->exec('UPDATE projects SET updated_at = created_at WHERE updated_at IS NULL');
+    if ($definition['nullable'] === 'YES') {
+        $database->exec('ALTER TABLE projects MODIFY COLUMN updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)');
+    }
+    requireColumnDefinition($database, 'projects', 'updated_at', 'timestamp(6)', 'NO');
+}
+
 function executeSqlMigration(PDO $database, array $migration): void
 {
     if ($migration['version'] === '002' && $migration['name'] === 'integrity_constraints') {
@@ -683,6 +705,10 @@ function executeSqlMigration(PDO $database, array $migration): void
     }
     if ($migration['version'] === PUBLIC_LIFECYCLE_MIGRATION_VERSION && $migration['name'] === PUBLIC_LIFECYCLE_MIGRATION_NAME) {
         executePublicLifecycleMigration($database);
+        return;
+    }
+    if ($migration['version'] === PROJECT_UPDATED_AT_MIGRATION_VERSION && $migration['name'] === PROJECT_UPDATED_AT_MIGRATION_NAME) {
+        executeProjectUpdatedAtMigration($database);
         return;
     }
 

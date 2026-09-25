@@ -21,6 +21,8 @@ final class EvidenceHubStorageTest
         $rollback = self::read('database/rollback/010_project_evidence_fields.sql');
         $dispositionMigration = self::read('database/migrations/011_recommendation_dispositions.sql');
         $dispositionRollback = self::read('database/rollback/011_recommendation_dispositions.sql');
+        $updatedMigration = self::read('database/migrations/012_project_updated_at.sql');
+        $migrationRunner = self::read('database/migrate.php');
         $scopedData = self::read('includes/portfolio_scoped_data.php');
         $evaluator = self::read('includes/evidence_text_evaluator.php');
         $publicJson = self::read('includes/public_lifecycle.php');
@@ -31,6 +33,7 @@ final class EvidenceHubStorageTest
             phase2Assert(str_contains($migration, $column), 'Evidence migration does not add the approved nullable field.');
         }
         phase2Assert(str_contains($rollback, 'DROP COLUMN measurable_outcome') && str_contains($rollback, 'DROP COLUMN personal_role') && str_contains($rollback, 'DROP COLUMN problem_statement'), 'Disposable rollback companion is incomplete.');
+        phase2Assert(str_contains($updatedMigration, 'projects.updated_at') && str_contains($migrationRunner, 'UPDATE projects SET updated_at = created_at WHERE updated_at IS NULL') && !str_contains($migrationRunner, 'ON UPDATE CURRENT_TIMESTAMP'), 'Project activity migration is missing backfill or adds automatic update behavior.');
         foreach ([
             'CREATE TABLE recommendation_dispositions',
             'portfolio_id INT UNSIGNED NOT NULL',
@@ -69,6 +72,7 @@ final class EvidenceHubStorageTest
     {
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $database->exec('CREATE TABLE projects (id INTEGER PRIMARY KEY AUTOINCREMENT, portfolio_id INTEGER NOT NULL, title TEXT, category TEXT, description TEXT, github_url TEXT, image_path TEXT, technologies TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)');
+        $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL); INSERT INTO portfolios (id, owner_user_id) VALUES (10, 1), (20, 2)');
         $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 10);
         $otherContext = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(2), 20);
 
@@ -85,6 +89,7 @@ final class EvidenceHubStorageTest
         $stored = $database->query("SELECT problem_statement, personal_role, measurable_outcome FROM projects WHERE id = {$id}")->fetch(PDO::FETCH_ASSOC);
         phase2AssertSame($maximum, $stored['problem_statement'], 'Maximum valid evidence was not stored exactly.');
         phase2AssertSame(null, $stored['personal_role'], 'Explicit null evidence was not persisted.');
+        $database->exec('ALTER TABLE projects ADD COLUMN updated_at TEXT NULL; UPDATE projects SET updated_at = created_at WHERE updated_at IS NULL');
         phase2Assert(updateAuthorizedProject($database, $context, $id, 'Private evidence', 'Web', 'Existing description', '', null, [], ['measurable_outcome' => null]), 'Scoped evidence update failed.');
         phase2AssertSame(null, $database->query("SELECT measurable_outcome FROM projects WHERE id = {$id}")->fetchColumn(), 'Explicit null update was not persisted.');
         phase2Assert(!updateAuthorizedProject($database, $otherContext, $id, 'Foreign', 'Web', 'No', '', null, [], ['problem_statement' => 'foreign update']), 'Cross-tenant evidence update was accepted.');

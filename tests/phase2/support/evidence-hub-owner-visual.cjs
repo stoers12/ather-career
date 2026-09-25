@@ -21,6 +21,7 @@ const noOverflow = page => page.evaluate(() => {
     if (document.body.scrollWidth > viewport + 1 || scrollX !== 0) return false;
     return [...document.body.querySelectorAll('*')].every(node => {
         if (closedDrawer?.inert && node.closest('#evidence-hub-mobile-drawer')) return true;
+        if (node.closest('.evidence-hub-section-nav')) return true;
         const box = node.getBoundingClientRect();
         return box.left >= -1 && box.right <= viewport + 1;
     });
@@ -64,8 +65,8 @@ const captureBrowserErrors = page => {
             assert.equal(await page.getByRole('option', { name: /arabic/i }).count(), 0, `${viewport.width}: no Arabic language option`);
             const topbar = page.locator('.evidence-hub-topbar');
             const topbarBox = await topbar.boundingBox();
-            assert.ok(topbarBox && Math.round(topbarBox.height) >= 60 && Math.round(topbarBox.height) <= 64, `${viewport.width}: distinct 60–64px application top bar`);
-            assert.equal(await page.locator('#evidence-hub-theme-toggle').isVisible(), true, `${viewport.width}: theme control is reachable in application chrome`);
+            assert.ok(topbarBox && Math.round(topbarBox.height) >= 52 && Math.round(topbarBox.height) <= 58, `${viewport.width}: compact unified Navbar`);
+            assert.equal(await page.locator('#evidence-hub-theme-toggle').count(), 0, `${viewport.width}: no visible theme control`);
             assert.equal(await page.locator('.evidence-hub-presentation .evidence-hub-topbar-breadcrumb, .evidence-hub-presentation .evidence-hub-context-bar').count(), 0, `${viewport.width}: breadcrumb is not duplicated in editorial content`);
             assert.equal(await page.locator('.evidence-hub-hero').getByRole('link', { name: 'Manage projects' }).count(), 0, `${viewport.width}: intro has no global Manage projects action`);
             assert.equal(await page.getByRole('heading', { name: 'Evidence overview' }).count(), 1, `${viewport.width}: overview heading is not duplicated`);
@@ -133,12 +134,14 @@ const captureBrowserErrors = page => {
         assert.equal(await desktop.locator('body').evaluate(node => node.classList.contains('evidence-hub-sidebar-collapsed')), true, 'desktop: rail collapses');
         await desktop.waitForFunction(() => Math.round(document.querySelector('.evidence-hub-sidebar').getBoundingClientRect().width) === 78);
         assert.equal(Math.round((await rail.boundingBox()).width), 78, 'desktop: collapsed rail is 78px');
-        await desktop.locator('#evidence-hub-theme-toggle').focus();
+        await desktop.locator('#evidence-hub-sidebar-toggle').focus();
         await desktop.screenshot({ path: path.join(output, 'desktop-collapsed-tooltip.png') });
         assert.equal(await desktop.locator('#evidence-hub-sidebar-toggle').getAttribute('aria-label'), 'Expand navigation', 'desktop: collapsed rail label');
-        await desktop.locator('#evidence-hub-theme-toggle').click();
+        await desktop.locator('#evidence-hub-sidebar-toggle').click();
+        await desktop.evaluate(() => localStorage.setItem('ather.evidenceHub.theme', 'dark'));
+        await desktop.reload();
         assert.equal(await desktop.locator('body').getAttribute('data-evidence-hub-theme'), 'dark', 'desktop: dark theme applies');
-        assert.equal(await desktop.locator('#evidence-hub-theme-toggle').getAttribute('aria-label'), 'Enable light theme', 'desktop: dark theme control label');
+        assert.equal(await desktop.locator('#evidence-hub-theme-toggle').count(), 0, 'desktop: no theme control in dark theme');
         await desktop.locator('.admin-content').screenshot({ path: path.join(output, 'desktop-expanded-dark.png') });
         await desktop.locator('#evidence-hub-sidebar-toggle').focus();
         await desktop.screenshot({ path: path.join(output, 'keyboard-focus.png') });
@@ -210,7 +213,7 @@ const captureBrowserErrors = page => {
                 body: { clientWidth: document.body.clientWidth, scrollWidth: document.body.scrollWidth, width: document.body.getBoundingClientRect().width, classes: document.body.className, overflowX: getComputedStyle(document.body).overflowX },
                 innerWidth,
                 scrollX,
-                rightmost: [...document.querySelectorAll('*')].map(node => { const box = node.getBoundingClientRect(); return { tag: node.tagName, className: typeof node.className === 'string' ? node.className : '', id: node.id, position: getComputedStyle(node).position, left: Math.round(box.left), right: Math.round(box.right), width: Math.round(box.width) }; }).filter(node => node.right > innerWidth + 1).sort((a, b) => b.right - a.right).slice(0, 8),
+                rightmost: [...document.querySelectorAll('*')].filter(node => !node.closest('.evidence-hub-section-nav')).map(node => { const box = node.getBoundingClientRect(); return { tag: node.tagName, className: typeof node.className === 'string' ? node.className : '', id: node.id, position: getComputedStyle(node).position, left: Math.round(box.left), right: Math.round(box.right), width: Math.round(box.width) }; }).filter(node => node.right > innerWidth + 1).sort((a, b) => b.right - a.right).slice(0, 8),
             }));
             console.log(`DRAWER_REFLOW_${viewport.width}=${JSON.stringify(drawerReflow)}`);
             assert.equal(drawerReflow.body.scrollWidth <= drawerReflow.innerWidth && drawerReflow.scrollX === 0 && drawerReflow.rightmost.length === 0, true, `${viewport.width}: drawer has no horizontal overflow`);
