@@ -9,7 +9,25 @@ jobs:
     runs-on: ubuntu-latest
     env:
       APP_VERSION: ${{ github.sha }}
+      PORTFOLIO_PRODUCTION_IMAGE: ather-career-ci-web:${{ github.sha }}
+      MYSQL_DATABASE: ather_career_test_ci
+      MYSQL_USER: portfolio_user
+      MYSQL_PASSWORD: ci_database_password
+      MYSQL_ROOT_PASSWORD: ci_root_password
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: ather_career_test_ci
+      DB_USER: portfolio_user
+      DB_PASSWORD: ci_database_password
+      PUBLIC_BASE_URL: https://localhost:8443
       SESSION_COOKIE_SECURE: "true"
+      EXPECTED_OIDC_ISSUER: https://127.0.0.1:9443/
+      PRESERVED_V1_OIDC_SUBJECT: synthetic-preserved-owner
+      OIDC_CLIENT_ID: ci_auth0_client_id_123456
+      OIDC_CLIENT_SECRET: ci_auth0_client_secret_1234567890
+      OIDC_REDIRECT_URI: https://ci.ather-career.invalid/owner_oidc_callback.php
+      EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      COMPOSE_DISABLE_ENV_FILE: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -20,60 +38,283 @@ jobs:
       - name: JavaScript syntax
         run: node --check admin.js && node --check portfolio.js
 
+      - name: Validate production Compose configuration
+        run: docker compose -p ather-career-ci -f docker-compose.production.yml config --quiet
+
+      - name: Build production PHP image
+        run: docker compose -p ather-career-ci -f docker-compose.production.yml build web
+
+      - name: Verify PHP and libvips dependencies
+        run: |
+          docker run --rm --entrypoint php "$PORTFOLIO_PRODUCTION_IMAGE" -r 'foreach (["gd", "intl", "mbstring"] as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "$extension missing\n"); exit(1); } } if (!class_exists("Normalizer") || !function_exists("grapheme_strlen") || !function_exists("mb_strlen")) { fwrite(STDERR, "Unicode support missing\n"); exit(1); }'
+          docker run --rm --entrypoint sh "$PORTFOLIO_PRODUCTION_IMAGE" -c 'test -x /usr/bin/vips && /usr/bin/vips --version'
+
       - name: Phase 2 test foundation
         run: |
-          docker run --rm -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/app:ro" -w /app php:8.3-cli php scripts/run-phase2-tests.php
+          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/run-phase2-tests.php
 
-      - name: Configure disposable environment
+      - name: Start isolated CI database
+        run: docker compose -p ather-career-ci -f docker-compose.production.yml up -d --no-build db
+
+      - name: Wait for isolated CI database health
         run: |
-          cp .env.example .env
-          sed -i 's/replace_with_local_database_password/ci_database_password/' .env
-          sed -i 's/replace_with_local_root_password/ci_root_password/' .env
-          sed -i 's/MYSQL_DATABASE=portfolio_db/MYSQL_DATABASE=ather_career_test_ci/' .env
-          sed -i 's/SESSION_COOKIE_SECURE=false/SESSION_COOKIE_SECURE=true/' .env
-          cat >> .env <<'EOF'
-          EXPECTED_OIDC_ISSUER=https://ci-auth.us.auth0.com/
-          OIDC_CLIENT_ID=ci_auth0_client_id_123456
-          OIDC_CLIENT_SECRET=ci_auth0_client_secret_1234567890
-          OIDC_REDIRECT_URI=https://ci.ather-career.invalid/owner_oidc_callback.php
-          EOF
+          for _ in $(seq 1 60); do
+            db=$(docker inspect -f '{{.State.Health.Status}}' ather-career-ci-db-1 2>/dev/null || true)
+            [ "$db" = healthy ] && exit 0
+            sleep 2
+          done
+          echo 'Isolated CI database did not become healthy.' >&2
+          exit 1
 
-      - name: Build and start production-like stack
-        run: docker compose -p ather-career-ci -f docker-compose.production.yml up -d --build
-
-      - name: Wait for healthchecks
+      - name: Create fresh V1 rehearsal database
         run: |
-          for _ in $(seq 1 30); do
+          set -euo pipefail
+          REHEARSAL_DB_NAME="ather_career_test_$(openssl rand -hex 12)"
+          [[ "$REHEARSAL_DB_NAME" =~ ^ather_career_test_[a-f0-9]{24}$ ]] || { echo 'Invalid rehearsal database name.' >&2; exit 1; }
+          [[ "$MYSQL_USER" =~ ^[a-z_][a-z0-9_]{0,31}$ ]] || { echo 'Invalid CI database username.' >&2; exit 1; }
+          echo "REHEARSAL_DB_NAME=$REHEARSAL_DB_NAME" >> "$GITHUB_ENV"
+          docker exec ather-career-ci-db-1 sh -ec '
+            umask 077
+            printf "[client]\nuser=root\npassword=%s\n" "$MYSQL_ROOT_PASSWORD" > /tmp/ather-career-ci-mysql.cnf
+            chmod 0600 /tmp/ather-career-ci-mysql.cnf
+          '
+          docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -e "CREATE DATABASE \`$REHEARSAL_DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci; GRANT ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* TO '$MYSQL_USER'@'%';"
+          docker exec -i ather-career-ci-db-1 sh -c 'mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf "$1" < /docker-entrypoint-initdb.d/01-portfolio.sql' sh "$REHEARSAL_DB_NAME"
+          tables=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(TABLE_NAME ORDER BY TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$REHEARSAL_DB_NAME';")
+          test "$tables" = 'messages,personal_info,projects,skills' || { echo 'Rehearsal database is not a fresh V1 baseline.' >&2; exit 1; }
+
+      - name: Run six isolated CLI rehearsals
+        run: |
+          set -euo pipefail
+          [[ "$REHEARSAL_DB_NAME" =~ ^ather_career_test_[a-f0-9]{24}$ ]] || { echo 'Invalid rehearsal database name.' >&2; exit 1; }
+          rehearse() {
+            local output exit_code
+            if output=$(docker compose -p ather-career-ci -f docker-compose.production.yml run --rm --no-deps --entrypoint php \
+              -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e DB_HOST=db -e DB_PORT=3306 \
+              -e "DB_NAME=$REHEARSAL_DB_NAME" -e "ATHERCAR_TEST_DB_NAME=$REHEARSAL_DB_NAME" \
+              -e DB_USER -e DB_PASSWORD web "$1" 2>&1); then
+              printf '%s\n' "$output" | grep '^PASS ' || true
+            else
+              exit_code=$?
+              printf 'Rehearsal %s failed with exit code %s.\n' "$1" "$exit_code" >&2
+              printf '%s\n' "$output" |
+                sed -E \
+                  -e "s/$DB_PASSWORD/[REDACTED]/g" \
+                  -e "s/$MYSQL_ROOT_PASSWORD/[REDACTED]/g" \
+                  -e "s/$OIDC_CLIENT_SECRET/[REDACTED]/g" \
+                  -e "s/$PRESERVED_V1_OIDC_SUBJECT/[REDACTED]/g" \
+                  -e "s/Duplicate entry '[^']*'/Duplicate entry '[REDACTED]'/g" \
+                  -e 's/(subject|state|nonce|cookie|password|secret)[[:space:]_]*[=:][[:space:]]*[^[:space:],;]+/\1=[REDACTED]/Ig' |
+                tail -n 40 >&2
+              return "$exit_code"
+            fi
+          }
+          rehearse scripts/run-phase2-ownership-rehearsal.php
+          ledger=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(version ORDER BY version SEPARATOR ',') FROM \`$REHEARSAL_DB_NAME\`.schema_migrations;")
+          test "$ledger" = '001,002,003,004' || { echo 'Ownership rehearsal migration ledger is not exactly 001–004.' >&2; exit 1; }
+          echo 'PASS ownership migration checkpoint 001–004'
+          rehearse scripts/run-phase2-public-lifecycle-rehearsal.php
+          expected=$(find database/migrations -maxdepth 1 -type f -name '[0-9][0-9][0-9]_*.sql' -printf '%f\n' | sed 's/_.*//' | sort | paste -sd, -)
+          [[ "$expected" =~ ^[0-9]{3}(,[0-9]{3})*$ ]] || { echo 'Checked-in migration list is invalid.' >&2; exit 1; }
+          ledger=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(version ORDER BY version SEPARATOR ',') FROM \`$REHEARSAL_DB_NAME\`.schema_migrations;")
+          test "$ledger" = "$expected" || { echo 'Public lifecycle rehearsal did not reach the complete checked-in migration ledger.' >&2; exit 1; }
+          for required in 006 010 012; do
+            [[ ",$ledger," == *",$required,"* ]] || { echo "Required migration $required is missing." >&2; exit 1; }
+          done
+          columns=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY COLUMN_NAME SEPARATOR ',') FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '$REHEARSAL_DB_NAME' AND TABLE_NAME = 'projects' AND COLUMN_NAME IN ('technologies', 'problem_statement', 'personal_role', 'measurable_outcome');")
+          test "$columns" = 'measurable_outcome,personal_role,problem_statement,technologies' || { echo 'Required project technology or evidence columns are missing.' >&2; exit 1; }
+          echo 'PASS complete migration ledger and required project columns'
+          rehearse scripts/run-phase2-tenant-authorization-rehearsal.php
+          rehearse scripts/run-phase2-owner-flow-rehearsal.php
+          rehearse scripts/run-phase2-experience-rehearsal.php
+          rehearse scripts/run-phase2-auth0-rehearsal.php
+
+      - name: Remove isolated rehearsal database
+        run: |
+          set -euo pipefail
+          [[ "$REHEARSAL_DB_NAME" =~ ^ather_career_test_[a-f0-9]{24}$ ]] || { echo 'Invalid rehearsal database name.' >&2; exit 1; }
+          [[ "$MYSQL_USER" =~ ^[a-z_][a-z0-9_]{0,31}$ ]] || { echo 'Invalid CI database username.' >&2; exit 1; }
+          docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -e "REVOKE ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* FROM '$MYSQL_USER'@'%'; DROP DATABASE \`$REHEARSAL_DB_NAME\`;"
+          remaining=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$REHEARSAL_DB_NAME';")
+          test "$remaining" = 0 || { echo 'Rehearsal database still exists.' >&2; exit 1; }
+          echo 'REHEARSAL_DB_REMOVED=1' >> "$GITHUB_ENV"
+
+      - name: Start production-like web from tested image
+        run: docker compose -p ather-career-ci -f docker-compose.production.yml up -d --no-build web
+
+      - name: Wait for production-like stack health
+        run: |
+          for _ in $(seq 1 60); do
             db=$(docker inspect -f '{{.State.Health.Status}}' ather-career-ci-db-1 2>/dev/null || true)
             web=$(docker inspect -f '{{.State.Health.Status}}' ather-career-ci-web-1 2>/dev/null || true)
             [ "$db" = healthy ] && [ "$web" = healthy ] && exit 0
             sleep 2
           done
-          docker compose -p ather-career-ci -f docker-compose.production.yml logs
+          echo 'Production-like CI stack did not become healthy.' >&2
           exit 1
 
-      - name: Migration and production security gate
+      - name: Main CI migration and production security gate
         run: |
-          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-ownership-rehearsal.php
-          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-tenant-authorization-rehearsal.php
-          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-owner-flow-rehearsal.php
-          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-public-lifecycle-rehearsal.php
-          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-experience-rehearsal.php
+          set -euo pipefail
+          if [[ -n "${REHEARSAL_DB_NAME:-}" ]]; then
+            [[ "$REHEARSAL_DB_NAME" =~ ^ather_career_test_[a-f0-9]{24}$ ]] || exit 1
+            remaining=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$REHEARSAL_DB_NAME';")
+            test "$remaining" = 0 || { echo 'Rehearsal database was recreated.' >&2; exit 1; }
+          fi
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php database/migrate.php
-          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 web php scripts/run-phase2-auth0-rehearsal.php
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php database/migrate.php | grep -x 'No pending migrations.'
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php scripts/check-production-security.php
+
+      - name: Seed isolated public HTTP fixture
+        run: |
+          set -euo pipefail
+          fixture() { docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e ATHERCAR_CI_SMOKE_FIXTURE=1 "$@" web php scripts/ci-public-smoke-fixture.php; }
+          if fixture -e DB_NAME=incorrect_ci_database >/dev/null 2>&1; then echo 'Fixture accepted wrong database'; exit 1; fi
+          if fixture -e EXPECTED_OIDC_ISSUER=https://wrong-ci.invalid/ >/dev/null 2>&1; then echo 'Fixture accepted wrong issuer'; exit 1; fi
+          if fixture -e PRESERVED_V1_OIDC_SUBJECT=wrong-ci-owner >/dev/null 2>&1; then echo 'Fixture accepted wrong subject'; exit 1; fi
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php -r '
+            require "config/database.php";
+            $db = getDatabaseConnection();
+            if ((int) $db->query("SELECT COUNT(*) FROM portfolios")->fetchColumn() !== 1) exit(1);
+            $db->prepare("UPDATE portfolios SET public_slug = ?")->execute(["ci-conflict"]);
+          '
+          if fixture >/dev/null 2>&1; then echo 'Fixture accepted conflicting slug'; exit 1; fi
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php -r '
+            require "config/database.php";
+            $db = getDatabaseConnection();
+            $db->prepare("UPDATE portfolios SET public_slug = NULL WHERE public_slug = ? AND is_published = 0 AND published_at IS NULL")->execute(["ci-conflict"]);
+            if ((int) $db->query("SELECT COUNT(*) FROM portfolios WHERE public_slug IS NULL")->fetchColumn() !== 1) exit(1);
+          '
+          fixture
+          fixture
+
+      - name: Start isolated HTTPS OIDC discovery mock
+        run: |
+          set -euo pipefail
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web sh -lc '
+            set -eu
+            install -d -m 0700 /tmp/ather-career-ci-oidc
+            openssl req -x509 -newkey rsa:2048 -sha256 -nodes -days 1 \
+              -keyout /tmp/ather-career-ci-oidc/key.pem \
+              -out /tmp/ather-career-ci-oidc/cert.pem \
+              -subj /CN=ather-career-ci-oidc \
+              -addext subjectAltName=IP:127.0.0.1 >/dev/null 2>&1
+            chmod 0600 /tmp/ather-career-ci-oidc/key.pem
+            cp /tmp/ather-career-ci-oidc/cert.pem /usr/local/share/ca-certificates/ather-career-ci-oidc.crt
+            update-ca-certificates >/dev/null 2>&1
+          '
+          docker exec -d -e ATHERCAR_CI_OIDC_MOCK=1 -e ATHERCAR_CI_OIDC_INVALID_METADATA=1 ather-career-ci-web-1 php scripts/ci-oidc-discovery-mock.php /tmp/ather-career-ci-oidc
+          for _ in $(seq 1 15); do
+            if docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php -r 'exit(file_get_contents("https://127.0.0.1:9443/.well-known/openid-configuration") === false ? 1 : 0);' >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php -r '
+            require "includes/auth0_oidc.php";
+            try { auth0Discovery(auth0ConfigurationFromEnvironment()); exit(1); }
+            catch (Auth0OidcException $error) { if ($error->safeReason !== "discovery_invalid") exit(1); }
+          '
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web sh -lc 'kill "$(cat /tmp/ather-career-ci-oidc/mock.pid)"; sleep 1'
+          docker exec -d -e ATHERCAR_CI_OIDC_MOCK=1 ather-career-ci-web-1 php scripts/ci-oidc-discovery-mock.php /tmp/ather-career-ci-oidc
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php -r '
+            require "includes/auth0_oidc.php";
+            $config = auth0ConfigurationFromEnvironment();
+            $metadata = auth0Discovery($config);
+            if ($metadata["authorization_endpoint"] !== $config->issuer . "authorize") exit(1);
+            $bad = stream_context_create(["ssl" => ["verify_peer" => true, "verify_peer_name" => true, "cafile" => "/dev/null"]]);
+            if (@file_get_contents($config->issuer . ".well-known/openid-configuration", false, $bad) !== false) exit(1);
+          '
 
       - name: HTTP smoke test
         run: |
           curl --fail --retry 10 --retry-connrefused http://127.0.0.1:8098/health.php | grep -x OK
           curl --fail http://127.0.0.1:8098/ready.php | grep -x READY
           curl --fail http://127.0.0.1:8098/
-          curl --fail http://127.0.0.1:8098/owner_login.php
           for route in /admin.php /login.php /logout.php /personal_info.php /projects.php /messages.php /api/projects.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done
           curl --fail http://127.0.0.1:8098/p/a-public
           curl --fail http://127.0.0.1:8098/p/a-public/projects.json
           test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/api/projects.php)" = 404
+          docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php -r '
+            $headers = [];
+            $context = stream_context_create(["http" => ["follow_location" => 0, "ignore_errors" => true, "header" => "Host: 127.0.0.1\r\n"]]);
+            @file_get_contents("http://127.0.0.1/owner_login.php", false, $context);
+            $headers = $http_response_header ?? [];
+            $fail = static function (string $condition): never {
+              fwrite(STDERR, "Owner login assertion failed: {$condition}.\n");
+              exit(1);
+            };
+            if (!preg_match("#^HTTP/\\S+ 302 #", $headers[0] ?? "")) $fail("http_302");
+            $locations = [];
+            $cookies = [];
+            foreach ($headers as $header) {
+              if (stripos($header, "Location:") === 0) $locations[] = trim(substr($header, 9));
+              if (preg_match("/^Set-Cookie:\\s*portfolio_owner_session=/i", $header)) $cookies[] = $header;
+            }
+            if (count($locations) !== 1 || $locations[0] === "") $fail("single_location");
+            if (count($cookies) !== 1) $fail("owner_cookie_present");
+            $cookieParts = array_map("trim", explode(";", $cookies[0]));
+            if (!preg_match("/^Set-Cookie:\\s*portfolio_owner_session=[^;\\s]+$/i", $cookieParts[0])) $fail("owner_cookie_nonempty");
+            $cookieAttributes = array_map("strtolower", array_slice($cookieParts, 1));
+            if (!in_array("secure", $cookieAttributes, true)) $fail("owner_cookie_secure");
+            if (!in_array("httponly", $cookieAttributes, true)) $fail("owner_cookie_httponly");
+            if (!in_array("samesite=lax", $cookieAttributes, true)) $fail("owner_cookie_samesite_lax");
+            if (!in_array("path=/", $cookieAttributes, true)) $fail("owner_cookie_path");
+            $parts = parse_url($locations[0]);
+            if (!is_array($parts) || ($parts["scheme"] ?? "") !== "https") $fail("https_scheme");
+            if (($parts["host"] ?? "") !== "127.0.0.1") $fail("authorization_host");
+            if (($parts["port"] ?? 0) !== 9443) $fail("authorization_port");
+            if (($parts["path"] ?? "") !== "/authorize") $fail("authorization_path");
+            parse_str($parts["query"] ?? "", $query);
+            foreach (["state", "nonce", "code_challenge"] as $key) {
+              if (!is_string($query[$key] ?? null) || $query[$key] === "") $fail($key . "_nonempty");
+            }
+            if (($query["code_challenge_method"] ?? "") !== "S256") $fail("pkce_s256");
+            echo "Owner login start passed.\n";
+          '
 
       - name: Cleanup
         if: always()
-        run: docker compose -p ather-career-ci -f docker-compose.production.yml down -v --remove-orphans
+        run: |
+          set +e
+          cleanup_failed=0
+          if docker inspect ather-career-ci-web-1 >/dev/null 2>&1; then
+            docker exec ather-career-ci-web-1 sh -ec '
+              if test -f /tmp/ather-career-ci-oidc/mock.pid; then
+                mock_pid=$(cat /tmp/ather-career-ci-oidc/mock.pid)
+                case "$mock_pid" in *[!0-9]*|"") exit 1;; esac
+                kill "$mock_pid" 2>/dev/null || true
+              fi
+              rm -f /usr/local/share/ca-certificates/ather-career-ci-oidc.crt
+              rm -rf /tmp/ather-career-ci-oidc
+              update-ca-certificates >/dev/null 2>&1
+            ' || { echo 'CI OIDC mock or TLS cleanup failed.' >&2; cleanup_failed=1; }
+          fi
+          if [[ -n "${REHEARSAL_DB_NAME:-}" ]]; then
+            if [[ "$REHEARSAL_DB_NAME" =~ ^ather_career_test_[a-f0-9]{24}$ ]] && [[ "$MYSQL_USER" =~ ^[a-z_][a-z0-9_]{0,31}$ ]]; then
+              if docker inspect ather-career-ci-db-1 >/dev/null 2>&1; then
+                docker exec ather-career-ci-db-1 sh -ec '
+                  if test ! -f /tmp/ather-career-ci-mysql.cnf; then
+                    umask 077
+                    printf "[client]\nuser=root\npassword=%s\n" "$MYSQL_ROOT_PASSWORD" > /tmp/ather-career-ci-mysql.cnf
+                    chmod 0600 /tmp/ather-career-ci-mysql.cnf
+                  fi
+                ' || { echo 'CI MySQL option file preparation failed.' >&2; cleanup_failed=1; }
+                if [[ "${REHEARSAL_DB_REMOVED:-}" != 1 ]]; then
+                  docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -e "REVOKE ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* FROM '$MYSQL_USER'@'%';" || { echo 'CI rehearsal privilege revocation failed.' >&2; cleanup_failed=1; }
+                  docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -e "DROP DATABASE IF EXISTS \`$REHEARSAL_DB_NAME\`;" || { echo 'CI rehearsal database deletion failed.' >&2; cleanup_failed=1; }
+                fi
+                remaining=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$REHEARSAL_DB_NAME';")
+                if [[ "$remaining" != 0 ]]; then echo 'CI rehearsal database remains.' >&2; cleanup_failed=1; fi
+              else
+                echo 'CI database container unavailable for rehearsal cleanup.' >&2
+                cleanup_failed=1
+              fi
+            else
+              echo 'Invalid CI rehearsal cleanup target.' >&2
+              cleanup_failed=1
+            fi
+          fi
+          if docker inspect ather-career-ci-db-1 >/dev/null 2>&1; then
+            docker exec ather-career-ci-db-1 sh -c 'rm -f /tmp/ather-career-ci-mysql.cnf' || { echo 'CI MySQL option file cleanup failed.' >&2; cleanup_failed=1; }
+          fi
+          docker compose -p ather-career-ci -f docker-compose.production.yml down -v --remove-orphans || { echo 'CI Compose cleanup failed.' >&2; cleanup_failed=1; }
+          exit "$cleanup_failed"

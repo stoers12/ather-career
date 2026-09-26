@@ -65,7 +65,7 @@ services:
       - portfolio_production_db_data:/var/lib/mysql
       - ./database/portfolio_db.sql:/docker-entrypoint-initdb.d/01-portfolio.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysqladmin ping -h localhost -u root --silent"]
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysqladmin ping --protocol=TCP -h 127.0.0.1 -P 3306 -u root --silent"]
       interval: 5s
       timeout: 5s
       retries: 20
