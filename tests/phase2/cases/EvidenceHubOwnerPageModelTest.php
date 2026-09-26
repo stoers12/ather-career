@@ -9,6 +9,7 @@ final class EvidenceHubOwnerPageModelTest
         require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_page_model.php';
         require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_page_presentation.php';
         self::staticContracts();
+        self::fractionalEpochParsing();
         self::progressStages();
         self::partialVisualFacts();
         if (evidenceTextUnicodeRuntimeIsAvailable() && in_array('sqlite', PDO::getAvailableDrivers(), true)) {
@@ -40,6 +41,34 @@ final class EvidenceHubOwnerPageModelTest
         phase2Assert(str_contains(file_get_contents($root . 'evidence_hub.js'), 'targetCard()') && str_contains(file_get_contents($root . 'evidence_hub.js'), 'expanded = true'), 'Targeted project reveal is missing.');
         phase2Assert(str_contains(file_get_contents($root . 'docker/apache/production-vhost.conf'), '^/owner/projects/[1-9][0-9]*/evidence/?$'), 'Clean production evidence route is missing.');
         phase2Assert(str_contains(file_get_contents($root . 'docker/apache/development-vhost.conf'), '^/owner/projects/[1-9][0-9]*/evidence/?$'), 'Clean development evidence route is missing.');
+    }
+
+    private static function fractionalEpochParsing(): void
+    {
+        foreach ([
+            [0, 0],
+            [1720000000, 1720000000],
+            ['0', 0],
+            ['1720000000', 1720000000],
+            ['1720000000.000000', 1720000000],
+            ['1720000000.987654', 1720000000],
+            ['0.999999', 0],
+            [(string) PHP_INT_MAX . '.999999', PHP_INT_MAX],
+        ] as [$input, $expected]) {
+            phase2AssertSame($expected, evidenceHubProjectRecordedAtEpochSeconds($input), 'Valid project epoch was not converted to whole seconds.');
+        }
+
+        foreach ([
+            null, false, -1, -1.0, 1.5, INF, NAN, [], '',
+            '-1', '-1.000000', '01', '01.000000', ' 1720000000.000000',
+            '1720000000.000000 ', '.5', '1.', '1..2', '1.0000000',
+            '1e9', '1E+9', 'NaN', 'INF', (string) PHP_INT_MAX . '0.000000',
+        ] as $input) {
+            phase2AssertSame(null, evidenceHubProjectRecordedAtEpochSeconds($input), 'Malformed project epoch was accepted.');
+        }
+
+        $updated = evidenceHubProjectRecordedAtEpochSeconds('1720000000.000000');
+        phase2AssertSame('2024-07-03', $updated === null ? null : gmdate('Y-m-d', $updated), 'Fractional MySQL epoch still produces an unavailable project update date.');
     }
 
     private static function progressStages(): void

@@ -65,14 +65,16 @@ function evidenceHubProjectRecordedAtEpochSeconds(mixed $value): ?int
     if (is_int($value)) {
         return $value >= 0 ? $value : null;
     }
-    if (!is_string($value) || preg_match('/^(?:0|[1-9][0-9]*)$/D', $value) !== 1) {
+    if (!is_string($value) || preg_match('/^(?:0|[1-9][0-9]*)(?:\.[0-9]{1,6})?$/D', $value) !== 1) {
         return null;
     }
-    if (strlen($value) > strlen((string) PHP_INT_MAX) || (strlen($value) === strlen((string) PHP_INT_MAX) && $value > (string) PHP_INT_MAX)) {
+    // MySQL TIMESTAMP(6) yields a decimal epoch; retain whole seconds without float rounding.
+    $seconds = explode('.', $value, 2)[0];
+    if (strlen($seconds) > strlen((string) PHP_INT_MAX) || (strlen($seconds) === strlen((string) PHP_INT_MAX) && $seconds > (string) PHP_INT_MAX)) {
         return null;
     }
 
-    return (int) $value;
+    return (int) $seconds;
 }
 
 function loadAuthorizedEvidenceHubPublicationState(PDO $database, AuthorizedPortfolioContext $context): string
