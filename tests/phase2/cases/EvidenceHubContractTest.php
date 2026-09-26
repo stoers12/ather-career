@@ -15,8 +15,29 @@ final class EvidenceHubContractTest
 
         self::schema($schema);
         self::taxonomy($taxonomy);
+        self::versionTwo(self::json('contracts/evidence-hub-contract-v2.schema.json'), self::json('contracts/evidence-hub-taxonomy-v2.json'), $schema, $taxonomy);
         self::fixtures($fixtures, $schema);
         self::privacyAndScope($document, $fixtures);
+    }
+
+    /** @param array<string, mixed> $schema @param array<string, mixed> $taxonomy @param array<string, mixed> $v1Schema @param array<string, mixed> $v1Taxonomy */
+    private static function versionTwo(array $schema, array $taxonomy, array $v1Schema, array $v1Taxonomy): void
+    {
+        phase2AssertSame('evidence-hub-contract-v2', $schema['properties']['contract_id']['const'] ?? null, 'V2 contract ID is wrong.');
+        phase2AssertSame('2.0.0', $schema['properties']['schema_version']['const'] ?? null, 'V2 contract version is wrong.');
+        phase2AssertSame('v2', $schema['$defs']['technology_mapping']['properties']['taxonomy_version']['const'] ?? null, 'V2 taxonomy version is wrong.');
+        $categories = ['database', 'framework', 'language', 'library', 'platform', 'runtime', 'stylesheet', 'technique', 'tool'];
+        phase2AssertSame([...$categories, null], $schema['$defs']['technology_mapping']['properties']['category']['enum'] ?? null, 'V2 category enum is wrong.');
+        phase2AssertSame('v2', $taxonomy['taxonomy_version'] ?? null, 'V2 taxonomy identity is wrong.');
+        phase2AssertSame($categories, $taxonomy['category_order'] ?? null, 'V2 category order is wrong.');
+        phase2AssertSame(31, count($taxonomy['entries'] ?? []), 'V2 must contain 31 bounded entries.');
+        phase2AssertSame($v1Taxonomy['entries'], array_slice($taxonomy['entries'], 0, 17), 'V2 changed a v1 entry.');
+        phase2AssertSame($v1Schema['$defs']['documentation_coverage'], $schema['$defs']['documentation_coverage'], 'V2 changed frozen documentation semantics.');
+        phase2AssertSame($v1Schema['$defs']['portfolio_progress'], $schema['$defs']['portfolio_progress'], 'V2 changed frozen progress semantics.');
+        self::closed($schema, 'v2');
+        $source = self::text('contracts/evidence-hub-contract-v2.schema.json');
+        $crlf = str_replace("\n", "\r\n", str_replace("\r\n", "\n", $source));
+        phase2AssertSame($schema, json_decode($crlf, true, 512, JSON_THROW_ON_ERROR), 'V2 schema loading differs by checkout line endings.');
     }
 
     /** @return array<string, mixed> */

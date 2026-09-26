@@ -8,7 +8,7 @@ final class EvidenceHubContractMappingException extends RuntimeException
 
 /**
  * Maps validated Owner-core metrics and already-filtered R2 recommendation
- * output into the frozen private v1 envelope. It only selects documented
+ * output into a selected private contract envelope. It only selects documented
  * output fields and never recalculates recommendation eligibility or order.
  *
  * @param array<string, mixed> $core
@@ -17,6 +17,20 @@ final class EvidenceHubContractMappingException extends RuntimeException
  */
 function mapEvidenceHubContractV1(array $core, array $recommendations): array
 {
+    return mapEvidenceHubContractVersion($core, $recommendations, 'v1');
+}
+
+function mapEvidenceHubContractV2(array $core, array $recommendations): array
+{
+    return mapEvidenceHubContractVersion($core, $recommendations, 'v2');
+}
+
+/** @param array<string, mixed> $core @param list<array<string, mixed>> $recommendations @return array<string, mixed> */
+function mapEvidenceHubContractVersion(array $core, array $recommendations, string $version): array
+{
+    if (!in_array($version, ['v1', 'v2'], true)) {
+        throw new EvidenceHubContractMappingException('Evidence Hub contract version is unsupported.');
+    }
     $maturity = evidenceHubContractMapFields($core, ['maturity'], 'core');
     $documentation = evidenceHubContractMapFields($core, ['documentation_coverage'], 'core');
     $technology = evidenceHubContractMapFields($core, ['technology_evidence_map'], 'core');
@@ -28,8 +42,8 @@ function mapEvidenceHubContractV1(array $core, array $recommendations): array
     $technologyMetric['mappings'] = evidenceHubContractMapTechnologyMappings($technologyMetric['mappings']);
 
     $payload = [
-        'contract_id' => 'evidence-hub-contract-v1',
-        'schema_version' => '1.0.0',
+        'contract_id' => 'evidence-hub-contract-' . $version,
+        'schema_version' => $version === 'v1' ? '1.0.0' : '2.0.0',
         'maturity' => evidenceHubContractMapObject($maturity['maturity'], ['state', 'version'], 'maturity'),
         'metrics' => [
             'documentation_coverage' => evidenceHubContractMapObject($documentation['documentation_coverage'], [
@@ -43,6 +57,14 @@ function mapEvidenceHubContractV1(array $core, array $recommendations): array
         'recommendations' => evidenceHubContractMapRecommendations($recommendations),
     ];
     evidenceHubContractAssertFrozenV1($payload);
+    if ($version === 'v2') {
+        foreach ($technologyMetric['mappings'] as $mapping) {
+            if ($mapping['taxonomy_version'] !== 'v2'
+                || ($mapping['mapping_state'] === 'mapped' && !in_array($mapping['category'], EVIDENCE_HUB_TAXONOMY_V2_CATEGORIES, true))) {
+                throw new EvidenceHubContractMappingException('Evidence Hub v2 technology mapping is invalid.');
+            }
+        }
+    }
 
     return $payload;
 }

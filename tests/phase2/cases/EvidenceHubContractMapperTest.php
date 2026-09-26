@@ -14,8 +14,9 @@ final class EvidenceHubContractMapperTest
         self::positivePayloads($fixtures, $schema);
         self::recommendationOutputMapping($fixtures, $schema);
         self::negativeInputs($fixtures);
+        self::versionTwoMapping($fixtures, self::schemaV2());
         if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
-            self::ownerCoreIntegration($schema);
+            self::ownerCoreIntegration(self::schemaV2());
         }
         self::staticDisclosureGuard();
     }
@@ -155,6 +156,32 @@ final class EvidenceHubContractMapperTest
         phase2Assert(!array_key_exists('internal_target', $mapped['metrics']['technology_evidence_map']['mappings'][0]), 'Mapper did not exclude a nested non-allow-listed field.');
     }
 
+    /** @param array<string, mixed> $fixtures @param array<string, mixed> $schema */
+    private static function versionTwoMapping(array $fixtures, array $schema): void
+    {
+        $payload = $fixtures['positive_payloads'][2]['payload'];
+        foreach ($payload['metrics']['technology_evidence_map']['mappings'] as &$mapping) {
+            $mapping['taxonomy_version'] = 'v2';
+        }
+        unset($mapping);
+        $core = [
+            'maturity' => $payload['maturity'],
+            'documentation_coverage' => $payload['metrics']['documentation_coverage'],
+            'technology_evidence_map' => $payload['metrics']['technology_evidence_map'],
+            'portfolio_progress' => $payload['metrics']['portfolio_progress'],
+        ];
+        $actual = mapEvidenceHubContractV2($core, $payload['recommendations']);
+        phase2AssertSame('evidence-hub-contract-v2', $actual['contract_id'], 'V2 mapper selected the wrong contract.');
+        phase2AssertSame('2.0.0', $actual['schema_version'], 'V2 mapper selected the wrong schema version.');
+        phase2AssertSame($schema['required'], array_keys($actual), 'V2 mapper changed the envelope shape.');
+        $bad = $core;
+        $bad['technology_evidence_map']['mappings'][0]['taxonomy_version'] = 'v1';
+        self::assertMappingFailure(static fn (): array => mapEvidenceHubContractV2($bad, []), 'V2 mapper accepted a v1 mapping.');
+        $bad = $core;
+        $bad['technology_evidence_map']['mappings'][0]['category'] = 'unsupported';
+        self::assertMappingFailure(static fn (): array => mapEvidenceHubContractV2($bad, []), 'V2 mapper accepted an unsupported category.');
+    }
+
     /** @param array<string, mixed> $schema */
     private static function ownerCoreIntegration(array $schema): void
     {
@@ -164,7 +191,9 @@ final class EvidenceHubContractMapperTest
         $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 10);
         $actual = buildAuthorizedEvidenceHubOwnerContract($database, $context, []);
         phase2AssertSame([], $actual['recommendations'], 'Owner-core contract integration changed supplied R2 output.');
-        self::assertFrozenSchemaConformance($schema, $actual, 'R3 owner-core integration');
+        phase2AssertSame('evidence-hub-contract-v2', $actual['contract_id'], 'Owner core did not select v2.');
+        phase2AssertSame('2.0.0', $actual['schema_version'], 'Owner core v2 schema version is wrong.');
+        phase2AssertSame($schema['required'], array_keys($actual), 'Owner core v2 envelope shape changed.');
     }
 
     private static function staticDisclosureGuard(): void
@@ -242,6 +271,14 @@ final class EvidenceHubContractMapperTest
     {
         $decoded = json_decode(self::read('contracts/evidence-hub-contract-v1.schema.json'), true, 512, JSON_THROW_ON_ERROR);
         phase2Assert(is_array($decoded), 'Frozen Evidence Hub schema is invalid.');
+        return $decoded;
+    }
+
+    /** @return array<string, mixed> */
+    private static function schemaV2(): array
+    {
+        $decoded = json_decode(self::read('contracts/evidence-hub-contract-v2.schema.json'), true, 512, JSON_THROW_ON_ERROR);
+        phase2Assert(is_array($decoded), 'Evidence Hub v2 schema is invalid.');
         return $decoded;
     }
 

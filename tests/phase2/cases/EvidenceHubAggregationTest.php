@@ -7,12 +7,14 @@ final class EvidenceHubAggregationTest
     public static function run(TestEnvironment $environment): void
     {
         require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_core.php';
+        require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_page_model.php';
         requireEvidenceTextUnicodeRuntime();
         $fixtures = self::fixtures();
         self::documentationAndMaturity($fixtures);
         self::progress($fixtures);
         self::technologyStorageAndSummary($fixtures);
         self::taxonomyAndMapping();
+        self::taxonomyV2();
         if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             self::ownerScopeIntegration();
         }
@@ -144,7 +146,7 @@ final class EvidenceHubAggregationTest
                 $parsed = $byId[$caseId];
                 $facts[] = ['storage_state' => $parsed['storage_state'], 'reason_codes' => $parsed['reason_codes'], 'labels' => $parsed['labels']];
             }
-            $summary = summarizeEvidenceHubTechnologies($facts, loadEvidenceHubTechnologyTaxonomy());
+            $summary = summarizeEvidenceHubTechnologies($facts, loadEvidenceHubTechnologyTaxonomy('v1'));
             phase2AssertSame($fixture['expected_status'], $summary['status'], "{$fixture['id']} technology status changed.");
             phase2AssertSame($fixture['expected_reason_codes'], $summary['reason_codes'], "{$fixture['id']} technology reason changed.");
             foreach (['technology_occurrence_count', 'mapped_occurrence_count', 'unmapped_occurrence_count', 'distinct_technology_count', 'distinct_mapped_technology_count', 'distinct_unmapped_technology_count', 'invalid_technology_storage_project_count'] as $key) {
@@ -154,7 +156,7 @@ final class EvidenceHubAggregationTest
             phase2AssertSame($summary['distinct_technology_count'], $summary['distinct_mapped_technology_count'] + $summary['distinct_unmapped_technology_count'], "{$fixture['id']} distinct invariant changed.");
             phase2Assert(!str_contains(json_encode($summary, JSON_THROW_ON_ERROR), '"stored_value"'), "{$fixture['id']} exposed raw technology storage.");
         }
-        $taxonomy = loadEvidenceHubTechnologyTaxonomy();
+        $taxonomy = loadEvidenceHubTechnologyTaxonomy('v1');
         self::assertInvariant(static fn (): array => summarizeEvidenceHubTechnologies(['project_a' => ['storage_state' => 'valid', 'reason_codes' => [], 'labels' => []]], $taxonomy), 'Associative technology storage facts were accepted.');
         self::assertInvariant(static fn (): array => summarizeEvidenceHubTechnologies([['storage_state' => 'invalid', 'reason_codes' => [], 'labels' => []]], $taxonomy), 'Invalid technology storage lost its non-sensitive reason.');
         self::assertInvariant(static fn (): array => summarizeEvidenceHubTechnologies([['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['JS', 4]]], $taxonomy), 'Invalid technology label member was accepted.');
@@ -162,7 +164,7 @@ final class EvidenceHubAggregationTest
 
     private static function taxonomyAndMapping(): void
     {
-        $taxonomy = loadEvidenceHubTechnologyTaxonomy();
+        $taxonomy = loadEvidenceHubTechnologyTaxonomy('v1');
         phase2AssertSame('v1', $taxonomy['taxonomy_version'], 'Frozen taxonomy version changed.');
         phase2AssertSame(17, count($taxonomy['entries']), 'Frozen taxonomy must have exactly 17 entries.');
         foreach (['  js  ' => 'tech.javascript', 'Java' => 'tech.java', 'C++' => 'tech.cpp', 'react native' => 'tech.react-native', 'Microsoft   SQL Server' => 'tech.sql-server', 'sql' => 'tech.sql', 'JQUERY' => 'tech.jquery'] as $label => $id) {
@@ -180,7 +182,77 @@ final class EvidenceHubAggregationTest
         phase2AssertSame(null, mapEvidenceHubTechnologyLabel(" \t\r\n ", $taxonomy), 'Empty normalized labels must not become occurrences.');
         $source = file_get_contents(PHASE2_REPOSITORY_ROOT . '/contracts/evidence-hub-taxonomy-v1.json');
         phase2Assert(is_string($source), 'Frozen taxonomy source is unreadable.');
-        self::assertTaxonomyInvariant(static fn (): array => parseEvidenceHubTechnologyTaxonomy(str_replace('"JS"', '"Java"', $source)), 'A normalized taxonomy alias collision was accepted.');
+        self::assertTaxonomyInvariant(static fn (): array => parseEvidenceHubTechnologyTaxonomy(str_replace('"JS"', '"Java"', $source), 'v1'), 'A normalized taxonomy alias collision was accepted.');
+    }
+
+    private static function taxonomyV2(): void
+    {
+        $v1 = loadEvidenceHubTechnologyTaxonomy('v1');
+        $v2 = loadEvidenceHubTechnologyTaxonomy('v2');
+        phase2AssertSame('v1', $v1['taxonomy_version'], 'Frozen v1 taxonomy did not load independently.');
+        phase2AssertSame(17, count($v1['entries']), 'Frozen v1 entry count changed.');
+        phase2AssertSame('v2', $v2['taxonomy_version'], 'Active taxonomy is not v2.');
+        phase2AssertSame(31, count($v2['entries']), 'V2 entry count is wrong.');
+        phase2AssertSame($v1['entries'], array_slice($v2['entries'], 0, 17), 'V2 changed a frozen v1 canonical entry.');
+        phase2AssertSame(
+            ['database', 'framework', 'language', 'library', 'platform', 'runtime', 'stylesheet', 'technique', 'tool'],
+            $v2['category_order'],
+            'V2 category ordering changed.'
+        );
+        foreach ([
+            'Css' => ['tech.css', 'CSS', 'stylesheet'],
+            'Dax Equation' => ['tech.dax', 'DAX', 'language'],
+            'Git' => ['tech.git', 'Git', 'tool'],
+            'Github' => ['tech.github', 'GitHub', 'platform'],
+            'Joblib' => ['tech.joblib', 'Joblib', 'library'],
+            'LSA' => ['tech.lsa', 'Latent Semantic Analysis (LSA)', 'technique'],
+            'MLR' => ['tech.mlr', 'Multiple Linear Regression (MLR)', 'technique'],
+            'Matplotlib' => ['tech.matplotlib', 'Matplotlib', 'library'],
+            'NumPy' => ['tech.numpy', 'NumPy', 'library'],
+            'Pandas' => ['tech.pandas', 'Pandas', 'library'],
+            'Power bi' => ['tech.power-bi', 'Power BI', 'platform'],
+            'Scikit-learn' => ['tech.scikit-learn', 'Scikit-learn', 'library'],
+            'Seaborn' => ['tech.seaborn', 'Seaborn', 'library'],
+            'TF-IDF' => ['tech.tf-idf', 'TF-IDF', 'technique'],
+        ] as $label => [$id, $display, $category]) {
+            $mapping = mapEvidenceHubTechnologyLabel($label, $v2);
+            phase2AssertSame([$id, $display, $category], [$mapping['canonical_id'], $mapping['display_name'], $mapping['category']], "{$label} did not resolve to its reviewed v2 entry.");
+            phase2AssertSame(null, mapEvidenceHubTechnologyLabel($label, $v1)['canonical_id'], "{$label} unexpectedly mapped in frozen v1.");
+        }
+        foreach (['php' => 'tech.php', 'Docker' => 'tech.docker', 'Js' => 'tech.javascript', 'Python' => 'tech.python', 'MySql' => 'tech.mysql'] as $label => $id) {
+            phase2AssertSame($id, mapEvidenceHubTechnologyLabel($label, $v1)['canonical_id'], "Existing {$label} v1 mapping changed.");
+            phase2AssertSame($id, mapEvidenceHubTechnologyLabel($label, $v2)['canonical_id'], "Existing {$label} v2 mapping changed.");
+        }
+        foreach (['Linear Regression', 'Pandas, NumPy, Scikit-learn, Matplotlib, Seaborn, Joblib', 'Future Unknown', 'JavaScriptish'] as $unknown) {
+            phase2AssertSame('unmapped', mapEvidenceHubTechnologyLabel($unknown, $v2)['mapping_state'], "{$unknown} was guessed or split.");
+        }
+        phase2AssertSame('tech.mlr', mapEvidenceHubTechnologyLabel('Multiple Linear Regression', $v2)['canonical_id'], 'Unambiguous MLR alias failed.');
+        phase2AssertSame('tech.github', mapEvidenceHubTechnologyLabel("  GITHUB\t", $v2)['canonical_id'], 'Whitespace and case normalization failed.');
+        phase2AssertSame(normalizeEvidenceHubTechnologyLabel("Cafe\u{301}"), normalizeEvidenceHubTechnologyLabel('Café'), 'NFC comparison behavior changed.');
+        $source = file_get_contents(PHASE2_REPOSITORY_ROOT . '/contracts/evidence-hub-taxonomy-v2.json');
+        phase2Assert(is_string($source), 'V2 taxonomy source is unreadable.');
+        phase2AssertSame(parseEvidenceHubTechnologyTaxonomy($source, 'v2'), parseEvidenceHubTechnologyTaxonomy(str_replace("\n", "\r\n", str_replace("\r\n", "\n", $source)), 'v2'), 'V2 JSON differs across LF and CRLF loading.');
+        $labels = [
+            18 => ['Python', 'Pandas, NumPy, Scikit-learn, Matplotlib, Seaborn, Joblib'],
+            19 => ['Python', 'Scikit-learn', 'Pandas', 'NumPy', 'Matplotlib', 'Seaborn', 'Joblib', 'TF-IDF', 'LSA', 'Linear Regression'],
+            20 => ['php', 'Docker', 'Css', 'Js', 'Git', 'Github'],
+            21 => ['Power bi', 'MySql', 'Dax Equation'],
+        ];
+        $facts = [];
+        $technologyFacts = [];
+        foreach ($labels as $projectId => $items) {
+            $facts[] = self::projectDocumentation($projectId === 20 ? 3 : 0, $projectId, ['technologies' => $items]);
+            $technologyFacts[] = ['storage_state' => 'valid', 'reason_codes' => [], 'labels' => $items];
+        }
+        $coverage = aggregateEvidenceHubDocumentationCoverage($facts);
+        phase2AssertSame([3, 12, 2500, 1], [$coverage['complete_evidence_field_count'], $coverage['expected_evidence_field_count'], $coverage['coverage_bps'], $coverage['projects_with_complete_evidence']], 'Technology v2 changed Evidence completion.');
+        $summary = summarizeEvidenceHubTechnologies($technologyFacts, $v2);
+        phase2AssertSame([21, 18, 2], [$summary['technology_occurrence_count'], $summary['distinct_mapped_technology_count'], $summary['distinct_unmapped_technology_count']], 'Pre-edit v2 technology totals are wrong.');
+        $overview = evidenceHubOwnerPageTechnologies($technologyFacts);
+        phase2AssertSame(['mapped_technology_count' => 18, 'unmapped_technology_count' => 2, 'unmapped_project_count' => 2], $overview['overview'], 'V2 page model totals are wrong.');
+        phase2AssertSame(array_values(array_filter($v2['category_order'], static fn (string $category): bool => isset($overview['mapped'][$category]))), array_keys($overview['mapped']), 'V2 page-model category order is unstable.');
+        phase2AssertSame(['Unmapped technology 1', 'Unmapped technology 2'], array_column($overview['unmapped'], 'label'), 'V2 unknown labels exposed raw values.');
+        phase2AssertSame(1, evidenceHubOwnerPageProgress(4, 1, [100])['complete_project_count'], 'Technology v2 changed portfolio progress.');
     }
 
     private static function ownerScopeIntegration(): void

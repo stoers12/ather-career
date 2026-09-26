@@ -182,7 +182,7 @@ function evidenceHubOwnerPageFieldReason(array $evaluation, string $label): stri
 /** @param list<array<string, mixed>> $technologyFacts @return array{mapped: array<string, list<array<string, mixed>>>, unmapped: list<array<string, mixed>>, overview: array{mapped_technology_count: int, unmapped_technology_count: int, unmapped_project_count: int}} */
 function evidenceHubOwnerPageTechnologies(array $technologyFacts): array
 {
-    $taxonomy = loadEvidenceHubTechnologyTaxonomy();
+    $taxonomy = loadEvidenceHubTechnologyTaxonomy('v2');
     $mapped = [];
     $unmapped = [];
     $unmappedProjectCount = 0;
@@ -227,7 +227,8 @@ function evidenceHubOwnerPageTechnologies(array $technologyFacts): array
     foreach ($mapped as $entry) {
         $categories[$entry['category']][] = $entry;
     }
-    ksort($categories, SORT_STRING);
+    $order = array_flip($taxonomy['category_order']);
+    uksort($categories, static fn (string $left, string $right): int => $order[$left] <=> $order[$right]);
     foreach ($categories as &$entries) {
         usort($entries, static fn (array $a, array $b): int => [$a['label'], $a['key']] <=> [$b['label'], $b['key']]);
     }

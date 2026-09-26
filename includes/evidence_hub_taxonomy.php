@@ -4,26 +4,31 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/evidence_text_normalization.php';
 
-const EVIDENCE_HUB_TAXONOMY_VERSION = 'v1';
-const EVIDENCE_HUB_TAXONOMY_ENTRY_COUNT = 17;
+const EVIDENCE_HUB_TAXONOMY_V1_ENTRY_COUNT = 17;
+const EVIDENCE_HUB_TAXONOMY_V2_ENTRY_COUNT = 31;
+const EVIDENCE_HUB_TAXONOMY_V1_CATEGORIES = ['database', 'framework', 'language', 'library', 'runtime', 'tool'];
+const EVIDENCE_HUB_TAXONOMY_V2_CATEGORIES = ['database', 'framework', 'language', 'library', 'platform', 'runtime', 'stylesheet', 'technique', 'tool'];
 
 final class EvidenceHubTaxonomyException extends RuntimeException
 {
 }
 
 /** @return array{taxonomy_version: string, entries: list<array<string, mixed>>, aliases: array<string, array<string, mixed>>} */
-function loadEvidenceHubTechnologyTaxonomy(): array
+function loadEvidenceHubTechnologyTaxonomy(string $version = 'v1'): array
 {
-    $contents = file_get_contents(dirname(__DIR__) . '/contracts/evidence-hub-taxonomy-v1.json');
+    if (!in_array($version, ['v1', 'v2'], true)) {
+        throw new EvidenceHubTaxonomyException('Evidence Hub taxonomy version is unsupported.');
+    }
+    $contents = file_get_contents(dirname(__DIR__) . '/contracts/evidence-hub-taxonomy-' . $version . '.json');
     if (!is_string($contents)) {
         throw new EvidenceHubTaxonomyException('Evidence Hub taxonomy is unavailable.');
     }
 
-    return parseEvidenceHubTechnologyTaxonomy($contents);
+    return parseEvidenceHubTechnologyTaxonomy($contents, $version);
 }
 
 /** @return array{taxonomy_version: string, entries: list<array<string, mixed>>, aliases: array<string, array<string, mixed>>} */
-function parseEvidenceHubTechnologyTaxonomy(string $contents): array
+function parseEvidenceHubTechnologyTaxonomy(string $contents, string $version = 'v1'): array
 {
     try {
         $taxonomy = json_decode($contents, true, 32, JSON_THROW_ON_ERROR);
@@ -34,13 +39,20 @@ function parseEvidenceHubTechnologyTaxonomy(string $contents): array
         throw new EvidenceHubTaxonomyException('Evidence Hub taxonomy is malformed.');
     }
 
-    evidenceHubTaxonomyClosedKeys($taxonomy, ['taxonomy_id', 'taxonomy_version', 'match_policy', 'entries']);
+    if (!in_array($version, ['v1', 'v2'], true)) {
+        throw new EvidenceHubTaxonomyException('Evidence Hub taxonomy version is unsupported.');
+    }
+    evidenceHubTaxonomyClosedKeys($taxonomy, $version === 'v1'
+        ? ['taxonomy_id', 'taxonomy_version', 'match_policy', 'entries']
+        : ['taxonomy_id', 'taxonomy_version', 'match_policy', 'entries', 'category_order']);
+    $categories = $version === 'v1' ? EVIDENCE_HUB_TAXONOMY_V1_CATEGORIES : EVIDENCE_HUB_TAXONOMY_V2_CATEGORIES;
     if (($taxonomy['taxonomy_id'] ?? null) !== 'evidence-hub-technology-taxonomy'
-        || ($taxonomy['taxonomy_version'] ?? null) !== EVIDENCE_HUB_TAXONOMY_VERSION
+        || ($taxonomy['taxonomy_version'] ?? null) !== $version
         || ($taxonomy['match_policy'] ?? null) !== 'normalized_exact_nfc_latin_casefold'
         || !is_array($taxonomy['entries'] ?? null)
         || !array_is_list($taxonomy['entries'])
-        || count($taxonomy['entries']) !== EVIDENCE_HUB_TAXONOMY_ENTRY_COUNT) {
+        || count($taxonomy['entries']) !== ($version === 'v1' ? EVIDENCE_HUB_TAXONOMY_V1_ENTRY_COUNT : EVIDENCE_HUB_TAXONOMY_V2_ENTRY_COUNT)
+        || ($version === 'v2' && ($taxonomy['category_order'] ?? null) !== $categories)) {
         throw new EvidenceHubTaxonomyException('Evidence Hub taxonomy is unsupported.');
     }
 
@@ -62,7 +74,7 @@ function parseEvidenceHubTechnologyTaxonomy(string $contents): array
         if (!is_string($id) || preg_match('/^tech\.[a-z0-9-]+$/', $id) !== 1
             || !is_string($key) || preg_match('/^[a-z0-9-]+$/', $key) !== 1
             || !is_string($name) || $name === ''
-            || !is_string($category) || !in_array($category, ['language', 'framework', 'runtime', 'database', 'tool', 'library'], true)
+            || !is_string($category) || !in_array($category, $categories, true)
             || !is_array($entryAliases) || !array_is_list($entryAliases) || $entryAliases === []
             || !is_bool($entry['deprecated'] ?? null) || !is_bool($entry['merged'] ?? null)
             || (!is_null($entry['replaced_by_id'] ?? null) && (!is_string($entry['replaced_by_id']) || preg_match('/^tech\.[a-z0-9-]+$/', $entry['replaced_by_id']) !== 1))) {
@@ -104,7 +116,7 @@ function parseEvidenceHubTechnologyTaxonomy(string $contents): array
         }
     }
 
-    return ['taxonomy_version' => EVIDENCE_HUB_TAXONOMY_VERSION, 'entries' => $entries, 'aliases' => $aliases];
+    return ['taxonomy_version' => $version, 'category_order' => $categories, 'entries' => $entries, 'aliases' => $aliases];
 }
 
 function normalizeEvidenceHubTechnologyLabel(string $label): ?string
