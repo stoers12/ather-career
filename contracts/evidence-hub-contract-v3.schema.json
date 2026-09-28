@@ -1,0 +1,651 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ather-career.example/contracts/evidence-hub-contract-v3.schema.json",
+  "title": "Evidence Hub private response contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "schema_version",
+    "maturity",
+    "metrics",
+    "recommendations"
+  ],
+  "properties": {
+    "contract_id": {
+      "const": "evidence-hub-contract-v3"
+    },
+    "schema_version": {
+      "const": "3.0.0"
+    },
+    "maturity": {
+      "$ref": "#/$defs/maturity"
+    },
+    "metrics": {
+      "$ref": "#/$defs/metrics"
+    },
+    "recommendations": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/recommendation"
+      }
+    }
+  },
+  "$defs": {
+    "basis_points": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "reason_code": {
+      "type": "string",
+      "enum": [
+        "NO_PROJECTS",
+        "FIELD_NOT_AVAILABLE",
+        "NON_SCALAR_INPUT",
+        "INVALID_UTF8",
+        "EMPTY_NORMALIZED_VALUE",
+        "PROHIBITED_CONTROL_CHARACTER",
+        "PROHIBITED_DIRECTIONALITY_CHARACTER",
+        "ZERO_WIDTH_CHARACTER",
+        "MAXIMUM_LENGTH_EXCEEDED",
+        "GRAPHEME_THRESHOLD_NOT_MET",
+        "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+        "DISTINCT_TOKEN_THRESHOLD_NOT_MET",
+        "REPETITION_SUSPECTED",
+        "PLACEHOLDER_CONFIRMED",
+        "TEXT_COMPLETE",
+        "TECHNOLOGY_MAPPED",
+        "TECHNOLOGY_UNMAPPED",
+        "TECHNOLOGY_STORAGE_INVALID",
+        "HISTORY_NOT_TRACKED",
+        "TENANT_AUTHORITY_REJECTED",
+        "RECOMMENDATION_SNOOZED",
+        "RECOMMENDATION_DISMISSED",
+        "RECOMMENDATION_SUPERSEDED",
+        "PORTFOLIO_NOT_PUBLISHED"
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/reason_code"
+      }
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "unavailable",
+        "low",
+        "medium",
+        "high"
+      ],
+      "description": "Evidence sufficiency only; never competence probability."
+    },
+    "maturity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "version"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "zero",
+            "partial",
+            "ready"
+          ]
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "field_evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_field",
+        "rule_version",
+        "storage_validity",
+        "evidence_status",
+        "content_graphemes",
+        "useful_token_count",
+        "distinct_token_count",
+        "reason_codes"
+      ],
+      "properties": {
+        "evidence_field": {
+          "type": "string",
+          "enum": [
+            "problem_statement",
+            "personal_role",
+            "measurable_outcome"
+          ]
+        },
+        "rule_version": {
+          "const": "1.0.0"
+        },
+        "storage_validity": {
+          "type": "string",
+          "enum": [
+            "valid",
+            "invalid"
+          ]
+        },
+        "evidence_status": {
+          "type": "string",
+          "enum": [
+            "unavailable",
+            "needs_attention",
+            "complete"
+          ]
+        },
+        "content_graphemes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "useful_token_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "distinct_token_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reason_codes": {
+          "$ref": "#/$defs/reason_codes"
+        }
+      }
+    },
+    "documentation_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "version",
+        "project_count",
+        "expected_evidence_field_count",
+        "complete_evidence_field_count",
+        "coverage_bps",
+        "evidence_confidence",
+        "reason_codes"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "unavailable",
+            "needs_attention",
+            "ready"
+          ]
+        },
+        "version": {
+          "const": "1.0.0"
+        },
+        "project_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expected_evidence_field_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "complete_evidence_field_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "coverage_bps": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "evidence_confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "reason_codes": {
+          "$ref": "#/$defs/reason_codes"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "project_count": {
+                "const": 0
+              },
+              "expected_evidence_field_count": {
+                "const": 0
+              },
+              "complete_evidence_field_count": {
+                "const": 0
+              },
+              "coverage_bps": {
+                "const": null
+              },
+              "reason_codes": {
+                "contains": {
+                  "const": "NO_PROJECTS"
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "project_count": {
+                "minimum": 1
+              },
+              "expected_evidence_field_count": {
+                "minimum": 3
+              },
+              "coverage_bps": {
+                "$ref": "#/$defs/basis_points"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "technology_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_label",
+        "mapping_state",
+        "taxonomy_version",
+        "canonical_id",
+        "canonical_key",
+        "display_name",
+        "category"
+      ],
+      "properties": {
+        "raw_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "mapping_state": {
+          "type": "string",
+          "enum": [
+            "mapped",
+            "unmapped"
+          ]
+        },
+        "taxonomy_version": {
+          "const": "v3"
+        },
+        "canonical_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^tech\\.[a-z0-9-]+$"
+        },
+        "canonical_key": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "display_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 60
+        },
+        "category": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "database",
+            "framework",
+            "language",
+            "library",
+            "platform",
+            "runtime",
+            "stylesheet",
+            "technique",
+            "tool",
+            null
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mapping_state": {
+                "const": "mapped"
+              }
+            },
+            "required": [
+              "mapping_state"
+            ]
+          },
+          "then": {
+            "properties": {
+              "canonical_id": {
+                "type": "string",
+                "pattern": "^tech\\.[a-z0-9-]+$"
+              },
+              "canonical_key": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "canonical_id": {
+                "const": null
+              },
+              "canonical_key": {
+                "const": null
+              },
+              "display_name": {
+                "const": null
+              },
+              "category": {
+                "const": null
+              }
+            }
+          }
+        }
+      ]
+    },
+    "technology_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "version",
+        "evidence_confidence",
+        "reason_codes",
+        "mappings",
+        "technology_occurrence_count",
+        "mapped_occurrence_count",
+        "unmapped_occurrence_count",
+        "distinct_technology_count",
+        "distinct_mapped_technology_count",
+        "distinct_unmapped_technology_count",
+        "invalid_technology_storage_project_count"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "unavailable",
+            "needs_attention",
+            "ready"
+          ]
+        },
+        "version": {
+          "const": "1.0.0"
+        },
+        "evidence_confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "reason_codes": {
+          "$ref": "#/$defs/reason_codes"
+        },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/technology_mapping"
+          }
+        },
+        "technology_occurrence_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mapped_occurrence_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unmapped_occurrence_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "distinct_technology_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "distinct_mapped_technology_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "distinct_unmapped_technology_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "invalid_technology_storage_project_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "portfolio_progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "version",
+        "project_count",
+        "projects_with_complete_evidence",
+        "first_project_recorded_at",
+        "latest_project_recorded_at",
+        "recorded_activity_span_days",
+        "portfolio_publication_state",
+        "trend_status",
+        "trend_direction",
+        "reason_codes"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "unavailable",
+            "ready"
+          ]
+        },
+        "version": {
+          "const": "1.0.0"
+        },
+        "project_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "projects_with_complete_evidence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "first_project_recorded_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "latest_project_recorded_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "recorded_activity_span_days": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "portfolio_publication_state": {
+          "type": "string",
+          "enum": [
+            "published",
+            "unpublished",
+            "not_configured"
+          ]
+        },
+        "trend_status": {
+          "const": "not_available"
+        },
+        "trend_direction": {
+          "const": null
+        },
+        "reason_codes": {
+          "type": "array",
+          "contains": {
+            "const": "HISTORY_NOT_TRACKED"
+          },
+          "items": {
+            "$ref": "#/$defs/reason_code"
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentation_coverage",
+        "technology_evidence_map",
+        "portfolio_progress"
+      ],
+      "properties": {
+        "documentation_coverage": {
+          "$ref": "#/$defs/documentation_coverage"
+        },
+        "technology_evidence_map": {
+          "$ref": "#/$defs/technology_metric"
+        },
+        "portfolio_progress": {
+          "$ref": "#/$defs/portfolio_progress"
+        }
+      }
+    },
+    "recommendation_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route",
+        "action_id",
+        "opaque_target_ref"
+      ],
+      "properties": {
+        "route": {
+          "const": "owner_evidence_hub"
+        },
+        "action_id": {
+          "type": "string",
+          "enum": [
+            "add_first_project",
+            "complete_project_evidence",
+            "review_unmapped_technology",
+            "complete_portfolio_publication"
+          ]
+        },
+        "opaque_target_ref": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{7,63}$"
+        }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "rule_version",
+        "recommendation_key",
+        "evidence_fingerprint",
+        "lifecycle_state",
+        "priority_rank",
+        "display_order",
+        "reason_codes",
+        "target",
+        "snoozed_until"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "enum": [
+            "add_first_project",
+            "complete_project_evidence",
+            "review_unmapped_technology",
+            "complete_portfolio_publication"
+          ]
+        },
+        "rule_version": {
+          "const": "1.0.0"
+        },
+        "recommendation_key": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "evidence_fingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "lifecycle_state": {
+          "const": "active"
+        },
+        "priority_rank": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "display_order": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "reason_codes": {
+          "$ref": "#/$defs/reason_codes",
+          "not": {
+            "contains": {
+              "enum": [
+                "RECOMMENDATION_SNOOZED",
+                "RECOMMENDATION_DISMISSED",
+                "RECOMMENDATION_SUPERSEDED"
+              ]
+            }
+          }
+        },
+        "target": {
+          "$ref": "#/$defs/recommendation_target"
+        },
+        "snoozed_until": {
+          "const": null
+        }
+      }
+    }
+  }
+}

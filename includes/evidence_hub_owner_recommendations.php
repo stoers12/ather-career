@@ -22,7 +22,7 @@ function buildAuthorizedEvidenceHubOwnerRecommendationState(
 ): array {
     $projects = loadAuthorizedEvidenceHubOwnerEvaluatedProjects($database, $context);
     $publicationState = loadAuthorizedEvidenceHubPublicationState($database, $context);
-    $taxonomy = loadEvidenceHubTechnologyTaxonomy('v2');
+    $taxonomy = loadEvidenceHubTechnologyTaxonomy('v3');
     $factsAndAssociations = buildEvidenceHubOwnerRecommendationFacts($context, $projects, $taxonomy, loadAuthorizedEvidenceHubRecommendationPublicationFacts($database, $context));
     $candidates = buildEvidenceHubRecommendationCandidates($factsAndAssociations['facts'], $opaqueTargetHmacMaterial);
     $resourceAssociations = evidenceHubOwnerRecommendationResourceAssociations(
@@ -38,7 +38,7 @@ function buildAuthorizedEvidenceHubOwnerRecommendationState(
     );
 
     return [
-        'contract' => mapEvidenceHubContractV2(buildEvidenceHubOwnerCoreFromEvaluatedProjects($projects, $publicationState), $visible),
+        'contract' => mapEvidenceHubContractV3(buildEvidenceHubOwnerCoreFromEvaluatedProjects($projects, $publicationState), $visible),
         'current_candidates' => $candidates,
         'resource_associations' => $resourceAssociations,
     ];

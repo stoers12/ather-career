@@ -182,7 +182,7 @@ function evidenceHubOwnerPageFieldReason(array $evaluation, string $label): stri
 /** @param list<array<string, mixed>> $technologyFacts @return array{mapped: array<string, list<array<string, mixed>>>, unmapped: list<array<string, mixed>>, overview: array{mapped_technology_count: int, unmapped_technology_count: int, unmapped_project_count: int}} */
 function evidenceHubOwnerPageTechnologies(array $technologyFacts): array
 {
-    $taxonomy = loadEvidenceHubTechnologyTaxonomy('v2');
+    $taxonomy = loadEvidenceHubTechnologyTaxonomy('v3');
     $mapped = [];
     $unmapped = [];
     $unmappedProjectCount = 0;

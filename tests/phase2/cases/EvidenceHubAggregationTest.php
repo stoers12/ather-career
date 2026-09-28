@@ -15,6 +15,7 @@ final class EvidenceHubAggregationTest
         self::technologyStorageAndSummary($fixtures);
         self::taxonomyAndMapping();
         self::taxonomyV2();
+        self::taxonomyV3();
         if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             self::ownerScopeIntegration();
         }
@@ -191,7 +192,7 @@ final class EvidenceHubAggregationTest
         $v2 = loadEvidenceHubTechnologyTaxonomy('v2');
         phase2AssertSame('v1', $v1['taxonomy_version'], 'Frozen v1 taxonomy did not load independently.');
         phase2AssertSame(17, count($v1['entries']), 'Frozen v1 entry count changed.');
-        phase2AssertSame('v2', $v2['taxonomy_version'], 'Active taxonomy is not v2.');
+        phase2AssertSame('v2', $v2['taxonomy_version'], 'Frozen v2 taxonomy did not load independently.');
         phase2AssertSame(31, count($v2['entries']), 'V2 entry count is wrong.');
         phase2AssertSame($v1['entries'], array_slice($v2['entries'], 0, 17), 'V2 changed a frozen v1 canonical entry.');
         phase2AssertSame(
@@ -253,6 +254,47 @@ final class EvidenceHubAggregationTest
         phase2AssertSame(array_values(array_filter($v2['category_order'], static fn (string $category): bool => isset($overview['mapped'][$category]))), array_keys($overview['mapped']), 'V2 page-model category order is unstable.');
         phase2AssertSame(['Unmapped technology 1', 'Unmapped technology 2'], array_column($overview['unmapped'], 'label'), 'V2 unknown labels exposed raw values.');
         phase2AssertSame(1, evidenceHubOwnerPageProgress(4, 1, [100])['complete_project_count'], 'Technology v2 changed portfolio progress.');
+    }
+
+    private static function taxonomyV3(): void
+    {
+        $v2 = loadEvidenceHubTechnologyTaxonomy('v2');
+        $v3 = loadEvidenceHubTechnologyTaxonomy('v3');
+        phase2AssertSame('v3', $v3['taxonomy_version'], 'V3 taxonomy did not load.');
+        phase2AssertSame(37, count($v3['entries']), 'V3 entry count is wrong.');
+        phase2AssertSame($v2['entries'], array_slice($v3['entries'], 0, 31), 'V3 changed a frozen v2 entry.');
+        phase2AssertSame($v2['category_order'], $v3['category_order'], 'V3 category order changed.');
+        foreach ([
+            'FastAPI' => ['tech.fastapi', 'FastAPI', 'framework'],
+            'pgvector' => ['tech.pgvector', 'pgvector', 'database'],
+            'SentenceTransformers' => ['tech.sentence-transformers', 'SentenceTransformers', 'library'],
+            'Redis' => ['tech.redis', 'Redis', 'database'],
+            'Celery' => ['tech.celery', 'Celery', 'framework'],
+            'Groq' => ['tech.groq', 'Groq', 'platform'],
+        ] as $label => $expected) {
+            $mapping = mapEvidenceHubTechnologyLabel($label, $v3);
+            phase2AssertSame($expected, [$mapping['canonical_id'], $mapping['display_name'], $mapping['category']], "V3 {$label} mapping changed.");
+            phase2AssertSame('unmapped', mapEvidenceHubTechnologyLabel($label, $v2)['mapping_state'], "V2 unexpectedly knows {$label}.");
+            phase2AssertSame($mapping['canonical_id'], mapEvidenceHubTechnologyLabel(strtoupper($label), $v3)['canonical_id'], "V3 case alias failed for {$label}.");
+        }
+        foreach (['Fast API' => 'tech.fastapi', 'pg vector' => 'tech.pgvector', 'Sentence Transformers' => 'tech.sentence-transformers'] as $alias => $id) {
+            phase2AssertSame($id, mapEvidenceHubTechnologyLabel($alias, $v3)['canonical_id'], "V3 spacing alias failed for {$alias}.");
+        }
+        foreach (['GitHub Actions', 'Graph RAG', 'Linear Regression', 'Pandas, NumPy', 'Future Unknown'] as $unknown) {
+            phase2AssertSame('unmapped', mapEvidenceHubTechnologyLabel($unknown, $v3)['mapping_state'], "V3 guessed {$unknown}.");
+        }
+        $project18 = ['Python', 'Pandas', 'NumPy', 'Scikit-learn', 'Matplotlib', 'Seaborn', 'Joblib'];
+        $project19 = ['Python', 'FastAPI', 'PostgreSQL', 'pgvector', 'SentenceTransformers', 'Redis', 'Celery', 'Groq', 'Docker'];
+        $project20 = ['php', 'Docker', 'Css', 'Js', 'Git', 'Github'];
+        $project21 = ['Power bi', 'MySql', 'Dax Equation'];
+        $facts = array_map(static fn (array $labels): array => ['storage_state' => 'valid', 'reason_codes' => [], 'labels' => $labels], [$project18, $project19, $project20, $project21]);
+        $summary = summarizeEvidenceHubTechnologies($facts, $v3);
+        phase2AssertSame([25, 23, 0], [$summary['technology_occurrence_count'], $summary['distinct_mapped_technology_count'], $summary['distinct_unmapped_technology_count']], 'Future Project 19 technology totals changed.');
+        $page = evidenceHubOwnerPageTechnologies($facts);
+        phase2AssertSame([], $page['unmapped'], 'V3 future portfolio exposed unknown labels.');
+        phase2AssertSame(array_values(array_filter($v3['category_order'], static fn (string $category): bool => isset($page['mapped'][$category]))), array_keys($page['mapped']), 'V3 category order is unstable.');
+        $unknownPage = evidenceHubOwnerPageTechnologies([['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['Future Unknown']]]);
+        phase2AssertSame(['Unmapped technology 1'], array_column($unknownPage['unmapped'], 'label'), 'V3 unknown label is not privacy-safe.');
     }
 
     private static function ownerScopeIntegration(): void

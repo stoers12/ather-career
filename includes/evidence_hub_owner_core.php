@@ -28,7 +28,7 @@ function loadAuthorizedEvidenceHubOwnerEvaluatedProjects(PDO $database, Authoriz
 function buildEvidenceHubOwnerCoreFromEvaluatedProjects(array $projects, string $publicationState): array
 {
     $coverage = aggregateEvidenceHubDocumentationCoverage($projects);
-    $taxonomy = loadEvidenceHubTechnologyTaxonomy('v2');
+    $taxonomy = loadEvidenceHubTechnologyTaxonomy('v3');
 
     return [
         'documentation_coverage' => $coverage,
@@ -54,5 +54,5 @@ function buildAuthorizedEvidenceHubOwnerContract(
     AuthorizedPortfolioContext $context,
     array $recommendations,
 ): array {
-    return mapEvidenceHubContractV2(buildAuthorizedEvidenceHubOwnerCore($database, $context), $recommendations);
+    return mapEvidenceHubContractV3(buildAuthorizedEvidenceHubOwnerCore($database, $context), $recommendations);
 }

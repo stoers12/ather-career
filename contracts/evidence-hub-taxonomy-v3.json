@@ -1,0 +1,476 @@
+{
+  "taxonomy_id": "evidence-hub-technology-taxonomy",
+  "taxonomy_version": "v3",
+  "match_policy": "normalized_exact_nfc_latin_casefold",
+  "entries": [
+    {
+      "technology_id": "tech.javascript",
+      "canonical_key": "javascript",
+      "display_name": "JavaScript",
+      "category": "language",
+      "aliases": [
+        "JavaScript",
+        "JS"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.java",
+      "canonical_key": "java",
+      "display_name": "Java",
+      "category": "language",
+      "aliases": [
+        "Java"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.c",
+      "canonical_key": "c",
+      "display_name": "C",
+      "category": "language",
+      "aliases": [
+        "C"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.cpp",
+      "canonical_key": "cpp",
+      "display_name": "C++",
+      "category": "language",
+      "aliases": [
+        "C++"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.csharp",
+      "canonical_key": "csharp",
+      "display_name": "C#",
+      "category": "language",
+      "aliases": [
+        "C#",
+        "C Sharp"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.php",
+      "canonical_key": "php",
+      "display_name": "PHP",
+      "category": "language",
+      "aliases": [
+        "PHP"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.python",
+      "canonical_key": "python",
+      "display_name": "Python",
+      "category": "language",
+      "aliases": [
+        "Python"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.typescript",
+      "canonical_key": "typescript",
+      "display_name": "TypeScript",
+      "category": "language",
+      "aliases": [
+        "TypeScript",
+        "TS"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.react",
+      "canonical_key": "react",
+      "display_name": "React",
+      "category": "framework",
+      "aliases": [
+        "React",
+        "React.js"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.react-native",
+      "canonical_key": "react-native",
+      "display_name": "React Native",
+      "category": "framework",
+      "aliases": [
+        "React Native"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.mysql",
+      "canonical_key": "mysql",
+      "display_name": "MySQL",
+      "category": "database",
+      "aliases": [
+        "MySQL"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.postgresql",
+      "canonical_key": "postgresql",
+      "display_name": "PostgreSQL",
+      "category": "database",
+      "aliases": [
+        "PostgreSQL",
+        "Postgres"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.sql",
+      "canonical_key": "sql",
+      "display_name": "SQL",
+      "category": "language",
+      "aliases": [
+        "SQL"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.sql-server",
+      "canonical_key": "sql-server",
+      "display_name": "SQL Server",
+      "category": "database",
+      "aliases": [
+        "SQL Server",
+        "Microsoft SQL Server",
+        "MSSQL"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.docker",
+      "canonical_key": "docker",
+      "display_name": "Docker",
+      "category": "tool",
+      "aliases": [
+        "Docker"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.nodejs",
+      "canonical_key": "nodejs",
+      "display_name": "Node.js",
+      "category": "runtime",
+      "aliases": [
+        "Node.js",
+        "NodeJS"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.jquery",
+      "canonical_key": "jquery",
+      "display_name": "jQuery",
+      "category": "library",
+      "aliases": [
+        "jQuery"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.css",
+      "canonical_key": "css",
+      "display_name": "CSS",
+      "category": "stylesheet",
+      "aliases": [
+        "Css"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.dax",
+      "canonical_key": "dax",
+      "display_name": "DAX",
+      "category": "language",
+      "aliases": [
+        "DAX",
+        "Dax Equation"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.git",
+      "canonical_key": "git",
+      "display_name": "Git",
+      "category": "tool",
+      "aliases": [
+        "Git"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.github",
+      "canonical_key": "github",
+      "display_name": "GitHub",
+      "category": "platform",
+      "aliases": [
+        "Github"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.joblib",
+      "canonical_key": "joblib",
+      "display_name": "Joblib",
+      "category": "library",
+      "aliases": [
+        "Joblib"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.lsa",
+      "canonical_key": "lsa",
+      "display_name": "Latent Semantic Analysis (LSA)",
+      "category": "technique",
+      "aliases": [
+        "LSA",
+        "Latent Semantic Analysis"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.mlr",
+      "canonical_key": "mlr",
+      "display_name": "Multiple Linear Regression (MLR)",
+      "category": "technique",
+      "aliases": [
+        "MLR",
+        "Multiple Linear Regression"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.matplotlib",
+      "canonical_key": "matplotlib",
+      "display_name": "Matplotlib",
+      "category": "library",
+      "aliases": [
+        "Matplotlib"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.numpy",
+      "canonical_key": "numpy",
+      "display_name": "NumPy",
+      "category": "library",
+      "aliases": [
+        "NumPy"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.pandas",
+      "canonical_key": "pandas",
+      "display_name": "Pandas",
+      "category": "library",
+      "aliases": [
+        "Pandas"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.power-bi",
+      "canonical_key": "power-bi",
+      "display_name": "Power BI",
+      "category": "platform",
+      "aliases": [
+        "Power bi"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.scikit-learn",
+      "canonical_key": "scikit-learn",
+      "display_name": "Scikit-learn",
+      "category": "library",
+      "aliases": [
+        "Scikit-learn"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.seaborn",
+      "canonical_key": "seaborn",
+      "display_name": "Seaborn",
+      "category": "library",
+      "aliases": [
+        "Seaborn"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.tf-idf",
+      "canonical_key": "tf-idf",
+      "display_name": "TF-IDF",
+      "category": "technique",
+      "aliases": [
+        "TF-IDF"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.fastapi",
+      "canonical_key": "fastapi",
+      "display_name": "FastAPI",
+      "category": "framework",
+      "aliases": [
+        "FastAPI",
+        "Fast API"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.pgvector",
+      "canonical_key": "pgvector",
+      "display_name": "pgvector",
+      "category": "database",
+      "aliases": [
+        "pgvector",
+        "pg vector"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.sentence-transformers",
+      "canonical_key": "sentence-transformers",
+      "display_name": "SentenceTransformers",
+      "category": "library",
+      "aliases": [
+        "SentenceTransformers",
+        "Sentence Transformers"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.redis",
+      "canonical_key": "redis",
+      "display_name": "Redis",
+      "category": "database",
+      "aliases": [
+        "Redis"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.celery",
+      "canonical_key": "celery",
+      "display_name": "Celery",
+      "category": "framework",
+      "aliases": [
+        "Celery"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    },
+    {
+      "technology_id": "tech.groq",
+      "canonical_key": "groq",
+      "display_name": "Groq",
+      "category": "platform",
+      "aliases": [
+        "Groq"
+      ],
+      "deprecated": false,
+      "merged": false,
+      "replaced_by_id": null
+    }
+  ],
+  "category_order": [
+    "database",
+    "framework",
+    "language",
+    "library",
+    "platform",
+    "runtime",
+    "stylesheet",
+    "technique",
+    "tool"
+  ]
+}

@@ -79,11 +79,15 @@ An occurrence is one accepted non-empty label from one valid project collection 
 
 ### Taxonomy v2
 
-The private Owner Evidence Hub uses taxonomy v2 and contract v2. The original 17-entry taxonomy v1 and contract v1 remain independently loadable and byte-for-byte frozen for historical validation. Contract v2 changes the envelope identity to `evidence-hub-contract-v2` and schema version to `2.0.0`; the existing Evidence text, coverage, progress, and recommendation rules retain their v1 semantics and internal rule versions.
+Taxonomy v2 and contract v2 remain independently loadable and byte-for-byte frozen, as do the original 17-entry taxonomy v1 and contract v1. Contract v2 changes the envelope identity to `evidence-hub-contract-v2` and schema version to `2.0.0`; the existing Evidence text, coverage, progress, and recommendation rules retain their v1 semantics and internal rule versions.
 
 Taxonomy v2 retains all 17 v1 canonical entries and adds CSS (stylesheet), DAX (language), Git (tool), GitHub and Power BI (platform), Joblib, Matplotlib, NumPy, Pandas, Scikit-learn, and Seaborn (library), and Latent Semantic Analysis (LSA), Multiple Linear Regression (MLR), and TF-IDF (technique). Its explicit category order is database, framework, language, library, platform, runtime, stylesheet, technique, tool. Labels within each category sort by canonical display name and key.
 
 Exact NFC, Unicode whitespace normalization, and Latin case folding still determine aliases. Reviewed aliases cover stored `Css`, `Dax Equation`, `Github`, `LSA`, and `Power bi` without fuzzy matching. Generic `Linear Regression` is intentionally not an alias for MLR: simple linear regression is a different possible future value. A comma-separated six-library label remains one unknown value until the owner splits it in the project editor. Unknown values retain null canonical fields and privacy-safe numbered Owner labels; they are never automatically split or displayed raw by the Hub. Per-project canonical deduplication and deterministic sorting remain in force.
+
+### Taxonomy v3
+
+The private Owner Evidence Hub now selects taxonomy v3 and contract v3 (`evidence-hub-contract-v3`, schema version `3.0.0`). V3 retains all 31 v2 entries and their category order, then adds FastAPI (framework), pgvector (database extension), SentenceTransformers (library), Redis (database), Celery (framework), and Groq (platform). Exact normalized aliases include `Fast API`, `pg vector`, and `Sentence Transformers`; case folding already covers capitalization. GitHub Actions remains outside this project technology taxonomy. Unknown values remain privacy-safe and combined labels are not split. Evidence, coverage, progress, and recommendation rules retain their existing semantics.
 
 ## Portfolio Progress
 
