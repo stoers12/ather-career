@@ -7,6 +7,7 @@ require_once __DIR__ . '/error_reporting.php';
 require_once __DIR__ . '/project_technologies.php';
 require_once __DIR__ . '/project_presentation.php';
 require_once __DIR__ . '/transaction.php';
+require_once __DIR__ . '/validation.php';
 
 const PUBLIC_SLUG_MIN_LENGTH = 3;
 const PUBLIC_SLUG_MAX_LENGTH = 64;
@@ -299,7 +300,7 @@ function listPublicProjects(PDO $database, PublicReadContext $context): array
  * resolved published Portfolio. Raw storage locators remain server-side: the
  * optional image URL is a scoped public-media capability instead.
  *
- * @return list<array{title: string, category: string, description: string, github_url: string, technologies: list<string>, image_url?: string}>
+ * @return list<array{title: string, category: string, description: string, github_url?: string, technologies: list<string>, image_url?: string}>
  */
 function listPublicProjectJsonPayload(PDO $database, PublicReadContext $context, string $slug): array
 {
@@ -322,9 +323,15 @@ function listPublicProjectJsonPayload(PDO $database, PublicReadContext $context,
             'title' => (string) ($record['title'] ?? ''),
             'category' => (string) ($record['category'] ?? ''),
             'description' => (string) ($record['description'] ?? ''),
-            'github_url' => (string) ($record['github_url'] ?? ''),
-            'technologies' => projectTechnologiesFromStorage($record['technologies'] ?? null),
         ];
+
+        $githubUrl = is_string($record['github_url'] ?? null) ? trim($record['github_url']) : '';
+        $githubLength = utf8CharacterLength($githubUrl);
+        if ($githubUrl !== '' && $githubLength !== null
+            && $githubLength <= PROJECT_GITHUB_URL_MAX_LENGTH && isSafeHttpUrl($githubUrl)) {
+            $project['github_url'] = $githubUrl;
+        }
+        $project['technologies'] = projectTechnologiesFromStorage($record['technologies'] ?? null);
 
         $imagePath = $record['image_path'] ?? null;
         $projectId = authorizationPositiveInteger($record['id'] ?? null);

@@ -246,14 +246,14 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         $fieldErrors = [];
         $titleInput = submittedStringField($post, 'title', PROJECT_TITLE_MAX_LENGTH, 'Title', true);
         $categoryInput = submittedStringField($post, 'category', PROJECT_CATEGORY_MAX_LENGTH, 'Category', true);
-        $githubInput = submittedStringField($post, 'github_url', PROJECT_GITHUB_URL_MAX_LENGTH, 'GitHub URL', true);
+        $githubInput = submittedStringField($post, 'github_url', PROJECT_GITHUB_URL_MAX_LENGTH, 'GitHub URL');
         $descriptionInput = array_key_exists('description', $post) && !is_string($post['description'])
             ? ['value' => '', 'error' => 'Description must be submitted as text.']
             : ['value' => is_string($post['description'] ?? null) ? trim($post['description']) : '', 'error' => null];
         $title = $titleInput['value'];
         $category = $categoryInput['value'];
         $description = $descriptionInput['value'];
-        $githubUrl = $githubInput['value'];
+        $githubUrl = $githubInput['value'] === '' ? null : $githubInput['value'];
         foreach (['title' => $titleInput, 'category' => $categoryInput, 'description' => $descriptionInput, 'github_url' => $githubInput] as $field => $input) {
             if ($input['error'] !== null) {
                 $fieldErrors[$field] = $input['error'];
@@ -266,13 +266,13 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
             ? ($post['technologies'] ?? '')
             : null;
         $formMode = $action === 'update' ? 'edit' : 'add';
-        $editingProject = ['id' => is_string($post['id'] ?? null) ? $post['id'] : '', 'title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubUrl, 'technologies' => $technologiesInput, 'image_path' => null];
+        $editingProject = ['id' => is_string($post['id'] ?? null) ? $post['id'] : '', 'title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubInput['value'], 'technologies' => $technologiesInput, 'image_path' => null];
         $technologyErrors = [];
         $technologies = normalizeProjectTechnologies($technologiesInput, $technologyErrors);
         if ($technologyErrors !== []) {
             $fieldErrors['technologies'] = $technologyErrors[0];
         }
-        if (!isset($fieldErrors['github_url']) && !isSafeHttpUrl($githubUrl)) {
+        if (!isset($fieldErrors['github_url']) && $githubUrl !== null && !isSafeHttpUrl($githubUrl)) {
             $fieldErrors['github_url'] = 'Please enter a valid HTTP or HTTPS URL.';
         }
 

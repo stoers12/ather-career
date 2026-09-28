@@ -31,7 +31,7 @@ final class PublicProjectJsonContractTest
              INSERT INTO portfolios (id, owner_user_id, public_slug, is_published) VALUES (10, 1, 'public-owner', 1), (20, 2, 'draft-owner', 0);
              INSERT INTO projects (id, portfolio_id, title, category, description, github_url, image_path, technologies, created_at) VALUES
                 (100, 10, 'Published image', 'Web', 'Published description', 'https://example.test/project', 'portfolios/10/projects/managed-private.png', '[\"PHP\", \"UTF-8 ✓\"]', '2026-01-02'),
-                (101, 10, 'Published no image', 'Data', 'No image description', '', NULL, '[]', '2026-01-01'),
+                (101, 10, 'Published no image', 'Data', 'No image description', NULL, NULL, '[]', '2026-01-01'),
                 (200, 20, 'Draft image', 'Private', 'Draft description', '', 'portfolios/20/projects/draft-private.webp', '[]', '2026-01-03')"
         );
 
@@ -55,7 +55,9 @@ final class PublicProjectJsonContractTest
             phase2AssertSame(['PHP', 'UTF-8 ✓'], $withImage['technologies'], 'Public Project JSON did not preserve valid UTF-8 technology data.');
 
             $withoutImage = $projects[1];
-            phase2AssertSame(['title', 'category', 'description', 'github_url', 'technologies'], array_keys($withoutImage), 'An image-less Project exposed an unnecessary media field.');
+            phase2AssertSame(['title', 'category', 'description', 'technologies'], array_keys($withoutImage), 'A Project without GitHub or image exposed an optional field.');
+            phase2AssertSame('https://example.test/project', $withImage['github_url'], 'Existing GitHub URL changed in public JSON.');
+            phase2Assert(!array_key_exists('github_url', $withoutImage), 'Absent GitHub URL must be omitted from public JSON.');
             phase2Assert(!array_key_exists('image_url', $withoutImage), 'An image-less Project exposed an image URL.');
             phase2Assert(resolvePublicReadContext($database, 'draft-owner') === null, 'Unpublished Portfolio Projects resolved through the public JSON context.');
             phase2AssertSame(null, normalizePublicSlug('invalid_slug'), 'A non-canonical route slug entered the JSON application contract.');

@@ -1,0 +1,2 @@
+-- Migration 013 is executed by the guarded nullable projects.github_url path
+-- in database/migrate.php. Existing nonempty URLs are preserved.
