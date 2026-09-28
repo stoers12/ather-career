@@ -87,6 +87,7 @@ async function main() {
         const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
         const page = await context.newPage();
         await page.goto(hub('partial'), { waitUntil: 'networkidle' });
+        const readinessCopy = await page.locator('.evidence-hub-readiness-panel small').innerText();
         const ctas = await page.locator('.evidence-hub-recommendation-card .evidence-hub-primary-cta').evaluateAll(links => links.map(link => link.getAttribute('href')));
         assert.deepEqual(ctas, ['/owner/projects/8/evidence', '/owner_projects.php?edit=8', '/owner_publication.php']);
         assert.equal(await page.locator('.evidence-hub-recommendation-card').count(), 3);
@@ -125,9 +126,12 @@ async function main() {
         assert.equal(await page.locator('.evidence-hub-project-card .evidence-hub-field .evidence-hub-state--complete').count(), 7);
         await page.getByRole('button', { name: 'Needs attention', exact: true }).click();
         assert.equal(await page.locator('.evidence-hub-project-card:visible').count(), 6);
+        assert.equal(await page.locator('.evidence-hub-readiness-panel small').innerText(), readinessCopy);
         await page.getByRole('button', { name: 'Complete', exact: true }).click();
         assert.equal(await page.locator('.evidence-hub-project-card:visible').count(), 1);
+        assert.equal(await page.locator('.evidence-hub-readiness-panel small').innerText(), readinessCopy);
         await page.getByRole('button', { name: 'All', exact: true }).click();
+        assert.equal(await page.locator('.evidence-hub-readiness-panel small').innerText(), readinessCopy);
         await page.getByRole('button', { name: 'Show more' }).click();
         assert.equal(await page.locator('.evidence-hub-project-card:visible').count(), 8);
         await page.locator('#project-8 summary').click();
@@ -191,6 +195,7 @@ async function main() {
         const targetPage = await target.newPage();
         await targetPage.goto(hub('partial') + '#project-1', { waitUntil: 'networkidle' });
         assert.equal(await targetPage.locator('#project-1').isVisible(), true);
+        assert.equal(await targetPage.locator('.evidence-hub-readiness-panel small').innerText(), readinessCopy);
         await target.close();
         results.push('Target project beyond six revealed by fragment passed');
 

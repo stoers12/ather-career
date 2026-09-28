@@ -24,7 +24,7 @@ function renderEvidenceHubOwnerPage(array $contract, array $model, array $action
     $state = $contract['maturity']['state'];
     ?>
 <div class="evidence-hub-presentation evidence-hub-page-body" dir="ltr">
-    <header class="evidence-hub-hero"><div class="evidence-hub-hero-copy"><p class="evidence-hub-kicker"><?php echo evidenceHubOwnerIcon('spark'); ?> Evidence Hub</p><h1>Build a portfolio people can trust.</h1><p>See the evidence recorded in your projects, identify gaps, and choose a useful next step.</p></div><aside class="evidence-hub-readiness-panel" aria-label="General evidence state"><?php echo evidenceHubOwnerIcon(evidenceHubOwnerMaturityIcon($state)); ?><div><span>Current evidence state</span><strong><?php echo ownerEscapeHtml(evidenceHubOwnerPageReadinessLabel($state)); ?></strong><small><?php echo ownerEscapeHtml(evidenceHubOwnerPageReadinessDetail($state)); ?></small><a href="#next-steps">View next steps</a></div></aside></header>
+    <header class="evidence-hub-hero"><div class="evidence-hub-hero-copy"><p class="evidence-hub-kicker"><?php echo evidenceHubOwnerIcon('spark'); ?> Evidence Hub</p><h1>Build a portfolio people can trust.</h1><p>See the evidence recorded in your projects, identify gaps, and choose a useful next step.</p></div><aside class="evidence-hub-readiness-panel" aria-label="General evidence state"><?php echo evidenceHubOwnerIcon(evidenceHubOwnerMaturityIcon($state)); ?><div><span>Current evidence state</span><strong><?php echo ownerEscapeHtml(evidenceHubOwnerPageReadinessLabel($state)); ?></strong><small><?php echo ownerEscapeHtml(evidenceHubOwnerPageReadinessDetail($state, (int) $progress['project_count'], (int) $progress['complete_project_count'])); ?></small><a href="#next-steps">View next steps</a></div></aside></header>
     <?php if ($feedback !== ''): ?><p class="evidence-hub-feedback" role="status" aria-live="polite" tabindex="-1" id="evidence-hub-action-feedback"><?php echo ownerEscapeHtml($feedback); ?></p><?php endif; ?>
 
     <section class="evidence-hub-section evidence-hub-recommendations" id="next-steps" aria-labelledby="evidence-hub-recommendations-title"><div class="evidence-hub-section-heading"><div><p>Next steps</p><h2 id="evidence-hub-recommendations-title">Recommended next steps</h2></div><span>Based on recorded evidence</span></div>
@@ -59,7 +59,19 @@ function renderEvidenceHubOwnerPage(array $contract, array $model, array $action
 }
 
 function evidenceHubOwnerPageReadinessLabel(string $state): string { return match ($state) {'zero' => 'Zero', 'partial' => 'Partial', 'ready' => 'Ready', default => 'Unavailable'}; }
-function evidenceHubOwnerPageReadinessDetail(string $state): string { return match ($state) {'zero' => 'No project evidence is recorded yet.', 'partial' => 'Some evidence is recorded; gaps remain.', 'ready' => 'Required evidence fields are recorded. Keep them current.', default => 'Evidence state is unavailable.'}; }
+function evidenceHubOwnerPageReadinessDetail(string $state, int $projectCount, int $completeProjectCount): string
+{
+    if ($state === 'zero' || $projectCount === 0) {
+        return 'No project evidence is recorded yet.';
+    }
+    return match ($state) {
+        'partial' => 'No project has all three evidence fields complete yet. Continue recording the missing fields below.',
+        'ready' => $completeProjectCount === $projectCount
+            ? 'Every eligible project has all three evidence fields complete. Keep them current.'
+            : 'At least one project has all three evidence fields complete. Review the remaining projects below.',
+        default => 'Evidence state is unavailable.',
+    };
+}
 function evidenceHubOwnerPageMetricState(string $state): string { return match ($state) {'ready' => 'Complete', 'needs_attention' => 'Needs attention', default => 'Unavailable'}; }
 function evidenceHubOwnerPageFieldStatusLabel(string $status): string { return match ($status) {'complete' => 'Complete', 'needs_attention' => 'Needs attention', 'invalid' => 'Invalid', 'missing' => 'Missing', default => 'Unavailable'}; }
 function evidenceHubOwnerPageActivityText(?string $first, ?string $latest): ?string

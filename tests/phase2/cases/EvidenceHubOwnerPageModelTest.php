@@ -11,6 +11,7 @@ final class EvidenceHubOwnerPageModelTest
         self::staticContracts();
         self::fractionalEpochParsing();
         self::progressStages();
+        self::readinessCopy();
         self::partialVisualFacts();
         if (evidenceTextUnicodeRuntimeIsAvailable() && in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             self::scopedPersistenceAndPresentation();
@@ -91,6 +92,100 @@ final class EvidenceHubOwnerPageModelTest
             phase2AssertSame($count . ' mapped ' . ($count === 1 ? 'technology' : 'technologies'), evidenceHubOwnerCountPhrase($count, 'mapped technology', 'mapped technologies'), 'Mapped technology grammar is wrong.');
             phase2AssertSame($count . ' unmapped ' . ($count === 1 ? 'technology' : 'technologies'), evidenceHubOwnerCountPhrase($count, 'unmapped technology', 'unmapped technologies'), 'Unmapped technology grammar is wrong.');
             phase2AssertSame($count . ' ' . ($count === 1 ? 'project' : 'projects'), evidenceHubOwnerCountPhrase($count, 'project', 'projects'), 'Project grammar is wrong.');
+        }
+    }
+
+    private static function readinessCopy(): void
+    {
+        $zeroCopy = 'No project evidence is recorded yet.';
+        $partialCopy = 'No project has all three evidence fields complete yet. Continue recording the missing fields below.';
+        $someReadyCopy = 'At least one project has all three evidence fields complete. Review the remaining projects below.';
+        $allReadyCopy = 'Every eligible project has all three evidence fields complete. Keep them current.';
+        $cases = [
+            'no projects' => [[], null, 0, 'zero', $zeroCopy],
+            'four missing' => [[0, 0, 0, 0], 0, 0, 'partial', $partialCopy],
+            'one field' => [[1], 3333, 0, 'partial', $partialCopy],
+            'two fields' => [[2], 6667, 0, 'partial', $partialCopy],
+            'one ready three missing' => [[3, 0, 0, 0], 2500, 1, 'ready', $someReadyCopy],
+            'two ready two missing' => [[3, 3, 0, 0], 5000, 2, 'ready', $someReadyCopy],
+            'mixed evidence' => [[1, 2, 3, 0], 5000, 1, 'ready', $someReadyCopy],
+            'four ready' => [[3, 3, 3, 3], 10000, 4, 'ready', $allReadyCopy],
+            'one ready' => [[3], 10000, 1, 'ready', $allReadyCopy],
+        ];
+        $names = ['problem_statement', 'personal_role', 'measurable_outcome'];
+        foreach ($cases as $name => [$counts, $expectedBps, $expectedCompleteProjects, $expectedState, $expectedCopy]) {
+            $evaluated = [];
+            $recommendationProjects = [];
+            $pageProjects = [];
+            foreach ($counts as $index => $completeFields) {
+                $evaluations = [];
+                $states = [];
+                $pageFields = [];
+                foreach ($names as $fieldIndex => $field) {
+                    $status = $fieldIndex < $completeFields ? 'complete' : 'unavailable';
+                    $reasons = $status === 'complete' ? [] : ['FIELD_NOT_AVAILABLE'];
+                    $evaluations[$field] = ['evidence_field' => $field, 'evidence_status' => $status, 'reason_codes' => $reasons];
+                    $states[$field] = $status;
+                    $pageFields[] = [
+                        'key' => $field === 'problem_statement' ? 'problem' : $field,
+                        'label' => ['Problem', 'Personal role', 'Measurable outcome'][$fieldIndex],
+                        'status' => $status === 'complete' ? 'complete' : 'missing',
+                        'reason' => $status === 'complete' ? '' : 'Add a specific account of this evidence.',
+                    ];
+                }
+                $evaluated[] = [
+                    'project_ref' => $index + 1,
+                    'recorded_at_epoch_seconds' => 1767225600,
+                    'technology_storage_state' => 'valid',
+                    'technology_storage_reason_codes' => [],
+                    'technologies' => [],
+                    'field_evaluations' => $evaluations,
+                    'expected_evidence_fields' => 3,
+                    'complete_evidence_fields' => $completeFields,
+                    'project_has_complete_evidence' => $completeFields === 3,
+                ];
+                $recommendationProjects[] = [
+                    'target_identity' => 'readiness-copy-project-' . $index,
+                    'field_completeness_states' => $states,
+                    'reason_codes' => $completeFields === 3 ? [] : ['FIELD_NOT_AVAILABLE'],
+                ];
+                $pageProjects[] = [
+                    'id' => $index + 1,
+                    'title' => 'Synthetic project ' . ($index + 1),
+                    'status' => $completeFields === 3 ? 'complete' : ($completeFields === 0 ? 'missing' : 'needs_attention'),
+                    'complete_count' => $completeFields,
+                    'updated_at' => null,
+                    'fields' => $pageFields,
+                    'edit_url' => '/owner_projects.php?edit=' . ($index + 1),
+                ];
+            }
+            $core = buildEvidenceHubOwnerCoreFromEvaluatedProjects($evaluated, 'published');
+            $coverage = $core['documentation_coverage'];
+            $progress = evidenceHubOwnerPageProgress(count($counts), $coverage['projects_with_complete_evidence'], []);
+            $recommendations = buildEvidenceHubRecommendations([
+                'tenant_scope_ref' => 'readiness-copy-tenant',
+                'portfolio_target_identity' => 'readiness-copy-portfolio',
+                'projects' => $recommendationProjects,
+                'technology_mappings' => [],
+                'portfolio_publication' => ['portfolio_published' => true, 'publication_prerequisites_met' => false],
+            ], [], 1767225600, 'readiness-copy-synthetic-hmac');
+            $incompleteCount = count(array_filter($counts, static fn (int $count): bool => $count < 3));
+            $expectedRules = $counts === [] ? ['add_first_project'] : array_fill(0, min(3, $incompleteCount), 'complete_project_evidence');
+            phase2AssertSame(count($counts) * 3, $coverage['expected_evidence_field_count'], "{$name}: expected fields changed.");
+            phase2AssertSame(array_sum($counts), $coverage['complete_evidence_field_count'], "{$name}: complete fields changed.");
+            phase2AssertSame($expectedBps, $coverage['coverage_bps'], "{$name}: coverage changed.");
+            phase2AssertSame($expectedCompleteProjects, $progress['complete_project_count'], "{$name}: complete-project progress changed.");
+            phase2AssertSame(count($counts), $progress['project_count'], "{$name}: eligible-project progress changed.");
+            phase2AssertSame($expectedState, $core['maturity']['state'], "{$name}: maturity changed.");
+            phase2AssertSame($expectedRules, array_column($recommendations, 'rule_id'), "{$name}: recommendations changed.");
+            phase2AssertSame($expectedCopy, evidenceHubOwnerPageReadinessDetail($core['maturity']['state'], $progress['project_count'], $progress['complete_project_count']), "{$name}: supporting copy changed.");
+            $contract = mapEvidenceHubContractV2($core, $recommendations);
+            $model = ['projects' => $pageProjects, 'technologies' => evidenceHubOwnerPageTechnologies([]), 'progress' => $progress, 'recommendations' => array_fill(0, count($recommendations), [])];
+            ob_start();
+            renderEvidenceHubOwnerPage($contract, $model);
+            $html = (string) ob_get_clean();
+            $summary = '<strong>' . evidenceHubOwnerPageReadinessLabel($expectedState) . '</strong><small>' . $expectedCopy . '</small>';
+            phase2Assert(str_contains($html, $summary), "{$name}: rendered summary differs from the model.");
         }
     }
 
