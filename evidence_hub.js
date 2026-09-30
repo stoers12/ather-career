@@ -262,27 +262,113 @@
 
     var cards = Array.from(page.querySelectorAll('.evidence-hub-project-card'));
     var filters = Array.from(page.querySelectorAll('[data-evidence-filter]'));
-    var more = page.querySelector('.evidence-hub-show-more');
+    var carousel = page.querySelector('[data-evidence-carousel]');
+    var track = page.querySelector('[data-evidence-carousel-track]');
+    var navigation = page.querySelector('[data-evidence-carousel-navigation]');
+    var previous = page.querySelector('[data-evidence-carousel-previous]');
+    var next = page.querySelector('[data-evidence-carousel-next]');
+    var counter = page.querySelector('[data-evidence-carousel-counter]');
+    var filterEmpty = page.querySelector('[data-evidence-filter-empty]');
+    var review = page.querySelector('[data-review-project-evidence]');
+    var mobileCards = window.matchMedia('(max-width: 700px)');
+    var tabletCards = window.matchMedia('(max-width: 1100px)');
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     var selected = 'all';
-    var expanded = false;
-    var revealTarget = true;
+    var position = 0;
+    var matches = [];
+    if (carousel) carousel.classList.add('is-enhanced');
+    function visibleCount() { return mobileCards.matches ? 1 : (tabletCards.matches ? 2 : 3); }
+    function maxPosition() { return Math.max(0, matches.length - visibleCount()); }
+    function scrollToPosition(animate) {
+        if (!track || !matches[position]) return;
+        var left = matches[position].offsetLeft - matches[0].offsetLeft;
+        track.scrollTo({ left: left, behavior: animate && !reducedMotion.matches ? 'smooth' : 'instant' });
+    }
+    function updateNavigation() {
+        var size = visibleCount();
+        var total = matches.length;
+        position = Math.min(position, maxPosition());
+        if (navigation) navigation.hidden = total <= size;
+        if (previous) previous.disabled = position === 0;
+        if (next) next.disabled = position >= maxPosition();
+        if (counter) counter.textContent = total === 0 ? '' : (size === 1
+            ? 'Project ' + (position + 1) + ' of ' + total
+            : 'Showing projects ' + (position + 1) + '–' + Math.min(position + size, total) + ' of ' + total);
+        cards.forEach(function (card) {
+            var index = matches.indexOf(card);
+            card.inert = card.hidden || index < position || index >= position + size;
+        });
+    }
     function targetCard() {
         var hash = window.location.hash;
         return /^#project-[1-9][0-9]*$/.test(hash) ? document.getElementById(hash.slice(1)) : null;
     }
     function renderProjects() {
-        var target = targetCard();
-        if (revealTarget && target && cards.includes(target)) { selected = 'all'; expanded = true; }
+        closeProjectMenus();
         filters.forEach(function (button) { button.setAttribute('aria-pressed', button.dataset.evidenceFilter === selected ? 'true' : 'false'); });
-        var matches = cards.filter(function (card) { return selected === 'all' || card.dataset.evidenceProjectStatus === selected; });
-        matches.forEach(function (card, index) { card.hidden = !expanded && index >= 6; });
+        matches = cards.filter(function (card) { return selected === 'all' || card.dataset.evidenceProjectStatus === selected; });
         cards.forEach(function (card) { if (!matches.includes(card)) card.hidden = true; });
-        if (more) more.hidden = expanded || matches.length <= 6;
+        matches.forEach(function (card) { card.hidden = false; });
+        if (filterEmpty) filterEmpty.hidden = matches.length !== 0;
+        if (carousel) carousel.hidden = matches.length === 0;
+        position = Math.min(position, maxPosition());
+        updateNavigation();
+        scrollToPosition(false);
+    }
+    function revealFragment() {
+        var target = targetCard();
+        if (!target || !cards.includes(target)) return;
+        selected = 'all';
+        position = 0;
+        renderProjects();
+        position = Math.min(matches.indexOf(target), maxPosition());
+        updateNavigation();
+        scrollToPosition(false);
+        target.tabIndex = -1;
+        window.requestAnimationFrame(function () {
+            target.focus({ preventScroll: true });
+            target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+        });
     }
     filters.forEach(function (button) {
-        button.addEventListener('click', function () { revealTarget = false; selected = button.dataset.evidenceFilter; expanded = false; renderProjects(); });
+        button.addEventListener('click', function () { selected = button.dataset.evidenceFilter; position = 0; renderProjects(); });
     });
-    if (more) more.addEventListener('click', function () { expanded = true; renderProjects(); });
-    window.addEventListener('hashchange', function () { revealTarget = true; renderProjects(); });
+    function move(delta) {
+        var focusedArrow = document.activeElement === previous ? previous : (document.activeElement === next ? next : null);
+        closeProjectMenus();
+        position = Math.max(0, Math.min(maxPosition(), position + delta));
+        updateNavigation();
+        scrollToPosition(true);
+        if (focusedArrow && focusedArrow.disabled) {
+            var availableArrow = focusedArrow === next ? previous : next;
+            if (availableArrow && !availableArrow.disabled) availableArrow.focus({ preventScroll: true });
+        }
+    }
+    if (previous) previous.addEventListener('click', function () { move(-1); });
+    if (next) next.addEventListener('click', function () { move(1); });
+    if (navigation) navigation.addEventListener('keydown', function (event) {
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+        if (!event.target.closest('[data-evidence-carousel-navigation]')) return;
+        event.preventDefault();
+        move(event.key === 'ArrowLeft' ? -1 : 1);
+    });
+    if (track) track.addEventListener('scroll', function () {
+        if (matches.length === 0) return;
+        var pitch = matches.length > 1 ? matches[1].offsetLeft - matches[0].offsetLeft : 0;
+        if (pitch > 0) {
+            var nextPosition = Math.max(0, Math.min(maxPosition(), Math.round(track.scrollLeft / pitch)));
+            if (nextPosition !== position) { position = nextPosition; updateNavigation(); }
+        }
+        closeProjectMenus();
+    }, { passive: true });
+    window.addEventListener('resize', function () { position = Math.min(position, maxPosition()); updateNavigation(); scrollToPosition(false); });
+    window.addEventListener('hashchange', revealFragment);
+    if (review) review.addEventListener('click', function () {
+        selected = 'all'; position = 0; renderProjects();
+        var section = document.getElementById('project-evidence');
+        if (section) section.scrollIntoView({ block: 'start', behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+        if (matches[0]) { matches[0].tabIndex = -1; matches[0].focus({ preventScroll: true }); }
+    });
     renderProjects();
+    revealFragment();
 }());
