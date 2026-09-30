@@ -182,19 +182,83 @@
     if (hashSection()) updateForFragment();
     updateCurrentSection();
 
-    var optionMenus = Array.from(page.querySelectorAll('.evidence-hub-options'));
+    var activeOptionMenu = null;
+    var activeOptionTrigger = null;
+    var activeProjectId = null;
+    function optionTrigger(menu) {
+        if (!menu.classList.contains('evidence-hub-project-options')) return menu.querySelector(':scope > summary');
+        var id = menu.dataset.projectId;
+        if (!/^[1-9][0-9]*$/.test(id || '')) return null;
+        var card = document.getElementById('project-' + id);
+        var trigger = card && card.querySelector('.evidence-hub-project-options > summary');
+        var panel = card && card.querySelector('.evidence-hub-project-options > div');
+        return trigger && panel && trigger.id === 'project-' + id + '-options-trigger'
+            && trigger.getAttribute('aria-controls') === panel.id ? trigger : null;
+    }
+    function closeOptionMenu(menu) {
+        if (!menu) return;
+        menu.open = false;
+        var trigger = optionTrigger(menu);
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        if (activeOptionMenu === menu) {
+            activeOptionMenu = null;
+            activeOptionTrigger = null;
+            activeProjectId = null;
+        }
+    }
+    function closeProjectMenus() {
+        page.querySelectorAll('.evidence-hub-project-options[open]').forEach(closeOptionMenu);
+    }
+    function positionProjectMenu(menu) {
+        if (!menu.classList.contains('evidence-hub-project-options') || !menu.open) return;
+        var trigger = optionTrigger(menu);
+        var panel = menu.querySelector(':scope > div');
+        if (!trigger || !panel) return;
+        var bounds = trigger.getBoundingClientRect();
+        panel.style.top = Math.min(bounds.bottom + 4, window.innerHeight - panel.offsetHeight - 8) + 'px';
+        panel.style.left = Math.max(8, Math.min(bounds.right - panel.offsetWidth, window.innerWidth - panel.offsetWidth - 8)) + 'px';
+    }
+    page.addEventListener('toggle', function (event) {
+        var menu = event.target;
+        if (!menu.matches || !menu.matches('.evidence-hub-options')) return;
+        var trigger = optionTrigger(menu);
+        if (trigger) trigger.setAttribute('aria-expanded', menu.open ? 'true' : 'false');
+        if (!menu.open) return;
+        page.querySelectorAll('.evidence-hub-options[open]').forEach(function (other) {
+            if (other !== menu) closeOptionMenu(other);
+        });
+        activeOptionMenu = menu;
+        activeOptionTrigger = trigger;
+        activeProjectId = menu.classList.contains('evidence-hub-project-options') ? menu.dataset.projectId : null;
+        positionProjectMenu(menu);
+    }, true);
+    page.addEventListener('click', function (event) {
+        var menu = event.target.closest('.evidence-hub-options');
+        if (menu && event.target.closest('a, button')) closeOptionMenu(menu);
+    });
     document.addEventListener('click', function (event) {
-        optionMenus.forEach(function (menu) { if (menu.open && !menu.contains(event.target)) menu.open = false; });
+        page.querySelectorAll('.evidence-hub-options[open]').forEach(function (menu) {
+            if (!menu.contains(event.target)) closeOptionMenu(menu);
+        });
     });
     document.addEventListener('keydown', function (event) {
         if (event.key !== 'Escape') return;
-        optionMenus.forEach(function (menu) {
-            if (!menu.open) return;
-            var focusWasInside = menu.contains(document.activeElement);
-            menu.open = false;
-            if (focusWasInside) menu.querySelector('summary').focus();
-        });
-    });
+        var menu = activeOptionMenu && activeOptionMenu.isConnected && activeOptionMenu.open
+            ? activeOptionMenu : page.querySelector('.evidence-hub-options[open]');
+        if (!menu) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        var trigger = activeOptionMenu === menu && activeOptionTrigger && activeOptionTrigger.isConnected
+            ? activeOptionTrigger : optionTrigger(menu);
+        var projectId = menu.classList.contains('evidence-hub-project-options') ? menu.dataset.projectId : null;
+        if (projectId && (projectId !== activeProjectId || trigger !== optionTrigger(menu))) trigger = optionTrigger(menu);
+        closeOptionMenu(menu);
+        if (trigger && trigger.isConnected && trigger.getClientRects().length > 0
+            && !trigger.closest('[hidden], [inert], [aria-disabled="true"]')
+            && !trigger.matches(':disabled')) trigger.focus({ preventScroll: true });
+    }, true);
+
+    window.addEventListener('resize', function () { page.querySelectorAll('.evidence-hub-options[open]').forEach(positionProjectMenu); });
 
     var cards = Array.from(page.querySelectorAll('.evidence-hub-project-card'));
     var filters = Array.from(page.querySelectorAll('[data-evidence-filter]'));

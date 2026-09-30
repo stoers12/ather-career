@@ -52,6 +52,7 @@ require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubOwnerRoutePresenterTes
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubOwnerPageModelTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubRecommendationActionTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubRequiredGatesStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubUndoTest.php';
 
 $environment = null;
 $failures = [];
@@ -100,6 +101,7 @@ $tests = [
     'Evidence Hub private page model, progress, and evidence persistence' => [EvidenceHubOwnerPageModelTest::class, 'run'],
     'Evidence Hub protected recommendation disposition actions' => [EvidenceHubRecommendationActionTest::class, 'run'],
     'Evidence Hub required finalization-gate registration' => [EvidenceHubRequiredGatesStaticTest::class, 'run'],
+    'Evidence Hub immediate one-level Undo' => [EvidenceHubUndoTest::class, 'run'],
 ];
 
 try {

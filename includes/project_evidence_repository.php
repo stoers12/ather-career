@@ -41,7 +41,7 @@ function projectEvidenceLogicalEvaluations(array $values): array
     return $evaluations;
 }
 
-/** @return array{id:int,title:string,values:array<string,mixed>}|null */
+/** @return array{id:int,title:string,values:array<string,mixed>,updated_at:?string}|null */
 function findAuthorizedProjectEvidenceForEdit(PDO $database, AuthorizedPortfolioContext $context, int $projectId, bool $forUpdate = false): ?array
 {
     if ($projectId < 1) {
@@ -50,7 +50,7 @@ function findAuthorizedProjectEvidenceForEdit(PDO $database, AuthorizedPortfolio
     $lock = $forUpdate && $database->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
     $statement = $database->prepare(
         'SELECT projects.id, projects.title, projects.problem_statement,
-                projects.personal_role, projects.measurable_outcome
+                projects.personal_role, projects.measurable_outcome, projects.updated_at
          FROM projects
          JOIN portfolios ON portfolios.id = projects.portfolio_id
          WHERE projects.id = :resource_id
@@ -71,7 +71,11 @@ function findAuthorizedProjectEvidenceForEdit(PDO $database, AuthorizedPortfolio
     if ($id === null || !is_string($record['title'] ?? null)) {
         throw new RuntimeException('Project evidence record is invalid.');
     }
-    return ['id' => $id, 'title' => $record['title'], 'values' => projectEvidenceLogicalValuesFromStorage($record)];
+    $updatedAt = $record['updated_at'] ?? null;
+    if ($updatedAt !== null && !is_string($updatedAt)) {
+        throw new RuntimeException('Project evidence timestamp is invalid.');
+    }
+    return ['id' => $id, 'title' => $record['title'], 'values' => projectEvidenceLogicalValuesFromStorage($record), 'updated_at' => $updatedAt];
 }
 
 /**

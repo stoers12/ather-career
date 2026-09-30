@@ -23,6 +23,7 @@ body.evidence-hub-page {
     --eh-success-soft: #e6f5ed;
     --eh-warning: #a45b13;
     --eh-warning-soft: #fff2df;
+    --eh-gold: #94640e;
     --eh-danger: #ae3047;
     --eh-danger-soft: #fff0f2;
     --eh-focus: #8a4a06;
@@ -63,6 +64,7 @@ body.evidence-hub-page[data-evidence-hub-theme="dark"] {
     --eh-success-soft: #1c453a;
     --eh-warning: #f1b66e;
     --eh-warning-soft: #4d3821;
+    --eh-gold: #e7bd64;
     --eh-danger: #ff9aad;
     --eh-danger-soft: #502b37;
     --eh-focus: #ffd58f;
@@ -589,3 +591,39 @@ body.evidence-hub-page .admin-content :is(.evidence-hub-page-body,.evidence-hub-
     border-color: var(--eh-border) !important;
     cursor: not-allowed;
 }
+
+/* Immediate Evidence feedback and permanent project menu. */
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-save-panel {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+    margin-top: 18px; padding: 16px 20px; color: var(--eh-ink);
+    background: var(--eh-success-soft); border: 1px solid var(--eh-success); border-radius: var(--eh-radius);
+}
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-save-panel strong { color: var(--eh-ink); font-size: 1rem; }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-save-panel p { flex-basis: 100%; margin: 0; color: var(--eh-secondary-ink); }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-save-panel form { margin: 0; background: transparent; }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-save-panel button {
+    min-height: 44px; padding: 9px 14px; color: var(--eh-gold); background: var(--eh-surface);
+    border: 2px solid var(--eh-gold); border-radius: 9px; font: inherit; font-weight: 750; cursor: pointer;
+}
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-card { position: relative; align-items: flex-start; }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-card .evidence-hub-project-disclosure { flex: 1 1 auto; min-width: 0; }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-card .evidence-hub-project-options { flex: 0 0 auto; }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-card .evidence-hub-project-disclosure > summary { display: flex; }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-card .evidence-hub-project-options > summary { display: inline-flex; font-size: .76rem; white-space: nowrap; }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-card .evidence-hub-project-options > summary::before { content: none; }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-card .evidence-hub-project-options[open] > summary::before { content: none; }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-card .evidence-hub-project-fields { grid-template-columns: minmax(0, 1fr); }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-options > div { min-width: 205px; }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-options > div a {
+    display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 10px;
+    color: var(--eh-ink); background: var(--eh-surface); border-radius: 7px;
+    font-size: .82rem; font-weight: 700; text-decoration: none; transition: none;
+}
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-options > div a:first-child { background: var(--eh-primary-soft); }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-options > div a:focus-visible {
+    color: var(--eh-interaction-hover-ink); background: var(--eh-interaction-hover-bg);
+}
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-project-options > div a svg {
+    width: 17px; height: 17px; flex: 0 0 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-carousel.is-enhanced .evidence-hub-project-options > div { position: fixed; z-index: 30; }

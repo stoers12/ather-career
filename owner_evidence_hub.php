@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/includes/owner_session.php';
+require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/includes/http.php';
@@ -13,6 +14,7 @@ require_once __DIR__ . '/includes/evidence_hub_owner_page_presentation.php';
 require_once __DIR__ . '/includes/evidence_hub_owner_recommendations.php';
 require_once __DIR__ . '/includes/evidence_hub_owner_page_model.php';
 require_once __DIR__ . '/includes/evidence_hub_recommendation_action_tokens.php';
+require_once __DIR__ . '/includes/evidence_hub_undo.php';
 
 startOwnerSession();
 httpRegisterExceptionBoundary('owner_evidence_hub.php');
@@ -30,11 +32,23 @@ $contract = null;
 $pageModel = null;
 $actionTokens = [];
 $feedback = '';
+$undoFeedback = ['kind' => 'none'];
 $error = '';
 try {
     $database = getDatabaseConnection();
     $context = requireOwnerPortfolioContext($database);
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+        if (($_POST['action'] ?? null) === 'undo_evidence') {
+            requireValidCsrfToken($_POST['csrf_token'] ?? null);
+            $expected = ['csrf_token', 'action', 'undo_token'];
+            $validShape = is_array($_POST) && !array_is_list($_POST)
+                && array_diff(array_keys($_POST), $expected) === []
+                && array_diff($expected, array_keys($_POST)) === [];
+            $result = $validShape ? executeImmediateEvidenceHubUndo($database, $context, $_POST['undo_token'], time()) : 'unavailable';
+            $_SESSION[EVIDENCE_HUB_UNDO_FEEDBACK_KEY] = $result;
+            header('Cache-Control: no-store');
+            httpRedirect('/owner/evidence-hub', 303);
+        }
         $request = evidenceHubOwnerRecommendationActionRequest();
         $tokenRecord = consumeEvidenceHubRecommendationActionToken($context, $request['action'], $request['action_token']);
         if ($tokenRecord === null || !executeAuthorizedEvidenceHubRecommendationAction($database, $context, $tokenRecord, time())) {
@@ -48,10 +62,7 @@ try {
     $contract = $state['contract'];
     $pageModel = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state);
     $feedback = takeEvidenceHubRecommendationActionFeedback();
-    if (($_SESSION['owner_evidence_saved'] ?? null) === true) {
-        unset($_SESSION['owner_evidence_saved']);
-        $feedback = 'Project evidence saved.';
-    }
+    $undoFeedback = takeImmediateEvidenceHubUndoFeedback($context, time());
     foreach ($contract['recommendations'] as $recommendation) {
         $resolved = resolveAuthorizedEvidenceHubOwnerRecommendation($state, $recommendation['recommendation_key']);
         if (!is_array($resolved)) {
@@ -85,7 +96,7 @@ ownerLayoutStart('Evidence Hub', 'evidence_hub', true);
 if ($error !== '' || !is_array($contract) || !is_array($pageModel)) {
     renderEvidenceHubOwnerSafeError();
 } else {
-    renderEvidenceHubOwnerPage($contract, $pageModel, $actionTokens, $feedback);
+    renderEvidenceHubOwnerPage($contract, $pageModel, $actionTokens, $feedback, $undoFeedback);
 }
 
 /** @return array{action:string, action_token:string} */

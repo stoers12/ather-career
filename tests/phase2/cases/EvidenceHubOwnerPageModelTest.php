@@ -285,7 +285,7 @@ final class EvidenceHubOwnerPageModelTest
         phase2Assert(!str_contains($html, 'PRIVATE_DESCRIPTION_MARKER') && !str_contains($html, 'CROSS_TENANT_TITLE'), 'Owner markup leaked private or cross-tenant data.');
         phase2Assert(substr_count($html, 'class="evidence-hub-status-card"') === 3, 'Overview must have exactly three metrics.');
         phase2Assert(str_contains($html, '1 mapped technology') && str_contains($html, '2 unmapped technologies across 2 projects'), 'Overview technology units or grammar are wrong.');
-        phase2Assert(str_contains($html, '/owner/projects/2/evidence#problem') && str_contains($html, '/owner/projects/2/evidence#personal-role') && str_contains($html, '/owner/projects/2/evidence#measurable-outcome'), 'Field edit links do not target the approved anchors.');
+        phase2Assert(str_contains($html, 'Review &amp; edit evidence') && str_contains($html, 'href="/owner/projects/2/evidence"'), 'Permanent project Evidence editor action is missing.');
         phase2Assert(!str_contains($html, 'FIELD_NOT_AVAILABLE') && !str_contains($html, 'problem_statement'), 'Raw evidence internals leaked to markup.');
 
         foreach ([

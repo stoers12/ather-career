@@ -10,6 +10,7 @@ require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/owner_layout.php';
 require_once __DIR__ . '/includes/transaction.php';
 require_once __DIR__ . '/includes/project_evidence_repository.php';
+require_once __DIR__ . '/includes/evidence_hub_undo.php';
 require_once __DIR__ . '/includes/evidence_hub_owner_page_model.php';
 require_once __DIR__ . '/includes/evidence_hub_owner_page_presentation.php';
 require_once __DIR__ . '/includes/owner_project_evidence_presentation.php';
@@ -66,11 +67,12 @@ try {
         }
         $values = $submitted;
         if ($fieldErrors === []) {
-            $saved = runDatabaseTransaction($database, static fn (): bool => saveAuthorizedProjectEvidence($database, $context, $projectId, $submitted));
-            if (!$saved) {
+            $save = runDatabaseTransaction($database, static fn (): ?array => saveAuthorizedProjectEvidenceWithUndo($database, $context, $projectId, $submitted));
+            if ($save === null) {
                 httpAbortHtml(404, 'Project not found.');
             }
-            $_SESSION['owner_evidence_saved'] = true;
+            rememberEvidenceHubUndo($context, $projectId, $save, time());
+            header('Cache-Control: no-store');
             httpRedirect('/owner/evidence-hub#project-' . $projectId, 303);
         }
         http_response_code(422);
