@@ -13,6 +13,7 @@ final class EvidenceHubUndoTest
         if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             throw new RuntimeException('Isolated SQLite Undo fixtures are unavailable.');
         }
+        self::navigationLifetime();
         $database = self::database();
         $owner = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 10);
         $other = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(2), 20);
@@ -102,10 +103,103 @@ final class EvidenceHubUndoTest
         $route = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/owner_evidence_hub.php');
         $editor = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/owner_project_evidence.php');
         $session = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/session.php');
+        $ownerSession = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/owner_session.php');
         phase2Assert(str_contains($route, 'requireOwnerPortfolioContext($database)') && str_contains($route, 'requireValidCsrfToken') && str_contains($route, "=== 'POST'") && str_contains($route, 'executeImmediateEvidenceHubUndo') && str_contains($route, "httpRedirect('/owner/evidence-hub', 303)"), 'Undo route lost Owner, CSRF, POST, or PRG guards.');
         phase2Assert(str_contains($editor, 'rememberEvidenceHubUndo') && str_contains($editor, 'runDatabaseTransaction'), 'Editor save is not transactional or page scoped.');
         phase2Assert(str_contains($session, "'httponly' => true") && str_contains($session, "'samesite' => 'Lax'") && str_contains($session, 'session_name($sessionName)'), 'Owner cookie must carry only a protected session identifier.');
+        phase2Assert(str_contains($ownerSession, 'expireEvidenceHubUndoForOwnerRequest('), 'Shared Owner session no longer expires Undo on navigation.');
         phase2Assert(!str_contains($route . $editor, 'localStorage') && !str_contains($route . $editor, 'sessionStorage') && !str_contains($route . $editor, 'confirm('), 'Undo uses browser storage or a confirmation dialog.');
+    }
+
+    private static function navigationLifetime(): void
+    {
+        $database = self::database();
+        $owner = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 10);
+        $read = static fn (): array => findAuthorizedProjectEvidenceForEdit($database, $owner, 1)['values'];
+        $arm = static function (string $tag, int $now) use ($database, $owner): string {
+            $save = runDatabaseTransaction($database, static fn (): ?array => saveAuthorizedProjectEvidenceWithUndo($database, $owner, 1, self::values($tag)));
+            phase2AssertSame(true, $save['changed'] ?? null, 'Synthetic navigation save did not change Evidence.');
+            rememberEvidenceHubUndo($owner, 1, $save, $now);
+            expireEvidenceHubUndoForOwnerRequest('owner_evidence_hub.php', 'GET', '/owner/evidence-hub', []);
+            $page = takeImmediateEvidenceHubUndoFeedback($owner, $now);
+            phase2AssertSame('saved', $page['kind'], 'First redirect landing did not arm Undo.');
+            return $page['token'];
+        };
+
+        $_SESSION = ['csrf_token' => str_repeat('c', 64)];
+        $token = $arm('Direct navigation', 1000);
+        expireEvidenceHubUndoForOwnerRequest('owner_media.php', 'GET', '/owner_media.php', []);
+        $post = ['action' => 'undo_evidence', 'undo_token' => $token, 'csrf_token' => $_SESSION['csrf_token']];
+        expireEvidenceHubUndoForOwnerRequest('owner_evidence_hub.php', 'POST', '/owner/evidence-hub', $post);
+        phase2AssertSame('undone', executeImmediateEvidenceHubUndo($database, $owner, $token, 1000), 'Immediate landing-page Undo failed.');
+        phase2AssertSame('unavailable', executeImmediateEvidenceHubUndo($database, $owner, $token, 1000), 'Consumed Undo was replayed.');
+
+        foreach ([
+            ['owner_evidence_hub.php', '/owner/evidence-hub', 'Refresh'],
+            ['owner_projects.php', '/owner_projects.php', 'Projects navigation'],
+            ['owner_profile.php', '/owner_profile.php', 'Different Owner page'],
+            ['owner_project_evidence.php', '/owner/projects/2/evidence', 'Different project'],
+        ] as $index => [$script, $path, $tag]) {
+            $now = 2000 + $index;
+            $token = $arm($tag, $now);
+            $saved = $read();
+            expireEvidenceHubUndoForOwnerRequest($script, 'GET', $path, []);
+            phase2AssertSame('unavailable', executeImmediateEvidenceHubUndo($database, $owner, $token, $now), "$tag did not expire Undo.");
+            phase2AssertSame($saved, $read(), "$tag changed Evidence after an unavailable Undo.");
+            // Revisiting the saved page through history cannot re-arm it.
+            expireEvidenceHubUndoForOwnerRequest('owner_evidence_hub.php', 'GET', '/owner/evidence-hub', []);
+            phase2AssertSame('none', takeImmediateEvidenceHubUndoFeedback($owner, $now)['kind'], "$tag history reuse re-armed Undo.");
+        }
+
+        $token = $arm('Background', 3000);
+        $saved = $read();
+        expireEvidenceHubUndoForOwnerRequest('owner_media.php', 'GET', '/owner_media.php', []);
+        phase2AssertSame($token, $_SESSION[EVIDENCE_HUB_UNDO_SESSION_KEY]['token'], 'Background private media consumed Undo.');
+        phase2AssertSame('undone', executeImmediateEvidenceHubUndo($database, $owner, $token, 3000), 'Background media blocked immediate Undo.');
+        phase2Assert($saved !== $read(), 'Background Undo did not restore the prior fields.');
+
+        $premature = runDatabaseTransaction($database, static fn (): ?array => saveAuthorizedProjectEvidenceWithUndo($database, $owner, 1, self::values('Before landing')));
+        rememberEvidenceHubUndo($owner, 1, $premature, 3500);
+        $prematureToken = $_SESSION[EVIDENCE_HUB_UNDO_SESSION_KEY]['token'];
+        $saved = $read();
+        expireEvidenceHubUndoForOwnerRequest('owner_evidence_hub.php', 'POST', '/owner/evidence-hub', ['action' => 'undo_evidence', 'undo_token' => $prematureToken, 'csrf_token' => $_SESSION['csrf_token']]);
+        phase2AssertSame('unavailable', executeImmediateEvidenceHubUndo($database, $owner, $prematureToken, 3500), 'Undo was usable before its redirect landing.');
+        phase2AssertSame($saved, $read(), 'Premature Undo changed Evidence.');
+
+        $token = $arm('Wrong CSRF', 4000);
+        $saved = $read();
+        expireEvidenceHubUndoForOwnerRequest('owner_evidence_hub.php', 'POST', '/owner/evidence-hub', ['action' => 'undo_evidence', 'undo_token' => $token, 'csrf_token' => str_repeat('0', 64)]);
+        phase2AssertSame('unavailable', executeImmediateEvidenceHubUndo($database, $owner, $token, 4000), 'Wrong CSRF left Undo usable.');
+        phase2AssertSame($saved, $read(), 'Wrong CSRF changed Evidence.');
+
+        $token = $arm('Malformed', 5000);
+        $saved = $read();
+        expireEvidenceHubUndoForOwnerRequest('owner_evidence_hub.php', 'POST', '/owner/evidence-hub', ['action' => 'undo_evidence', 'undo_token' => 'malformed', 'csrf_token' => $_SESSION['csrf_token']]);
+        phase2AssertSame('unavailable', executeImmediateEvidenceHubUndo($database, $owner, $token, 5000), 'Malformed token left Undo usable.');
+        phase2AssertSame($saved, $read(), 'Malformed token changed Evidence.');
+
+        $token = $arm('Session mismatch', 6000);
+        $saved = $read();
+        $_SESSION = ['csrf_token' => str_repeat('d', 64)];
+        phase2AssertSame('unavailable', executeImmediateEvidenceHubUndo($database, $owner, $token, 6000), 'Another session accepted Undo.');
+        phase2AssertSame($saved, $read(), 'Session mismatch changed Evidence.');
+
+        $_SESSION = ['csrf_token' => str_repeat('c', 64)];
+        $token = $arm('Foreign project', 7000);
+        $saved = $read();
+        $database->exec("INSERT INTO projects (id,portfolio_id,title,description,technologies,created_at) VALUES (2,20,'Foreign synthetic project','Private','[]','2026-01-01T00:00:00Z')");
+        $_SESSION[EVIDENCE_HUB_UNDO_SESSION_KEY]['project_id'] = 2;
+        phase2AssertSame('unavailable', executeImmediateEvidenceHubUndo($database, $owner, $token, 7000), 'Foreign project was restored.');
+        phase2AssertSame($saved, $read(), 'Foreign project attempt changed the owned Evidence.');
+        $foreign = $database->query('SELECT problem_statement, personal_role, measurable_outcome FROM projects WHERE id = 2')->fetch(PDO::FETCH_ASSOC);
+        phase2AssertSame(['problem_statement' => null, 'personal_role' => null, 'measurable_outcome' => null], $foreign, 'Foreign project attempt changed another project.');
+
+        $old = $arm('Older save', 8000);
+        expireEvidenceHubUndoForOwnerRequest('owner_project_evidence.php', 'POST', '/owner/projects/1/evidence', []);
+        phase2AssertSame('unavailable', executeImmediateEvidenceHubUndo($database, $owner, $old, 8000), 'New Evidence save request retained the older Undo.');
+        $new = $arm('Newer save', 8001);
+        phase2AssertSame('undone', executeImmediateEvidenceHubUndo($database, $owner, $new, 8001), 'Newer Evidence save Undo failed.');
+        $_SESSION = [];
     }
 
     /** @return array{problem:string,personal_role:string,measurable_outcome:string} */

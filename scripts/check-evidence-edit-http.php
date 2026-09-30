@@ -120,7 +120,7 @@ try {
     requireHttp($after['problem_statement'] === $fields['problem'] && $after['personal_role'] === $fields['personal_role'] && $after['measurable_outcome'] === $fields['measurable_outcome'], 'Valid POST did not atomically save all fields.');
     requireHttp($after['updated_at'] !== $before['updated_at'], 'Meaningful evidence edit did not advance updated_at.');
     $hub = httpEvidenceRequest('GET', '/owner/evidence-hub', null, $cookieA);
-    requireHttp($hub['status'] === 200 && str_contains($hub['body'], 'Project evidence saved.') && str_contains($hub['body'], 'id="project-' . $projectId . '"'), 'Success feedback or return card is missing.');
+    requireHttp($hub['status'] === 200 && str_contains($hub['body'], 'Evidence saved successfully') && str_contains($hub['body'], 'Undo last evidence update') && str_contains($hub['body'], 'id="project-' . $projectId . '"'), 'Immediate Undo success panel or return card is missing.');
     $unchanged = $fields;
     $unchanged['problem'] = '  ' . $fields['problem'] . '  ';
     requireHttp(httpEvidenceRequest('POST', $route, $unchanged, $cookieA)['status'] === 303, 'Equivalent normalized POST did not use PRG.');

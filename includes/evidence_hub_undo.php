@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/project_evidence_repository.php';
 require_once __DIR__ . '/transaction.php';
+require_once __DIR__ . '/evidence_hub_undo_lifecycle.php';
 
-const EVIDENCE_HUB_UNDO_SESSION_KEY = 'evidence_hub_last_evidence_undo';
 const EVIDENCE_HUB_UNDO_FEEDBACK_KEY = 'evidence_hub_undo_feedback';
 const EVIDENCE_HUB_UNDO_LIFETIME_SECONDS = 600;
 
@@ -125,6 +125,7 @@ function executeImmediateEvidenceHubUndo(PDO $database, AuthorizedPortfolioConte
     $record = $_SESSION[EVIDENCE_HUB_UNDO_SESSION_KEY] ?? null;
     if (!is_string($token) || preg_match('/\A[a-f0-9]{64}\z/D', $token) !== 1
         || !evidenceHubUndoRecordIsValid($record, $context, $now)
+        || $record['display_pending'] !== false
         || !hash_equals($record['token_hash'], hash('sha256', $token))) {
         return 'unavailable';
     }
