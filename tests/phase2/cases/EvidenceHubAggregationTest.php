@@ -16,6 +16,7 @@ final class EvidenceHubAggregationTest
         self::taxonomyAndMapping();
         self::taxonomyV2();
         self::taxonomyV3();
+        self::taxonomyV4();
         if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             self::ownerScopeIntegration();
         }
@@ -295,6 +296,41 @@ final class EvidenceHubAggregationTest
         phase2AssertSame(array_values(array_filter($v3['category_order'], static fn (string $category): bool => isset($page['mapped'][$category]))), array_keys($page['mapped']), 'V3 category order is unstable.');
         $unknownPage = evidenceHubOwnerPageTechnologies([['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['Future Unknown']]]);
         phase2AssertSame(['Unmapped technology 1'], array_column($unknownPage['unmapped'], 'label'), 'V3 unknown label is not privacy-safe.');
+    }
+
+    private static function taxonomyV4(): void
+    {
+        $v3 = loadEvidenceHubTechnologyTaxonomy('v3');
+        $v4 = loadEvidenceHubTechnologyTaxonomy('v4');
+        phase2AssertSame($v3['entries'], array_slice($v4['entries'], 0, 37), 'V4 changed a v3 entry.');
+        phase2AssertSame($v3['category_order'], $v4['category_order'], 'V4 changed category ordering.');
+        foreach (['Excel', 'Microsoft Excel', 'MS Excel'] as $alias) {
+            $mapping = mapEvidenceHubTechnologyLabel($alias, $v4);
+            phase2AssertSame(['tech.excel', 'Excel', 'tool', 'v4'], [$mapping['canonical_id'], $mapping['display_name'], $mapping['category'], $mapping['taxonomy_version']], "V4 {$alias} alias failed.");
+            phase2AssertSame('unmapped', mapEvidenceHubTechnologyLabel($alias, $v3)['mapping_state'], "V3 unexpectedly knows {$alias}.");
+        }
+        phase2AssertSame('unmapped', mapEvidenceHubTechnologyLabel('Excel Power BI', $v4)['mapping_state'], 'V4 guessed an unknown Microsoft technology.');
+        $facts = [
+            ['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['Python', 'Pandas', 'NumPy', 'Scikit-learn', 'Matplotlib', 'Seaborn', 'Joblib', 'Excel']],
+            ['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['Python', 'FastAPI', 'PostgreSQL', 'pgvector', 'SentenceTransformers', 'Redis', 'Celery', 'Groq', 'Docker']],
+            ['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['php', 'Docker', 'Css', 'Js', 'Git', 'Github']],
+            ['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['Power bi', 'MySql', 'Dax Equation', 'MS Excel']],
+        ];
+        $summary = summarizeEvidenceHubTechnologies($facts, $v4);
+        phase2AssertSame([27, 24, 0], [$summary['technology_occurrence_count'], $summary['distinct_mapped_technology_count'], $summary['distinct_unmapped_technology_count']], 'V4 Excel synthetic totals are wrong.');
+        $page = evidenceHubOwnerPageTechnologies($facts);
+        phase2AssertSame(['mapped_technology_count' => 24, 'unmapped_technology_count' => 0, 'unmapped_project_count' => 0], $page['overview'], 'V4 private page totals are wrong.');
+        phase2AssertSame(array_values(array_filter($v4['category_order'], static fn (string $category): bool => isset($page['mapped'][$category]))), array_keys($page['mapped']), 'V4 category order is unstable.');
+        $unknown = evidenceHubOwnerPageTechnologies([['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['Private Future Tool']]]);
+        phase2AssertSame('Unmapped technology 1', $unknown['unmapped'][0]['label'], 'Unknown technology label is not privacy-safe.');
+        $source = json_decode((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/contracts/evidence-hub-taxonomy-v4.json'), true, 512, JSON_THROW_ON_ERROR);
+        $source['entries'][37]['aliases'][] = 'Docker';
+        try {
+            parseEvidenceHubTechnologyTaxonomy(json_encode($source, JSON_THROW_ON_ERROR), 'v4');
+            throw new RuntimeException('V4 accepted a cross-entry alias collision.');
+        } catch (EvidenceHubTaxonomyException) {
+            // The loader rejects ambiguous labels before mapping.
+        }
     }
 
     private static function ownerScopeIntegration(): void

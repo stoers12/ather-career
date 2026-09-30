@@ -16,6 +16,7 @@ final class EvidenceHubContractMapperTest
         self::negativeInputs($fixtures);
         self::versionTwoMapping($fixtures, self::schemaV2());
         self::versionThreeMapping($fixtures);
+        self::versionFourMapping($fixtures);
         if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             self::ownerCoreIntegration(self::schemaV2());
         }
@@ -204,6 +205,27 @@ final class EvidenceHubContractMapperTest
         self::assertMappingFailure(static fn (): array => mapEvidenceHubContractV3($bad, []), 'V3 mapper accepted a v2 mapping.');
     }
 
+    /** @param array<string, mixed> $fixtures */
+    private static function versionFourMapping(array $fixtures): void
+    {
+        $payload = $fixtures['positive_payloads'][2]['payload'];
+        foreach ($payload['metrics']['technology_evidence_map']['mappings'] as &$mapping) {
+            $mapping['taxonomy_version'] = 'v4';
+        }
+        unset($mapping);
+        $core = [
+            'maturity' => $payload['maturity'],
+            'documentation_coverage' => $payload['metrics']['documentation_coverage'],
+            'technology_evidence_map' => $payload['metrics']['technology_evidence_map'],
+            'portfolio_progress' => $payload['metrics']['portfolio_progress'],
+        ];
+        $actual = mapEvidenceHubContractV4($core, $payload['recommendations']);
+        phase2AssertSame(['evidence-hub-contract-v4', '4.0.0'], [$actual['contract_id'], $actual['schema_version']], 'V4 mapper selected the wrong contract.');
+        $bad = $core;
+        $bad['technology_evidence_map']['mappings'][0]['taxonomy_version'] = 'v3';
+        self::assertMappingFailure(static fn (): array => mapEvidenceHubContractV4($bad, []), 'V4 mapper accepted a v3 mapping.');
+    }
+
     /** @param array<string, mixed> $schema */
     private static function ownerCoreIntegration(array $schema): void
     {
@@ -213,9 +235,9 @@ final class EvidenceHubContractMapperTest
         $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 10);
         $actual = buildAuthorizedEvidenceHubOwnerContract($database, $context, []);
         phase2AssertSame([], $actual['recommendations'], 'Owner-core contract integration changed supplied R2 output.');
-        phase2AssertSame('evidence-hub-contract-v3', $actual['contract_id'], 'Owner core did not select v3.');
-        phase2AssertSame('3.0.0', $actual['schema_version'], 'Owner core v3 schema version is wrong.');
-        phase2AssertSame($schema['required'], array_keys($actual), 'Owner core v3 envelope shape changed.');
+        phase2AssertSame('evidence-hub-contract-v4', $actual['contract_id'], 'Owner core did not select v4.');
+        phase2AssertSame('4.0.0', $actual['schema_version'], 'Owner core v4 schema version is wrong.');
+        phase2AssertSame($schema['required'], array_keys($actual), 'Owner core v4 envelope shape changed.');
     }
 
     private static function staticDisclosureGuard(): void

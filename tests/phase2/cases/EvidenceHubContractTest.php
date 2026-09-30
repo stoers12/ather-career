@@ -17,6 +17,7 @@ final class EvidenceHubContractTest
         self::taxonomy($taxonomy);
         self::versionTwo(self::json('contracts/evidence-hub-contract-v2.schema.json'), self::json('contracts/evidence-hub-taxonomy-v2.json'), $schema, $taxonomy);
         self::versionThree(self::json('contracts/evidence-hub-contract-v3.schema.json'), self::json('contracts/evidence-hub-taxonomy-v3.json'));
+        self::versionFour(self::json('contracts/evidence-hub-contract-v4.schema.json'), self::json('contracts/evidence-hub-taxonomy-v4.json'));
         self::fixtures($fixtures, $schema);
         self::privacyAndScope($document, $fixtures);
     }
@@ -55,6 +56,23 @@ final class EvidenceHubContractTest
         phase2AssertSame(37, count($taxonomy['entries'] ?? []), 'V3 must contain exactly six new entries.');
         phase2AssertSame($v2Taxonomy['category_order'], $taxonomy['category_order'], 'V3 category order changed.');
         self::closed($schema, 'v3');
+    }
+
+    /** @param array<string, mixed> $schema @param array<string, mixed> $taxonomy */
+    private static function versionFour(array $schema, array $taxonomy): void
+    {
+        $v3Schema = self::json('contracts/evidence-hub-contract-v3.schema.json');
+        $v3Taxonomy = self::json('contracts/evidence-hub-taxonomy-v3.json');
+        phase2AssertSame('evidence-hub-contract-v4', $schema['properties']['contract_id']['const'] ?? null, 'V4 contract ID is wrong.');
+        phase2AssertSame('4.0.0', $schema['properties']['schema_version']['const'] ?? null, 'V4 schema version is wrong.');
+        phase2AssertSame('v4', $schema['$defs']['technology_mapping']['properties']['taxonomy_version']['const'] ?? null, 'V4 taxonomy version is wrong.');
+        phase2AssertSame($v3Schema['$defs']['documentation_coverage'], $schema['$defs']['documentation_coverage'], 'V4 changed frozen coverage semantics.');
+        phase2AssertSame($v3Schema['$defs']['portfolio_progress'], $schema['$defs']['portfolio_progress'], 'V4 changed frozen progress semantics.');
+        phase2AssertSame($v3Taxonomy['entries'], array_slice($taxonomy['entries'] ?? [], 0, 37), 'V4 changed v3 taxonomy entries.');
+        phase2AssertSame(38, count($taxonomy['entries'] ?? []), 'V4 must contain exactly one new entry.');
+        phase2AssertSame($v3Taxonomy['category_order'], $taxonomy['category_order'], 'V4 category order changed.');
+        phase2AssertSame(['technology_id' => 'tech.excel', 'canonical_key' => 'excel', 'display_name' => 'Excel', 'category' => 'tool', 'aliases' => ['Excel', 'Microsoft Excel', 'MS Excel'], 'deprecated' => false, 'merged' => false, 'replaced_by_id' => null], $taxonomy['entries'][37], 'V4 Excel entry changed.');
+        self::closed($schema, 'v4');
     }
 
     /** @return array<string, mixed> */
