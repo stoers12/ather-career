@@ -1,4 +1,5 @@
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const crypto = require('node:crypto');
 
 const baseUrl = process.env.EVIDENCE_HUB_ACTION_TEST_URL;
 const edgeExecutable = process.env.EVIDENCE_HUB_EDGE_EXECUTABLE;
@@ -21,7 +22,35 @@ const fail = (identifier, reason) => {
     throw new Error(reason);
 };
 const expectState = (condition, identifier, reason) => {
-    if (!condition) fail(identifier, reason);
+    if (!condition) fail(identifier, 'expected=true actual=false; ' + reason);
+};
+const safeStatus = value => {
+    if (typeof value !== 'string') return 'type=' + typeof value;
+    if (value === 'Recommendation snoozed for 14 days.' || value === 'Recommendation dismissed.'
+        || /^Project [1-9][0-9]* of [1-9][0-9]*$/.test(value)) return JSON.stringify(value);
+    return '[redacted status length=' + value.length + ' sha256=' + crypto.createHash('sha256').update(value).digest('hex') + ']';
+};
+const expectActionFeedback = async (page, expected, identifier) => {
+    const feedback = page.locator('#evidence-hub-action-feedback[role="status"]');
+    const feedbackCount = await feedback.count();
+    expectState(feedbackCount === 1, identifier + '-single',
+        'state=action-feedback expectedCount=1 actualCount=' + feedbackCount);
+    const actualFeedback = await feedback.textContent();
+    expectState(actualFeedback === expected, identifier,
+        'state=action-feedback expected=' + JSON.stringify(expected) + ' actual=' + safeStatus(actualFeedback));
+
+    const counter = page.locator('[data-evidence-carousel-counter][role="status"]');
+    const counterCount = await counter.count();
+    const counterVisible = counterCount === 1 && await counter.isVisible();
+    expectState(counterCount === 1 && counterVisible, identifier + '-counter',
+        'state=carousel-counter expectedCount=1 actualCount=' + counterCount
+        + ' expectedVisible=true actualVisible=' + counterVisible);
+    const projectCount = await page.locator('[data-evidence-carousel-track] > .evidence-hub-project-card').count();
+    const actualCounter = await counter.textContent();
+    const expectedCounter = 'Project 1 of ' + projectCount;
+    expectState(projectCount > 0 && actualCounter === expectedCounter, identifier + '-counter-text',
+        'state=carousel-counter expected=' + JSON.stringify(expectedCounter)
+        + ' actual=' + safeStatus(actualCounter) + ' projectCount=' + projectCount);
 };
 const withinStepTimeout = (operation, label) => new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`${label} timed out`)), stepTimeout);
@@ -112,7 +141,7 @@ const watchdog = setTimeout(async () => {
         const snoozeNavigationResponse = await snoozeNavigation;
         expectState(snoozeNavigationResponse?.status() === 200, 'snooze-navigation-status', `expected 200; received ${snoozeNavigationResponse?.status() ?? 'none'}`);
         expectState(currentPathname(page) === routePath, 'snooze-prg-complete', 'expected route pathname after redirect');
-        expectState(await page.getByRole('status').textContent() === 'Recommendation snoozed for 14 days.', 'snooze-feedback-visible', 'expected Snooze feedback was not visible');
+        await expectActionFeedback(page, 'Recommendation snoozed for 14 days.', 'snooze-feedback-visible');
 
         mark('dismiss-candidate-remains');
         const postSnoozeCards = actionableCards(page);
@@ -150,7 +179,7 @@ const watchdog = setTimeout(async () => {
         expectState(currentPathname(page) === routePath, 'dismiss-prg-complete', 'expected route pathname after redirect');
 
         mark('dismiss-feedback-visible');
-        expectState(await page.getByRole('status').textContent() === 'Recommendation dismissed.', 'dismiss-feedback-visible', 'expected Dismiss feedback was not visible');
+        await expectActionFeedback(page, 'Recommendation dismissed.', 'dismiss-feedback-visible');
         mark('dismiss-recommendation-removed');
         const postDismissCount = await actionableCards(page).count();
         console.log(`POST_DISMISS_ACTIONABLE_CANDIDATE_COUNT=${postDismissCount}`);
@@ -187,4 +216,15 @@ const watchdog = setTimeout(async () => {
     }
 })().then(() => {
     if (watchdogTimedOut) process.exitCode = 1;
-}).catch(() => { console.error(`FAILED at ${failureCheckpoint ?? checkpoint}: ${watchdogTimedOut ? 'step watchdog timed out' : failureReason}`); process.exitCode = 1; });
+}).catch(error => {
+    const firstLine = String(error?.message ?? failureReason).split(/\r?\n/, 1)[0]
+        .replace(/https?:\/\/\S+/g, '[url]')
+        .replace(/\b[a-f0-9]{24,}\b/gi, '[redacted]')
+        .replace(/\b(cookie|csrf|session|token|secret|password|nonce|authorization)\b\s*[:=]\s*[^\s,;]+/gi, '$1=[redacted]')
+        .replace(/(['"`])[^'"`]{48,}\1/g, '[redacted text]')
+        .slice(0, 240);
+    const location = /evidence-hub-owner-actions-visual\.cjs:(\d+):(\d+)/.exec(String(error?.stack ?? ''));
+    console.error(`FAILED at ${failureCheckpoint ?? checkpoint}: ${watchdogTimedOut ? 'step watchdog timed out' : firstLine}`);
+    if (location) console.error(`ERROR_LOCATION=evidence-hub-owner-actions-visual.cjs:${location[1]}:${location[2]}`);
+    process.exitCode = 1;
+});
