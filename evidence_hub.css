@@ -633,8 +633,9 @@ body.evidence-hub-page .evidence-hub-page-body .evidence-hub-carousel.is-enhance
 body.evidence-hub-page .evidence-hub-page-body .evidence-hub-carousel.is-enhanced .evidence-hub-project-list {
     position: relative; display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden;
     padding: 5px; scroll-snap-type: x mandatory; scroll-padding-inline: 5px;
-    overscroll-behavior-x: contain; scrollbar-width: thin;
+    overscroll-behavior-x: contain; scrollbar-width: none;
 }
+body.evidence-hub-page .evidence-hub-page-body .evidence-hub-carousel.is-enhanced .evidence-hub-project-list::-webkit-scrollbar { display: none; }
 body.evidence-hub-page .evidence-hub-page-body .evidence-hub-carousel.is-enhanced .evidence-hub-project-card {
     flex: 0 0 calc((100% - 34px) / 3); scroll-snap-align: start;
 }

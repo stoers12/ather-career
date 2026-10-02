@@ -100,6 +100,8 @@ async function state(cdp) {
         const nav = document.querySelector('[data-evidence-carousel-navigation]');
         const prev = document.querySelector('[data-evidence-carousel-previous]');
         const next = document.querySelector('[data-evidence-carousel-next]');
+        const sectionNav = document.querySelector('.evidence-hub-section-nav');
+        const trackStyle = getComputedStyle(track);
         const rect = element => { const r = element.getBoundingClientRect(); return { x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom }; };
         const grid = document.querySelector('.evidence-hub-recommendation-grid');
         const ids = [...document.querySelectorAll('[id]')].map(element => element.id);
@@ -111,6 +113,13 @@ async function state(cdp) {
             counter: document.querySelector('[data-evidence-carousel-counter]').textContent.trim(),
             navHidden: nav.hidden, prevDisabled: prev.disabled, nextDisabled: next.disabled,
             track: rect(track), prev: rect(prev), next: rect(next),
+            trackOverflowX: trackStyle.overflowX, trackScrollable: track.scrollWidth > track.clientWidth,
+            trackScrollbarGutter: track.offsetHeight - track.clientHeight,
+            trackScrollbarWidth: trackStyle.scrollbarWidth,
+            trackWebkitScrollbarDisplay: getComputedStyle(track, '::-webkit-scrollbar').display,
+            sectionNavScrollbarWidth: getComputedStyle(sectionNav).scrollbarWidth,
+            pageScrollableY: document.documentElement.scrollHeight > document.documentElement.clientHeight,
+            pageOverflowY: getComputedStyle(document.documentElement).overflowY,
             gridColumns: grid ? getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length : 0,
             recommendationCount: document.querySelectorAll('.evidence-hub-recommendation-card').length,
             completion: !!document.querySelector('.evidence-hub-completion-panel'),
@@ -194,6 +203,14 @@ async function main() {
             assert.equal(item.documentWidth <= width, true, `overflow at ${width} ${theme}`);
             assert.equal(item.cards, 4);
             assert.equal(item.completion, true);
+            assert.equal(item.trackScrollable, true, `carousel is not horizontally scrollable at ${width} ${theme}`);
+            assert.ok(['auto', 'scroll'].includes(item.trackOverflowX), `carousel overflow-x changed at ${width} ${theme}`);
+            assert.equal(item.trackScrollbarGutter, 0, `carousel retained a scrollbar gutter at ${width} ${theme}`);
+            assert.equal(item.trackScrollbarWidth, 'none', `carousel scrollbar is visible at ${width} ${theme}`);
+            assert.equal(item.trackWebkitScrollbarDisplay, 'none', `WebKit carousel scrollbar is visible at ${width} ${theme}`);
+            assert.equal(item.sectionNavScrollbarWidth, 'thin', `unrelated section-nav scrollbar changed at ${width} ${theme}`);
+            assert.equal(item.pageScrollableY, true, `page is not vertically scrollable at ${width} ${theme}`);
+            assert.notEqual(item.pageOverflowY, 'hidden', `page vertical scrollbar was hidden at ${width} ${theme}`);
             assert.equal(item.fullyVisible, width > 1100 ? 3 : (width > 700 ? 2 : 1));
             assert.equal(item.counter, width > 1100 ? 'Showing projects 1–3 of 4' : (width > 700 ? 'Showing projects 1–2 of 4' : 'Project 1 of 4'));
             assert.equal(item.prevDisabled, true);
