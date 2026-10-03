@@ -1,11 +1,66 @@
 <?php
 
 require_once __DIR__ . '/error_reporting.php';
+require_once __DIR__ . '/media_image_policy.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/validation.php';
 require_once __DIR__ . '/profile_presentation.php';
 
-const PROFILE_PIXEL_CEILING = 8000000;
+const PROFILE_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+
+function profileImageMaximumMegabytes(): int
+{
+    return (int) (PROFILE_IMAGE_MAX_BYTES / (1024 * 1024));
+}
+
+function profileImageSizeIsAllowed(mixed $size): bool
+{
+    return is_int($size) && $size >= 0 && $size <= PROFILE_IMAGE_MAX_BYTES;
+}
+
+/** @return array{extension: string, mime: string}|string */
+function validateProfileImageUpload(array $file): array|string
+{
+    if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || !profileImageSizeIsAllowed($file['size'] ?? null)) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'encoded_size', 'FILE_TOO_LARGE', null, is_int($file['size'] ?? null) ? $file['size'] : null);
+        return 'Profile photo must be ' . profileImageMaximumMegabytes() . ' MB or smaller.';
+    }
+    if (($file['error'] ?? null) !== UPLOAD_ERR_OK || !isset($file['tmp_name']) || !is_string($file['tmp_name'])) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'multipart', 'IMAGE_MALFORMED');
+        return 'The uploaded image could not be processed.';
+    }
+
+    $actualSize = @filesize($file['tmp_name']);
+    if (!profileImageSizeIsAllowed($actualSize)) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'actual_size', 'FILE_TOO_LARGE', null, is_int($actualSize) ? $actualSize : null);
+        return 'Profile photo must be ' . profileImageMaximumMegabytes() . ' MB or smaller.';
+    }
+    $info = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = $info === false ? false : finfo_file($info, $file['tmp_name']);
+    if ($info !== false) {
+        finfo_close($info);
+    }
+    $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png'];
+    if (!is_string($mime) || !isset($extensions[$mime])) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'mime', 'UNSUPPORTED_TYPE', is_string($mime) ? $mime : null, is_int($actualSize) ? $actualSize : null);
+        return 'Please upload a JPG or PNG image.';
+    }
+    $dimensions = @getimagesize($file['tmp_name']);
+    if ($dimensions === false) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'image_metadata', 'IMAGE_MALFORMED', $mime, is_int($actualSize) ? $actualSize : null);
+        return 'The uploaded profile photo could not be decoded.';
+    }
+    if ($dimensions[0] < 400 || $dimensions[1] < 400) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'minimum_dimensions', 'IMAGE_TOO_SMALL', $mime, is_int($actualSize) ? $actualSize : null, $dimensions);
+        return 'Profile photo must be at least 400 × 400 pixels.';
+    }
+    if (!profileImageDimensionsAreSafe($dimensions, $mime, $file['tmp_name'])) {
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'ingestion_dimensions', 'IMAGE_UNSAFE_DIMENSIONS', $mime, is_int($actualSize) ? $actualSize : null, $dimensions);
+        return 'Profile photo dimensions are too large.';
+    }
+
+    return ['extension' => $extensions[$mime], 'mime' => $mime];
+}
 
 function isMySqlDuplicateKeyViolation(PDOException $exception): bool
 {
@@ -18,30 +73,9 @@ function isMySqlDuplicateKeyViolation(PDOException $exception): bool
 
 function storeValidatedProfileImage(array $file, array &$errors, ?int $portfolioId = null): ?string
 {
-    if (($file['error'] ?? null) === UPLOAD_ERR_INI_SIZE || (($file['size'] ?? 0) > 8 * 1024 * 1024)) {
-        $errors[] = 'Profile photo must be 8 MB or smaller.';
-        return null;
-    }
-    if (($file['error'] ?? null) !== UPLOAD_ERR_OK || !isset($file['tmp_name'])) {
-        $errors[] = 'The uploaded image could not be processed.';
-        return null;
-    }
-
-    $info = finfo_open(FILEINFO_MIME_TYPE);
-    $mime = finfo_file($info, $file['tmp_name']);
-    finfo_close($info);
-    $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png'];
-    $dimensions = @getimagesize($file['tmp_name']);
-    if (!isset($extensions[$mime])) {
-        $errors[] = 'Please upload a JPG or PNG image.';
-        return null;
-    }
-    if ($dimensions === false || $dimensions[0] < 400 || $dimensions[1] < 400) {
-        $errors[] = 'Profile photo must be at least 400 × 400 pixels.';
-        return null;
-    }
-    if ($dimensions[0] * $dimensions[1] > PROFILE_PIXEL_CEILING) {
-        $errors[] = 'Profile photo dimensions are too large.';
+    $validation = validateProfileImageUpload($file);
+    if (is_string($validation)) {
+        $errors[] = $validation;
         return null;
     }
     if ($portfolioId === null || $portfolioId < 1) {
@@ -50,25 +84,30 @@ function storeValidatedProfileImage(array $file, array &$errors, ?int $portfolio
     }
 
     try {
-        $key = storePrivateUploadedImage($file, $portfolioId, 'profile_original', 'profile', $extensions[$mime], $mime);
+        $key = storePrivateUploadedImage($file, $portfolioId, 'profile_original', 'profile', $validation['extension'], $validation['mime']);
     } catch (PortfolioQuotaExceededException) {
         reportSecurityEvent('quota_denial', 'denied', ['portfolio_id' => $portfolioId, 'resource_type' => 'profile']);
         $errors[] = 'Portfolio storage quota exceeded.';
         return null;
     }
     if ($key === null) {
-        $errors[] = 'The uploaded image could not be processed.';
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'storage', 'private_staging_failed');
+        $errors[] = 'The image could not be saved. Please try again.';
         return null;
     }
     try {
-        $presentationKey = generateProfilePresentationImage($key, $portfolioId);
+        $presentation = generateProfilePresentationResult($key, $portfolioId);
     } catch (Throwable $exception) {
         reportApplicationError($exception, 'owner_profile.php', 'profile_presentation_storage_failure');
-        $presentationKey = null;
+        $presentation = ['key' => null, 'reason' => 'NORMALIZATION_FAILED'];
     }
-    if ($presentationKey === null) {
+    if ($presentation['key'] === null) {
+        // Normalization may have committed a derivative before a later check
+        // fails. Both files belong to this request, so retire both.
+        deleteProfilePresentationImage($key, $portfolioId);
         deletePrivateMediaFile($key, $portfolioId, 'profile_original');
-        $errors[] = 'The uploaded image could not be processed.';
+        reportPortfolioMediaEvent('media_upload_rejected', 'profile', 'normalization', $presentation['reason']);
+        $errors[] = portfolioImageFailureMessage($presentation['reason']);
         return null;
     }
 
@@ -82,161 +121,14 @@ function cleanProfileImage(?string $imagePath, string $action, ?int $portfolioId
     }
 
     if ($portfolioId === null || resolvePrivateMediaPath($imagePath, $portfolioId, 'profile_original') === null) {
-        reportApplicationError(new RuntimeException('Managed profile path rejected.'), 'personal_info.php', $action . '_path_rejected');
+        reportApplicationError(new RuntimeException('Managed profile path rejected.'), 'owner_profile.php', $action . '_path_rejected');
         return;
     }
 
     if (!deleteProfilePresentationImage($imagePath, $portfolioId)) {
-        reportApplicationError(new RuntimeException('Profile presentation cleanup failed.'), 'personal_info.php', $action . '_presentation_cleanup_failed');
+        reportApplicationError(new RuntimeException('Profile presentation cleanup failed.'), 'owner_profile.php', $action . '_presentation_cleanup_failed');
     }
     if (!deletePrivateMediaFile($imagePath, $portfolioId, 'profile_original')) {
-        reportApplicationError(new RuntimeException('Profile image cleanup failed.'), 'personal_info.php', $action . '_cleanup_failed');
-    }
-}
-
-function profileActionResult(array $errors, array $profile, ?string $redirect = null): array
-{
-    return ['errors' => $errors, 'profile' => $profile, 'redirect' => $redirect];
-}
-
-function handleProfileAction(PDO $database, array $post, array $files, $current, ?string $currentImagePath, array $fields, array $profile): array
-{
-    $action = isset($post['action']) && is_string($post['action']) ? $post['action'] : '';
-    $errors = [];
-
-    try {
-        if ($action === 'upload_profile_image') {
-            if ($current === false) {
-                return profileActionResult(['Save your personal information before uploading a photo.'], $profile);
-            }
-
-            $newImagePath = storeValidatedProfileImage($files['profile_image'] ?? [], $errors);
-            if ($errors !== []) {
-                return profileActionResult($errors, $profile);
-            }
-
-            $statement = $database->prepare('UPDATE personal_info SET profile_image_path = :path WHERE id = :id');
-            $statement->execute(['path' => $newImagePath, 'id' => $current['id']]);
-            if ($statement->rowCount() !== 1) {
-                cleanProfileImage($newImagePath, 'profile_update_compensation');
-                return profileActionResult(['The profile photo could not be updated.'], $profile);
-            }
-
-            cleanProfileImage($currentImagePath, 'profile_update_old_image');
-            return profileActionResult([], $profile, 'personal_info.php?photo_updated=1');
-        }
-
-        if ($action === 'save_profile') {
-            foreach ($fields as $field) {
-                $profile[$field] = isset($post[$field]) && is_string($post[$field]) ? trim($post[$field]) : '';
-            }
-            if ($profile['full_name'] === '') {
-                $errors[] = 'Full name is required.';
-            }
-            foreach (PERSONAL_INFO_FIELD_MAX_LENGTHS as $field => $maximum) {
-                $error = utf8FieldLengthError($profile[$field], $maximum, ucwords(str_replace('_', ' ', $field)));
-                if ($error !== null) {
-                    $errors[] = $error;
-                }
-            }
-            if ($profile['email'] !== '' && filter_var($profile['email'], FILTER_VALIDATE_EMAIL) === false) {
-                $errors[] = 'Please enter a valid email address.';
-            }
-            foreach (['linkedin_url', 'github_url', 'instagram_url', 'facebook_url', 'website_url'] as $urlField) {
-                if ($profile[$urlField] !== '' && !isSafeHttpUrl($profile[$urlField])) {
-                    $errors[] = 'Please enter valid URLs.';
-                    break;
-                }
-            }
-            if ($errors !== []) {
-                return profileActionResult($errors, $profile);
-            }
-
-            $profileFields = array_merge($fields, ['profile_image_path']);
-            $values = array_combine(
-                array_map(fn ($field) => ':' . $field, $fields),
-                array_map(fn ($field) => $profile[$field], $fields)
-            );
-            $values[':profile_image_path'] = $currentImagePath;
-            if ($current === false) {
-                $statement = $database->prepare('INSERT INTO personal_info (' . implode(', ', $profileFields) . ') VALUES (' . implode(', ', array_keys($values)) . ')');
-            } else {
-                $updates = implode(', ', array_map(fn ($field) => "$field = :$field", $profileFields));
-                $statement = $database->prepare("UPDATE personal_info SET $updates WHERE id = :id");
-                $values[':id'] = $current['id'];
-            }
-            $statement->execute($values);
-            if ($current !== false && $statement->rowCount() === 0) {
-                $verify = $database->prepare('SELECT id FROM personal_info WHERE id = :id');
-                $verify->execute(['id' => $current['id']]);
-                if ($verify->fetch() === false) {
-                    return profileActionResult(['Your personal information could not be saved. Please reload and try again.'], $profile);
-                }
-            }
-            return profileActionResult([], $profile, 'personal_info.php?saved=1');
-        }
-
-        if ($action === 'remove_profile_image') {
-            if ($current === false || $currentImagePath === null) {
-                return profileActionResult(['Profile photo not found.'], $profile);
-            }
-
-            $statement = $database->prepare('UPDATE personal_info SET profile_image_path = NULL WHERE id = :id AND profile_image_path = :path');
-            $statement->execute(['id' => $current['id'], 'path' => $currentImagePath]);
-            if ($statement->rowCount() !== 1) {
-                return profileActionResult(['Profile photo not found.'], $profile);
-            }
-
-            cleanProfileImage($currentImagePath, 'profile_remove_old_image');
-            return profileActionResult([], $profile, 'personal_info.php?photo_removed=1');
-        }
-
-        if ($action === 'add_skill') {
-            $skill = isset($post['skill_name']) && is_string($post['skill_name']) ? trim($post['skill_name']) : '';
-            $skillLength = utf8CharacterLength($skill);
-            if ($skill === '' || $skillLength === null || $skillLength > SKILL_NAME_MAX_LENGTH) {
-                return profileActionResult(['Skill must be between 1 and 100 characters.'], $profile);
-            }
-
-            $statement = $database->prepare('SELECT id FROM skills WHERE skill_name = :skill LIMIT 1');
-            $statement->execute(['skill' => $skill]);
-            if ($statement->fetch() !== false) {
-                return profileActionResult(['That skill already exists.'], $profile);
-            }
-
-            $statement = $database->prepare('INSERT INTO skills (skill_name) VALUES (:skill)');
-            $statement->execute(['skill' => $skill]);
-            return profileActionResult([], $profile, 'personal_info.php?skill_added=1');
-        }
-
-        if ($action === 'delete_skill') {
-            $skillId = filter_var($post['skill_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-            if ($skillId === false) {
-                return profileActionResult(['Please provide a valid skill.'], $profile);
-            }
-
-            $statement = $database->prepare('DELETE FROM skills WHERE id = :id');
-            $statement->execute(['id' => $skillId]);
-            if ($statement->rowCount() !== 1) {
-                return profileActionResult(['Skill not found.'], $profile);
-            }
-
-            return profileActionResult([], $profile, 'personal_info.php?skill_deleted=1');
-        }
-
-        return profileActionResult([], $profile);
-    } catch (PDOException $exception) {
-        if ($action === 'add_skill' && isMySqlDuplicateKeyViolation($exception)) {
-            return profileActionResult(['That skill already exists.'], $profile);
-        }
-        if ($action === 'save_profile' && $current === false && isMySqlDuplicateKeyViolation($exception)) {
-            return profileActionResult(['Profile was initialized by another request. Please reload and try again.'], $profile);
-        }
-
-        reportApplicationError($exception, 'personal_info.php', 'profile_' . ($action === '' ? 'unknown' : $action));
-        if (isset($newImagePath)) {
-            cleanProfileImage($newImagePath, 'profile_database_compensation');
-        }
-        return profileActionResult(['The requested change could not be saved.'], $profile);
+        reportApplicationError(new RuntimeException('Profile image cleanup failed.'), 'owner_profile.php', $action . '_cleanup_failed');
     }
 }

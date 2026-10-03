@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Creates a run-owned namespace for Phase 2 tests. This class deliberately
  * does not connect to MySQL or application storage in P2J-00; later tests may
- * use the generated identifiers only after creating disposable resources.
+ * opt into a generated database only after creating disposable resources.
  */
 final class TestEnvironment
 {
@@ -16,6 +16,8 @@ final class TestEnvironment
     private const MARKER_FILE = '.ather-career-test-run.json';
 
     private bool $tornDown = false;
+    private bool $databaseAttached = false;
+    private string|false $previousDatabaseName = false;
 
     private function __construct(
         public readonly string $runId,
@@ -30,10 +32,18 @@ final class TestEnvironment
     {
         self::assertSafeEnvironment(self::processEnvironment());
 
-        try {
-            $runId = bin2hex(random_bytes(12));
-        } catch (Throwable $exception) {
-            throw new RuntimeException('Could not create a safe test run identifier.', 0, $exception);
+        $configuredDatabaseName = getenv('ATHERCAR_TEST_DB_NAME');
+        if (is_string($configuredDatabaseName) && $configuredDatabaseName !== '') {
+            if (!preg_match('/^' . preg_quote(self::DATABASE_PREFIX, '/') . '([a-f0-9]{24})$/', $configuredDatabaseName, $matches)) {
+                throw new RuntimeException('Configured Phase 2 test database name is not an exact disposable namespace.');
+            }
+            $runId = $matches[1];
+        } else {
+            try {
+                $runId = bin2hex(random_bytes(12));
+            } catch (Throwable $exception) {
+                throw new RuntimeException('Could not create a safe test run identifier.', 0, $exception);
+            }
         }
 
         $baseRoot = self::baseRoot();
@@ -53,7 +63,7 @@ final class TestEnvironment
 
         $environment = new self(
             $runId,
-            self::DATABASE_PREFIX . $runId,
+            $configuredDatabaseName ?: self::DATABASE_PREFIX . $runId,
             self::COMPOSE_PREFIX . $runId,
             $namespaceRoot,
             $namespaceRoot . DIRECTORY_SEPARATOR . 'storage',
@@ -112,26 +122,40 @@ final class TestEnvironment
         return $path;
     }
 
+    /**
+     * Uses a database created by the privileged test-runner boundary. The
+     * application account never receives global DDL permissions; the runner
+     * must remove this exact namespace in its finally block.
+     */
+    public function useExternallyProvisionedDatabase(): void
+    {
+        if ($this->databaseAttached) {
+            return;
+        }
+        if (getenv('ATHERCAR_TEST_DB_PROVISIONED') !== self::TEST_MODE) {
+            throw new RuntimeException('Phase 2 test database was not explicitly provisioned by the isolated runner.');
+        }
+
+        $this->assertOwnedDatabaseName();
+        self::databaseConnection($this->databaseName);
+        $this->previousDatabaseName = getenv('DB_NAME');
+        putenv('DB_NAME=' . $this->databaseName);
+        putenv('PORTFOLIO_DB_NAME');
+        $this->databaseAttached = true;
+    }
+
     public function tearDown(): void
     {
         if ($this->tornDown) {
             return;
         }
 
-        $baseRoot = realpath(self::baseRoot());
-        if ($baseRoot === false || dirname($this->namespaceRoot) !== $baseRoot || basename($this->namespaceRoot) !== $this->runId) {
-            throw new RuntimeException('Refusing unsafe Phase 2 test teardown target.');
-        }
-
-        $markerPath = $this->namespaceRoot . DIRECTORY_SEPARATOR . self::MARKER_FILE;
-        $marker = is_file($markerPath) ? file_get_contents($markerPath) : false;
-        $metadata = is_string($marker) ? json_decode($marker, true) : null;
-        if (!is_array($metadata)
-            || ($metadata['created_by'] ?? null) !== 'ather-career-phase2'
-            || ($metadata['run_id'] ?? null) !== $this->runId
-            || ($metadata['database_name'] ?? null) !== $this->databaseName
-            || ($metadata['compose_project'] ?? null) !== $this->composeProject) {
-            throw new RuntimeException('Refusing teardown of a namespace not owned by this Phase 2 test run.');
+        $this->assertOwnedNamespace();
+        if ($this->databaseAttached) {
+            $this->assertOwnedDatabaseName();
+            $this->databaseAttached = false;
+            putenv('DB_NAME' . (is_string($this->previousDatabaseName) ? '=' . $this->previousDatabaseName : ''));
+            putenv('PORTFOLIO_DB_NAME');
         }
 
         $iterator = new RecursiveIteratorIterator(
@@ -204,5 +228,53 @@ final class TestEnvironment
         putenv('ATHERCAR_TEST_DB_NAME=' . $this->databaseName);
         putenv('ATHERCAR_TEST_STORAGE_ROOT=' . $this->storageRoot);
         putenv('ATHERCAR_TEST_COMPOSE_PROJECT=' . $this->composeProject);
+    }
+
+    private function assertOwnedNamespace(): void
+    {
+        $baseRoot = realpath(self::baseRoot());
+        if ($baseRoot === false || dirname($this->namespaceRoot) !== $baseRoot || basename($this->namespaceRoot) !== $this->runId) {
+            throw new RuntimeException('Refusing unsafe Phase 2 test teardown target.');
+        }
+
+        $markerPath = $this->namespaceRoot . DIRECTORY_SEPARATOR . self::MARKER_FILE;
+        $marker = is_file($markerPath) ? file_get_contents($markerPath) : false;
+        $metadata = is_string($marker) ? json_decode($marker, true) : null;
+        if (!is_array($metadata)
+            || ($metadata['created_by'] ?? null) !== 'ather-career-phase2'
+            || ($metadata['run_id'] ?? null) !== $this->runId
+            || ($metadata['database_name'] ?? null) !== $this->databaseName
+            || ($metadata['compose_project'] ?? null) !== $this->composeProject) {
+            throw new RuntimeException('Refusing teardown of a namespace not owned by this Phase 2 test run.');
+        }
+    }
+
+    private function assertOwnedDatabaseName(): void
+    {
+        if (!preg_match('/^' . preg_quote(self::DATABASE_PREFIX, '/') . '[a-f0-9]{24}$/', $this->databaseName)
+            || !hash_equals(self::DATABASE_PREFIX . $this->runId, $this->databaseName)) {
+            throw new RuntimeException('Refusing unsafe Phase 2 test database target.');
+        }
+    }
+
+    private static function databaseConnection(string $databaseName): PDO
+    {
+        $host = getenv('DB_HOST');
+        $port = getenv('DB_PORT');
+        $user = getenv('DB_USER');
+        $password = getenv('DB_PASSWORD');
+        if (!is_string($host) || $host === ''
+            || !is_string($port) || !ctype_digit($port) || (int) $port < 1 || (int) $port > 65535
+            || !is_string($user) || $user === ''
+            || !is_string($password)) {
+            throw new RuntimeException('Phase 2 database-server configuration is unavailable.');
+        }
+
+        return new PDO(
+            "mysql:host={$host};port={$port};dbname={$databaseName};charset=utf8mb4",
+            $user,
+            $password,
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
+        );
     }
 }

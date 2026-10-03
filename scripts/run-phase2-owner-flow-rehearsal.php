@@ -188,7 +188,7 @@ try {
 
     $profileA = createAuthorizedPersonalInfo($database, $contextA, ownerFlowProfileValues('Private A'));
     $skillA = createAuthorizedSkill($database, $contextA, 'A Skill');
-    $projectA = createAuthorizedProject($database, $contextA, 'A Project', 'Owner Test', 'A private project.', 'https://example.test/a-project', null);
+    $projectA = createAuthorizedProject($database, $contextA, 'A Project', 'Owner Test', 'A private project.', 'https://example.test/a-project', null, []);
     $messageA = $database->prepare('INSERT INTO messages (recipient_portfolio_id, name, email, message) VALUES (:portfolio_id, :name, :email, :message)');
     $messageA->execute(['portfolio_id' => $portfolioA, 'name' => 'Sender A', 'email' => 'sender.a@example.test', 'message' => 'A private message.']);
     $messageAId = (int) $database->lastInsertId();
@@ -206,7 +206,7 @@ try {
     if (file_put_contents($bImagePath, 'B private image', LOCK_EX) === false) {
         throw new RuntimeException('Could not create B project image fixture.');
     }
-    $projectB = createAuthorizedProject($database, $contextB, 'B Project', 'Owner Test', 'B private project.', 'https://example.test/b-project', 'uploads/projects/' . $bImageFilename);
+    $projectB = createAuthorizedProject($database, $contextB, 'B Project', 'Owner Test', 'B private project.', 'https://example.test/b-project', 'uploads/projects/' . $bImageFilename, []);
     $messageB = $database->prepare('INSERT INTO messages (recipient_portfolio_id, name, email, message) VALUES (:portfolio_id, :name, :email, :message)');
     $messageB->execute(['portfolio_id' => $portfolioB, 'name' => 'Sender B', 'email' => 'sender.b@example.test', 'message' => 'B private message.']);
     $messageBId = (int) $database->lastInsertId();
@@ -248,14 +248,23 @@ try {
     phase2Assert($foreignProjectDelete['errors'] !== [], 'A foreign project delete was accepted.');
     $ownProject = handleAuthorizedProjectAction($database, $contextA, [
         'action' => 'update', 'id' => (string) $projectA, 'portfolio_id' => (string) $portfolioB,
-        'title' => 'A Project Updated', 'category' => 'Owner Test', 'description' => 'A update only.', 'github_url' => 'https://example.test/a-project-updated',
+        'title' => 'A Project Updated', 'category' => 'Owner Test', 'description' => 'A update only.', 'github_url' => 'https://example.test/a-project-updated', 'technologies' => "Python\nPandas\npython",
     ], []);
     phase2AssertSame('owner_projects.php', $ownProject['redirect'], 'Project update did not PRG.');
+    phase2AssertSame(['Python', 'Pandas'], findAuthorizedProject($database, $contextA, $projectA)['technologies'], 'Owner Project update did not normalize and persist technologies.');
+    $removeProjectTechnologies = handleAuthorizedProjectAction($database, $contextA, [
+        'action' => 'update', 'id' => (string) $projectA,
+        'title' => 'A Project Updated', 'category' => 'Owner Test', 'description' => 'A update only.', 'github_url' => 'https://example.test/a-project-updated', 'technologies' => '',
+    ], []);
+    phase2AssertSame('owner_projects.php', $removeProjectTechnologies['redirect'], 'Owner Project technology removal did not PRG.');
+    phase2AssertSame([], findAuthorizedProject($database, $contextA, $projectA)['technologies'], 'Removing all Project technologies must produce the empty semantic value.');
     $createProject = handleAuthorizedProjectAction($database, $contextA, [
         'action' => 'add', 'portfolio_id' => (string) $portfolioB,
-        'title' => 'A Created Project', 'category' => 'Owner Test', 'description' => 'Created for A.', 'github_url' => 'https://example.test/a-created',
+        'title' => 'A Created Project', 'category' => 'Owner Test', 'description' => 'Created for A.', 'github_url' => 'https://example.test/a-created', 'technologies' => 'SQL',
     ], []);
     phase2AssertSame('owner_projects.php', $createProject['redirect'], 'Project creation did not PRG.');
+    $createdProjects = array_values(array_filter(listAuthorizedProjects($database, $contextA), static fn (array $project): bool => $project['title'] === 'A Created Project'));
+    phase2AssertSame(['SQL'], $createdProjects[0]['technologies'] ?? null, 'Owner Project creation did not persist technologies.');
 
     phase2AssertSame(null, findAuthorizedMessage($database, $contextA, $messageBId), 'A read B message through an owner route candidate.');
     phase2AssertSame(null, findAuthorizedPersonalInfo($database, $contextA, $profileB), 'A read B profile.');

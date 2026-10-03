@@ -12,6 +12,7 @@ const PRIVATE_MEDIA_COLLECTIONS = [
     'profile_original' => ['profile', 'original'],
     'profile_presentation' => ['profile', 'presentation'],
     'projects' => ['projects'],
+    'project_presentation' => ['project', 'presentation'],
 ];
 const PORTFOLIO_STORAGE_QUOTA_BYTES = 104857600;
 
@@ -70,7 +71,7 @@ function parseManagedMediaKey(mixed $candidate): ?array
     if (!is_string($candidate) || $candidate === '' || strlen($candidate) > 240 || str_contains($candidate, '\\') || str_contains($candidate, '%')) {
         return null;
     }
-    if (preg_match('#^portfolios/([1-9][0-9]{0,9})/(profile/original|profile/presentation|projects)/([a-z0-9][a-z0-9._-]{0,127})$#', $candidate, $matches) !== 1) {
+    if (preg_match('#^portfolios/([1-9][0-9]{0,9})/(profile/original|profile/presentation|projects|project/presentation)/([a-z0-9][a-z0-9._-]{0,127})$#', $candidate, $matches) !== 1) {
         return null;
     }
 
@@ -78,6 +79,7 @@ function parseManagedMediaKey(mixed $candidate): ?array
         'profile/original' => 'profile_original',
         'profile/presentation' => 'profile_presentation',
         'projects' => 'projects',
+        'project/presentation' => 'project_presentation',
     };
 
     return ['portfolio_id' => (int) $matches[1], 'collection' => $collection, 'filename' => $matches[3]];
@@ -267,7 +269,6 @@ function privateMediaDescriptor(mixed $key, int $portfolioId, string $collection
 function streamPrivateMedia(array $descriptor): never
 {
     header('Cache-Control: no-store');
-    header('X-Content-Type-Options: nosniff');
     header('Content-Type: ' . $descriptor['mime']);
     header('Content-Disposition: inline');
     if (is_int($descriptor['size']) && $descriptor['size'] >= 0) {

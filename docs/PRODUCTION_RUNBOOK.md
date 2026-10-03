@@ -5,7 +5,8 @@ This runbook is for the current single-host Docker Compose deployment. It does n
 ## Prerequisites and configuration
 
 - Docker Engine with Compose v2 and host access restricted to operators.
-- Copy `.env.example` to a host-only `.env`; set unique database credentials, admin credentials, and `SESSION_COOKIE_SECURE=true`.
+- Copy `.env.example` to a host-only `.env`; set unique database credentials, the Auth0 configuration, the stable Evidence Hub target-reference key, and `SESSION_COOKIE_SECURE=true`.
+- `EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY` must be exactly 64 hexadecimal characters (32 decoded bytes). It is read only at the application configuration boundary; do not place it in source control, logs, requests, sessions, or payloads. A missing or invalid value fails closed for Evidence Hub and fails the production security check.
 - Keep `.env` and `backups/` outside Git and outside the public document root.
 - Use a short read-only/maintenance window for backup, migration, and restore operations.
 
@@ -18,17 +19,21 @@ export APP_VERSION="$(git rev-parse HEAD)"
 docker compose -f docker-compose.production.yml build --build-arg APP_VERSION="$APP_VERSION" web
 docker compose -f docker-compose.production.yml up -d db
 docker compose -f docker-compose.production.yml ps
-./scripts/backup-production.sh --app-version "$APP_VERSION"
+# Complete the approved Stage-4C backup procedure before migration.
 docker compose -f docker-compose.production.yml run --rm --no-deps web php database/migrate.php
 docker compose -f docker-compose.production.yml run --rm --no-deps web php database/migrate.php
 docker compose -f docker-compose.production.yml exec -T db sh -lc 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -h 127.0.0.1 -uroot "$MYSQL_DATABASE" -e "SELECT version, name, applied_at FROM schema_migrations ORDER BY version"'
 docker compose -f docker-compose.production.yml up -d --force-recreate web
 curl -fsS http://127.0.0.1:8098/health.php
-curl -fsS http://127.0.0.1:8098/api/projects.php
+curl -fsS http://127.0.0.1:8098/ready.php
 docker compose -f docker-compose.production.yml logs --tail 100 web db
 ```
 
-The web healthcheck is liveness only: `GET /health.php` returns `OK` without a DB query. Use `GET /api/projects.php` as the DB-backed readiness signal: `200` is ready and `503` means the DB dependency is unavailable.
+The web healthcheck is liveness only: `GET /health.php` returns `OK` without a DB query. `GET /ready.php` returns `READY` only when database connectivity, the checked-in migration/schema state, writable managed-media storage, and required local configuration are compatible; otherwise it returns a sanitized `503`. Neither endpoint contacts Auth0. Retired global administration routes and the retired unscoped `/api/projects.php` endpoint must return `404` in production.
+
+Both endpoints return a generated `X-Request-ID` response header. Use that value to correlate sanitized JSON Lines application events in `docker compose -f docker-compose.production.yml logs web`; do not supply a client request-ID expecting it to be trusted. Successful health and readiness probes are intentionally not logged as normal request-completion events.
+
+The `web` healthcheck runs local liveness every 10 seconds (3-second timeout, 3 retries, 30-second start period). MySQL uses a local `mysqladmin ping` every 5 seconds (5-second timeout, 20 retries, 20-second start period). Normal stops allow 30 seconds for web and 60 seconds for MySQL before force termination. Dependency ordering only protects initial startup; if MySQL becomes unavailable later, liveness remains available and readiness must recover to `READY` after the compatible database returns.
 
 ## First deployment / empty volumes
 
@@ -36,15 +41,15 @@ The web healthcheck is liveness only: `GET /health.php` returns `OK` without a D
 
 ## Backup and restore
 
-`scripts/backup-production.sh` creates timestamped `database.sql`, `private-storage.tar.gz`, and `manifest.json` under ignored `backups/`. The manifest binds both checksums into one recovery-pair identifier. It captures MySQL and private managed media sequentially, so avoid mutations during the short backup window. Rate-limit state, PHP sessions, and container logs are intentionally excluded.
+The former sequential backup/restore examples are superseded by the explicit
+Stage-4C recovery contract in [Stage-4C recovery and operational security](STAGE4C_RECOVERY_OPERATIONS.md).
+It requires a controlled quiesced window, an explicit target, manifest and
+archive verification, encrypted production handling, and a new disposable
+restore target. It never stops or overwrites a live deployment automatically.
 
-Restore is destructive and requires explicit confirmation:
-
-```sh
-./scripts/restore-production.sh --backup-dir backups/20260101T000000Z --confirm-restore
-```
-
-It stops web, replaces the selected MySQL database and managed uploads, then starts web. Validate the migration ledger, `/health.php`, `/api/projects.php`, and referenced uploads before reopening mutations. Backup artifacts contain user data and require host-level access control.
+Use the linked procedure for the exact explicit command. It preserves source and
+target isolation: restore validates into a new target and never stops or
+replaces the live database/media volumes automatically.
 
 ## Failure and rollback
 
@@ -52,4 +57,11 @@ It stops web, replaces the selected MySQL database and managed uploads, then sta
 - If migration succeeds but new web fails, start the previous application image/commit. Migration `002` is additive and backward-compatible with pre-Stage-5 application SQL.
 - `docker compose stop`/`start` and normal container recreation preserve named volumes. **`docker compose down -v` deletes DB, upload, and rate-limit volumes and is destructive.**
 
-Admin sessions are container-local and may be lost when web is recreated. Minimum operating checks are web liveness, API readiness, `docker compose ps`, host disk capacity, Docker log growth, and successful backup completion.
+Owner PHP sessions are container-local and may be lost when web is recreated. Minimum operating checks are web liveness, database connectivity, `docker compose ps`, host disk capacity, Docker log growth, and successful backup completion.
+# Evidence Hub Owner route
+
+After configuring the stable Evidence Hub HMAC key, verify the protected
+read-only route at `/owner/evidence-hub` through an authenticated Owner
+session. A configuration failure must remain a generic unavailable response;
+do not log or expose key material. The path is canonical without a trailing
+slash and private responses use `Cache-Control: no-store`.

@@ -4,35 +4,58 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/public_contact.php';
 require_once __DIR__ . '/includes/rate_limit.php';
+require_once __DIR__ . '/includes/portfolio_presentation.php';
 
 const PUBLIC_CONTACT_RATE_LIMIT_ATTEMPTS = 3;
 const PUBLIC_CONTACT_RATE_LIMIT_WINDOW_SECONDS = 900;
 
 function publicContactNotFound(): never
 {
-    http_response_code(404);
-    header('Cache-Control: no-store');
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Portfolio not found</title></head><body><h1>Portfolio not found.</h1></body></html>';
+    httpSetHtmlResponse(404);
+    httpRenderStatusPage('Portfolio not found', 'Portfolio not found.');
     exit;
 }
 
 function publicContactError(int $status, array $errors): never
 {
-    http_response_code($status);
-    header('Cache-Control: no-store');
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Message unavailable</title></head><body><h1>Message unavailable.</h1><ul>';
-    foreach ($errors as $error) {
-        echo '<li>' . htmlspecialchars((string) $error, ENT_QUOTES, 'UTF-8') . '</li>';
-    }
-    echo '</ul></body></html>';
+    httpSetHtmlResponse($status);
+    httpRenderStatusPage('Message unavailable', 'Message unavailable.', array_values(array_map(static fn (mixed $error): string => (string) $error, $errors)));
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    publicContactNotFound();
+/** @param array{name: string, email: string, message: string} $values
+ *  @param array<string, string> $fieldErrors
+ */
+function publicContactValidationFailure(PDO $database, PublicReadContext $context, string $slug, array $values, array $fieldErrors): never
+{
+    $profile = loadPublicPersonalInfo($database, $context);
+    if ($profile === null || trim((string) $profile['full_name']) === '') {
+        publicContactNotFound();
+    }
+
+    $skills = listPublicSkills($database, $context);
+    $projects = listPublicProjects($database, $context);
+    $experiences = listPublicExperiences($database, $context);
+    $encodedSlug = rawurlencode($slug);
+
+    http_response_code(422);
+    renderPortfolioPresentation($profile, $skills, $projects, [
+        'profile_media_url' => (string) ($profile['profile_image_path'] ?? '') !== '' ? "/p/{$encodedSlug}/media/profile" : '',
+        'project_media_url' => static fn (int $projectId): string => "/p/{$encodedSlug}/media/project/{$projectId}",
+        'contact_action' => "/p/{$encodedSlug}/contact",
+        'contact_values' => $values,
+        'contact_field_errors' => $fieldErrors,
+        'contact_form_error' => 'Please correct the highlighted fields and try again.',
+        'experiences' => $experiences,
+    ]);
+    exit;
 }
+
+httpRegisterExceptionBoundary('public_contact.php');
+httpRequireMethod(['POST']);
 
 header('Cache-Control: no-store');
 
@@ -43,7 +66,17 @@ try {
         publicContactNotFound();
     }
     if ($submission['errors'] !== []) {
-        publicContactError(422, $submission['errors']);
+        $slug = normalizePublicSlug($_GET['slug'] ?? null);
+        if ($slug === null) {
+            publicContactNotFound();
+        }
+        publicContactValidationFailure(
+            $database,
+            $submission['context'],
+            $slug,
+            $submission['values'],
+            $submission['field_errors'],
+        );
     }
 
     $rateLimit = consumeRateLimit(
@@ -63,8 +96,7 @@ try {
     if ($slug === null) {
         publicContactNotFound();
     }
-    header('Location: /p/' . rawurlencode($slug) . '?contact=sent#contact', true, 303);
-    exit;
+    httpRedirect('/p/' . rawurlencode($slug) . '?contact=sent#contact');
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'public_contact.php', 'public_contact_submit');
     publicContactError(503, ['The message could not be saved right now.']);

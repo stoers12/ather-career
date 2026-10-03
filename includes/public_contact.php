@@ -9,47 +9,60 @@ const PUBLIC_CONTACT_NAME_MAX_LENGTH = 100;
 const PUBLIC_CONTACT_EMAIL_MAX_LENGTH = 255;
 const PUBLIC_CONTACT_MESSAGE_MAX_LENGTH = 5000;
 
+/** @return array{name: string, email: string, message: string} */
+function publicContactSubmittedValues(array $submitted): array
+{
+    $values = [];
+    foreach ([
+        'name' => [PUBLIC_CONTACT_NAME_MAX_LENGTH, 'Name'],
+        'email' => [PUBLIC_CONTACT_EMAIL_MAX_LENGTH, 'Email'],
+        'message' => [PUBLIC_CONTACT_MESSAGE_MAX_LENGTH, 'Message'],
+    ] as $field => [$maximum, $label]) {
+        $values[$field] = submittedStringField($submitted, $field, $maximum, $label, true)['value'];
+    }
+
+    return $values;
+}
+
 /**
- * @return array{context: PublicReadContext|null, values: array{name: string, email: string, message: string}|null, errors: list<string>}
+ * @return array{values: array{name: string, email: string, message: string}, errors: list<string>, field_errors: array<string, string>}
+ */
+function publicContactFormState(array $submitted): array
+{
+    $values = [];
+    $fieldErrors = [];
+
+    foreach ([
+        'name' => [PUBLIC_CONTACT_NAME_MAX_LENGTH, 'Name'],
+        'email' => [PUBLIC_CONTACT_EMAIL_MAX_LENGTH, 'Email'],
+        'message' => [PUBLIC_CONTACT_MESSAGE_MAX_LENGTH, 'Message'],
+    ] as $field => [$maximum, $label]) {
+        $result = submittedStringField($submitted, $field, $maximum, $label, true);
+        $values[$field] = $result['value'];
+        if ($result['error'] !== null) {
+            $fieldErrors[$field] = $result['error'];
+        }
+    }
+
+    if (!isset($fieldErrors['email']) && !filter_var($values['email'], FILTER_VALIDATE_EMAIL)) {
+        $fieldErrors['email'] = 'Please enter a valid email address.';
+    }
+
+    return ['values' => $values, 'errors' => validationErrorList($fieldErrors), 'field_errors' => $fieldErrors];
+}
+
+/**
+ * @return array{context: PublicReadContext|null, values: array{name: string, email: string, message: string}, errors: list<string>, field_errors: array<string, string>}
  */
 function preparePublicContactSubmission(PDO $database, mixed $slug, array $submitted): array
 {
     // This must run for every POST. A context from a prior public GET is never reused.
     $context = resolvePublicReadContext($database, $slug);
     if ($context === null) {
-        return ['context' => null, 'values' => null, 'errors' => []];
+        return ['context' => null, ...publicContactFormState($submitted)];
     }
 
-    $name = isset($submitted['name']) && is_string($submitted['name']) ? trim($submitted['name']) : '';
-    $email = isset($submitted['email']) && is_string($submitted['email']) ? trim($submitted['email']) : '';
-    $message = isset($submitted['message']) && is_string($submitted['message']) ? trim($submitted['message']) : '';
-    $errors = [];
-
-    if ($name === '') {
-        $errors[] = 'Name is required.';
-    } elseif (($length = utf8CharacterLength($name)) === null || $length > PUBLIC_CONTACT_NAME_MAX_LENGTH) {
-        $errors[] = 'Name must be 100 characters or fewer.';
-    }
-
-    if ($email === '') {
-        $errors[] = 'Email is required.';
-    } elseif (($length = utf8CharacterLength($email)) === null || $length > PUBLIC_CONTACT_EMAIL_MAX_LENGTH) {
-        $errors[] = 'Email must be 255 characters or fewer.';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Please enter a valid email address.';
-    }
-
-    if ($message === '') {
-        $errors[] = 'Message is required.';
-    } elseif (($length = utf8CharacterLength($message)) === null || $length > PUBLIC_CONTACT_MESSAGE_MAX_LENGTH) {
-        $errors[] = 'Message must be 5000 characters or fewer.';
-    }
-
-    return [
-        'context' => $context,
-        'values' => $errors === [] ? ['name' => $name, 'email' => $email, 'message' => $message] : null,
-        'errors' => $errors,
-    ];
+    return ['context' => $context, ...publicContactFormState($submitted)];
 }
 
 /** @param array{name: string, email: string, message: string} $values */

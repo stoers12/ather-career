@@ -24,7 +24,7 @@ final class TenantAuthorizationStaticTest
             'AND portfolio_id = :authorized_portfolio_id',
             'AND recipient_portfolio_id = :authorized_portfolio_id',
             'INSERT INTO skills (portfolio_id, skill_name)',
-            'INSERT INTO projects (portfolio_id, title, category, description, github_url, image_path)',
+            'INSERT INTO projects (portfolio_id, title, category, description, github_url, image_path, technologies)',
             'INSERT INTO personal_info (',
         ] as $requiredFragment) {
             phase2Assert(str_contains($scopedData, self::normalizeLineEndings($requiredFragment)), "P2J-03 scoped data contract is missing {$requiredFragment}.");

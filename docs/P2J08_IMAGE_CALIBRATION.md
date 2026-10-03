@@ -6,11 +6,18 @@ Disposable production-image calibration used PHP 8.3.33, bundled GD 2.1-compatib
 |---|---:|---:|---:|
 | 4000×2000 PNG | 8,000,000 | 59,654,144 bytes | 78,820 KiB |
 | 3000×3000 PNG | 9,000,000 | 64,749,568 bytes | 85,860 KiB |
-| 4000×4000 PNG | 16,000,000 | 115,109,888 bytes | 134,496 KiB |
+| 4032×3024 PNG | 12,192,768 | 89,010,176 bytes | 107,616 KiB |
+| 4000×3500 PNG | 14,000,000 | 100,720,640 bytes | 120,420 KiB |
+| 4000×4000 PNG | 16,000,000 | 115,109,888 bytes | 134,368 KiB |
 
-JPEG measurements were lower; PNG is the limiting measured format. Sixteen million pixels approaches the PHP process limit without adequate worker headroom. Phase 2 therefore enforces:
+JPEG measurements were lower; PNG is the limiting measured format. A 20-megapixel GD decode exhausted the 128 MiB PHP limit, and 16 megapixels left inadequate worker headroom. The old GD policy therefore enforced 14 MP, but this was an implementation ceiling rather than a product safety policy.
 
-- `PROFILE_PIXEL_CEILING = 8000000`
-- `PROJECT_PIXEL_CEILING = 8000000`
+The libvips thumbnail spike used `VIPS_CONCURRENCY=1` inside a 256 MiB disposable container. It normalized the real 25.96 MP JPEG source to 960 px at 47 MiB RSS and 1600 px at 61 MiB RSS. A 64 MP alpha PNG reached 190 MiB RSS; progressive JPEG and WebP loaders had materially different behavior. The source preflight policy is therefore format-specific:
 
-Actual multipart tests confirmed that a valid 4000×4000 compressed PNG below the encoded-byte limits is rejected by both upload paths.
+- baseline JPEG: 64 MP
+- progressive JPEG: 26 MP
+- PNG: 64 MP
+- WebP: 32 MP
+- every supported format: maximum 12,000 pixels on either edge
+
+These are decoded-image safety limits, not presentation dimensions. Valid sources are normalized through a bounded libvips thumbnail process to a maximum 960-pixel Profile derivative or 1600-pixel Project derivative without upscaling or cropping; private originals remain preserved. Inputs above the relevant ceiling are rejected before libvips execution.

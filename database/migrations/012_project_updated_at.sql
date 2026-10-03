@@ -1,0 +1,2 @@
+-- Migration 012 is executed by the guarded additive projects.updated_at path
+-- in database/migrate.php. Existing rows are backfilled from created_at.

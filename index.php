@@ -2,7 +2,11 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/presentation.php';
+
+httpRegisterExceptionBoundary('index.php');
+httpRequireMethod(['GET', 'HEAD']);
 
 ?>
 <!DOCTYPE html>

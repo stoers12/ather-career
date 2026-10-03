@@ -1,25 +1,12 @@
 (function () {
     'use strict';
-    function showToast(message, type) {
-        var toast = document.createElement('div');
-        toast.className = 'toast ' + (type || 'success');
-        toast.setAttribute('role', 'status');
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        window.setTimeout(function () { toast.classList.add('visible'); }, 20);
-        window.setTimeout(function () {
-            toast.classList.remove('visible');
-            window.setTimeout(function () { toast.remove(); }, 250);
-        }, 3500);
-    }
-
     var modal;
     var lastActiveElement;
     function confirmAction(message, callback, title, actionLabel) {
         if (!modal) {
             modal = document.createElement('div');
             modal.className = 'confirm-modal';
-            modal.innerHTML = '<div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title"><h2 id="confirm-title">Are you sure?</h2><p class="confirm-message"></p><div class="confirm-actions"><button type="button" class="button-link confirm-cancel">Cancel</button><button type="button" class="button-danger confirm-ok">Continue</button></div></div>';
+            modal.innerHTML = '<div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message"><h2 id="confirm-title">Are you sure?</h2><p class="confirm-message" id="confirm-message"></p><div class="confirm-actions"><button type="button" class="button-link confirm-cancel">Cancel</button><button type="button" class="button-danger confirm-ok">Continue</button></div></div>';
             document.body.appendChild(modal);
         }
         lastActiveElement = document.activeElement;
@@ -73,155 +60,140 @@
             confirmAction(element.getAttribute('data-confirm'), function () { window.location.href = element.href; }, element.getAttribute('data-confirm-title'), element.getAttribute('data-confirm-action'));
         });
     });
+    document.querySelectorAll('input[name="remove_image"]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            if (!input.checked) return;
+            input.checked = false;
+            var titleField = input.form ? input.form.querySelector('input[name="title"]') : null;
+            var projectTitle = titleField && titleField.value.trim();
+            var message = projectTitle ? 'Remove the current image for ' + projectTitle + ' when this project is saved?' : 'Remove the current project image when this project is saved?';
+            confirmAction(message, function () {
+                input.checked = true;
+                input.focus();
+            }, 'Remove project image?', 'Remove image');
+        });
+    });
+
+    function restoreOwnerFormState(form) {
+        form.dataset.submitting = '';
+        form.removeAttribute('aria-busy');
+        form.querySelectorAll('[data-owner-pending-original]').forEach(function (control) {
+            control.disabled = false;
+            control.removeAttribute('aria-disabled');
+            control.textContent = control.dataset.ownerPendingOriginal;
+            control.style.minWidth = control.dataset.ownerPendingWidth || '';
+            delete control.dataset.ownerPendingOriginal;
+            delete control.dataset.ownerPendingWidth;
+        });
+    }
+
+    document.querySelectorAll('form[data-owner-form]').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (event.defaultPrevented) return;
+            if (form.dataset.submitting === '1') {
+                event.preventDefault();
+                return;
+            }
+            if (typeof form.checkValidity === 'function' && !form.checkValidity()) return;
+
+            var submitter = event.submitter || form.querySelector('button[type="submit"]:not([disabled]), input[type="submit"]:not([disabled])');
+            if (!submitter) return;
+
+            form.dataset.submitting = '1';
+            form.setAttribute('aria-busy', 'true');
+            submitter.dataset.ownerPendingOriginal = submitter.textContent;
+            submitter.dataset.ownerPendingWidth = submitter.style.minWidth || '';
+            submitter.style.minWidth = Math.ceil(submitter.getBoundingClientRect().width) + 'px';
+            submitter.textContent = submitter.getAttribute('data-pending-label') || 'Saving…';
+            submitter.disabled = true;
+            submitter.setAttribute('aria-disabled', 'true');
+        });
+    });
+
+    window.addEventListener('pageshow', function () {
+        document.querySelectorAll('form[data-owner-form]').forEach(restoreOwnerFormState);
+    });
+
+    var errorSummary = document.querySelector('[data-error-summary]');
+    if (errorSummary) {
+        window.setTimeout(function () { errorSummary.focus(); }, 0);
+    }
+
+    function formState(form) {
+        return JSON.stringify(Array.from(new FormData(form).entries(), function (entry) {
+            var value = entry[1];
+            return [entry[0], value instanceof File ? [value.name, value.size, value.lastModified] : value];
+        }));
+    }
 
     var profileForm = document.getElementById('profile-form');
     if (profileForm) {
-        var initialState = new FormData(profileForm);
+        var initialState = formState(profileForm);
         function hasChanges() {
-            var current = new FormData(profileForm);
-            for (var pair of initialState.entries()) {
-                if (current.get(pair[0]) !== pair[1]) return true;
-            }
-            return false;
+            return formState(profileForm) !== initialState;
         }
-        profileForm.addEventListener('submit', function () { initialState = new FormData(profileForm); });
+        profileForm.addEventListener('submit', function () { initialState = formState(profileForm); });
         window.addEventListener('beforeunload', function (event) {
             if (hasChanges()) { event.preventDefault(); event.returnValue = ''; }
         });
     }
 
-    document.querySelectorAll('[data-image-preview]').forEach(function (input) {
-        var photoSubmit = document.querySelector('[data-photo-submit]');
-        var selectionStatus = document.getElementById('photo-selection-status');
-        input.addEventListener('change', function () {
-            var preview = document.querySelector(input.getAttribute('data-image-preview'));
-            var file = input.files && input.files[0];
-            var initials = document.querySelector('[data-profile-initials]');
-            var resetSelection = function (message) {
-                input.value = '';
-                if (photoSubmit) photoSubmit.disabled = true;
-                if (selectionStatus) selectionStatus.textContent = message || '';
-                if (preview) {
-                    if (preview.dataset.savedSrc) {
-                        preview.src = preview.dataset.savedSrc;
-                        preview.hidden = false;
-                    } else {
-                        preview.removeAttribute('src');
-                        preview.hidden = true;
-                    }
-                }
-                if (initials && !preview.dataset.savedSrc) initials.hidden = false;
-            };
-            if (!preview || !file) {
-                resetSelection('');
+    var profileImageInput = document.querySelector('[data-profile-image-input]');
+    if (profileImageInput) {
+        var profileImageStatus = document.getElementById('profile-image-status');
+        var profileImageMaxBytes = Number(profileImageInput.dataset.profileImageMaxBytes);
+        profileImageInput.addEventListener('change', function () {
+            var file = profileImageInput.files && profileImageInput.files[0];
+            if (!profileImageStatus) return;
+            if (!file) {
+                profileImageStatus.textContent = '';
                 return;
             }
-            if (!file.type.match(/^image\/(jpeg|png)$/) || file.size > 8 * 1024 * 1024) {
-                resetSelection('');
-                showToast('Choose a JPG or PNG image up to 8 MB.', 'error');
+            if (Number.isFinite(profileImageMaxBytes) && file.size > profileImageMaxBytes) {
+                profileImageInput.value = '';
+                profileImageStatus.textContent = 'Choose a profile photo no larger than ' + Math.round(profileImageMaxBytes / (1024 * 1024)) + ' MB.';
                 return;
             }
-            var reader = new FileReader();
-            reader.onload = function () {
-                var testImage = new Image();
-                testImage.onload = function () {
-                    if (testImage.naturalWidth < 400 || testImage.naturalHeight < 400) {
-                        resetSelection('');
-                        showToast('Profile photo must be at least 400 × 400 pixels.', 'error');
-                        return;
-                    }
-                    preview.src = reader.result;
-                    preview.hidden = false;
-                    if (initials) initials.hidden = true;
-                    if (selectionStatus) selectionStatus.textContent = 'Selected: ' + file.name;
-                    if (photoSubmit) photoSubmit.disabled = false;
-                };
-                testImage.onerror = function () {
-                    resetSelection('');
-                    showToast('The selected image could not be previewed.', 'error');
-                };
-                testImage.src = reader.result;
-            };
-            reader.onerror = function () {
-                resetSelection('');
-                showToast('The selected image could not be read.', 'error');
-            };
-            reader.readAsDataURL(file);
+            profileImageStatus.textContent = 'Selected: ' + file.name + '. Validation continues when you save.';
         });
-    });
-
-    document.querySelectorAll('[data-file-trigger]').forEach(function (trigger) {
-        trigger.addEventListener('click', function () {
-            var input = document.getElementById(trigger.getAttribute('data-file-trigger'));
-            if (input) input.click();
-        });
-    });
-
-    var projectForm = document.querySelector('[data-project-form]');
-    var projectFormToggle = document.querySelector('[data-project-form-toggle]');
-    function setProjectFormVisible(visible, shouldFocus) {
-        if (!projectForm || !projectFormToggle) return;
-        projectForm.hidden = !visible;
-        projectFormToggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
-        if (visible && shouldFocus) {
-            window.setTimeout(function () {
-                var firstField = projectForm.querySelector('#title');
-                if (firstField) firstField.focus();
-            }, 0);
-        }
-    }
-    if (projectForm && projectFormToggle) {
-        projectFormToggle.addEventListener('click', function () {
-            setProjectFormVisible(projectForm.hidden, true);
-        });
-        var projectFormCancel = projectForm.querySelector('[data-project-form-cancel]');
-        if (projectFormCancel) {
-            projectFormCancel.addEventListener('click', function () {
-                var form = projectForm.querySelector('form');
-                if (form) form.reset();
-                setProjectFormVisible(false, false);
-                projectFormToggle.focus();
-            });
-        }
     }
 
     var projectImageInput = document.querySelector('[data-project-image-input]');
     if (projectImageInput) {
         var projectImageStatus = document.getElementById('project-image-status');
+        var projectImageMaxBytes = Number(projectImageInput.dataset.projectImageMaxBytes);
         projectImageInput.addEventListener('change', function () {
             var file = projectImageInput.files && projectImageInput.files[0];
+            if (!projectImageStatus) return;
             if (!file) {
-                if (projectImageStatus) projectImageStatus.textContent = '';
+                projectImageStatus.textContent = '';
                 return;
             }
-            if (!file.type.match(/^image\/(jpeg|png|webp)$/) || file.size > 2 * 1024 * 1024) {
+            if (Number.isFinite(projectImageMaxBytes) && file.size > projectImageMaxBytes) {
                 projectImageInput.value = '';
-                if (projectImageStatus) projectImageStatus.textContent = '';
-                showToast('Choose a JPG, PNG, or WEBP image up to 2 MB.', 'error');
+                projectImageStatus.textContent = 'Choose a project image no larger than ' + Math.round(projectImageMaxBytes / (1024 * 1024)) + ' MB.';
                 return;
             }
-            if (projectImageStatus) projectImageStatus.textContent = 'Selected: ' + file.name;
+            projectImageStatus.textContent = 'Selected: ' + file.name + '. Validation continues when you save.';
         });
     }
 
-    var skillInput = document.getElementById('skill_name');
-    var skillNames = Array.prototype.map.call(document.querySelectorAll('[data-skill-name]'), function (item) {
-        return item.getAttribute('data-skill-name').toLowerCase();
-    });
-    if (skillInput) {
-        skillInput.addEventListener('input', function () {
-            var duplicate = skillNames.indexOf(skillInput.value.trim().toLowerCase()) !== -1;
-            var feedback = document.getElementById('skill-feedback');
-            if (feedback) {
-                feedback.textContent = duplicate ? 'That skill already exists.' : '';
-                feedback.className = duplicate ? 'field-feedback error' : 'field-feedback';
-            }
-            skillInput.setCustomValidity(duplicate ? 'That skill already exists.' : '');
+    document.querySelectorAll('[data-copy-public-url]').forEach(function (button) {
+        var publicUrl = document.getElementById(button.getAttribute('data-copy-public-url'));
+        var feedback = document.getElementById('publication-copy-feedback');
+        if (!publicUrl || !feedback || !navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+            return;
+        }
+        button.hidden = false;
+        button.addEventListener('click', function () {
+            navigator.clipboard.writeText(publicUrl.textContent.trim()).then(function () {
+                feedback.textContent = 'Portfolio link copied.';
+                feedback.classList.remove('error');
+            }).catch(function () {
+                feedback.textContent = 'Copying the Portfolio link failed. Select and copy the link manually.';
+                feedback.classList.add('error');
+            });
         });
-    }
-
-    document.querySelectorAll('.status-message[data-toast]').forEach(function (message) {
-        showToast(message.textContent.trim(), message.classList.contains('error') ? 'error' : 'success');
     });
 
     var projectSearch = document.querySelector('[data-project-search]');

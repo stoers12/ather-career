@@ -4,16 +4,25 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/authorization.php';
 require_once __DIR__ . '/error_reporting.php';
+require_once __DIR__ . '/http.php';
 require_once __DIR__ . '/owner_session.php';
 
 function ownerAuthorizationDenied(): never
 {
-    http_response_code(403);
-    exit('Owner authentication required.');
+    httpAbortHtml(403, 'You are not authorized to access this resource.');
+}
+
+function ownerAuthenticationRequired(): never
+{
+    httpRedirect('/owner_login.php');
 }
 
 function requireOwnerAuthenticatedUser(PDO $database): AuthenticatedUserContext
 {
+    if (currentInternalUserSession() === null) {
+        ownerAuthenticationRequired();
+    }
+
     try {
         return requireAuthenticatedUser($database);
     } catch (AuthorizationDeniedException) {
@@ -44,8 +53,7 @@ function requireOwnerPortfolioContext(PDO $database): AuthorizedPortfolioContext
 
     try {
         if (!ownerHasPortfolio($database, $user)) {
-            header('Location: owner_onboarding.php', true, 303);
-            exit;
+            httpRedirect('/owner_onboarding.php');
         }
 
         return requireOwnedPortfolioContext($database);

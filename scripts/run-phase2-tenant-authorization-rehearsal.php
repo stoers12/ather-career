@@ -220,7 +220,7 @@ try {
 
     $profileA = createAuthorizedPersonalInfo($database, $contextA, ['full_name' => 'Private A Profile']);
     $skillA = createAuthorizedSkill($database, $contextA, 'A Skill');
-    $projectA = createAuthorizedProject($database, $contextA, 'A Project', 'Tenant Test', 'A private project.', 'https://example.test/a-project', null);
+    $projectA = createAuthorizedProject($database, $contextA, 'A Project', 'Tenant Test', 'A private project.', 'https://example.test/a-project', null, []);
     $messageA = tenantSeedMessage($database, $portfolioA, 'Sender A');
 
     $profileB = tenantSeedProfile($database, $portfolioB, 'Private B Profile');
@@ -286,7 +286,7 @@ try {
     phase2AssertSame($portfolioA, (int) $createdForAPortfolio->fetchColumn(), 'A submitted portfolio_id selected B for skill creation.');
 
     phase2AssertSame(null, findAuthorizedProject($database, $contextA, $projectB), 'A read B private project.');
-    phase2AssertSame(false, updateAuthorizedProject($database, $contextA, $projectB, 'A overwrote B Project', 'Tenant Test', 'Attempted overwrite.', 'https://example.test/overwrite', null), 'A updated B project.');
+    phase2AssertSame(false, updateAuthorizedProject($database, $contextA, $projectB, 'A overwrote B Project', 'Tenant Test', 'Attempted overwrite.', 'https://example.test/overwrite', null, []), 'A updated B project.');
     phase2AssertSame(false, deleteAuthorizedProject($database, $contextA, $projectB), 'A deleted B project.');
     phase2AssertSame(null, findAuthorizedMessage($database, $contextA, $messageB), 'A read B message.');
     phase2AssertSame($bBeforeA, tenantPortfolioSnapshot($database, $portfolioB), 'A cross-tenant operation changed B database rows.');
@@ -306,7 +306,7 @@ try {
     phase2AssertSame(false, updateAuthorizedSkill($database, $contextB, $skillA, 'B overwrote A Skill'), 'B updated A skill.');
     phase2AssertSame(false, deleteAuthorizedSkill($database, $contextB, $skillA), 'B deleted A skill.');
     phase2AssertSame(null, findAuthorizedProject($database, $contextB, $projectA), 'B read A private project.');
-    phase2AssertSame(false, updateAuthorizedProject($database, $contextB, $projectA, 'B overwrote A Project', 'Tenant Test', 'Attempted overwrite.', 'https://example.test/overwrite', null), 'B updated A project.');
+    phase2AssertSame(false, updateAuthorizedProject($database, $contextB, $projectA, 'B overwrote A Project', 'Tenant Test', 'Attempted overwrite.', 'https://example.test/overwrite', null, []), 'B updated A project.');
     phase2AssertSame(false, deleteAuthorizedProject($database, $contextB, $projectA), 'B deleted A project.');
     phase2AssertSame(null, findAuthorizedMessage($database, $contextB, $messageA), 'B read A message.');
     phase2AssertSame($aBeforeB, tenantPortfolioSnapshot($database, $portfolioA), 'B cross-tenant operation changed A database rows.');

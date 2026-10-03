@@ -14,13 +14,45 @@ require_once __DIR__ . '/../tests/phase2/cases/IdentitySessionContractTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OwnershipMigrationStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OwnerFlowStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PublicLifecycleStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/PublicUrlConfigurationTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PublicContactStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/PortfolioPresentationStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/HeroPersonalInfoCapabilityTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/ProfileContactTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/ProjectTechnologiesStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/ExperienceCapabilityTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/ExperiencePresentationStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/FooterPresentationStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PrivateMediaStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/MediaNormalizationTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/LibvipsImageProcessorTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OperationalSecurityStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/RuntimeObservabilityStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EdgeSecurityStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/OperationalRecoveryStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/Auth0OidcStaticTest.php';
-require_once __DIR__ . '/../tests/phase2/cases/LegacyAdminCutoverStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/LegacyBackendRemovalStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/HttpValidationContractTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/PublicProjectJsonContractTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/OwnerTransactionIntegrityStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/OwnerFrontendExperienceStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/ResponsiveAccessibilityStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/FrontendPerformanceResilienceStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/StaticArchitectureGuardTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/TenantAuthorizationStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceTextEvaluationTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubStorageTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubAggregationTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubRecommendationDispositionTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractMapperTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubConfigurationTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubOwnerRecommendationOrchestrationTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubOwnerRoutePresenterTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubOwnerPageModelTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubRecommendationActionTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubRequiredGatesStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubUndoTest.php';
 
 $environment = null;
 $failures = [];
@@ -29,15 +61,47 @@ $tests = [
     'ownership migration static contract' => [OwnershipMigrationStaticTest::class, 'run'],
     'owner flow static contract' => [OwnerFlowStaticTest::class, 'run'],
     'public lifecycle static contract' => [PublicLifecycleStaticTest::class, 'run'],
+    'public URL configuration and publication presentation contract' => [PublicUrlConfigurationTest::class, 'run'],
     'public contact static contract' => [PublicContactStaticTest::class, 'run'],
+    'shared Portfolio presentation contract' => [PortfolioPresentationStaticTest::class, 'run'],
+    'Hero Personal Info capability contract' => [HeroPersonalInfoCapabilityTest::class, 'run'],
+    'Profile contact visibility and rendering' => [ProfileContactTest::class, 'run'],
+    'project technologies static contract' => [ProjectTechnologiesStaticTest::class, 'run'],
+    'Experience capability static contract' => [ExperienceCapabilityTest::class, 'run'],
+    'Experience presentation static contract' => [ExperiencePresentationStaticTest::class, 'run'],
+    'Footer presentation static contract' => [FooterPresentationStaticTest::class, 'run'],
     'private media static contract' => [PrivateMediaStaticTest::class, 'run'],
+    'media dimension normalization contract' => [MediaNormalizationTest::class, 'run'],
+    'bounded libvips image processor contract' => [LibvipsImageProcessorTest::class, 'run'],
     'operational security static contract' => [OperationalSecurityStaticTest::class, 'run'],
+    'runtime health and observability static contract' => [RuntimeObservabilityStaticTest::class, 'run'],
+    'edge security and abuse-protection static contract' => [EdgeSecurityStaticTest::class, 'run'],
+    'operational recovery and closure static contract' => [OperationalRecoveryStaticTest::class, 'run'],
     'Auth0 OIDC static contract' => [Auth0OidcStaticTest::class, 'run'],
-    'legacy admin cutover static contract' => [LegacyAdminCutoverStaticTest::class, 'run'],
+    'legacy backend removal static contract' => [LegacyBackendRemovalStaticTest::class, 'run'],
+    'HTTP response and validation contract' => [HttpValidationContractTest::class, 'run'],
+    'public Project JSON allow-list and media contract' => [PublicProjectJsonContractTest::class, 'run'],
+    'owner transaction and media-integrity static contract' => [OwnerTransactionIntegrityStaticTest::class, 'run'],
+    'Owner frontend experience static contract' => [OwnerFrontendExperienceStaticTest::class, 'run'],
+    'responsive and accessibility static contract' => [ResponsiveAccessibilityStaticTest::class, 'run'],
+    'frontend performance and resilience static contract' => [FrontendPerformanceResilienceStaticTest::class, 'run'],
     'environment safety and disposable namespace' => [EnvironmentSafetyTest::class, 'run'],
     'synthetic fixture contract and test authentication carrier' => [FixtureContractTest::class, 'run'],
     'static architecture guards' => [StaticArchitectureGuardTest::class, 'run'],
     'tenant authorization static contract' => [TenantAuthorizationStaticTest::class, 'run'],
+    'Evidence Hub contracts, taxonomy, fixtures, and tenant isolation' => [EvidenceHubContractTest::class, 'run'],
+    'Evidence Hub deterministic Unicode text evaluation' => [EvidenceTextEvaluationTest::class, 'run'],
+    'Evidence Hub private storage and migration contract' => [EvidenceHubStorageTest::class, 'run'],
+    'Evidence Hub Owner aggregation and technology mapping core' => [EvidenceHubAggregationTest::class, 'run'],
+    'Evidence Hub tenant-scoped recommendation disposition repository' => [EvidenceHubRecommendationDispositionTest::class, 'run'],
+    'Evidence Hub frozen contract mapper' => [EvidenceHubContractMapperTest::class, 'run'],
+    'Evidence Hub stable HMAC configuration boundary' => [EvidenceHubConfigurationTest::class, 'run'],
+    'Evidence Hub Owner recommendation orchestration and full candidate resolution' => [EvidenceHubOwnerRecommendationOrchestrationTest::class, 'run'],
+    'Evidence Hub protected Owner route and read-only presenter' => [EvidenceHubOwnerRoutePresenterTest::class, 'run'],
+    'Evidence Hub private page model, progress, and evidence persistence' => [EvidenceHubOwnerPageModelTest::class, 'run'],
+    'Evidence Hub protected recommendation disposition actions' => [EvidenceHubRecommendationActionTest::class, 'run'],
+    'Evidence Hub required finalization-gate registration' => [EvidenceHubRequiredGatesStaticTest::class, 'run'],
+    'Evidence Hub immediate one-level Undo' => [EvidenceHubUndoTest::class, 'run'],
 ];
 
 try {

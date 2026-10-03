@@ -8,16 +8,61 @@ const SKILL_NAME_MAX_LENGTH = 100;
 const PERSONAL_INFO_FIELD_MAX_LENGTHS = [
     'full_name' => 150,
     'professional_title' => 150,
+    'hero_headline' => 180,
     'email' => 150,
     'phone_primary' => 30,
     'phone_secondary' => 30,
     'location' => 150,
+    'about_me' => 5000,
     'linkedin_url' => 255,
     'github_url' => 255,
     'instagram_url' => 255,
     'facebook_url' => 255,
     'website_url' => 255,
+    'work_description' => 1200,
 ];
+
+/**
+ * Normalizes one scalar HTML form field exactly once and keeps validation
+ * messages keyed to the submitted field. Missing optional fields normalize to
+ * an empty string; arrays and other structured input are always rejected.
+ *
+ * @return array{value: string, error: string|null}
+ */
+function submittedStringField(array $submitted, string $field, int $maximum, string $label, bool $required = false): array
+{
+    $present = array_key_exists($field, $submitted);
+    $raw = $present ? $submitted[$field] : null;
+    if ($present && !is_string($raw)) {
+        return ['value' => '', 'error' => "{$label} must be submitted as text."];
+    }
+
+    $value = is_string($raw) ? trim($raw) : '';
+    if ($required && $value === '') {
+        return ['value' => $value, 'error' => "{$label} is required."];
+    }
+
+    $lengthError = utf8FieldLengthError($value, $maximum, $label);
+    if ($lengthError !== null) {
+        return ['value' => $value, 'error' => $lengthError];
+    }
+
+    return ['value' => $value, 'error' => null];
+}
+
+/** @param array<string, string> $fieldErrors
+ *  @return list<string>
+ */
+function validationErrorList(array $fieldErrors): array
+{
+    return array_values($fieldErrors);
+}
+
+/** @param list<string> $allowedValues */
+function submittedEnumValue(mixed $value, array $allowedValues): ?string
+{
+    return is_string($value) && in_array($value, $allowedValues, true) ? $value : null;
+}
 
 function isSafeHttpUrl(string $url): bool
 {

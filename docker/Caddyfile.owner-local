@@ -1,0 +1,40 @@
+# Local-only TLS termination for the Owner development service.
+# Caddy's internal CA is intentional; clients may trust it or use curl -k.
+https://localhost {
+    tls internal
+
+    @oidc_callback path /owner_oidc_callback.php
+    handle @oidc_callback {
+        header {
+            Content-Security-Policy "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; media-src 'self'"
+            X-Content-Type-Options "nosniff"
+            X-Frame-Options "DENY"
+            Referrer-Policy "no-referrer"
+            Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+        }
+        reverse_proxy web:80 {
+            header_down -Content-Security-Policy
+            header_down -X-Content-Type-Options
+            header_down -X-Frame-Options
+            header_down -Referrer-Policy
+            header_down -Permissions-Policy
+        }
+    }
+
+    handle {
+        header {
+            Content-Security-Policy "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; media-src 'self'"
+            X-Content-Type-Options "nosniff"
+            X-Frame-Options "DENY"
+            Referrer-Policy "strict-origin-when-cross-origin"
+            Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+        }
+        reverse_proxy web:80 {
+            header_down -Content-Security-Policy
+            header_down -X-Content-Type-Options
+            header_down -X-Frame-Options
+            header_down -Referrer-Policy
+            header_down -Permissions-Policy
+        }
+    }
+}

@@ -2,6 +2,7 @@ name: portfolio_course_production
 
 services:
   web:
+    image: ${PORTFOLIO_PRODUCTION_IMAGE:-portfolio_course_production-web:latest}
     build:
       context: .
       dockerfile: Dockerfile.production
@@ -9,21 +10,26 @@ services:
         APP_VERSION: ${APP_VERSION:-unknown}
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8098:80"
+      - "127.0.0.1:${PORTFOLIO_PRODUCTION_PORT:-8098}:80"
+    mem_limit: 512m
+    security_opt:
+      - no-new-privileges:true
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      APP_ENV: production
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?PUBLIC_BASE_URL must be configured}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE}
-      ADMIN_USERNAME: ${ADMIN_USERNAME}
-      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
-      LEGACY_ADMIN_AUTH_ENABLED: ${LEGACY_ADMIN_AUTH_ENABLED:-true}
       EXPECTED_OIDC_ISSUER: ${EXPECTED_OIDC_ISSUER}
+      # Required only for a fresh V1 baseline before ownership migration 004.
+      PRESERVED_V1_OIDC_SUBJECT: ${PRESERVED_V1_OIDC_SUBJECT:-}
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
       OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI}
+      EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY: ${EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY:?EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY is required}
       RATE_LIMIT_STATE_DIR: /var/www/app/runtime/rate-limit
       ATHERCAR_STORAGE_ROOT: /var/lib/ather-career/storage
     volumes:
@@ -37,7 +43,8 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
-      start_period: 10s
+      start_period: 30s
+    stop_grace_period: 30s
     logging:
       driver: json-file
       options:
@@ -47,6 +54,8 @@ services:
   db:
     image: mysql:8.4
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
@@ -56,10 +65,12 @@ services:
       - portfolio_production_db_data:/var/lib/mysql
       - ./database/portfolio_db.sql:/docker-entrypoint-initdb.d/01-portfolio.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysqladmin ping -h localhost -u root --silent"]
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysqladmin ping --protocol=TCP -h 127.0.0.1 -P 3306 -u root --silent"]
       interval: 5s
       timeout: 5s
       retries: 20
+      start_period: 20s
+    stop_grace_period: 60s
     logging:
       driver: json-file
       options:

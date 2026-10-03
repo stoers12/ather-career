@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/presentation.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/public_lifecycle.php';
+require_once __DIR__ . '/includes/public_url.php';
+require_once __DIR__ . '/includes/portfolio_presentation.php';
 
 function publicPortfolioNotFound(): never
 {
-    http_response_code(404);
-    header('Cache-Control: no-store');
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Portfolio not found</title></head><body><h1>Portfolio not found.</h1></body></html>';
+    httpSetHtmlResponse(404);
+    httpRenderStatusPage('Portfolio not found', 'Portfolio not found.');
     exit;
 }
 
+httpRegisterExceptionBoundary('public_portfolio.php');
+httpRequireMethod(['GET', 'HEAD']);
 header('Cache-Control: no-store');
 
 try {
@@ -33,33 +36,20 @@ try {
     }
     $skills = listPublicSkills($database, $context);
     $projects = listPublicProjects($database, $context);
+    $experiences = listPublicExperiences($database, $context);
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'public_portfolio.php', 'public_portfolio_load');
-    http_response_code(503);
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Portfolio unavailable</title></head><body><h1>Portfolio temporarily unavailable.</h1></body></html>';
+    httpSetHtmlResponse(503);
+    httpRenderStatusPage('Portfolio unavailable', 'Portfolio temporarily unavailable.');
     exit;
 }
 
-$escape = static fn (mixed $value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="index,follow">
-    <title><?php echo $escape($profile['full_name']); ?> - Portfolio</title>
-    <link rel="stylesheet" href="<?php echo versionedAssetUrl('style.css'); ?>">
-</head>
-<body>
-<main>
-    <header><h1><?php echo $escape($profile['full_name']); ?></h1><?php if ((string) $profile['professional_title'] !== ''): ?><p><?php echo $escape($profile['professional_title']); ?></p><?php endif; ?></header>
-    <?php if ((string) $profile['profile_image_path'] !== ''): ?><img src="/p/<?php echo rawurlencode($slug); ?>/media/profile" alt="<?php echo $escape($profile['full_name']); ?>"><?php endif; ?>
-    <?php if ((string) $profile['location'] !== ''): ?><p><?php echo $escape($profile['location']); ?></p><?php endif; ?>
-    <?php if ((string) $profile['about_me'] !== '' || (string) $profile['work_description'] !== ''): ?><section><h2>About</h2><p><?php echo $escape((string) ($profile['about_me'] ?: $profile['work_description'])); ?></p></section><?php endif; ?>
-    <section><h2>Skills</h2><?php if ($skills === []): ?><p>No skills listed.</p><?php else: ?><ul><?php foreach ($skills as $skill): ?><li><?php echo $escape($skill['skill_name']); ?></li><?php endforeach; ?></ul><?php endif; ?></section>
-    <section><h2>Projects</h2><?php if ($projects === []): ?><p>No projects listed.</p><?php else: ?><div><?php foreach ($projects as $project): ?><article><?php if ((string) ($project['image_path'] ?? '') !== ''): ?><img src="/p/<?php echo rawurlencode($slug); ?>/media/project/<?php echo (int) $project['id']; ?>" alt="<?php echo $escape($project['title']); ?>"><?php endif; ?><h3><?php echo $escape($project['title']); ?></h3><p><?php echo $escape($project['category']); ?></p><p><?php echo $escape($project['description']); ?></p><?php if ((string) $project['github_url'] !== ''): ?><p><a href="<?php echo $escape($project['github_url']); ?>" rel="noopener noreferrer">Project link</a></p><?php endif; ?></article><?php endforeach; ?></div><?php endif; ?></section>
-    <section id="contact"><h2>Contact</h2><?php if (($_GET['contact'] ?? null) === 'sent'): ?><p role="status">Message submitted successfully.</p><?php endif; ?><form method="post" action="/p/<?php echo rawurlencode($slug); ?>/contact"><label>Name <input type="text" name="name" maxlength="100" required autocomplete="name"></label><label>Email <input type="email" name="email" maxlength="255" required autocomplete="email"></label><label>Message <textarea name="message" maxlength="5000" required></textarea></label><button type="submit">Send message</button></form></section>
-</main>
-</body>
-</html>
+$encodedSlug = rawurlencode($slug);
+renderPortfolioPresentation($profile, $skills, $projects, [
+    'profile_media_url' => (string) ($profile['profile_image_path'] ?? '') !== '' ? "/p/{$encodedSlug}/media/profile" : '',
+    'project_media_url' => static fn (int $projectId): string => "/p/{$encodedSlug}/media/project/{$projectId}",
+    'contact_action' => "/p/{$encodedSlug}/contact",
+    'canonical_url' => publicPortfolioUrl($slug),
+    'contact_sent' => ($_GET['contact'] ?? null) === 'sent',
+    'experiences' => $experiences,
+]);

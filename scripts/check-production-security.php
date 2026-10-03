@@ -6,9 +6,10 @@ if (PHP_SAPI !== 'cli') {
 }
 
 require_once __DIR__ . '/../includes/session.php';
-require_once __DIR__ . '/../includes/admin_session.php';
 require_once __DIR__ . '/../includes/storage.php';
 require_once __DIR__ . '/../includes/auth0_oidc.php';
+require_once __DIR__ . '/../includes/public_url.php';
+require_once __DIR__ . '/../includes/evidence_hub_configuration.php';
 
 function productionSecurityDirectiveIsEnabled(string $name): bool
 {
@@ -17,20 +18,21 @@ function productionSecurityDirectiveIsEnabled(string $name): bool
 
 $failures = [];
 $failures = array_merge($failures, auth0ProductionConfigurationFailures());
+try {
+    evidenceHubOpaqueTargetHmacKeyFromEnvironment();
+} catch (EvidenceHubHmacConfigurationException) {
+    $failures[] = 'Evidence Hub HMAC key is missing or invalid.';
+}
+
+try {
+    publicBaseUrl();
+} catch (PublicUrlConfigurationException) {
+    $failures[] = 'PUBLIC_BASE_URL must be configured as a valid HTTPS origin.';
+}
 
 if (getenv('APP_ENV') === 'test' || getenv('ATHERCAR_TEST_MODE') === '1') {
     $failures[] = 'test-mode configuration is forbidden in production.';
 }
-$adminUsername = getenv('ADMIN_USERNAME');
-$adminPasswordHash = getenv('ADMIN_PASSWORD_HASH');
-if (in_array($adminUsername, ['fixture', 'test', 'admin'], true)
-    || (is_string($adminPasswordHash) && preg_match('/replace|fixture|password/i', $adminPasswordHash))) {
-    $failures[] = 'known test or placeholder credentials are forbidden.';
-}
-if (!legacyAdminAuthorityConfigurationIsValid()) {
-    $failures[] = 'LEGACY_ADMIN_AUTH_ENABLED must be a boolean value.';
-}
-
 try {
     requirePrivateStorageRoot();
 } catch (PrivateStorageConfigurationException $exception) {
@@ -80,9 +82,10 @@ if (is_string($vhostConfiguration) && preg_match('/^\s*Alias\s+\/uploads\//mi', 
 $headerConfiguration = @file_get_contents('/etc/apache2/conf-enabled/zzz-portfolio-security-headers.conf');
 $requiredHeaderRules = [
     'X-Frame-Options "DENY"',
-    "Content-Security-Policy \"frame-ancestors 'none'\"",
+    "Content-Security-Policy \"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; media-src 'self'\"",
     'X-Content-Type-Options "nosniff"',
     'Referrer-Policy "strict-origin-when-cross-origin"',
+    'Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"',
 ];
 if (!is_file('/etc/apache2/mods-enabled/headers.load') || !is_string($headerConfiguration)) {
     $failures[] = 'the Apache security-header configuration is unavailable.';

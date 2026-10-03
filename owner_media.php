@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/owner_session.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/owner_flow.php';
+require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/media_access.php';
 
 function ownerMediaNotFound(): never
@@ -15,6 +16,8 @@ function ownerMediaNotFound(): never
 }
 
 startOwnerSession();
+httpRegisterExceptionBoundary('owner_media.php');
+httpRequireMethod(['GET', 'HEAD']);
 
 try {
     $database = getDatabaseConnection();
