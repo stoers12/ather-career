@@ -2,6 +2,8 @@
 
 **All routes here are proposals, not implemented filenames.** Existing Owner URLs remain guarded during transition. Each private response is no-store; redirects use fixed allowlists. A route never accepts an owner ID as authorization. Method/URI spelling is subject to route review, while the security contract is binding. State model: anonymous → OIDC pending → unverified holding or verified onboarding → completed private Dashboard → explicit publication. Disabled/restricted states deny protected resources. See [ADRs](02-ARCHITECTURE-DECISIONS.md) and [test IDs](07-TEST-AND-ACCEPTANCE-MATRIX.md).
 
+Phase 1's local 014 and read-only repository add no route, callback cutover, registration or account-linking action. The existing `owner_oidc_callback.php` still uses the legacy resolver; this table must not be treated as enabling any proposed flow below.
+
 | Flow | Starting state | Action | Proposed route | Authorization | Security checks | State transition | Success | Safe failure | Audit code | Related ADR suffix | Required test |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Landing entry | anonymous | choose account action | GET / | public | safe next allowlist | anonymous→Sign In | clear entry | generic unavailable | ENTRY_VIEW | 001/005 | AUTH-OIDC-001 |

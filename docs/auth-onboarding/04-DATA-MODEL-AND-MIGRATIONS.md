@@ -1,6 +1,6 @@
 # 04 — Data model and migration plan
 
-**Plan only.** No migration file or live row is changed by this record. The verified baseline has ordered migrations 001–013. Schema names below are proposals until isolated migration rehearsal and review. Current behavior is detailed in [01](01-CURRENT-STATE.md); decisions in [02](02-ARCHITECTURE-DECISIONS.md).
+**Phase 1 local implementation:** Migration 014 and a read-only compatibility repository exist in unpushed commit `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e`. Migration 014 passed isolated fresh and upgraded rehearsals; it has not been applied to the canonical database, whose ledger remains 001–013. Migrations 015–017 and all account-readiness, onboarding, linking and publication stores below remain proposals. Current behavior is detailed in [01](01-CURRENT-STATE.md); decisions in [02](02-ARCHITECTURE-DECISIONS.md).
 
 ## Current relevant model and limitations
 
@@ -11,9 +11,9 @@
 | personal_info and profile-related rows | Current name, professional and contact facts | Required onboarding fields and per-contact privacy need a careful mapping |
 | projects, project_technologies, project evidence fields | Owner-scoped work and Evidence data | No per-project or independent public Evidence choice |
 | portfolio/contact visibility state | Existing portfolio and contact publication controls | New phone-by-default and type-by-type contract needs review |
-| migration ledger | Applied schema history | Expected 001–013; exact live ledger must be SELECT-checked before any rollout |
+| migration ledger | Applied schema history | Canonical live ledger 001–013 at Phase 1 review; SELECT-check again before any rollout |
 
-Ownership relationships and indexes must be inspected against the actual schema and collation in the Phase 1 characterization slice. Do not infer unique issuer/subject semantics from current email or profile fields.
+The Phase 1 characterization inspected ownership relationships and the current binary issuer/subject columns. Do not infer identity from email or profile fields.
 
 ## Proposed responsibilities and constraints
 
@@ -51,7 +51,24 @@ Only active-step fields are validated on draft save; all required answers are va
 
 ### 014 — Identity model and safe backfill
 
-Add user_identities and unique (issuer, subject), user_id FK and required indexes. Detect duplicate/missing issuer-subject pairs and collation collisions **before** live writes. Backfill exactly one binding per existing users row from existing issuer/subject columns into its existing user_id; verify one-to-one counts and owner edges. Keep old columns for dual-read compatibility and rollback. A callback change follows characterization and isolated rehearsal, not the migration alone. No registration, linking, user merge or portfolio move in Phase 1.
+**Implemented locally; not deployed.** The guarded 014 runner creates only `user_identities` (InnoDB, utf8mb4) and a migration-ledger entry after success. It does not alter `users`, portfolios, projects or their ownership. Exact schema:
+
+| Column | Type and rule |
+| --- | --- |
+| `id` | `INT UNSIGNED AUTO_INCREMENT PRIMARY KEY` |
+| `user_id` | `INT UNSIGNED NOT NULL`; `fk_user_identities_user` to `users(id)` with update/delete `RESTRICT`; `idx_user_identities_user` |
+| `oidc_issuer` | `VARBINARY(2048) NOT NULL` |
+| `oidc_subject` | `VARBINARY(255) NOT NULL` |
+| `is_primary` | `TINYINT(1) NOT NULL DEFAULT 1`; check permits only 0 or 1 |
+| `provider_name` | nullable `VARCHAR(32)` using `ascii_bin`; not inferred during backfill |
+| `connection_name` | nullable `VARCHAR(64)` using `ascii_bin`; not inferred during backfill |
+| `created_at` | `TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP` |
+
+`uq_user_identities_pair` uniquely indexes the full binary `(oidc_issuer, oidc_subject)` pair. Issuer and subject are opaque, case-sensitive bytes: validation rejects empty or over-limit values; it does not trim, case-fold, rewrite or derive either value from email. The legacy `users.oidc_issuer` and `users.oidc_subject` columns and their current unique-subject index remain intact. The migration preflights every legacy pair before DDL, locks users and bindings during backfill, rejects duplicate or conflicting rows, inserts exactly one primary binding per existing user and records 014 only after reconciliation. No identity consolidation or portfolio reassignment occurs.
+
+`findCompatibleIdentityUser` is an unwired, read-only repository function. Before 014 it resolves a bounded subject through the legacy binary column and verifies the issuer exactly. After 014 it resolves the exact binary pair through `user_identities`, joins the original `users` row, and rejects a nonprimary or legacy-mismatched binding. It returns only internal user ID, account status and authorization version, or `null`; it neither creates an account nor grants portfolio access. Existing callbacks still use their legacy resolver; owner authorization still derives portfolio ownership from the authenticated server session. A callback cutover requires a later, separately reviewed change.
+
+This slice implements the identity and preservation portions of [AUTH-ADR-001, AUTH-ADR-003 and AUTH-ADR-024](02-ARCHITECTURE-DECISIONS.md). The proof is scoped to `MIGRATION-001`, `MIGRATION-003`, the database-constraint portion of `AUTH-LINK-002` and the isolated 014 portion of `ROLLBACK-002` in [07](07-TEST-AND-ACCEPTANCE-MATRIX.md); it does not satisfy registration, verified-email or linking gates.
 
 ### 015 — Account verification, roles/security, onboarding and consent
 

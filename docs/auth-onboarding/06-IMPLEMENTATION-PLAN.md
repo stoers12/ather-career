@@ -1,6 +1,6 @@
 # 06 — Phased implementation plan
 
-**Current status:** Phase 0 documentation completed locally; owner documentation review is next. All later phases are proposed implementation packages, not work performed by this branch. Prefer small independently reviewable commits within each package. Keep open registration disabled until security, privacy, accessibility, recovery, tenant and legal gates pass. [Data plan](04-DATA-MODEL-AND-MIGRATIONS.md) defines 014–017; [test matrix](07-TEST-AND-ACCEPTANCE-MATRIX.md) defines evidence.
+**Current status:** Phase 1 identity foundation was committed locally at `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e` and reviewed against the approved architecture. The six-file implementation is unpushed and undeployed. 014 passed isolated rehearsal; the canonical ledger remains 001–013. Phases 2–7 remain proposed and blocked by their own gates. Keep open registration disabled until security, privacy, accessibility, recovery, tenant and legal gates pass. [Data plan](04-DATA-MODEL-AND-MIGRATIONS.md) distinguishes implemented 014 from proposed 015–017; [test matrix](07-TEST-AND-ACCEPTANCE-MATRIX.md) records scoped evidence.
 
 ## Phase 0 — Architecture documentation
 
@@ -22,15 +22,15 @@
 
 - **Objective:** Identity foundation.
 - **Prerequisites:** Accepted Phase 0; clean baseline; isolated databases.
-- **Expected files/components:** includes/auth0_identity.php, includes/auth0_oidc.php, identity repository, database/migrations/014_*.sql, tests/phase2, scripts/run-phase2-tests.php.
+- **Implemented files/components:** `database/identity_foundation.php`, `database/migrate.php`, `database/migrations/014_identity_foundation.sql`, `includes/identity_repository.php`, and two isolated rehearsal scripts. Existing OIDC/callback/session files and Phase 2 tests remain unchanged.
 - **Data impact:** Additive identity table and safe backfill only.
 - **Product behavior:** Current callback behavior preserved; no registration/linking/UI redesign.
 - **Threats:** OIDC regression, duplicate identity, cross-owner move.
 - **Implementation steps:** Characterization tests; precondition scan; 014; exact current-identity backfill; compatibility repository; isolated fresh/upgraded and repeat-run rehearsal.
 - **Test gates:** AUTH-OIDC, AUTH-LINK race, MIGRATION, ownership fingerprints.
-- **Recovery point:** Protected backup/isolated restore plan before live migration; old columns retained.
+- **Recovery point:** Verified local Git recovery bundle and isolated upgraded-copy rehearsal; protected live database/media backup and restore are still required before any live migration. Old columns remain.
 - **Owner approval point:** Accept backfill and compatibility proof before callback cutover.
-- **Definition of done:** Every existing binding maps exactly once; five records and all ownership/data fingerprints unchanged.
+- **Local verification:** Fresh and upgraded 001–013 copies, malformed/conflicting input, interrupted DDL and repeat-run no-op passed; five existing bindings map to original users with unchanged ownership/protected fingerprints. Live deployment and callback cutover remain separate gates.
 - **Forbidden actions:** No registration, linking, consolidation, new sign-in UI or destructive schema.
 - **Documentation files requiring updates:** 01, 03, 04, 06, 07, 08, CHANGELOG, README.
 
@@ -146,6 +146,6 @@ Non-production Auth0 validation must cover Google, Microsoft, database connectio
 
 Stop immediately on account/portfolio ownership mismatch, protected-project fingerprint drift, verification or MFA bypass, private media/Evidence leak, missing recovery evidence, source conflict or unresolved legal gate. Do not run migration rehearsals on the canonical database. [Operations](08-OPERATIONS-ROLLBACK-AND-RECOVERY.md) defines the future deployment boundary.
 
-## First implementation recommendation
+## Next safe action
 
-After owner acceptance, Phase 1 only: characterize existing OIDC/session/ownership behavior; create additive migration 014 in a later implementation commit; rehearse exact one-binding-per-existing-user backfill on fresh and upgraded isolated databases; add compatibility repository; prove five records, their portfolios and protected 12/12, 4/4, 27/24/0 aggregates unchanged. Do not enable registration, linking, UI redesign or consolidation.
+Obtain owner acceptance of the Phase 1 review and this documentation follow-up. A separate live-migration task must repeat fresh read-only baseline checks, prove a protected database/media restore, define a quiesced maintenance window, then apply 014 through the normal runner and reconcile before traffic resumes. The current Auth0 tenant has no capacity for another isolated tenant under its plan; do not upgrade, delete or mutate it. Isolated Auth0 capability testing and any callback cutover are later gates. Phase 1 does not enable registration, account linking, consolidation or new sign-in UI.

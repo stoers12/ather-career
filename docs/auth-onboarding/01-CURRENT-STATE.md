@@ -2,6 +2,8 @@
 
 Baseline: main at adbd1fd5772f6ce16b4844e29d0c6052e8eda221, documented in Phase 0 on 2026-10-04. “Verified” below means repository behavior and prior sanitized discovery; live tenant settings, upstream provider sessions and Docker identities were not independently verified for this documentation expansion. New architecture is in [ADRs](02-ARCHITECTURE-DECISIONS.md).
 
+**Phase 1 branch distinction:** Local, unpushed `feat/auth-onboarding-phase1` now has additive 014 and an unwired, read-only identity compatibility repository at `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e`. The canonical database remains at ledger 001–013. The existing callback, session, Owner authorization and public routes described below remain their current behavior; no new authentication or registration journey is live.
+
 ## Authentication and authorization
 
 **Verified current behavior.** GET owner_login.php redirects directly to Auth0 Universal Login. The authorization-code callback in owner_oidc_callback.php uses PKCE S256, state and nonce and validates signed ID-token signature, issuer, audience and expiry. A successful callback finds the stored issuer/subject or provisions an active local user, rotates the PHP session identifier, and routes an owner with a portfolio toward the Dashboard or to current onboarding. Owner routes use server-side identity and authorization checks. Existing authentication and ownership helpers include includes/auth0_oidc.php, includes/auth0_identity.php, includes/session.php, includes/owner_session.php, includes/authorization.php and includes/owner_flow.php.

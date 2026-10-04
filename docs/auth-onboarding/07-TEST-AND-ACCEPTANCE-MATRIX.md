@@ -1,6 +1,6 @@
 # 07 — Test and acceptance matrix
 
-**Status:** requirements, not passing tests. Stable IDs must not be reused for different behavior. “Blocker” means the row must pass before the listed phase can be accepted or before public beta where the phase is 7. Existing tests in tests/phase2 include OIDC static/session contract, tenant authorization, ownership migration, public lifecycle and Evidence checks; these characterize parts of current behavior but do not satisfy new gates. Use synthetic fixtures and redact result artifacts.
+**Status:** requirements with scoped Phase 1 evidence below, not a blanket pass. Stable IDs must not be reused for different behavior. “Blocker” means the row must pass before the listed phase can be accepted or before public beta where the phase is 7. Existing tests in tests/phase2 include OIDC static/session contract, tenant authorization, ownership migration, public lifecycle and Evidence checks; these characterize parts of current behavior but do not satisfy new gates. Use synthetic fixtures and redact result artifacts.
 
 | ID | Requirement | Layer | Fixture/environment | Expected result | Phase | Blocking status | Evidence required |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -57,5 +57,19 @@
 | SMOKE-003 | Migration ledger, container/port/volume and protected data reconciliation | Operations | read-only before/after | Expected identities and fingerprints preserved | 7 | Blocker | sanitized manifests |
 
 ## Acceptance rules
+
+### Phase 1 isolated evidence, 2026-10-04
+
+Commit `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e` added the guarded 014 migration, read-only compatibility lookup and disposable rehearsal harness. The Phase 2 foundation suite, static architecture checks, PHP and PowerShell syntax, and Git whitespace check passed locally. `scripts/run-phase1-isolated-rehearsals.ps1` passed:
+
+| Stable ID / scope | Verified result | Remaining boundary |
+| --- | --- | --- |
+| MIGRATION-001 | Fresh 001–014 and protected 001–013-copy upgrade; exact original-user binding, binary unique pair, FK, malformed and conflicting identity rejection; second runner invocation no pending migration | Live ledger remains 001–013; no live write authorized |
+| MIGRATION-003 | Five user-to-portfolio relationships and protected row fingerprints unchanged in upgraded copy; Projects 18–21, Evidence 12/12, complete projects 4/4, technologies 27/24/0 and image hashes reconciled against read-only canonical baseline | Repeat live SELECT reconciliation before deployment |
+| ROLLBACK-002, isolated 014 part | Deliberate post-DDL/empty-table state with no 014 ledger entry; normal runner completed backfill, repository lookup then passed, repeat run was a no-op | Incomplete state is not application-serving; arbitrary corruption and live recovery unproven |
+| AUTH-LINK-002, database constraint part | Duplicate issuer/subject pair rejected; conflicting preexisting binding stopped without ledger advancement | No account-linking flow or concurrent provider test exists |
+| Existing Phase 2 suite | Existing owner/OIDC/ownership/public lifecycle/Evidence characterization passed without changes | Does not establish new Auth0 tenant capabilities or future auth gates |
+
+`ROLLBACK-001` remains open: the isolated upgraded copy and Git bundle do not prove a protected live database/media backup and restore. `AUTH-OIDC-001/004` are only characterized by existing tests; the new repository is not wired to callbacks. `TENANT-001/002/003`, registration, verification, linking, UI and accessibility gates remain open. No live migration, Auth0 capability test or callback cutover was performed.
 
 Characterization tests precede behavior changes. Every migration runs against isolated fresh and upgraded databases, including repeat-run and partial-DDL cases. Tenant tests use non-production Auth0 and disposable identities. Accessibility needs measured Ather-page and customization verification; hosted-login claims alone are insufficient. Security and privacy cases are negative tests as well as happy paths. Production-like smoke never submits an Owner form against the canonical runtime without a separately approved operation. Do not print tokens, subjects, real emails, private Evidence or phone in test evidence.

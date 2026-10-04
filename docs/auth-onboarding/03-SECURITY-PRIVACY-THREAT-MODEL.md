@@ -2,6 +2,8 @@
 
 **Scope:** Proposed authentication, registration, account management, onboarding, profile publication and related public routes. This is a design threat model, not proof of controls. [ADRs](02-ARCHITECTURE-DECISIONS.md) define approved choices; [tests](07-TEST-AND-ACCEPTANCE-MATRIX.md) define gates. Revisit on every route/schema/tenant change.
 
+**Phase 1 control status:** Local 014 provides an exact binary issuer/subject unique constraint and a read-only compatibility lookup that cross-checks the legacy binding. It does not integrate with the callback, link accounts, change sessions or authorize portfolios. Its isolated failure and recovery tests are recorded in [07](07-TEST-AND-ACCEPTANCE-MATRIX.md). No Auth0 tenant capability or live recovery control was proven by this slice.
+
 ## Assets, actors and trust boundaries
 
 Protected assets: external identity bindings, account/role/verification state, server sessions, OIDC transactions, draft answers, profile/contact data, portfolio/project/Evidence/media content, consent events, slug history and audit events. Actors: anonymous visitor, normal account holder, administrator, support account, Auth0, Google/Microsoft identity providers, and an attacker controlling a browser, request body or another local account.
