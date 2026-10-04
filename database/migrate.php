@@ -9,6 +9,7 @@ if (PHP_SAPI !== 'cli') {
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/ownership_backfill.php';
+require_once __DIR__ . '/identity_foundation.php';
 
 class MigrationPreconditionException extends RuntimeException
 {
@@ -28,6 +29,8 @@ const PROJECT_UPDATED_AT_MIGRATION_VERSION = '012';
 const PROJECT_UPDATED_AT_MIGRATION_NAME = 'project_updated_at';
 const OPTIONAL_PROJECT_GITHUB_URL_MIGRATION_VERSION = '013';
 const OPTIONAL_PROJECT_GITHUB_URL_MIGRATION_NAME = 'optional_project_github_url';
+const IDENTITY_FOUNDATION_MIGRATION_VERSION = '014';
+const IDENTITY_FOUNDATION_MIGRATION_NAME = 'identity_foundation';
 
 function migrationFailure(string $message, ?string $version = null): never
 {
@@ -728,6 +731,10 @@ function executeSqlMigration(PDO $database, array $migration): void
     }
     if ($migration['version'] === OPTIONAL_PROJECT_GITHUB_URL_MIGRATION_VERSION && $migration['name'] === OPTIONAL_PROJECT_GITHUB_URL_MIGRATION_NAME) {
         executeOptionalProjectGithubUrlMigration($database);
+        return;
+    }
+    if ($migration['version'] === IDENTITY_FOUNDATION_MIGRATION_VERSION && $migration['name'] === IDENTITY_FOUNDATION_MIGRATION_NAME) {
+        executeIdentityFoundationMigration($database);
         return;
     }
 
