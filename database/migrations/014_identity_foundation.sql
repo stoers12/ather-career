@@ -1,0 +1,4 @@
+-- Migration 014 is executed by the guarded identity-foundation path in
+-- database/migrate.php. The PHP path validates legacy bindings before DDL,
+-- verifies any existing table after interrupted DDL, and backfills in one
+-- transaction. Do not execute this marker as a standalone migration.
