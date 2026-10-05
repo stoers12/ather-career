@@ -1,6 +1,6 @@
 # Phase 2A — Owner callback identity resolution
 
-**Version:** 2026-10-05 locally verified implementation on `feat/auth-callback-identity-resolution`. Phase 1 was merged at `43b36f3811ea64c23687b84d8b45327a88cf169d`; the canonical database already records 001–014 and five legacy bindings. This Phase 2A code has not been pushed or deployed. The canonical runtime still serves the merged main tree until a separately approved rollout.
+**Version:** 2026-10-05 locally verified implementation on `feat/auth-callback-identity-resolution`. Phase 1 was merged at `43b36f3811ea64c23687b84d8b45327a88cf169d`; the canonical database already records 001–014 and five legacy bindings. This Phase 2A code has not been pushed or intentionally deployed. During local development, the canonical bind-mounted checkout briefly exposed the candidate callback. Protected maintenance restored that checkout to approved main; the feature branch now resides in a separate non-mounted worktree. Retained canonical logs showed no callback request or successful Owner authentication during the observed exposure interval. A future intentional rollout requires separate approval.
 
 ## Characterized path and scoped change
 

@@ -1,6 +1,6 @@
 # Ather authentication and onboarding project record
 
-**Authority and phase:** Owner-approved architecture, expanded on 2026-10-04. Phase 1 merged to main at `43b36f3811ea64c23687b84d8b45327a88cf169d`, and canonical Migration 014 has five legacy bindings. Phase 2A callback resolution has passed local isolated gates and remains unpushed; see [its scoped contract](10-PHASE2A-CALLBACK-RESOLUTION.md). The canonical runtime retains the legacy callback until a separately approved deployment. Proposed registration, linking, routes and screens are not implemented.
+**Authority and phase:** Owner-approved architecture, expanded on 2026-10-04. Phase 1 merged to main at `43b36f3811ea64c23687b84d8b45327a88cf169d`, and canonical Migration 014 has five legacy bindings. Phase 2A callback resolution has passed local isolated gates and remains unpushed; see [its scoped contract](10-PHASE2A-CALLBACK-RESOLUTION.md). The canonical bind-mounted checkout was restored to approved main after temporary Phase 2A exposure. It now serves the legacy callback; an intentional Phase 2A rollout requires separate approval. Proposed registration, linking, routes and screens are not implemented.
 
 Ather is a broader professional platform, initially focused on students and graduates in Jordan. It preserves the story, decisions, role, evidence, lessons and impact behind work. The established green-and-gold identity carries into later design work. AI recommendations and recruiter/company accounts are future capabilities.
 
@@ -13,15 +13,15 @@ Read current behavior before changing code; use the ADRs for approved choices, t
 | [README.md](README.md) | Navigation and maintenance contract | Approved | This documentation-expansion commit | 2026-10-04 |
 | [01-CURRENT-STATE.md](01-CURRENT-STATE.md) | Verified baseline and limits | Verified | This documentation-expansion commit | 2026-10-04 |
 | [02-ARCHITECTURE-DECISIONS.md](02-ARCHITECTURE-DECISIONS.md) | Stable owner-approved ADRs | Approved | This documentation-expansion commit | 2026-10-04 |
-| [03-SECURITY-PRIVACY-THREAT-MODEL.md](03-SECURITY-PRIVACY-THREAT-MODEL.md) | Assets, boundaries and threats | Approved | This documentation-expansion commit | 2026-10-04 |
-| [04-DATA-MODEL-AND-MIGRATIONS.md](04-DATA-MODEL-AND-MIGRATIONS.md) | Implemented local 014 and proposed later schema | Implemented locally | This Phase 1 documentation follow-up | 2026-10-04 |
-| [05-USER-FLOWS-AND-ROUTES.md](05-USER-FLOWS-AND-ROUTES.md) | Proposed journeys and route contracts | Proposed | This documentation-expansion commit | 2026-10-04 |
-| [06-IMPLEMENTATION-PLAN.md](06-IMPLEMENTATION-PLAN.md) | Phases and acceptance gates | Approved; Phase 1 local | This Phase 1 documentation follow-up | 2026-10-04 |
-| [07-TEST-AND-ACCEPTANCE-MATRIX.md](07-TEST-AND-ACCEPTANCE-MATRIX.md) | Stable test requirements and scoped evidence | Verified for Phase 1 local scope | This Phase 1 documentation follow-up | 2026-10-04 |
-| [08-OPERATIONS-ROLLBACK-AND-RECOVERY.md](08-OPERATIONS-ROLLBACK-AND-RECOVERY.md) | Future delivery and recovery runbook | Proposed; Phase 1 rehearsal recorded | This Phase 1 documentation follow-up | 2026-10-04 |
+| [03-SECURITY-PRIVACY-THREAT-MODEL.md](03-SECURITY-PRIVACY-THREAT-MODEL.md) | Assets, boundaries and threats | Approved | This documentation correction | 2026-10-05 |
+| [04-DATA-MODEL-AND-MIGRATIONS.md](04-DATA-MODEL-AND-MIGRATIONS.md) | Deployed 014 and proposed later schema | Deployed and verified | This documentation correction | 2026-10-05 |
+| [05-USER-FLOWS-AND-ROUTES.md](05-USER-FLOWS-AND-ROUTES.md) | Proposed journeys and route contracts | Proposed | This documentation correction | 2026-10-05 |
+| [06-IMPLEMENTATION-PLAN.md](06-IMPLEMENTATION-PLAN.md) | Phases and acceptance gates | Approved; Phase 1 deployed | This documentation correction | 2026-10-05 |
+| [07-TEST-AND-ACCEPTANCE-MATRIX.md](07-TEST-AND-ACCEPTANCE-MATRIX.md) | Stable test requirements and scoped evidence | Scoped verification recorded | This documentation correction | 2026-10-05 |
+| [08-OPERATIONS-ROLLBACK-AND-RECOVERY.md](08-OPERATIONS-ROLLBACK-AND-RECOVERY.md) | Recovery and canonical bind-mount runbook | Maintenance boundary recorded | This documentation correction | 2026-10-05 |
 | [09-OFFICIAL-REFERENCES.md](09-OFFICIAL-REFERENCES.md) | Primary-source register | Verified | This documentation-expansion commit | 2026-10-04 |
-| [10-PHASE2A-CALLBACK-RESOLUTION.md](10-PHASE2A-CALLBACK-RESOLUTION.md) | Local callback cutover contract and recovery boundary | Verified locally | This Phase 2A commit | 2026-10-05 |
-| [CHANGELOG.md](CHANGELOG.md) | Durable phase and commit history | Approved | This Phase 1 documentation follow-up | 2026-10-04 |
+| [10-PHASE2A-CALLBACK-RESOLUTION.md](10-PHASE2A-CALLBACK-RESOLUTION.md) | Local callback cutover contract and recovery boundary | Verified locally; runtime corrected | This documentation correction | 2026-10-05 |
+| [CHANGELOG.md](CHANGELOG.md) | Durable phase and commit history | Approved | This documentation correction | 2026-10-05 |
 
 “This documentation-expansion commit” identifies the containing commit without an impossible self-referential SHA. Its parent is 2c486f11de660a6587e8dd33e66b0ebfbe3ca5bd.
 
@@ -46,7 +46,7 @@ Auth0 Universal Login owns credentials; Ather owns local authorization and serve
 ## Phase position and blockers
 
 - Deployed baseline: main `43b36f3811ea64c23687b84d8b45327a88cf169d`; canonical ledger 001–014 with five exact legacy bindings. Phase 0 decisions are at `2c486f11de660a6587e8dd33e66b0ebfbe3ca5bd` and `d3fd2a00f536657718da0cc38c1b256356889a2a`; Phase 1 implementation is at `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e`.
-- Local Phase 2A branch: `feat/auth-callback-identity-resolution`, unpushed and undeployed. It requires the verified 014 table for callback resolution and removes the callback's unknown-user creation path. No live callback, registration, linking, provider or tenant change occurred. Next safe action after local gates: owner review and a separately approved cutover plan. Auth0 capability testing remains a later gate.
+- Isolated Phase 2A branch: `feat/auth-callback-identity-resolution`, local and unpushed. It requires the verified 014 table and removes the candidate callback's unknown-user creation path. The bind-mounted canonical checkout briefly exposed this code during development; retained logs showed no callback request or successful Owner authentication in the observed interval. Maintenance restored canonical main. Registration, linking, provider and tenant changes remain disabled. Next safe action: owner review of the corrected boundary, then a separately approved cutover plan. Auth0 capability testing remains a later gate.
 - Known blockers for later phases: Auth0 plan/connection behavior and non-production validation; role/recovery and step-up policy details; policy text/version; legacy published-project backfill; slug retirement; independent accessibility measurement; qualified Jordanian legal/privacy review before public beta. The five owner-created legacy/test account records require a separate approved reconciliation operation.
 
 This record is design guidance, not a claim of legal compliance or a claim that proposed functionality exists.

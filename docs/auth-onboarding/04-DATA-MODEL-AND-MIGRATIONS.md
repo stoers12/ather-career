@@ -13,7 +13,7 @@
 | personal_info and profile-related rows | Current name, professional and contact facts | Required onboarding fields and per-contact privacy need a careful mapping |
 | projects, project_technologies, project evidence fields | Owner-scoped work and Evidence data | No per-project or independent public Evidence choice |
 | portfolio/contact visibility state | Existing portfolio and contact publication controls | New phone-by-default and type-by-type contract needs review |
-| migration ledger | Applied schema history | Canonical live ledger 001–013 at Phase 1 review; SELECT-check again before any rollout |
+| migration ledger | Applied schema history | Canonical live ledger 001–014 after protected deployment; SELECT-check again before any rollout |
 
 The Phase 1 characterization inspected ownership relationships and the current binary issuer/subject columns. Do not infer identity from email or profile fields.
 
@@ -53,7 +53,7 @@ Only active-step fields are validated on draft save; all required answers are va
 
 ### 014 — Identity model and safe backfill
 
-**Implemented locally; not deployed.** The guarded 014 runner creates only `user_identities` (InnoDB, utf8mb4) and a migration-ledger entry after success. It does not alter `users`, portfolios, projects or their ownership. Exact schema:
+**Deployed and verified on the canonical database (2026-10-05).** The guarded 014 runner creates only `user_identities` (InnoDB, utf8mb4) and a migration-ledger entry after success. It does not alter `users`, portfolios, projects or their ownership. Exact schema:
 
 | Column | Type and rule |
 | --- | --- |
@@ -68,7 +68,7 @@ Only active-step fields are validated on draft save; all required answers are va
 
 `uq_user_identities_pair` uniquely indexes the full binary `(oidc_issuer, oidc_subject)` pair. Issuer and subject are opaque, case-sensitive bytes: validation rejects empty or over-limit values; it does not trim, case-fold, rewrite or derive either value from email. The legacy `users.oidc_issuer` and `users.oidc_subject` columns and their current unique-subject index remain intact. The migration preflights every legacy pair before DDL, locks users and bindings during backfill, rejects duplicate or conflicting rows, inserts exactly one primary binding per existing user and records 014 only after reconciliation. No identity consolidation or portfolio reassignment occurs.
 
-`findCompatibleIdentityUser` is an unwired, read-only repository function. Before 014 it resolves a bounded subject through the legacy binary column and verifies the issuer exactly. After 014 it resolves the exact binary pair through `user_identities`, joins the original `users` row, and rejects a nonprimary or legacy-mismatched binding. It returns only internal user ID, account status and authorization version, or `null`; it neither creates an account nor grants portfolio access. Existing callbacks still use their legacy resolver; owner authorization still derives portfolio ownership from the authenticated server session. A callback cutover requires a later, separately reviewed change.
+`findCompatibleIdentityUser` is a read-only repository function. Phase 1 left it unwired; local Phase 2A now calls it from the candidate Owner callback. Before 014 it resolves a bounded subject through the legacy binary column and verifies the issuer exactly. After 014 it resolves the exact binary pair through `user_identities`, joins the original `users` row, and rejects a nonprimary or legacy-mismatched binding. It returns only internal user ID, account status and authorization version, or `null`; it neither creates an account nor grants portfolio access. The canonical main callback uses its legacy resolver; the isolated Phase 2A worktree uses this repository. Owner authorization still derives portfolio ownership from the authenticated server session. An intentional callback rollout requires separate review and approval.
 
 This slice implements the identity and preservation portions of [AUTH-ADR-001, AUTH-ADR-003 and AUTH-ADR-024](02-ARCHITECTURE-DECISIONS.md). The proof is scoped to `MIGRATION-001`, `MIGRATION-003`, the database-constraint portion of `AUTH-LINK-002` and the isolated 014 portion of `ROLLBACK-002` in [07](07-TEST-AND-ACCEPTANCE-MATRIX.md); it does not satisfy registration, verified-email or linking gates.
 
