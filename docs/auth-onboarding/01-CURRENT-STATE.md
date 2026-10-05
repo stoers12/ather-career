@@ -1,5 +1,7 @@
 # 01 — Verified current state
 
+**2026-10-05 status update:** The baseline below is historical. Phase 1 is merged, canonical ledger is 001–014 with five verified bindings, and the local Phase 2A callback change is described in [10](10-PHASE2A-CALLBACK-RESOLUTION.md). The canonical callback is still the merged-main version.
+
 Baseline: main at adbd1fd5772f6ce16b4844e29d0c6052e8eda221, documented in Phase 0 on 2026-10-04. “Verified” below means repository behavior and prior sanitized discovery; live tenant settings, upstream provider sessions and Docker identities were not independently verified for this documentation expansion. New architecture is in [ADRs](02-ARCHITECTURE-DECISIONS.md).
 
 **Phase 1 branch distinction:** Local, unpushed `feat/auth-onboarding-phase1` now has additive 014 and an unwired, read-only identity compatibility repository at `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e`. The canonical database remains at ledger 001–013. The existing callback, session, Owner authorization and public routes described below remain their current behavior; no new authentication or registration journey is live.

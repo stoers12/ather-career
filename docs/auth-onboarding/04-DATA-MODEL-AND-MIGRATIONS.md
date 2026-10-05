@@ -1,5 +1,7 @@
 # 04 — Data model and migration plan
 
+**2026-10-05 status update:** The Phase 1 local-only statements below are historical. Migration 014 is deployed with five exact legacy bindings and ledger 001–014. The local Phase 2A callback contract is in [10](10-PHASE2A-CALLBACK-RESOLUTION.md); it makes no schema or data change.
+
 **Phase 1 local implementation:** Migration 014 and a read-only compatibility repository exist in unpushed commit `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e`. Migration 014 passed isolated fresh and upgraded rehearsals; it has not been applied to the canonical database, whose ledger remains 001–013. Migrations 015–017 and all account-readiness, onboarding, linking and publication stores below remain proposals. Current behavior is detailed in [01](01-CURRENT-STATE.md); decisions in [02](02-ARCHITECTURE-DECISIONS.md).
 
 ## Current relevant model and limitations

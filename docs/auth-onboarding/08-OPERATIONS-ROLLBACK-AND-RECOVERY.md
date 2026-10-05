@@ -1,5 +1,7 @@
 # 08 — Operations, rollback and recovery
 
+**2026-10-05 status update:** Migration 014 is already deployed with ledger 001–014. The local Phase 2A callback candidate is undeployed; its quiesced recovery boundary and the danger of blindly restoring the old auto-creating callback are in [10](10-PHASE2A-CALLBACK-RESOLUTION.md). The original Phase 1 runbook below is historical.
+
 **Future runbook, not an instruction to act now.** Phase 1 ran Migration 014 only on disposable fresh and upgraded databases. The canonical ledger remains 001–013. This documentation follow-up performs no live migration, tenant mutation, service action or deployment. Any live operation requires an owner-approved phase plan and maintenance window. Store recovery artifacts outside Git in access-controlled storage. Use placeholders named RECOVERY_STORE, DATABASE_COPY and DEPLOYMENT_REF; never paste credentials, tokens, personal rows or live absolute backup paths here. See [migrations](04-DATA-MODEL-AND-MIGRATIONS.md) and [tests](07-TEST-AND-ACCEPTANCE-MATRIX.md).
 
 ## Preflight and recovery artifacts

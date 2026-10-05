@@ -1,5 +1,7 @@
 # 05 — Proposed user flows and route contracts
 
+**2026-10-05 status update:** The local Phase 2A candidate changes only the existing Owner callback's identity lookup; see [10](10-PHASE2A-CALLBACK-RESOLUTION.md). Proposed registration, linking, email verification and onboarding routes below remain disabled.
+
 **All routes here are proposals, not implemented filenames.** Existing Owner URLs remain guarded during transition. Each private response is no-store; redirects use fixed allowlists. A route never accepts an owner ID as authorization. Method/URI spelling is subject to route review, while the security contract is binding. State model: anonymous → OIDC pending → unverified holding or verified onboarding → completed private Dashboard → explicit publication. Disabled/restricted states deny protected resources. See [ADRs](02-ARCHITECTURE-DECISIONS.md) and [test IDs](07-TEST-AND-ACCEPTANCE-MATRIX.md).
 
 Phase 1's local 014 and read-only repository add no route, callback cutover, registration or account-linking action. The existing `owner_oidc_callback.php` still uses the legacy resolver; this table must not be treated as enabling any proposed flow below.
