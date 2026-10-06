@@ -285,15 +285,29 @@ function Initialize-RunWebRoot([string]$sourceRoot, [string]$webRootPath, [strin
             $raw = if (Test-Path -LiteralPath $tarError) { Get-Content -LiteralPath $tarError -Raw } else { $null }
             throw "Disposable web source extraction failed (tar exit $tarExit): $(ConvertTo-SafeDiagnostic $raw)"
         }
+        # Test the review candidate before its local commit. Only fixed runtime
+        # paths may override the approved HEAD archive in this run-owned copy.
+        $candidateFiles = @(
+            'includes/auth0_oidc.php', 'includes/observability.php',
+            'includes/owner_layout.php', 'includes/owner_session.php',
+            'includes/session.php', 'owner_login.php', 'owner_onboarding.php',
+            'owner_switch_account.php', 'public/owner_switch_account.php'
+        )
+        foreach ($relative in $candidateFiles) {
+            $original = Join-Path $sourceRoot $relative
+            $staged = Join-Path $safeRoot $relative
+            if (-not (Test-Path -LiteralPath $original -PathType Leaf)) { throw 'Candidate runtime source is missing.' }
+            Copy-Item -LiteralPath $original -Destination $staged -Force
+        }
         $vendorMountpoint = Join-Path $safeRoot 'vendor'
         if (Test-Path -LiteralPath $vendorMountpoint) { throw 'Disposable web source already contained a vendor path.' }
         New-Item -ItemType Directory -Path $vendorMountpoint | Out-Null
-        foreach ($relative in @('owner_oidc_callback.php', 'scripts/ci-oidc-discovery-mock.php', 'composer.lock')) {
+        foreach ($relative in @('owner_oidc_callback.php', 'scripts/ci-oidc-discovery-mock.php', 'composer.lock') + $candidateFiles) {
             $original = Join-Path $sourceRoot $relative
             $staged = Join-Path $safeRoot $relative
             if (-not (Test-Path -LiteralPath $staged -PathType Leaf) -or
                 (Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $staged -Algorithm SHA256).Hash) {
-                throw 'Disposable web source did not match isolated feature HEAD.'
+                throw 'Disposable web source did not match isolated candidate.'
             }
         }
         Write-Output 'DISPOSABLE_WEB_SOURCE=verified'
@@ -365,6 +379,12 @@ Invoke-WithRunCleanup {
         throw "Synthetic OIDC discovery did not become ready (last docker exit $discoveryExit): $(ConvertTo-SafeDiagnostic $raw)"
     }
     Write-Output 'DISPOSABLE_HEALTH=200 DISCOVERY_READY=yes'
+    $switchUrl = "http://127.0.0.1:$port/owner_switch_account.php"
+    $switchGet = & curl.exe --silent --show-error --output NUL --write-out '%{http_code}' --max-redirs 0 $switchUrl
+    if ($LASTEXITCODE -ne 0 -or $switchGet -ne '405') { throw 'Account selection GET did not return 405.' }
+    $switchWithoutCsrf = & curl.exe --silent --show-error --output NUL --write-out '%{http_code}' --max-redirs 0 --request POST --data '' $switchUrl
+    if ($LASTEXITCODE -ne 0 -or $switchWithoutCsrf -ne '403') { throw 'Account selection POST without CSRF did not return 403.' }
+    Write-Output 'ACCOUNT_SELECTION_GET=405 POST_WITHOUT_CSRF=403'
     & curl.exe --silent --show-error --dump-header $headers --output $loginBody --cookie-jar $cookies --max-redirs 0 ("http://127.0.0.1:"+$port+"/owner_login.php")
     $loginCurlExit = $LASTEXITCODE
     $lines = if (Test-Path -LiteralPath $headers) { @(Get-Content -LiteralPath $headers) } else { @() }

@@ -369,6 +369,7 @@ function Set-SmokeEnvironment([string]$Project, [string]$Port, [string]$Image, [
         OIDC_CLIENT_ID = ('smoke-client-' + (Get-RandomHex 8))
         OIDC_CLIENT_SECRET = $oidcSecret
         OIDC_REDIRECT_URI = 'https://portfolio-smoke.invalid/owner_oidc_callback.php'
+        EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY = (Get-RandomHex 32)
     }
     foreach ($entry in $settings.GetEnumerator()) {
         $script:EnvironmentBackup[$entry.Key] = [Environment]::GetEnvironmentVariable($entry.Key, 'Process')
@@ -607,6 +608,8 @@ function Invoke-ProductionSmokeRun([int]$Number, [string]$Head) {
         Wait-ContainerHealth $db 'database'
         Wait-ContainerHealth $web 'web'
         Wait-HealthyHttp $baseUrl
+        $securityGate = Invoke-Native 'docker' @('exec', $web, 'php', 'scripts/check-production-security.php')
+        Assert-Smoke ($securityGate -match 'Production security gate passed\.') 'The Production security gate did not pass.'
         $initialRestartCount = (Invoke-Native 'docker' @('inspect', '--format', '{{.RestartCount}}', $web)).Trim()
         if ($initialRestartCount -ne '0') {
             $safeStartupLog = (Invoke-Native 'docker' @('logs', '--tail', '80', $web)) -replace '(?i)(password|secret|token|credential|authorization)\S*', '$1=[REDACTED]'
