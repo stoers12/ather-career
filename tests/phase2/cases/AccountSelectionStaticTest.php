@@ -14,6 +14,10 @@ final class AccountSelectionStaticTest
         $oidc = (string) file_get_contents($root . 'includes/auth0_oidc.php');
         $layout = (string) file_get_contents($root . 'includes/owner_layout.php');
         $callback = (string) file_get_contents($root . 'owner_oidc_callback.php');
+        $retry = (string) file_get_contents($root . 'owner_auth_retry.php');
+        $recovery = (string) file_get_contents($root . 'includes/owner_auth_recovery.php');
+        $retryShim = (string) file_get_contents($root . 'public/owner_auth_retry.php');
+        $stylesheet = (string) file_get_contents($root . 'style.css');
 
         phase2Assert(str_contains($route, "httpRequireMethod(['POST'])")
             && str_contains($route, "requireValidCsrfToken(\$_POST['csrf_token'] ?? null)")
@@ -39,6 +43,28 @@ final class AccountSelectionStaticTest
         phase2Assert(str_contains($shim, "require dirname(__DIR__) . '/app/owner_switch_account.php'")
             && str_contains($callback, 'resolveAuth0InternalUser')
             && !preg_match('/logout_uri|federated|account_link|account_merge|INSERT\s+INTO\s+users/i', $route), 'Selection must return through the existing exact binding and never federate logout or create accounts.');
+        phase2Assert(str_contains($retry, "httpRequireMethod(['POST'])")
+            && str_contains($retry, "requireValidCsrfToken(\$_POST['csrf_token'] ?? null)")
+            && strpos($retry, 'requireValidCsrfToken') < strpos($retry, 'beginFreshOwnerAccountSelectionSession')
+            && str_contains($retry, 'currentInternalUserSession() !== null')
+            && str_contains($retry, "consumeRateLimit('oidc_start'")
+            && str_contains($retry, "'select_account'")
+            && str_contains($retryShim, "require dirname(__DIR__) . '/app/owner_auth_retry.php'"), 'Recovery retry lost its anonymous POST, CSRF, rotation, or chooser contract.');
+        phase2Assert(str_contains($callback, "=== 'authorization_denied'")
+            && str_contains($callback, 'beginFreshOwnerAccountSelectionSession()')
+            && str_contains($callback, 'renderOwnerAuthRecoveryPage(')
+            && str_contains($recovery, "header('Cache-Control: no-store')")
+            && str_contains($recovery, 'getCsrfToken()')
+            && str_contains($recovery, 'action="/owner_auth_retry.php" method="POST"')
+            && str_contains($recovery, 'href="/owner_login.php"')
+            && str_contains($recovery, 'autofocus')
+            && str_contains($recovery, 'lang="ar" dir="rtl"')
+            && str_contains($recovery, 'You are signed out. No data was changed.')
+            && str_contains($recovery, 'تم تسجيل خروجك. لم تتغير أي بيانات.')
+            && !str_contains($recovery, '<script')
+            && str_contains($stylesheet, '.owner-auth-recovery :is(button,a):focus')
+            && str_contains($stylesheet, '@media(max-width:400px)'), 'Recovery page lost bilingual, no-JavaScript, focus, mobile, or fixed-destination behavior.');
+        phase2Assert(!preg_match('/logout_uri|federated|account_link|account_merge|INSERT\s+INTO|UPDATE\s+|DELETE\s+FROM|\$_(?:GET|POST|REQUEST)\[(?:.redirect|.return|.next)/i', $retry . $recovery), 'Recovery retry may not federate logout, mutate accounts, or accept a return URL.');
 
         require_once $root . 'includes/owner_layout.php';
         $previousSession = $_SESSION ?? [];

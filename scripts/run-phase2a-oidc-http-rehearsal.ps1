@@ -289,9 +289,12 @@ function Initialize-RunWebRoot([string]$sourceRoot, [string]$webRootPath, [strin
         # paths may override the approved HEAD archive in this run-owned copy.
         $candidateFiles = @(
             'includes/auth0_oidc.php', 'includes/observability.php',
+            'includes/owner_auth_recovery.php',
             'includes/owner_layout.php', 'includes/owner_session.php',
             'includes/session.php', 'owner_login.php', 'owner_onboarding.php',
-            'owner_switch_account.php', 'public/owner_switch_account.php'
+            'owner_oidc_callback.php', 'owner_auth_retry.php',
+            'owner_switch_account.php', 'public/owner_auth_retry.php',
+            'public/owner_switch_account.php', 'style.css'
         )
         foreach ($relative in $candidateFiles) {
             $original = Join-Path $sourceRoot $relative
@@ -422,6 +425,107 @@ Invoke-WithRunCleanup {
     Invoke-Callback 'state=wrong&code=synthetic' 403
     Invoke-Callback ('state=' + [uri]::EscapeDataString($state) + '&code=synthetic') 403
     Invoke-Callback ('state=' + [uri]::EscapeDataString($state) + '&code=synthetic') 403
+
+    # A valid access_denied response consumes its transaction, retires the
+    # anonymous callback session, and renders a no-store recovery form.
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody `
+        --cookie $cookies --cookie-jar $cookies --max-redirs 0 ("http://127.0.0.1:"+$port+"/owner_login.php")
+    if ($LASTEXITCODE -ne 0) { throw 'Recovery rehearsal could not start an OIDC transaction.' }
+    $locationLine = @(Get-Content -LiteralPath $headers | Where-Object { $_ -match '^Location:' })
+    if ($locationLine.Count -ne 1 -or $locationLine[0] -notmatch '[?&]state=([^&]+)') { throw 'Recovery rehearsal start lacked a state.' }
+    $cancelState = [uri]::UnescapeDataString($Matches[1])
+    $cancelUrl = "http://127.0.0.1:${port}/owner_oidc_callback.php?state=$([uri]::EscapeDataString($cancelState))&error=access_denied&error_description=synthetic-private-marker"
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody `
+        --cookie $cookies --cookie-jar $cookies --max-redirs 0 $cancelUrl
+    if ($LASTEXITCODE -ne 0) { throw 'Valid cancellation callback request failed.' }
+    $cancelHeaders = @(Get-Content -LiteralPath $headers)
+    $cancelBody = Get-Content -LiteralPath $loginBody -Raw -Encoding UTF8
+    if (@($cancelHeaders | Where-Object { $_ -match '^HTTP/\S+\s+403\s' }).Count -ne 1 -or
+        @($cancelHeaders | Where-Object { $_ -match '(?i)^Cache-Control:\s*no-store' }).Count -lt 1 -or
+        $cancelBody -notmatch 'Sign-in was not completed' -or
+        $cancelBody -notmatch 'You are signed out\. No data was changed\.' -or
+        $cancelBody -notmatch 'لم يكتمل تسجيل الدخول' -or
+        $cancelBody -notmatch 'تم تسجيل خروجك\. لم تتغير أي بيانات\.' -or
+        $cancelBody -notmatch 'action="/owner_auth_retry.php" method="POST"' -or
+        $cancelBody -notmatch 'href="/owner_login.php"' -or
+        $cancelBody -match 'synthetic-private-marker' -or
+        $cancelBody.Contains($cancelState)) {
+        throw 'Valid cancellation did not produce sanitized bilingual recovery.'
+    }
+    if ($cancelBody -notmatch 'name="csrf_token" value="([a-f0-9]{64})"') { throw 'Recovery page lacked an anonymous CSRF token.' }
+    $recoveryCsrf = $Matches[1]
+    $retryUrl = "http://127.0.0.1:${port}/owner_auth_retry.php"
+    $retryGet = & curl.exe --silent --show-error --output NUL --write-out '%{http_code}' --max-redirs 0 $retryUrl
+    if ($LASTEXITCODE -ne 0 -or $retryGet -ne '405') { throw 'Recovery retry GET was not rejected.' }
+    $retryNoCsrf = & curl.exe --silent --show-error --output NUL --write-out '%{http_code}' --cookie $cookies --max-redirs 0 --request POST --data '' $retryUrl
+    if ($LASTEXITCODE -ne 0 -or $retryNoCsrf -ne '403') { throw 'Recovery retry without CSRF was not rejected.' }
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody `
+        --cookie $cookies --cookie-jar $cookies --max-redirs 0 --request POST `
+        --data-urlencode "csrf_token=$recoveryCsrf" `
+        --data-urlencode 'authorization_endpoint=https://attacker.invalid/authorize' `
+        --data-urlencode 'returnTo=https://attacker.invalid/after-login' $retryUrl
+    if ($LASTEXITCODE -ne 0 -or
+        @(Get-Content -LiteralPath $headers | Where-Object { $_ -match '^HTTP/\S+\s+403\s' }).Count -ne 1 -or
+        @(Get-Content -LiteralPath $headers | Where-Object { $_ -match '^Location:' }).Count -ne 0) {
+        throw 'Recovery retry accepted an attacker-controlled authorization endpoint or return destination.'
+    }
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody `
+        --cookie $cookies --cookie-jar $cookies --max-redirs 0 --request POST `
+        --data-urlencode "csrf_token=$recoveryCsrf" ($retryUrl + '?returnTo=https%3A%2F%2Fattacker.invalid')
+    if ($LASTEXITCODE -ne 0 -or
+        @(Get-Content -LiteralPath $headers | Where-Object { $_ -match '^HTTP/\S+\s+403\s' }).Count -ne 1 -or
+        @(Get-Content -LiteralPath $headers | Where-Object { $_ -match '^Location:' }).Count -ne 0) {
+        throw 'Recovery retry accepted a query-controlled return destination.'
+    }
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody `
+        --cookie $cookies --cookie-jar $cookies --max-redirs 0 --request POST --data-urlencode "csrf_token=$recoveryCsrf" $retryUrl
+    if ($LASTEXITCODE -ne 0) { throw 'Recovery retry request failed.' }
+    $retryHeaders = @(Get-Content -LiteralPath $headers)
+    $retryLocation = @($retryHeaders | Where-Object { $_ -match '^Location:' })
+    if (@($retryHeaders | Where-Object { $_ -match '^HTTP/\S+\s+302\s' }).Count -ne 1 -or
+        $retryLocation.Count -ne 1 -or $retryLocation[0] -notmatch '[?&]state=([^&]+)') {
+        throw 'Recovery retry did not start a new OIDC transaction.'
+    }
+    $retryState = [uri]::UnescapeDataString($Matches[1])
+    $retryTarget = [uri]$retryLocation[0].Substring(9).Trim()
+    $decodedRetryQuery = [uri]::UnescapeDataString($retryTarget.Query)
+    if ($retryState -eq $cancelState -or $retryLocation[0] -notmatch '[?&]prompt=select_account(?:&|$)' -or
+        $retryLocation[0] -notmatch '[?&]code_challenge_method=S256(?:&|$)' -or
+        $retryTarget.Scheme -ne 'https' -or $retryTarget.Host -ne '127.0.0.1' -or
+        $retryTarget.Port -ne 9443 -or $retryTarget.AbsolutePath -ne '/authorize' -or
+        $decodedRetryQuery -notmatch 'redirect_uri=https://phase2a\.invalid/owner_oidc_callback\.php(?:&|$)' -or
+        $decodedRetryQuery -match 'attacker\.invalid') {
+        throw 'Recovery retry reused state, lost chooser/PKCE, or changed the validated endpoint and fixed callback.'
+    }
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody `
+        --cookie $cookies --cookie-jar $cookies --max-redirs 0 $cancelUrl
+    if ($LASTEXITCODE -ne 0) { throw 'Consumed callback replay request failed.' }
+    $replayHeaders = @(Get-Content -LiteralPath $headers)
+    $replayBody = Get-Content -LiteralPath $loginBody -Raw -Encoding UTF8
+    if (@($replayHeaders | Where-Object { $_ -match '^HTTP/\S+\s+403\s' }).Count -ne 1 -or
+        $replayBody -notmatch 'The authorization response could not be accepted\.' -or
+        $replayBody -match 'The account selection was cancelled or denied\.') {
+        throw 'Consumed callback was misclassified as normal cancellation.'
+    }
+    if ($replayBody -notmatch 'name="csrf_token" value="([a-f0-9]{64})"') { throw 'Replay recovery lacked a fresh CSRF token.' }
+    $replayCsrf = $Matches[1]
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody `
+        --cookie $cookies --cookie-jar $cookies --max-redirs 0 --request POST --data-urlencode "csrf_token=$replayCsrf" $retryUrl
+    if ($LASTEXITCODE -ne 0) { throw 'Second recovery retry request failed.' }
+    $secondLocation = @(Get-Content -LiteralPath $headers | Where-Object { $_ -match '^Location:' })
+    if ($secondLocation.Count -ne 1 -or $secondLocation[0] -notmatch '[?&]state=([^&]+)') { throw 'Second recovery retry lacked fresh state.' }
+    $secondState = [uri]::UnescapeDataString($Matches[1])
+    if ($secondState -eq $retryState -or $secondState -eq $cancelState) { throw 'Second retry reused prior state.' }
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody `
+        --cookie $cookies --cookie-jar $cookies --max-redirs 0 ("http://127.0.0.1:${port}/owner_oidc_callback.php?state=$([uri]::EscapeDataString($secondState))&error=access_denied")
+    if ($LASTEXITCODE -ne 0) { throw 'Second cancellation callback request failed.' }
+    $secondBody = Get-Content -LiteralPath $loginBody -Raw -Encoding UTF8
+    if (@(Get-Content -LiteralPath $headers | Where-Object { $_ -match '^HTTP/\S+\s+403\s' }).Count -ne 1 -or
+        $secondBody -notmatch 'The account selection was cancelled or denied\.' -or
+        $secondBody -match 'http-equiv="refresh"|<script') {
+        throw 'Second cancellation did not stop at a manual recovery page.'
+    }
+    Write-Output 'RECOVERY_CANCEL=403 BILINGUAL=yes NO_STORE=yes RETRY_POST=302 PROMPT=select_account REPLAY=403 SECOND_CANCEL=403'
 } { Write-RunDiagnostics $container } {
     $cleanupFailure = $null
     try { Remove-RunContainer $container $runId $script:containerId } catch { $cleanupFailure = $_.Exception.Message }

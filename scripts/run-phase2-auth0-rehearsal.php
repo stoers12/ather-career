@@ -7,6 +7,7 @@ if (PHP_SAPI !== 'cli') exit(1);
 require_once __DIR__ . '/../tests/phase2/bootstrap.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/auth0_identity.php';
+require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../includes/owner_flow.php';
 require_once __DIR__ . '/../includes/owner_session.php';
 require_once __DIR__ . '/../includes/portfolio_scoped_data.php';
@@ -17,6 +18,17 @@ function auth0RehearsalAssertDenied(callable $operation, string $message): void
     try {
         $operation();
     } catch (Auth0OidcException) {
+        return;
+    }
+    throw new RuntimeException($message);
+}
+
+function auth0RehearsalAssertReason(callable $operation, string $expected, string $message): void
+{
+    try {
+        $operation();
+    } catch (Auth0OidcException $exception) {
+        phase2AssertSame($expected, $exception->safeReason, $message);
         return;
     }
     throw new RuntimeException($message);
@@ -83,7 +95,14 @@ try {
     phase2AssertSame('auth0|new-subject', $identity->subject, 'Validated Auth0 subject changed.');
     auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => $start['state'], 'code' => 'code'], $validator), 'Replayed callback was accepted.');
     $start = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize');
-    auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => $start['state'], 'error' => 'access_denied'], $validator), 'Provider error was accepted.');
+    auth0RehearsalAssertReason(static fn () => completeAuth0Authorization($configuration, ['state' => $start['state'], 'error' => 'access_denied', 'error_description' => 'synthetic private provider text'], $validator), 'authorization_denied', 'Valid provider denial was not classified safely.');
+    auth0RehearsalAssertReason(static fn () => completeAuth0Authorization($configuration, ['state' => $start['state'], 'error' => 'access_denied']), 'transaction_missing', 'Consumed denial was reusable.');
+    $start = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize');
+    auth0RehearsalAssertReason(static fn () => completeAuth0Authorization($configuration, ['state' => $start['state'], 'error' => 'server_error']), 'provider_error', 'Unexpected provider error was treated as cancellation.');
+    $start = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize');
+    auth0RehearsalAssertReason(static fn () => completeAuth0Authorization($configuration, ['state' => $start['state'], 'error' => 'access_denied', 'code' => 'synthetic']), 'provider_error', 'Malformed denial with code was treated as cancellation.');
+    $start = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize');
+    auth0RehearsalAssertReason(static fn () => completeAuth0Authorization($configuration, ['state' => 'wrong', 'error' => 'access_denied']), 'state_mismatch', 'Invalid state was treated as cancellation.');
     $start = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize');
     auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => $start['state'], 'code' => 'code'], static fn () => new Auth0ValidatedIdentity('https://other.us.auth0.com/', 'auth0|new')), 'Issuer mismatch was accepted.');
     $start = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize');
@@ -221,9 +240,21 @@ try {
 
     beginFreshOwnerAccountSelectionSession();
     $cancelled = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
-    auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => $cancelled['state'], 'error' => 'access_denied']), 'Cancelled authorization was accepted.');
-    auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => $cancelled['state'], 'code' => 'code']), 'Cancelled transaction was reusable.');
+    auth0RehearsalAssertReason(static fn () => completeAuth0Authorization($configuration, ['state' => $cancelled['state'], 'error' => 'access_denied']), 'authorization_denied', 'Valid cancellation was not recognized.');
+    auth0RehearsalAssertReason(static fn () => completeAuth0Authorization($configuration, ['state' => $cancelled['state'], 'code' => 'code']), 'transaction_missing', 'Cancelled transaction was reusable.');
     phase2AssertSame(null, currentInternalUserSession(), 'Cancellation restored old account authority.');
+    $cancelledSession = session_id();
+    beginFreshOwnerAccountSelectionSession();
+    phase2Assert($cancelledSession !== session_id(), 'Cancellation recovery reused an anonymous session.');
+    phase2AssertSame(null, currentInternalUserSession(), 'Cancellation recovery restored old authority.');
+    $freshCsrf = getCsrfToken();
+    phase2AssertSame(64, strlen($freshCsrf), 'Recovery did not create a fresh anonymous CSRF token.');
+    $retry = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    phase2Assert($retry['state'] !== $cancelled['state'], 'Retry reused the consumed OIDC state.');
+    parse_str((string) parse_url($retry['url'], PHP_URL_QUERY), $retryParameters);
+    phase2AssertSame('select_account', $retryParameters['prompt'] ?? null, 'Recovery retry lost the account chooser prompt.');
+    auth0RehearsalAssertReason(static fn () => completeAuth0Authorization($configuration, ['state' => $retry['state'], 'error' => 'access_denied']), 'authorization_denied', 'Second cancellation did not terminate the retry safely.');
+    phase2AssertSame(null, currentInternalUserSession(), 'Second cancellation restored Owner authority.');
     $expired = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
     $_SESSION[AUTH0_AUTH_TRANSACTION_KEY]['created_at'] = time() - AUTH0_AUTH_TRANSACTION_TTL_SECONDS - 1;
     auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => $expired['state'], 'code' => 'code']), 'Expired selection transaction was accepted.');

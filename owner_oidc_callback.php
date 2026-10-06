@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/auth0_identity.php';
 require_once __DIR__ . '/includes/owner_flow.php';
+require_once __DIR__ . '/includes/owner_auth_recovery.php';
 require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/owner_session.php';
 require_once __DIR__ . '/includes/security_events.php';
@@ -21,11 +22,11 @@ try {
     $database = getDatabaseConnection();
     httpRedirect(ownerHasPortfolio($database, AuthenticatedUserContext::fromValidatedUser($user['user_id'])) ? 'owner.php' : 'owner_onboarding.php');
 } catch (Auth0OidcException $exception) {
-    destroyInternalUserSession();
     reportSecurityEvent('oidc_callback', 'denied', ['reason' => $exception->safeReason]);
+    beginFreshOwnerAccountSelectionSession();
+    renderOwnerAuthRecoveryPage($exception->safeReason === 'authorization_denied');
 } catch (Throwable) {
-    destroyInternalUserSession();
     reportSecurityEvent('oidc_callback', 'denied', ['reason' => 'dependency_failure']);
+    beginFreshOwnerAccountSelectionSession();
+    renderOwnerAuthRecoveryPage(false);
 }
-
-httpAbortHtml(403, 'Authentication could not be completed.');

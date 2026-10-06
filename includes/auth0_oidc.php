@@ -261,8 +261,24 @@ function consumeAuth0AuthorizationTransaction(array $query): array
     if ($transaction['created_at'] > time() + 60 || time() - $transaction['created_at'] > AUTH0_AUTH_TRANSACTION_TTL_SECONDS) {
         throw new Auth0OidcException('transaction_expired');
     }
-    if (isset($query['error']) || !isset($query['code']) || !is_string($query['code']) || $query['code'] === '' || strlen($query['code']) > 4096) {
-        throw new Auth0OidcException(isset($query['error']) ? 'provider_error' : 'code_missing');
+    if (array_key_exists('error', $query)) {
+        // Only the provider's standard access_denied response, bound to this
+        // already-consumed transaction, represents a user cancellation/denial.
+        // Never render or log the provider's free-form diagnostic fields.
+        $allowed = ['state', 'error', 'error_description', 'error_uri'];
+        $knownShape = array_diff(array_keys($query), $allowed) === [];
+        foreach (['error_description', 'error_uri'] as $field) {
+            if (array_key_exists($field, $query) && (!is_string($query[$field]) || strlen($query[$field]) > 2048)) {
+                $knownShape = false;
+            }
+        }
+        if ($knownShape && $query['error'] === 'access_denied' && !array_key_exists('code', $query)) {
+            throw new Auth0OidcException('authorization_denied');
+        }
+        throw new Auth0OidcException('provider_error');
+    }
+    if (!isset($query['code']) || !is_string($query['code']) || $query['code'] === '' || strlen($query['code']) > 4096) {
+        throw new Auth0OidcException('code_missing');
     }
 
     return ['code_verifier' => $transaction['code_verifier'], 'nonce' => $transaction['nonce']];
