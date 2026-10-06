@@ -160,8 +160,91 @@ try {
     phase2AssertSame(null, findAuthorizedPersonalInfo($database, $ownerContext, $foreignProfileId), 'Callback-resolved Owner read another Portfolio profile.');
     phase2AssertSame($syntheticEmail, loadAuthorizedPersonalInfo($database, $ownerContext)['email'] ?? null, 'Callback-resolved Owner lost access to the owned profile.');
     unset($_GET['portfolio_id']);
+    $usersBeforeSelection = (int) $database->query('SELECT COUNT(*) FROM users')->fetchColumn();
+    $bindingsBeforeSelection = (int) $database->query('SELECT COUNT(*) FROM user_identities')->fetchColumn();
+    $portfoliosBeforeSelection = (int) $database->query('SELECT COUNT(*) FROM portfolios')->fetchColumn();
+
+    // Two independent browser sessions must keep separate local authority.
+    $browserA = session_id();
+    session_write_close();
+    session_id('');
+    startOwnerSession();
+    establishVerifiedInternalUserSession($foreignUserId, 1);
+    $browserB = session_id();
+    phase2Assert($browserA !== $browserB, 'Two browsers shared a session.');
+    session_write_close();
+    session_id($browserA);
+    startOwnerSession();
+    phase2AssertSame($knownId, currentInternalUserSession()['internal_user_id'] ?? null, 'Original browser lost its Owner identity.');
+
+    beginFreshOwnerAccountSelectionSession();
+    $selectionSession = session_id();
+    phase2Assert($selectionSession !== $browserA && $selectionSession !== $browserB, 'Account selection reused a browser session.');
+    phase2AssertSame(null, currentInternalUserSession(), 'Wrong-account authority survived account selection.');
+    $selection = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    parse_str((string) parse_url($selection['url'], PHP_URL_QUERY), $selectionParameters);
+    phase2AssertSame('select_account', $selectionParameters['prompt'] ?? null, 'Account chooser prompt was missing.');
+    phase2AssertSame('S256', $selectionParameters['code_challenge_method'] ?? null, 'Account selection lost PKCE.');
+    phase2AssertSame(null, $parameters['prompt'] ?? null, 'Ordinary login unexpectedly forced account selection.');
+    try {
+        beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'login');
+        throw new RuntimeException('Unapproved OIDC prompt was accepted.');
+    } catch (InvalidArgumentException) {
+        // The only optional prompt is the fixed account chooser.
+    }
+    auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => 'wrong', 'code' => 'code']), 'Selection accepted an old or mismatched state.');
+    $selectedIdentity = completeAuth0Authorization($configuration, ['state' => $selection['state'], 'code' => 'code'],
+        static fn (Auth0OidcConfiguration $config): Auth0ValidatedIdentity => new Auth0ValidatedIdentity($config->issuer, $foreignSubject));
+    auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => $selection['state'], 'code' => 'code']), 'Account selection replay was accepted.');
+    $selectedUser = resolveAuth0InternalUser($database, $configuration, $selectedIdentity);
+    phase2AssertSame($foreignUserId, $selectedUser['user_id'], 'Switch resolved the wrong binding.');
+    establishVerifiedInternalUserSession($selectedUser['user_id'], $selectedUser['authz_version']);
+    phase2Assert(session_id() !== $selectionSession, 'Selected-account callback did not rotate the session.');
+    phase2AssertSame($foreignPortfolio, requireOwnedPortfolioContext($database)->portfolioId, 'Switched account reached the wrong Portfolio.');
+
+    $selectedBrowserA = session_id();
+    session_write_close();
+    session_id($browserB);
+    startOwnerSession();
+    phase2AssertSame($foreignUserId, currentInternalUserSession()['internal_user_id'] ?? null, 'Switch in one browser changed the second browser.');
+    phase2AssertSame($foreignPortfolio, requireOwnedPortfolioContext($database)->portfolioId, 'Second browser crossed Portfolio ownership.');
+    session_write_close();
+    session_id($selectedBrowserA);
+    startOwnerSession();
+    beginFreshOwnerAccountSelectionSession();
+    $returnSelection = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    $returnIdentity = completeAuth0Authorization($configuration, ['state' => $returnSelection['state'], 'code' => 'code'],
+        static fn (Auth0OidcConfiguration $config): Auth0ValidatedIdentity => new Auth0ValidatedIdentity($config->issuer, $identity->subject));
+    $returnedUser = resolveAuth0InternalUser($database, $configuration, $returnIdentity);
+    establishVerifiedInternalUserSession($returnedUser['user_id'], $returnedUser['authz_version']);
+    phase2AssertSame($knownPortfolio, requireOwnedPortfolioContext($database)->portfolioId, 'Selecting the original account did not restore its Portfolio.');
+
+    beginFreshOwnerAccountSelectionSession();
+    $cancelled = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => $cancelled['state'], 'error' => 'access_denied']), 'Cancelled authorization was accepted.');
+    auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => $cancelled['state'], 'code' => 'code']), 'Cancelled transaction was reusable.');
+    phase2AssertSame(null, currentInternalUserSession(), 'Cancellation restored old account authority.');
+    $expired = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    $_SESSION[AUTH0_AUTH_TRANSACTION_KEY]['created_at'] = time() - AUTH0_AUTH_TRANSACTION_TTL_SECONDS - 1;
+    auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => $expired['state'], 'code' => 'code']), 'Expired selection transaction was accepted.');
+    $unknown = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    $unknownIdentity = completeAuth0Authorization($configuration, ['state' => $unknown['state'], 'code' => 'code'],
+        static fn (Auth0OidcConfiguration $config): Auth0ValidatedIdentity => new Auth0ValidatedIdentity($config->issuer, 'unknown-phase2b'));
+    auth0RehearsalAssertDenied(static fn () => resolveAuth0InternalUser($database, $configuration, $unknownIdentity), 'Unknown selection identity created a User.');
+    phase2AssertSame(null, currentInternalUserSession(), 'Unknown selection gained a session.');
+    destroyOwnerSession();
+    session_id($browserA);
+    startOwnerSession();
+    phase2AssertSame(null, currentInternalUserSession(), 'Back-button or retired session regained Owner authority.');
+    destroyOwnerSession();
+    session_id($browserB);
+    startOwnerSession();
+    phase2AssertSame($foreignUserId, currentInternalUserSession()['internal_user_id'] ?? null, 'Second browser was invalidated by first browser switch.');
     destroyOwnerSession();
     phase2AssertSame(null, currentInternalUserSession(), 'Owner logout retained local authority.');
+    phase2AssertSame($usersBeforeSelection, (int) $database->query('SELECT COUNT(*) FROM users')->fetchColumn(), 'Account selection created or merged a User.');
+    phase2AssertSame($bindingsBeforeSelection, (int) $database->query('SELECT COUNT(*) FROM user_identities')->fetchColumn(), 'Account selection linked an identity.');
+    phase2AssertSame($portfoliosBeforeSelection, (int) $database->query('SELECT COUNT(*) FROM portfolios')->fetchColumn(), 'Account selection created or reassigned a Portfolio.');
 
     $_SERVER['REMOTE_ADDR'] = '198.51.100.99';
     $_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.9';

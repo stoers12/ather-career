@@ -83,6 +83,7 @@ function ownerNavigation(string $activePage): void
         </nav>
         <div class="sidebar-footer">
             <a href="/owner_preview.php">Private Preview</a>
+            <?php ownerAccountSelectionForm(); ?>
             <form class="sidebar-logout-form" method="POST" action="/owner_logout.php" data-owner-form>
                 <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
                 <button class="sidebar-logout-button" type="submit" data-pending-label="Signing out…">Logout</button>
@@ -141,6 +142,7 @@ function ownerEvidenceHubNavigation(): void
                 <?php echo evidenceHubOwnerIcon('user-round'); ?>
                 <span class="evidence-hub-owner-context-copy"><span>Portfolio owner</span><span class="evidence-hub-private-workspace"><?php echo evidenceHubOwnerIcon('lock-keyhole'); ?><span>Private workspace</span></span></span>
             </div>
+            <?php ownerAccountSelectionForm(true); ?>
             <form class="sidebar-logout-form" method="POST" action="/owner_logout.php" data-owner-form>
                 <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
                 <button class="sidebar-logout-button evidence-hub-sign-out" type="submit" data-pending-label="Logging out…" aria-label="Log out" data-sidebar-tooltip="Log out" data-sidebar-tooltip-always="true"><?php echo evidenceHubOwnerIcon('log-out'); ?><span class="evidence-hub-sidebar-label">Log out</span></button>
@@ -148,6 +150,16 @@ function ownerEvidenceHubNavigation(): void
         </div>
     </aside>
     <div class="evidence-hub-mobile-backdrop" id="evidence-hub-mobile-backdrop" aria-hidden="true" hidden></div>
+    <?php
+}
+
+function ownerAccountSelectionForm(bool $evidenceHub = false): void
+{
+    ?>
+    <form class="sidebar-logout-form" method="POST" action="/owner_switch_account.php" data-owner-form>
+        <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
+        <button class="sidebar-logout-button<?php echo $evidenceHub ? ' evidence-hub-sign-out' : ''; ?>" type="submit" data-pending-label="Opening account selection…"<?php if ($evidenceHub): ?> data-sidebar-tooltip="Use another account" data-sidebar-tooltip-always="true"<?php endif; ?>><?php if ($evidenceHub): ?><?php echo evidenceHubOwnerIcon('user-round'); ?><span class="evidence-hub-sidebar-label"><?php endif; ?>Use another account <span lang="ar" dir="rtl">استخدام حساب آخر</span><?php if ($evidenceHub): ?></span><?php endif; ?></button>
+    </form>
     <?php
 }
 

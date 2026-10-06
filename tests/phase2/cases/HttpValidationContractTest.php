@@ -82,7 +82,9 @@ final class HttpValidationContractTest
         phase2Assert(!str_contains($http, '$_POST') && !str_contains($http, '$_COOKIE'), 'HTTP exception boundary must not log request bodies or cookies.');
 
         $runtime = self::runtimePhp();
-        phase2Assert(substr_count($runtime, "header('Location:") === 2, 'Runtime redirect handling is not consolidated to the shared helper plus the Auth0 authorization redirect.');
+        phase2Assert(substr_count($runtime, "header('Location:") === 3
+            && str_contains(self::read('owner_switch_account.php'), 'auth0Discovery($configuration)')
+            && str_contains(self::read('owner_switch_account.php'), "header('Location: ' . \$authorization['url'], true, 302)"), 'Runtime redirect handling must use the shared helper or a validated Auth0 authorization endpoint.');
         phase2Assert(str_contains(self::read('docker/apache/development-vhost.conf'), 'RewriteRule ^/p/') && str_contains(self::read('docker/apache/production-vhost.conf'), 'RewriteRule ^/p/'), 'Canonical public /p/<slug> routing is missing.');
     }
 

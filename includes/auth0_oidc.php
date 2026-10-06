@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 const AUTH0_AUTH_TRANSACTION_KEY = 'auth0_authorization_transaction';
 const AUTH0_AUTH_TRANSACTION_TTL_SECONDS = 600;
+const OIDC_START_RATE_LIMIT_ATTEMPTS = 5;
+const OIDC_START_RATE_LIMIT_WINDOW_SECONDS = 300;
 
 final class Auth0OidcException extends RuntimeException
 {
@@ -206,10 +208,13 @@ function auth0Discovery(Auth0OidcConfiguration $configuration): array
 }
 
 /** @return array{url: string, state: string, code_challenge: string} */
-function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $authorizationEndpoint): array
+function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $authorizationEndpoint, ?string $prompt = null): array
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         throw new LogicException('Auth0 authorization requires an active server-side session.');
+    }
+    if ($prompt !== null && $prompt !== 'select_account') {
+        throw new InvalidArgumentException('OIDC prompt is invalid.');
     }
     $state = auth0Base64Url(random_bytes(32));
     $verifier = auth0Base64Url(random_bytes(64));
@@ -221,7 +226,7 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
         'nonce' => $nonce,
         'created_at' => time(),
     ];
-    $url = $authorizationEndpoint . '?' . http_build_query([
+    $parameters = [
         'client_id' => $configuration->clientId,
         'response_type' => 'code',
         'redirect_uri' => $configuration->redirectUri,
@@ -230,7 +235,11 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
         'nonce' => $nonce,
         'code_challenge' => $challenge,
         'code_challenge_method' => 'S256',
-    ], '', '&', PHP_QUERY_RFC3986);
+    ];
+    if ($prompt !== null) {
+        $parameters['prompt'] = $prompt;
+    }
+    $url = $authorizationEndpoint . '?' . http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
     return ['url' => $url, 'state' => $state, 'code_challenge' => $challenge];
 }

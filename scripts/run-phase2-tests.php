@@ -32,6 +32,7 @@ require_once __DIR__ . '/../tests/phase2/cases/EdgeSecurityStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OperationalRecoveryStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/Auth0OidcStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/Auth0CallbackBoundaryTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/AccountSelectionStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/LegacyBackendRemovalStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/HttpValidationContractTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PublicProjectJsonContractTest.php';
@@ -80,6 +81,7 @@ $tests = [
     'operational recovery and closure static contract' => [OperationalRecoveryStaticTest::class, 'run'],
     'Auth0 OIDC static contract' => [Auth0OidcStaticTest::class, 'run'],
     'Auth0 callback boundary characterization' => [Auth0CallbackBoundaryTest::class, 'run'],
+    'Phase 2B account selection security and accessibility contract' => [AccountSelectionStaticTest::class, 'run'],
     'legacy backend removal static contract' => [LegacyBackendRemovalStaticTest::class, 'run'],
     'HTTP response and validation contract' => [HttpValidationContractTest::class, 'run'],
     'public Project JSON allow-list and media contract' => [PublicProjectJsonContractTest::class, 'run'],
