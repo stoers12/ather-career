@@ -50,12 +50,12 @@ $databaseCreated = $false
 $testFailure = $null
 $cleanupFailure = $null
 try {
-    & docker exec -e "ATHERCAR_TEST_DB_NAME=$testDatabase" $DbContainer sh -lc $createDatabaseScript
+    & docker exec -e "ATHERCAR_TEST_DB_NAME=$testDatabase" $DbContainer sh -lc ($createDatabaseScript.Replace("`r`n", "`n").Replace("`r", "`n"))
     if ($LASTEXITCODE -ne 0) {
         throw 'Could not provision the exact run-owned lifecycle test database.'
     }
     $databaseCreated = $true
-    & docker exec -e "ATHERCAR_TEST_DB_NAME=$testDatabase" $DbContainer sh -lc $grantDatabaseScript
+    & docker exec -e "ATHERCAR_TEST_DB_NAME=$testDatabase" $DbContainer sh -lc ($grantDatabaseScript.Replace("`r`n", "`n").Replace("`r", "`n"))
     if ($LASTEXITCODE -ne 0) {
         throw 'Could not grant the lifecycle test database to the application test account.'
     }
@@ -80,7 +80,7 @@ try {
 } finally {
     if ($databaseCreated) {
         try {
-            & docker exec -e "ATHERCAR_TEST_DB_NAME=$testDatabase" $DbContainer sh -lc $cleanupScript
+            & docker exec -e "ATHERCAR_TEST_DB_NAME=$testDatabase" $DbContainer sh -lc ($cleanupScript.Replace("`r`n", "`n").Replace("`r", "`n"))
             if ($LASTEXITCODE -ne 0) {
                 throw 'The lifecycle test database was not removed.'
             }

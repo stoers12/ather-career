@@ -1,9 +1,11 @@
 param(
-    [switch]$SkipUpgradedCopy
+    [switch]$SkipUpgradedCopy,
+    [string]$UpgradedDumpPath
 )
 
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+if ($SkipUpgradedCopy -and $UpgradedDumpPath) { throw 'Select either fresh-only or an upgraded dump.' }
 if ((git -C $root rev-parse --show-toplevel).Trim().Replace('\','/') -ne $root.Replace('\','/')) {
     throw 'Phase 1 rehearsal must run from the canonical repository.'
 }
@@ -79,17 +81,27 @@ try {
     }
 
     if (-not $SkipUpgradedCopy) {
-        $source = 'portfolio_course-db-1'
-        $sourceInfo = (docker inspect $source | ConvertFrom-Json)[0]
-        if ($sourceInfo.Name -ne "/$source" -or -not $sourceInfo.State.Running) {
-            throw 'Canonical source database identity is unavailable; no copy was made.'
+        if ($UpgradedDumpPath) {
+            $dump = (Resolve-Path -LiteralPath $UpgradedDumpPath -ErrorAction Stop).Path
+            if ([System.IO.Path]::GetExtension($dump) -ne '.sql' -or -not (Test-Path -LiteralPath $dump -PathType Leaf)) {
+                throw 'The protected upgraded-copy source is not a readable SQL dump.'
+            }
+            & docker run --rm --network $network -v "${dump}:/source.sql:ro" `
+                -e MYSQL_PWD mysql:8.4 sh -c `
+                'mysql -h phase1-db -u root "$1" < /source.sql' sh $databases.upgraded
+            Assert-LastExit 'isolated protected-dump restore'
+        } else {
+            $source = 'portfolio_course-db-1'
+            $sourceInfo = (docker inspect $source | ConvertFrom-Json)[0]
+            if ($sourceInfo.Name -ne "/$source" -or -not $sourceInfo.State.Running) {
+                throw 'Canonical source database identity is unavailable; no copy was made.'
+            }
+            # A transaction-consistent read only from a canonical 001–013 source.
+            & docker exec $source sh -c `
+                'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqldump --single-transaction --skip-lock-tables --set-gtid-purged=OFF -u root "$MYSQL_DATABASE"' |
+                & docker exec -i -e MYSQL_PWD=$password $container mysql -u root $databases.upgraded
+            Assert-LastExit 'isolated upgraded-copy restore'
         }
-        # The source command is a transaction-consistent read only. Its SQL
-        # stream goes directly into the isolated container, never to a file.
-        & docker exec $source sh -c `
-            'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqldump --single-transaction --skip-lock-tables --set-gtid-purged=OFF -u root "$MYSQL_DATABASE"' |
-            & docker exec -i -e MYSQL_PWD=$password $container mysql -u root $databases.upgraded
-        Assert-LastExit 'isolated upgraded-copy restore'
     }
 
     Invoke-AppPhp $databases.fresh @('scripts/run-phase1-identity-rehearsal.php','fresh')

@@ -21,7 +21,9 @@ final class Auth0OidcStaticTest
         phase2Assert(str_contains($oidc, 'AUTH0_AUTH_TRANSACTION_TTL_SECONDS') && str_contains($oidc, 'unset($_SESSION[AUTH0_AUTH_TRANSACTION_KEY])'), 'Auth0 callback transaction is not bounded and one-time.');
         phase2Assert(str_contains($oidc, 'Auth0\\SDK\\Token') && (str_contains($oidc, '->verify()->validate(') || (str_contains($oidc, '$token->verify();') && str_contains($oidc, '$token->validate('))), 'Auth0 signed ID token validation is missing.');
         phase2Assert(str_contains($oidc, 'hash_equals($configuration->issuer, $issuer)') && str_contains($identity, 'hash_equals($configuration->issuer, $identity->issuer)'), 'Auth0 issuer binding is not exact.');
-        phase2Assert(str_contains($identity, 'WHERE oidc_subject = :subject') && !preg_match('/email|name|nickname|username/i', $identity), 'Auth0 identity lookup is not subject-only.');
+        phase2Assert(str_contains($identity, 'identityRepositoryHasBindingsTable($database)')
+            && str_contains($identity, 'findCompatibleIdentityUser($database, $identity->issuer, $identity->subject)')
+            && !preg_match('/INSERT\s+INTO|UPDATE\s+|DELETE\s+FROM|email|nickname|username/i', $identity), 'Auth0 callback must resolve only an existing exact issuer/subject binding.');
         phase2Assert(str_contains($start, "consumeRateLimit('oidc_start', rateLimitClientIp()") && !preg_match('/X-Forwarded-For|Forwarded/i', $start), 'OIDC start limiter is not REMOTE_ADDR-only.');
         phase2Assert(str_contains($callback, 'establishVerifiedInternalUserSession') && str_contains($callback, 'destroyInternalUserSession'), 'Auth0 session establishment or denial cleanup is missing.');
         phase2Assert(str_contains($guard, 'auth0ProductionConfigurationFailures'), 'Production guard does not validate Auth0 configuration.');
