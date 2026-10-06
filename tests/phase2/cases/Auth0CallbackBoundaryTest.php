@@ -24,7 +24,8 @@ final class Auth0CallbackBoundaryTest
         phase2Assert(str_contains($callback, 'completeAuth0Authorization')
             && str_contains($callback, 'resolveAuth0InternalUser')
             && str_contains($callback, 'establishVerifiedInternalUserSession')
-            && str_contains($callback, 'destroyInternalUserSession()')
+            && str_contains($callback, 'beginFreshOwnerAccountSelectionSession()')
+            && str_contains($callback, 'renderOwnerAuthRecoveryPage(')
             && str_contains($callback, 'ownerHasPortfolio'), 'Callback sequencing or denial cleanup changed.');
         phase2Assert(str_contains($identity, 'hash_equals($configuration->issuer, $identity->issuer)')
             && str_contains($identity, 'findCompatibleIdentityUser($database, $identity->issuer, $identity->subject)')

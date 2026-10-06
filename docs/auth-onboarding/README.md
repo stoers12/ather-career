@@ -1,6 +1,6 @@
 # Ather authentication and onboarding project record
 
-**Authority and phase:** Owner-approved architecture, expanded on 2026-10-04. Phase 1 merged to main at `43b36f3811ea64c23687b84d8b45327a88cf169d`, and canonical Migration 014 has five legacy bindings. Phase 2A callback resolution has passed local isolated gates and remains unpushed; see [its scoped contract](10-PHASE2A-CALLBACK-RESOLUTION.md). The canonical bind-mounted checkout was restored to approved main after temporary Phase 2A exposure. It now serves the legacy callback; an intentional Phase 2A rollout requires separate approval. Proposed registration, linking, routes and screens are not implemented.
+**Current status (2026-10-06):** Phase 2A is merged, deployed, and accepted after two intentional signed Owner callbacks. Canonical main is `e1cd58d41d9996d3a97df425e9fd098d98258fbb`; Migration 014 and five exact bindings remain. Phase 2B account selection is being developed only in an isolated branch; see [its scoped contract](11-PHASE2B-ACCOUNT-SELECTION.md). No Phase 2B runtime or Auth0 change is authorized. The older phase records below retain their historical dates.
 
 Ather is a broader professional platform, initially focused on students and graduates in Jordan. It preserves the story, decisions, role, evidence, lessons and impact behind work. The established green-and-gold identity carries into later design work. AI recommendations and recruiter/company accounts are future capabilities.
 
@@ -21,6 +21,7 @@ Read current behavior before changing code; use the ADRs for approved choices, t
 | [08-OPERATIONS-ROLLBACK-AND-RECOVERY.md](08-OPERATIONS-ROLLBACK-AND-RECOVERY.md) | Recovery and canonical bind-mount runbook | Maintenance boundary recorded | This documentation correction | 2026-10-05 |
 | [09-OFFICIAL-REFERENCES.md](09-OFFICIAL-REFERENCES.md) | Primary-source register | Verified | This documentation-expansion commit | 2026-10-04 |
 | [10-PHASE2A-CALLBACK-RESOLUTION.md](10-PHASE2A-CALLBACK-RESOLUTION.md) | Local callback cutover contract and recovery boundary | Verified locally; runtime corrected | This documentation correction | 2026-10-05 |
+| [11-PHASE2B-ACCOUNT-SELECTION.md](11-PHASE2B-ACCOUNT-SELECTION.md) | Local session switch and fixed account chooser contract | Isolated review branch | Phase 2B local implementation | 2026-10-06 |
 | [CHANGELOG.md](CHANGELOG.md) | Durable phase and commit history | Approved | This documentation correction | 2026-10-05 |
 
 “This documentation-expansion commit” identifies the containing commit without an impossible self-referential SHA. Its parent is 2c486f11de660a6587e8dd33e66b0ebfbe3ca5bd.

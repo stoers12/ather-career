@@ -168,5 +168,7 @@ function destroyInternalUserSession(): void
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
-    session_destroy();
+    if (!session_destroy()) {
+        throw new RuntimeException('Could not destroy the local session.');
+    }
 }

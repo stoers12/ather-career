@@ -167,7 +167,8 @@ final class EvidenceHubOwnerRoutePresenterTest
         foreach (['evidence-hub-mobile-close', 'Close navigation', 'evidence-hub-mobile-backdrop', 'aria-controls="evidence-hub-mobile-drawer"'] as $required) {
             phase2Assert(str_contains($layout, $required), "Evidence Hub mobile drawer structure is missing {$required}.");
         }
-        phase2Assert(!preg_match('/[\x{0600}-\x{06FF}]/u', $layout . $presentation), 'Production Evidence Hub shell contains active Arabic application chrome.');
+        $shellWithoutAccountChooser = preg_replace('/function ownerAccountSelectionForm\(.*?(?=function evidenceHubOwnerIcon)/s', '', $layout);
+        phase2Assert(is_string($shellWithoutAccountChooser) && !preg_match('/[\x{0600}-\x{06FF}]/u', $shellWithoutAccountChooser . $presentation), 'Production Evidence Hub shell contains Arabic chrome outside the requested account chooser.');
         foreach (['evidence-hub-status', 'evidence-hub-documentation', 'evidence-hub-technology', 'evidence-hub-progress', 'evidence-hub-recommendations', 'evidence-hub-readiness-panel', 'evidence-hub-coverage-kpi', 'evidence-hub-recommendation-accent', 'evidence-hub-recommendation-metadata', 'evidence-hub-recommendation-footer', 'dir="ltr"', 'csrf_token', 'action_token', 'name="action" value="snooze"', 'name="action" value="dismiss"', 'evidence-hub-snooze', 'evidence-hub-dismiss'] as $required) {
             phase2Assert(str_contains($presentation, $required), "Production Evidence Hub presentation is missing {$required}.");
         }
@@ -176,7 +177,7 @@ final class EvidenceHubOwnerRoutePresenterTest
         foreach (['<html lang="en" dir="ltr">', 'Evidence Hub — My Portfolio', 'Open navigation', 'Close navigation'] as $required) {
             phase2Assert(str_contains($layout, $required), "English-only Owner shell is missing {$required}.");
         }
-        phase2Assert(!str_contains($layout, 'language selector') && !str_contains($layout, 'lang="ar"') && !str_contains($layout, 'dir="rtl"'), 'Owner shell retains an Arabic activation path.');
+        phase2Assert(!str_contains($shellWithoutAccountChooser, 'language selector') && !str_contains($shellWithoutAccountChooser, 'lang="ar"') && !str_contains($shellWithoutAccountChooser, 'dir="rtl"'), 'Owner shell retains an Arabic activation path outside the requested account chooser.');
         foreach (['recommendation_key', 'evidence_fingerprint', 'opaque_target_ref', 'raw_label', 'canonical_key', 'tenant_scope_ref', 'portfolio_target_identity'] as $forbidden) {
             phase2Assert(!str_contains($presentation, $forbidden), "Production Evidence Hub presentation exposes {$forbidden}.");
         }

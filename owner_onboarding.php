@@ -39,7 +39,7 @@ ownerLayoutStart('Create Your Portfolio', '');
     <div class="admin-page-header-copy">
         <p class="admin-eyebrow">Welcome</p>
         <h1 class="admin-page-title">Create your Portfolio</h1>
-        <p class="admin-page-description">Your private workspace is ready to set up. It is not public or published.</p>
+        <p class="admin-page-description">Your private workspace is ready to set up. It is not public or published. If this is the wrong account, use “Use another account” in the navigation before creating a Portfolio.</p>
     </div>
 </div>
 <?php ownerRenderFormFeedback('', $error === '' ? [] : [$error]); ?>

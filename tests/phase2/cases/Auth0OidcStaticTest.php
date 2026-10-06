@@ -25,7 +25,7 @@ final class Auth0OidcStaticTest
             && str_contains($identity, 'findCompatibleIdentityUser($database, $identity->issuer, $identity->subject)')
             && !preg_match('/INSERT\s+INTO|UPDATE\s+|DELETE\s+FROM|email|nickname|username/i', $identity), 'Auth0 callback must resolve only an existing exact issuer/subject binding.');
         phase2Assert(str_contains($start, "consumeRateLimit('oidc_start', rateLimitClientIp()") && !preg_match('/X-Forwarded-For|Forwarded/i', $start), 'OIDC start limiter is not REMOTE_ADDR-only.');
-        phase2Assert(str_contains($callback, 'establishVerifiedInternalUserSession') && str_contains($callback, 'destroyInternalUserSession'), 'Auth0 session establishment or denial cleanup is missing.');
+        phase2Assert(str_contains($callback, 'establishVerifiedInternalUserSession') && str_contains($callback, 'beginFreshOwnerAccountSelectionSession'), 'Auth0 session establishment or denial cleanup is missing.');
         phase2Assert(str_contains($guard, 'auth0ProductionConfigurationFailures'), 'Production guard does not validate Auth0 configuration.');
         phase2Assert(str_contains($safeAccessLog, '%m %H') && !preg_match('/%[hUqr]|%\{(?:Cookie|Authorization|Referer|User-agent)\}i/', $safeAccessLog)
             && str_contains($developmentDockerfile, 'a2disconf other-vhosts-access-log')
@@ -98,7 +98,9 @@ final class Auth0OidcStaticTest
             phase2Assert(!str_contains($reason, 'secret') && !str_contains($reason, 'invalid') && !str_contains($reason, 'http'), 'Token classifier leaked diagnostic text.');
         }
         phase2AssertSame('token_validation_failed', auth0TokenValidationExceptionReason(new RuntimeException('Issuer (iss) claim'), 'claims'), 'Unexpected exception types must use the generic safe reason.');
-        phase2Assert(!preg_match('/error_description|error_uri/i', $oidc), 'OAuth provider diagnostic mapping must not expose descriptions or URIs.');
+        phase2Assert(str_contains($oidc, "'authorization_denied'")
+            && str_contains($oidc, "'access_denied'")
+            && !preg_match('/(?:echo|print|error_log|reportSecurityEvent)\s*\([^;]*(?:error_description|error_uri)/i', $oidc), 'OAuth cancellation classification must never expose provider descriptions or URIs.');
         phase2Assert(!preg_match('/error_log|reportSecurityEvent|json_encode\s*\([^\n]*(?:exception|token|code|state|nonce|cookie|header)/i', $oidc), 'Auth0 token-validation classification must not log sensitive payloads.');
     }
 

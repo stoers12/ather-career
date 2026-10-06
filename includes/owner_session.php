@@ -24,3 +24,20 @@ function destroyOwnerSession(): void
 {
     destroyInternalUserSession();
 }
+
+function beginFreshOwnerAccountSelectionSession(): void
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        throw new LogicException('Account selection requires an active session.');
+    }
+
+    // Retire the authenticated session before creating a separate anonymous
+    // session for the new one-time OIDC transaction.
+    destroyOwnerSession();
+    session_id('');
+    startOwnerSession();
+    if (!session_regenerate_id(true)) {
+        destroyOwnerSession();
+        throw new RuntimeException('Could not rotate the account-selection session.');
+    }
+}

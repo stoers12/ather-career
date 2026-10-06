@@ -55,6 +55,7 @@ function runtimeRouteCategory(string $route): string
         'public_media.php' => 'public_media',
         'owner_login.php' => 'owner_login',
         'owner_logout.php' => 'owner_logout',
+        'owner_switch_account.php' => 'owner_account_selection',
         'owner_oidc_callback.php' => 'owner_oidc_callback',
         'owner.php' => 'owner_dashboard',
         'owner_profile.php', 'owner_projects.php', 'owner_experiences.php', 'owner_messages.php', 'owner_onboarding.php', 'owner_preview.php', 'owner_publication.php' => 'owner_workflow',
