@@ -20,7 +20,7 @@ final class AccountSelectionStaticTest
         $stylesheet = (string) file_get_contents($root . 'style.css');
 
         phase2Assert(str_contains($route, "httpRequireMethod(['POST'])")
-            && str_contains($route, "\$_GET !== [] || array_keys(\$_POST) !== ['csrf_token']")
+            && str_contains($route, "\$_GET !== [] || \$_FILES !== [] || array_keys(\$_POST) !== ['csrf_token']")
             && str_contains($route, "!is_string(\$_POST['csrf_token']) || \$_POST['csrf_token'] === ''")
             && str_contains($route, "httpAbortHtml(403, 'Invalid request.')")
             && str_contains($route, "requireValidCsrfToken(\$_POST['csrf_token'])")

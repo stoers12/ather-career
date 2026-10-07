@@ -99,7 +99,7 @@ final class HttpValidationContractTest
         $switch = self::read('owner_switch_account.php');
         $switchOrder = [
             "httpRequireMethod(['POST'])",
-            "\$_GET !== [] || array_keys(\$_POST) !== ['csrf_token']",
+            "\$_GET !== [] || \$_FILES !== [] || array_keys(\$_POST) !== ['csrf_token']",
             "!is_string(\$_POST['csrf_token']) || \$_POST['csrf_token'] === ''",
             "httpAbortHtml(403, 'Invalid request.')",
             "requireValidCsrfToken(\$_POST['csrf_token'])",

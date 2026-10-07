@@ -14,7 +14,7 @@ require_once __DIR__ . '/includes/security_events.php';
 startOwnerSession();
 httpRegisterExceptionBoundary('owner_switch_account.php');
 httpRequireMethod(['POST']);
-if ($_GET !== [] || array_keys($_POST) !== ['csrf_token']
+if ($_GET !== [] || $_FILES !== [] || array_keys($_POST) !== ['csrf_token']
     || !is_string($_POST['csrf_token']) || $_POST['csrf_token'] === '') {
     httpAbortHtml(403, 'Invalid request.');
 }

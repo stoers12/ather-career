@@ -13,6 +13,7 @@ $startStdout = Join-Path $env:TEMP "ather-phase2a-start-out-$runId"
 $startStderr = Join-Path $env:TEMP "ather-phase2a-start-err-$runId"
 $loginBody = Join-Path $env:TEMP "ather-phase2a-login-body-$runId"
 $discoveryErr = Join-Path $env:TEMP "ather-phase2a-discovery-err-$runId"
+$uploadFixture = Join-Path $env:TEMP "ather-phase2a-upload-$runId.txt"
 $vendorVolume = "ather-phase2a-vendor-$runId"
 $webRoot = Join-Path $env:TEMP "ather-phase2a-webroot-$runId"
 $archivePath = Join-Path $env:TEMP "ather-phase2a-source-$runId.tar"
@@ -445,6 +446,20 @@ function getDatabaseConnection(): PDO {
             throw "Account selection $($case.Name) retired the Owner session or created an OIDC transaction."
         }
     }
+    # Multipart files are not application-visible POST fields; reject them too.
+    [IO.File]::WriteAllText($uploadFixture, 'synthetic-upload-only', [Text.UTF8Encoding]::new($false))
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody --cookie $switchCookie --max-redirs 0 --request POST --form "csrf_token=$csrf" --form "unexpected=@$uploadFixture;filename=synthetic.txt;type=text/plain" $switchUrl
+    $uploadCurlExit = $LASTEXITCODE
+    $uploadLines = @(Get-Content -LiteralPath $headers)
+    $uploadBody = Get-Content -LiteralPath $loginBody -Raw -Encoding UTF8
+    $probe = & docker exec $container php -r $probeCode 2>$null
+    if ($uploadCurlExit -ne 0 -or $LASTEXITCODE -ne 0 -or
+        @($uploadLines | Where-Object { $_ -match '^HTTP/\S+\s+403\s' }).Count -ne 1 -or
+        @($uploadLines | Where-Object { $_ -match '(?i)^Location:' }).Count -ne 0 -or
+        $uploadBody -match 'synthetic-upload-only' -or
+        $probe -cne 'AUTHENTICATED_NO_TRANSACTION') {
+        throw 'Account selection accepted an uploaded file or changed the authenticated session.'
+    }
     & curl.exe --silent --show-error --dump-header $headers --output $loginBody --cookie $switchCookie --max-redirs 0 --request POST --header 'Content-Type: application/json' --data-binary '{"csrf_token":"synthetic"}' $switchUrl
     $jsonCurlExit = $LASTEXITCODE
     $jsonLines = @(Get-Content -LiteralPath $headers)
@@ -624,7 +639,7 @@ function getDatabaseConnection(): PDO {
     try { Remove-RunContainer $container $runId $script:containerId } catch { $cleanupFailure = $_.Exception.Message }
     try { Remove-RunVendorVolume $vendorVolume $runId } catch { if (-not $cleanupFailure) { $cleanupFailure = $_.Exception.Message } }
     try { Remove-RunWebRoot $webRoot } catch { if (-not $cleanupFailure) { $cleanupFailure = $_.Exception.Message } }
-    foreach ($path in @($headers, $cookies, $startStdout, $startStderr, $loginBody, $discoveryErr)) {
+    foreach ($path in @($headers, $cookies, $startStdout, $startStderr, $loginBody, $discoveryErr, $uploadFixture)) {
         try {
             if ($path.StartsWith(($env:TEMP.TrimEnd('\') + '\'), [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $path)) {
                 Remove-Item -LiteralPath $path -Force
