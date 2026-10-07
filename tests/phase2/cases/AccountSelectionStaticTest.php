@@ -20,7 +20,12 @@ final class AccountSelectionStaticTest
         $stylesheet = (string) file_get_contents($root . 'style.css');
 
         phase2Assert(str_contains($route, "httpRequireMethod(['POST'])")
-            && str_contains($route, "requireValidCsrfToken(\$_POST['csrf_token'] ?? null)")
+            && str_contains($route, "\$_GET !== [] || \$_FILES !== [] || array_keys(\$_POST) !== ['csrf_token']")
+            && str_contains($route, "!is_string(\$_POST['csrf_token']) || \$_POST['csrf_token'] === ''")
+            && str_contains($route, "httpAbortHtml(403, 'Invalid request.')")
+            && str_contains($route, "requireValidCsrfToken(\$_POST['csrf_token'])")
+            && strpos($route, 'httpRequireMethod') < strpos($route, 'array_keys($_POST)')
+            && strpos($route, 'array_keys($_POST)') < strpos($route, 'requireValidCsrfToken')
             && strpos($route, 'requireValidCsrfToken') < strpos($route, 'requireOwnerAuthenticatedUser')
             && strpos($route, 'requireOwnerAuthenticatedUser') < strpos($route, 'beginFreshOwnerAccountSelectionSession')
             && strpos($route, 'beginFreshOwnerAccountSelectionSession') < strpos($route, 'beginAuth0Authorization'), 'Account selection POST, CSRF, or session ordering changed.');

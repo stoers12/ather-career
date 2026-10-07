@@ -93,8 +93,32 @@ final class HttpValidationContractTest
             $source = self::read($route);
             phase2Assert(substr_count($source, "header('Location:") === 1 && str_contains($source, $statement), "Unapproved direct redirect in {$route}.");
         }
-        phase2Assert(str_contains(self::read('owner_switch_account.php'), 'auth0Discovery($configuration)')
-            && str_contains(self::read('owner_switch_account.php'), "header('Location: ' . \$authorization['url'], true, 302)"), 'Existing account-switch redirect validation changed.');
+        // Both chooser entry points must prove the input boundary before any
+        // redirect or local-session transition. The retry-only assertion
+        // previously left the authenticated switch route uncovered.
+        $switch = self::read('owner_switch_account.php');
+        $switchOrder = [
+            "httpRequireMethod(['POST'])",
+            "\$_GET !== [] || \$_FILES !== [] || array_keys(\$_POST) !== ['csrf_token']",
+            "!is_string(\$_POST['csrf_token']) || \$_POST['csrf_token'] === ''",
+            "httpAbortHtml(403, 'Invalid request.')",
+            "requireValidCsrfToken(\$_POST['csrf_token'])",
+            'requireOwnerAuthenticatedUser(getDatabaseConnection())',
+            'auth0ConfigurationFromEnvironment()',
+            'auth0Discovery($configuration)',
+            'beginFreshOwnerAccountSelectionSession()',
+            "beginAuth0Authorization(\$configuration, \$discovery['authorization_endpoint'], 'select_account')",
+            "header('Location: ' . \$authorization['url'], true, 302)",
+        ];
+        $previousPosition = -1;
+        foreach ($switchOrder as $step) {
+            $position = strpos($switch, $step);
+            phase2Assert($position !== false && $position > $previousPosition, "Account-switch redirect bypassed a required stage: {$step}.");
+            $previousPosition = $position;
+        }
+        phase2Assert(!preg_match('/\$_(?:GET|REQUEST|SERVER)\s*\[|\$_POST\s*\[(?![\'"]csrf_token[\'"])/', $switch)
+            && !preg_match('/returnTo|return_url|HTTP_HOST|REQUEST_SCHEME|error_description|error_uri/i', $switch),
+            'Account-switch redirect accepted a request-controlled endpoint or return destination.');
 
         $retry = self::read('owner_auth_retry.php');
         $oidc = self::read('includes/auth0_oidc.php');

@@ -13,6 +13,7 @@ $startStdout = Join-Path $env:TEMP "ather-phase2a-start-out-$runId"
 $startStderr = Join-Path $env:TEMP "ather-phase2a-start-err-$runId"
 $loginBody = Join-Path $env:TEMP "ather-phase2a-login-body-$runId"
 $discoveryErr = Join-Path $env:TEMP "ather-phase2a-discovery-err-$runId"
+$uploadFixture = Join-Path $env:TEMP "ather-phase2a-upload-$runId.txt"
 $vendorVolume = "ather-phase2a-vendor-$runId"
 $webRoot = Join-Path $env:TEMP "ather-phase2a-webroot-$runId"
 $archivePath = Join-Path $env:TEMP "ather-phase2a-source-$runId.tar"
@@ -349,6 +350,20 @@ $setup = ConvertTo-LfShellPayload $setup
 Invoke-WithRunCleanup {
     Initialize-RunVendorFixture $root $vendorVolume $runId
     Initialize-RunWebRoot $root $webRoot $archivePath
+    # Override only the disposable source copy with a synthetic, container-local
+    # User fixture. No canonical or run-worktree database is opened.
+    $fixtureDatabase = "/tmp/ather-phase2b-switch-$runId.sqlite"
+    $fixtureConfig = '<?php
+class DatabaseConfigurationException extends RuntimeException {}
+function getDatabaseConnection(): PDO {
+    return new PDO("sqlite:{DB}", null, null, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+}
+'
+    $fixtureConfig = $fixtureConfig.Replace('{DB}', $fixtureDatabase)
+    [IO.File]::WriteAllText((Join-Path $webRoot 'config/database.php'), $fixtureConfig, [Text.UTF8Encoding]::new($false))
     $dockerArgs = @('run','-d','--name',$container,'--label',("ather.phase2a.http="+$runId),'-p',("127.0.0.1:"+$port+":8080"),'-v',($webRoot+':/var/www/html:ro'),'-v',($vendorVolume+':/var/www/html/vendor:ro'),'-w','/var/www/html','-e','APP_ENV=production','-e','ATHERCAR_CI_OIDC_MOCK=1','-e','EXPECTED_OIDC_ISSUER=https://127.0.0.1:9443/','-e','OIDC_CLIENT_ID=synthetic-phase2a-client','-e','OIDC_CLIENT_SECRET=synthetic-phase2a-secret','-e','OIDC_REDIRECT_URI=https://phase2a.invalid/owner_oidc_callback.php','-e','SESSION_COOKIE_SECURE=false','-e','RATE_LIMIT_STATE_DIR=/tmp/ather-phase2a-rate','--entrypoint','sh','portfolio_course-web','-lc',$setup)
     & docker @dockerArgs 1> $startStdout 2> $startStderr
     $startExit = $LASTEXITCODE
@@ -388,6 +403,99 @@ Invoke-WithRunCleanup {
     $switchWithoutCsrf = & curl.exe --silent --show-error --output NUL --write-out '%{http_code}' --max-redirs 0 --request POST --data '' $switchUrl
     if ($LASTEXITCODE -ne 0 -or $switchWithoutCsrf -ne '403') { throw 'Account selection POST without CSRF did not return 403.' }
     Write-Output 'ACCOUNT_SELECTION_GET=405 POST_WITHOUT_CSRF=403'
+
+    # Seed only the disposable web container; the application-visible input
+    # contract must reject bad requests before touching this authenticated session.
+    $seedCode = '$d=new PDO("sqlite:{DB}");$d->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);$d->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT, authz_version INTEGER)");$d->exec("INSERT INTO users VALUES (1,''active'',1)");'.Replace('{DB}', $fixtureDatabase)
+    & docker exec $container php -r $seedCode 1>$null 2>$null
+    if ($LASTEXITCODE -ne 0) { throw 'Disposable switch User fixture could not be seeded.' }
+    $seedSessionCode = 'require "includes/owner_session.php"; startOwnerSession(); establishVerifiedInternalUserSession(1,1); $_SESSION["csrf_token"]=str_repeat("a",64); echo session_name()."=".session_id(); session_write_close();'
+    $switchCookie = & docker exec $container php -r $seedSessionCode 2>$null
+    if ($LASTEXITCODE -ne 0 -or $switchCookie -notmatch '^portfolio_owner_session=[A-Za-z0-9,-]{16,}$') {
+        throw 'Disposable authenticated Owner session could not be seeded.'
+    }
+    $switchSessionId = ($switchCookie -split '=', 2)[1]
+    $probeCode = 'require "includes/owner_session.php"; require "includes/auth0_oidc.php"; session_id("{SID}"); startOwnerSession(); $u=currentInternalUserSession(); echo ($u!==null && $u["internal_user_id"]===1 && !isset($_SESSION[AUTH0_AUTH_TRANSACTION_KEY]))?"AUTHENTICATED_NO_TRANSACTION":"NOT_AUTHENTICATED_OR_TRANSACTION"; session_write_close();'.Replace('{SID}', $switchSessionId)
+    $csrf = 'a' * 64
+    $switchRejectCases = @(
+        @{ Name = 'GET'; Method = 'GET'; Url = $switchUrl; Fields = @(); Status = '405' },
+        @{ Name = 'PUT'; Method = 'PUT'; Url = $switchUrl; Fields = @(); Status = '405' },
+        @{ Name = 'missing_csrf'; Method = 'POST'; Url = $switchUrl; Fields = @(); Status = '403' },
+        @{ Name = 'invalid_csrf'; Method = 'POST'; Url = $switchUrl; Fields = @('csrf_token=invalid'); Status = '403' },
+        @{ Name = 'empty_csrf'; Method = 'POST'; Url = $switchUrl; Fields = @('csrf_token='); Status = '403' },
+        @{ Name = 'array_csrf'; Method = 'POST'; Url = $switchUrl; Fields = @("csrf_token[]=$csrf"); Status = '403' },
+        @{ Name = 'extra_query'; Method = 'POST'; Url = ($switchUrl + '?returnTo=https%3A%2F%2Fattacker.invalid'); Fields = @("csrf_token=$csrf"); Status = '403' },
+        @{ Name = 'extra_form'; Method = 'POST'; Url = $switchUrl; Fields = @("csrf_token=$csrf", 'authorization_endpoint=https://attacker.invalid/authorize', 'returnTo=https://attacker.invalid/after-login'); Status = '403' }
+    )
+    foreach ($case in $switchRejectCases) {
+        $requestArgs = @('--silent', '--show-error', '--dump-header', $headers, '--output', $loginBody, '--cookie', $switchCookie, '--max-redirs', '0', '--request', $case.Method)
+        if ($case.Method -eq 'POST' -and @($case.Fields).Count -eq 0) { $requestArgs += @('--data', '') }
+        foreach ($field in $case.Fields) { $requestArgs += @('--data-urlencode', $field) }
+        $requestArgs += $case.Url
+        & curl.exe @requestArgs
+        if ($LASTEXITCODE -ne 0) { throw "Account selection $($case.Name) HTTP request failed." }
+        $switchLines = @(Get-Content -LiteralPath $headers)
+        $switchBody = Get-Content -LiteralPath $loginBody -Raw -Encoding UTF8
+        if (@($switchLines | Where-Object { $_ -match "^HTTP/\S+\s+$($case.Status)\s" }).Count -ne 1 -or
+            @($switchLines | Where-Object { $_ -match '(?i)^Location:' }).Count -ne 0 -or
+            $switchBody -match 'attacker\.invalid') {
+            throw "Account selection $($case.Name) did not reject without redirect or reflection."
+        }
+        $probe = & docker exec $container php -r $probeCode 2>$null
+        if ($LASTEXITCODE -ne 0 -or $probe -cne 'AUTHENTICATED_NO_TRANSACTION') {
+            throw "Account selection $($case.Name) retired the Owner session or created an OIDC transaction."
+        }
+    }
+    # Multipart files are not application-visible POST fields; reject them too.
+    [IO.File]::WriteAllText($uploadFixture, 'synthetic-upload-only', [Text.UTF8Encoding]::new($false))
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody --cookie $switchCookie --max-redirs 0 --request POST --form "csrf_token=$csrf" --form "unexpected=@$uploadFixture;filename=synthetic.txt;type=text/plain" $switchUrl
+    $uploadCurlExit = $LASTEXITCODE
+    $uploadLines = @(Get-Content -LiteralPath $headers)
+    $uploadBody = Get-Content -LiteralPath $loginBody -Raw -Encoding UTF8
+    $probe = & docker exec $container php -r $probeCode 2>$null
+    if ($uploadCurlExit -ne 0 -or $LASTEXITCODE -ne 0 -or
+        @($uploadLines | Where-Object { $_ -match '^HTTP/\S+\s+403\s' }).Count -ne 1 -or
+        @($uploadLines | Where-Object { $_ -match '(?i)^Location:' }).Count -ne 0 -or
+        $uploadBody -match 'synthetic-upload-only' -or
+        $probe -cne 'AUTHENTICATED_NO_TRANSACTION') {
+        throw 'Account selection accepted an uploaded file or changed the authenticated session.'
+    }
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody --cookie $switchCookie --max-redirs 0 --request POST --header 'Content-Type: application/json' --data-binary '{"csrf_token":"synthetic"}' $switchUrl
+    $jsonCurlExit = $LASTEXITCODE
+    $jsonLines = @(Get-Content -LiteralPath $headers)
+    $probe = & docker exec $container php -r $probeCode 2>$null
+    if ($jsonCurlExit -ne 0 -or $LASTEXITCODE -ne 0 -or
+        @($jsonLines | Where-Object { $_ -match '^HTTP/\S+\s+403\s' }).Count -ne 1 -or
+        @($jsonLines | Where-Object { $_ -match '(?i)^Location:' }).Count -ne 0 -or
+        $probe -cne 'AUTHENTICATED_NO_TRANSACTION') {
+        throw 'Account selection accepted malformed JSON input or changed the authenticated session.'
+    }
+    & curl.exe --silent --show-error --dump-header $headers --output $loginBody --cookie $switchCookie --max-redirs 0 --request POST --data-urlencode "csrf_token=$csrf" $switchUrl
+    if ($LASTEXITCODE -ne 0) { throw 'Valid exact account selection POST failed.' }
+    $switchLines = @(Get-Content -LiteralPath $headers)
+    $switchLocations = @($switchLines | Where-Object { $_ -match '(?i)^Location:' })
+    if (@($switchLines | Where-Object { $_ -match '^HTTP/\S+\s+302\s' }).Count -ne 1 -or $switchLocations.Count -ne 1) {
+        throw 'Valid exact account selection did not redirect once.'
+    }
+    $switchTarget = [uri]$switchLocations[0].Substring(9).Trim()
+    $switchQuery = [uri]::UnescapeDataString($switchTarget.Query)
+    if ($switchTarget.Scheme -ne 'https' -or $switchTarget.Host -ne '127.0.0.1' -or
+        $switchTarget.Port -ne 9443 -or $switchTarget.AbsolutePath -ne '/authorize' -or
+        $switchQuery -notmatch '(?:[?&])prompt=select_account(?:&|$)' -or
+        $switchQuery -notmatch 'redirect_uri=https://phase2a\.invalid/owner_oidc_callback\.php(?:&|$)' -or
+        $switchQuery -notmatch '(?:[?&])state=[^&]+' -or
+        $switchQuery -notmatch '(?:[?&])nonce=[^&]+' -or
+        $switchQuery -notmatch '(?:[?&])code_challenge=[^&]+' -or
+        $switchQuery -match 'attacker\.invalid') {
+        throw 'Valid exact account selection lost validated discovery, fixed callback, chooser, or one-time OIDC controls.'
+    }
+    $rotatedCookies = @($switchLines | Where-Object { $_ -match '(?i)^Set-Cookie:\s*portfolio_owner_session=([A-Za-z0-9,-]{16,})' } | ForEach-Object { if ($_ -match '(?i)^Set-Cookie:\s*portfolio_owner_session=([A-Za-z0-9,-]{16,})') { $Matches[1] } })
+    if (@($rotatedCookies | Where-Object { $_ -ne $switchSessionId }).Count -lt 1) { throw 'Valid account selection did not rotate the local session.' }
+    $retiredCode = 'require "includes/owner_session.php"; session_id("{SID}"); startOwnerSession(); echo currentInternalUserSession()===null?"RETIRED":"STILL_AUTHENTICATED"; session_write_close();'.Replace('{SID}', $switchSessionId)
+    $retired = & docker exec $container php -r $retiredCode 2>$null
+    if ($LASTEXITCODE -ne 0 -or $retired -cne 'RETIRED') { throw 'Valid account selection did not retire the old Owner session.' }
+    Write-Output 'ACCOUNT_SELECTION_INPUT_CONTRACT=passed OLD_SESSION=retired CHOOSER=select_account'
+
     & curl.exe --silent --show-error --dump-header $headers --output $loginBody --cookie-jar $cookies --max-redirs 0 ("http://127.0.0.1:"+$port+"/owner_login.php")
     $loginCurlExit = $LASTEXITCODE
     $lines = if (Test-Path -LiteralPath $headers) { @(Get-Content -LiteralPath $headers) } else { @() }
@@ -531,7 +639,7 @@ Invoke-WithRunCleanup {
     try { Remove-RunContainer $container $runId $script:containerId } catch { $cleanupFailure = $_.Exception.Message }
     try { Remove-RunVendorVolume $vendorVolume $runId } catch { if (-not $cleanupFailure) { $cleanupFailure = $_.Exception.Message } }
     try { Remove-RunWebRoot $webRoot } catch { if (-not $cleanupFailure) { $cleanupFailure = $_.Exception.Message } }
-    foreach ($path in @($headers, $cookies, $startStdout, $startStderr, $loginBody, $discoveryErr)) {
+    foreach ($path in @($headers, $cookies, $startStdout, $startStderr, $loginBody, $discoveryErr, $uploadFixture)) {
         try {
             if ($path.StartsWith(($env:TEMP.TrimEnd('\') + '\'), [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $path)) {
                 Remove-Item -LiteralPath $path -Force
