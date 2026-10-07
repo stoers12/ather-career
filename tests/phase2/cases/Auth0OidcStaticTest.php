@@ -35,6 +35,12 @@ final class Auth0OidcStaticTest
         phase2Assert(!preg_match('/password_verify|\$_POST\[.password|localStorage|sessionStorage|refresh_token/i', $start . $callback . $oidc), 'P2J-09 introduced an unsafe browser or password auth path.');
 
         require_once PHASE2_REPOSITORY_ROOT . '/includes/auth0_oidc.php';
+        foreach (['https://issuer.example.test/', 'https://127.0.0.1:9443/'] as $validIssuer) {
+            phase2Assert(auth0HttpsUrlParts($validIssuer) !== null, 'Valid HTTPS issuer parsing changed.');
+        }
+        foreach (['http://issuer.example.test/', 'https://issuer.example.test/?q=/', 'https://issuer.example.test/#/', 'https://user@issuer.example.test/'] as $invalidIssuer) {
+            phase2Assert(auth0HttpsUrlParts($invalidIssuer) === null, 'Malformed OIDC URL must be rejected.');
+        }
         $allowedReasons = [
             'token_transport_failed',
             'token_http_rejected',

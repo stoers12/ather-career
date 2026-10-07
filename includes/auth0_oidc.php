@@ -128,7 +128,10 @@ function auth0HttpsUrlParts(string $value): ?array
     if (!is_array($parts)
         || ($parts['scheme'] ?? null) !== 'https'
         || !isset($parts['host'])
-        || isset($parts['user'], $parts['pass'], $parts['query'], $parts['fragment'])) {
+        || isset($parts['user'])
+        || isset($parts['pass'])
+        || isset($parts['query'])
+        || isset($parts['fragment'])) {
         return null;
     }
 
