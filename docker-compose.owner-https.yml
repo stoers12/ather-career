@@ -8,6 +8,8 @@ services:
   owner_https:
     image: caddy@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     restart: "no"
+    environment:
+      EXPECTED_OIDC_ISSUER: ${EXPECTED_OIDC_ISSUER:?EXPECTED_OIDC_ISSUER must be configured}
     security_opt:
       - no-new-privileges:true
     depends_on:
