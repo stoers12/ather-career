@@ -216,7 +216,7 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
     if (session_status() !== PHP_SESSION_ACTIVE) {
         throw new LogicException('Auth0 authorization requires an active server-side session.');
     }
-    if ($prompt !== null && $prompt !== 'select_account') {
+    if ($prompt !== null && $prompt !== 'select_account' && $prompt !== 'login') {
         throw new InvalidArgumentException('OIDC prompt is invalid.');
     }
     $state = auth0Base64Url(random_bytes(32));

@@ -200,16 +200,16 @@ try {
     $selectionSession = session_id();
     phase2Assert($selectionSession !== $browserA && $selectionSession !== $browserB, 'Account selection reused a browser session.');
     phase2AssertSame(null, currentInternalUserSession(), 'Wrong-account authority survived account selection.');
-    $selection = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    $selection = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'login');
     parse_str((string) parse_url($selection['url'], PHP_URL_QUERY), $selectionParameters);
-    phase2AssertSame('select_account', $selectionParameters['prompt'] ?? null, 'Account chooser prompt was missing.');
+    phase2AssertSame('login', $selectionParameters['prompt'] ?? null, 'Account switch login prompt was missing.');
     phase2AssertSame('S256', $selectionParameters['code_challenge_method'] ?? null, 'Account selection lost PKCE.');
     phase2AssertSame(null, $parameters['prompt'] ?? null, 'Ordinary login unexpectedly forced account selection.');
     try {
-        beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'login');
+        beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'consent');
         throw new RuntimeException('Unapproved OIDC prompt was accepted.');
     } catch (InvalidArgumentException) {
-        // The only optional prompt is the fixed account chooser.
+        // Only the fixed account-selection prompts are permitted.
     }
     auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => 'wrong', 'code' => 'code']), 'Selection accepted an old or mismatched state.');
     $selectedIdentity = completeAuth0Authorization($configuration, ['state' => $selection['state'], 'code' => 'code'],
@@ -231,7 +231,7 @@ try {
     session_id($selectedBrowserA);
     startOwnerSession();
     beginFreshOwnerAccountSelectionSession();
-    $returnSelection = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    $returnSelection = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'login');
     $returnIdentity = completeAuth0Authorization($configuration, ['state' => $returnSelection['state'], 'code' => 'code'],
         static fn (Auth0OidcConfiguration $config): Auth0ValidatedIdentity => new Auth0ValidatedIdentity($config->issuer, $identity->subject));
     $returnedUser = resolveAuth0InternalUser($database, $configuration, $returnIdentity);
@@ -239,7 +239,7 @@ try {
     phase2AssertSame($knownPortfolio, requireOwnedPortfolioContext($database)->portfolioId, 'Selecting the original account did not restore its Portfolio.');
 
     beginFreshOwnerAccountSelectionSession();
-    $cancelled = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    $cancelled = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'login');
     auth0RehearsalAssertReason(static fn () => completeAuth0Authorization($configuration, ['state' => $cancelled['state'], 'error' => 'access_denied']), 'authorization_denied', 'Valid cancellation was not recognized.');
     auth0RehearsalAssertReason(static fn () => completeAuth0Authorization($configuration, ['state' => $cancelled['state'], 'code' => 'code']), 'transaction_missing', 'Cancelled transaction was reusable.');
     phase2AssertSame(null, currentInternalUserSession(), 'Cancellation restored old account authority.');
@@ -249,16 +249,16 @@ try {
     phase2AssertSame(null, currentInternalUserSession(), 'Cancellation recovery restored old authority.');
     $freshCsrf = getCsrfToken();
     phase2AssertSame(64, strlen($freshCsrf), 'Recovery did not create a fresh anonymous CSRF token.');
-    $retry = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    $retry = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'login');
     phase2Assert($retry['state'] !== $cancelled['state'], 'Retry reused the consumed OIDC state.');
     parse_str((string) parse_url($retry['url'], PHP_URL_QUERY), $retryParameters);
-    phase2AssertSame('select_account', $retryParameters['prompt'] ?? null, 'Recovery retry lost the account chooser prompt.');
+    phase2AssertSame('login', $retryParameters['prompt'] ?? null, 'Recovery retry lost the login prompt.');
     auth0RehearsalAssertReason(static fn () => completeAuth0Authorization($configuration, ['state' => $retry['state'], 'error' => 'access_denied']), 'authorization_denied', 'Second cancellation did not terminate the retry safely.');
     phase2AssertSame(null, currentInternalUserSession(), 'Second cancellation restored Owner authority.');
-    $expired = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    $expired = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'login');
     $_SESSION[AUTH0_AUTH_TRANSACTION_KEY]['created_at'] = time() - AUTH0_AUTH_TRANSACTION_TTL_SECONDS - 1;
     auth0RehearsalAssertDenied(static fn () => completeAuth0Authorization($configuration, ['state' => $expired['state'], 'code' => 'code']), 'Expired selection transaction was accepted.');
-    $unknown = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'select_account');
+    $unknown = beginAuth0Authorization($configuration, 'https://test-tenant.us.auth0.com/authorize', 'login');
     $unknownIdentity = completeAuth0Authorization($configuration, ['state' => $unknown['state'], 'code' => 'code'],
         static fn (Auth0OidcConfiguration $config): Auth0ValidatedIdentity => new Auth0ValidatedIdentity($config->issuer, 'unknown-phase2b'));
     auth0RehearsalAssertDenied(static fn () => resolveAuth0InternalUser($database, $configuration, $unknownIdentity), 'Unknown selection identity created a User.');

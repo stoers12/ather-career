@@ -107,7 +107,7 @@ final class HttpValidationContractTest
             'auth0ConfigurationFromEnvironment()',
             'auth0Discovery($configuration)',
             'beginFreshOwnerAccountSelectionSession()',
-            "beginAuth0Authorization(\$configuration, \$discovery['authorization_endpoint'], 'select_account')",
+            "beginAuth0Authorization(\$configuration, \$discovery['authorization_endpoint'], 'login')",
             "header('Location: ' . \$authorization['url'], true, 302)",
         ];
         $previousPosition = -1;
@@ -130,7 +130,7 @@ final class HttpValidationContractTest
             'auth0ConfigurationFromEnvironment()',
             'auth0Discovery($configuration)',
             'beginFreshOwnerAccountSelectionSession()',
-            "beginAuth0Authorization(\$configuration, \$discovery['authorization_endpoint'], 'select_account')",
+            "beginAuth0Authorization(\$configuration, \$discovery['authorization_endpoint'], 'login')",
             "header('Location: ' . \$authorization['url'], true, 302)",
         ];
         $previousPosition = -1;
