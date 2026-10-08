@@ -44,6 +44,11 @@ jobs:
       - name: Build production PHP image
         run: docker compose -p ather-career-ci -f docker-compose.production.yml build web
 
+      - name: Verify OIDC issuer CSP startup guard in Apache and Caddy
+        run: |
+          docker run --rm --entrypoint /bin/sh -v "$PWD/scripts/test-oidc-issuer-guard.sh:/test-oidc-issuer-guard.sh:ro" "$PORTFOLIO_PRODUCTION_IMAGE" /test-oidc-issuer-guard.sh /usr/local/bin/validate-oidc-issuer.sh
+          docker run --rm --entrypoint /bin/sh -v "$PWD/scripts/test-oidc-issuer-guard.sh:/test-oidc-issuer-guard.sh:ro" -v "$PWD/docker/validate-oidc-issuer.sh:/etc/caddy/validate-oidc-issuer.sh:ro" caddy@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648 /test-oidc-issuer-guard.sh /etc/caddy/validate-oidc-issuer.sh
+
       - name: Verify PHP and libvips dependencies
         run: |
           docker run --rm --entrypoint php "$PORTFOLIO_PRODUCTION_IMAGE" -r 'foreach (["gd", "intl", "mbstring"] as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "$extension missing\n"); exit(1); } } if (!class_exists("Normalizer") || !function_exists("grapheme_strlen") || !function_exists("mb_strlen")) { fwrite(STDERR, "Unicode support missing\n"); exit(1); }'
