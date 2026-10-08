@@ -82,7 +82,7 @@ if (is_string($vhostConfiguration) && preg_match('/^\s*Alias\s+\/uploads\//mi', 
 $headerConfiguration = @file_get_contents('/etc/apache2/conf-enabled/zzz-portfolio-security-headers.conf');
 $requiredHeaderRules = [
     'X-Frame-Options "DENY"',
-    "Content-Security-Policy \"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; media-src 'self'\"",
+    "Content-Security-Policy \"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self' \${EXPECTED_OIDC_ISSUER}; media-src 'self'\"",
     'X-Content-Type-Options "nosniff"',
     'Referrer-Policy "strict-origin-when-cross-origin"',
     'Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"',

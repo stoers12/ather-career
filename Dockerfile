@@ -17,6 +17,7 @@ COPY docker/apache/cache-policy.conf /etc/apache2/conf-enabled/zzz-portfolio-cac
 COPY docker/apache/safe-access-log.conf /etc/apache2/conf-enabled/zzz-portfolio-safe-access-log.conf
 COPY docker/apache/development-vhost.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/production-entrypoint.sh /usr/local/bin/portfolio-runtime-entrypoint
+COPY docker/validate-oidc-issuer.sh /usr/local/bin/validate-oidc-issuer.sh
 RUN a2disconf other-vhosts-access-log
 
 WORKDIR /var/www/html

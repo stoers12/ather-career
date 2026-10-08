@@ -8,6 +8,10 @@ services:
   owner_https:
     image: caddy@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     restart: "no"
+    environment:
+      EXPECTED_OIDC_ISSUER: ${EXPECTED_OIDC_ISSUER:?EXPECTED_OIDC_ISSUER must be configured}
+    entrypoint: ["/bin/sh", "/etc/caddy/validate-oidc-issuer.sh"]
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
     security_opt:
       - no-new-privileges:true
     depends_on:
@@ -17,6 +21,7 @@ services:
       - "127.0.0.1:8443:443"
     volumes:
       - ./docker/Caddyfile.owner-local:/etc/caddy/Caddyfile:ro
+      - ./docker/validate-oidc-issuer.sh:/etc/caddy/validate-oidc-issuer.sh:ro
       - caddy_data:/data
     healthcheck:
       test: ["CMD-SHELL", "curl --fail --silent --show-error --insecure --resolve localhost:443:127.0.0.1 https://localhost/health.php >/dev/null"]

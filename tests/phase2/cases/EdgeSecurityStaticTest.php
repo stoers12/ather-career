@@ -15,6 +15,9 @@ final class EdgeSecurityStaticTest
         $development = self::read('docker/apache/development-vhost.conf');
         $production = self::read('docker/apache/production-vhost.conf');
         $caddy = self::read('docker/Caddyfile.owner-local');
+        $httpsCompose = self::read('docker-compose.owner-https.yml');
+        $issuerGuard = self::read('docker/validate-oidc-issuer.sh');
+        $entrypoint = self::read('docker/production-entrypoint.sh');
         $portfolio = self::read('includes/portfolio_presentation.php');
         $storage = self::read('includes/storage.php');
         $apacheOwnedHeaders = [
@@ -26,9 +29,21 @@ final class EdgeSecurityStaticTest
         ];
 
         foreach (["default-src 'self'", "base-uri 'none'", "object-src 'none'", "frame-ancestors 'none'", "script-src 'self'", "style-src 'self'", "form-action 'self'"] as $directive) {
-            phase2Assert(str_contains($edge, $directive) && str_contains($apache, $directive), "Enforced CSP directive {$directive} is missing.");
+            phase2Assert(str_contains($apache, $directive) && str_contains($caddy, $directive), "Enforced CSP directive {$directive} is missing.");
         }
-        phase2Assert(!str_contains($edge, 'unsafe-inline') && !str_contains($edge, 'unsafe-eval') && !preg_match('/(?:default|script|style|img|font|connect|form|media)-src\s+[^;]*\*/', $edge), 'CSP contains an unsafe broad execution or source allowance.');
+        phase2Assert(!str_contains($apache . $caddy, 'unsafe-inline') && !str_contains($apache . $caddy, 'unsafe-eval')
+            && !preg_match('/(?:default|script|style|img|font|connect|form|media)-src\s+[^;]*\*/', $apache . $caddy), 'CSP contains an unsafe broad execution or source allowance.');
+        phase2Assert(str_contains($apache, 'form-action \'self\' ${EXPECTED_OIDC_ISSUER}')
+            && substr_count($caddy, 'form-action \'self\' {$EXPECTED_OIDC_ISSUER}') === 2
+            && str_contains($httpsCompose, 'EXPECTED_OIDC_ISSUER: ${EXPECTED_OIDC_ISSUER:?EXPECTED_OIDC_ISSUER must be configured}'),
+            'The exact configured OIDC issuer must be the only cross-origin form-action target at both edges.');
+        phase2Assert(str_contains($issuerGuard, "grep -Eq '^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?/$'")
+            && str_contains($entrypoint, '/bin/sh /usr/local/bin/validate-oidc-issuer.sh')
+            && str_contains($dockerfile, 'COPY docker/validate-oidc-issuer.sh')
+            && str_contains($productionDockerfile, 'COPY docker/validate-oidc-issuer.sh')
+            && str_contains($httpsCompose, 'entrypoint: ["/bin/sh", "/etc/caddy/validate-oidc-issuer.sh"]')
+            && str_contains($httpsCompose, './docker/validate-oidc-issuer.sh:/etc/caddy/validate-oidc-issuer.sh:ro'),
+            'Both edges must reject missing or malformed issuer values before emitting CSP.');
         phase2Assert(str_contains($edge, 'Cache-Control: no-store') && str_contains($apache, 'X-Content-Type-Options') && str_contains($apache, 'Permissions-Policy') && str_contains($apache, 'X-Frame-Options'), 'Server security or sensitive-cache headers are incomplete.');
         phase2Assert(str_contains($apache, 'Header always set') && str_contains($apache, 'ather_oidc_callback') && str_contains($caddy, 'Content-Security-Policy'), 'Server/proxy error and callback header protection is incomplete.');
         phase2Assert(str_contains($development, 'LimitRequestBody 16777216') && str_contains($production, 'LimitRequestBody 16777216'), 'Apache request-size boundary is missing.');

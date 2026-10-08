@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+/bin/sh /usr/local/bin/validate-oidc-issuer.sh
+
 storage_root=${ATHERCAR_STORAGE_ROOT:-}
 case "$storage_root" in
     /var/www/private-storage|/var/lib/ather-career/storage) ;;
