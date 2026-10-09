@@ -1,6 +1,10 @@
 # Phase 2B prompt=login experiment
 
-Status: isolated implementation candidate; temporarily active in the private E: environment under owner authorization. No merge or permanent deployment has occurred.
+**Completion (2026-10-09 UTC):** Phase 2B account switching is permanently finalized through [PR #7](https://github.com/stoers12/ather-career/pull/7) at approved main `82353dc2d2a709858d0b56852182acce20f06009`. Main CI passed on that exact merge SHA; the temporary activation is finalized. The experiment below remains a dated record of the earlier candidate, including its limitations.
+
+## Historical experiment checkpoint (2026-10-09)
+
+At this checkpoint the candidate was isolated and temporarily active in private E: under owner authorization; no merge or permanent deployment had yet occurred. This historical status and the pending-approval statement below are superseded by the finalization section.
 
 The earlier deployed switch and recovery retry sent `prompt=select_account`. In the October 9 owner recording, Auth0 immediately showed consent for Momen without an account chooser. The isolated candidate changes only those two call sites to `prompt=login` and permits `login` in the existing OIDC prompt allowlist. Ordinary login remains without a prompt. CSRF, local session retirement and rotation, rate limiting, discovery validation, state, nonce, PKCE, callback validation, and exact issuer/subject identity resolution are unchanged.
 
@@ -9,3 +13,29 @@ On the first temporary activation, the owner saw immediate consent for Momen. Th
 A final SELECT-only reconciliation found migration ledger 001–014; five Users, five distinct exact identity bindings with no mismatch against legacy pairs, five portfolios with distinct owners and no orphan; the protected four-project portfolio with Evidence 12/12, four complete projects, 27 technology occurrences, 24 distinct mapped technologies, and zero unmapped occurrences. Its five referenced original images were readable. Protected row and media fingerprints were computed for the current state, but no pre-experiment fingerprints are available here for byte-for-byte comparison. These checks do not replace the owner's cross-account UI observations.
 
 Keep the temporary E: activation distinct from this branch commit. Any permanent merge or deployment requires separate owner approval. The owner-visible account switch and return are accepted as owner-reported browser evidence, with the actual Auth0 navigation prompt corroborated by Edge History. No additional browser attempt is needed for this result.
+
+## Finalization evidence (2026-10-09 UTC)
+
+PR #7 merged approved head `d00198329c7443ea613f4f1f2ed59ff71d8b834e` into actual merge/main `82353dc2d2a709858d0b56852182acce20f06009`; the merged tree equals the approved tree. [Main CI push run 37979181209](https://github.com/stoers12/ather-career/actions/runs/37979181209) completed successfully on that exact merge SHA. GitHub PR/main/run metadata and exact-head checks were rechecked for this documentation review.
+
+The [one-time owner review exception](https://github.com/stoers12/ather-career/pull/7#issuecomment-6087592180) applies solely to PR #7 at the approved head above. GitHub Advanced Security/Copilot failed before analysis with quota HTTP 402, and Sourcery review was skipped because its budget was exhausted. Neither passed. Production-smoke was rechecked successful on the unchanged approved diff before merge. The exception grants no authority for this documentation PR, another PR/head or Main CI, and no workflow was changed to obtain it.
+
+The existing protected `FINALIZATION-HANDOFF.md` and `finalization-result.json` record completion at 2026-10-09T19:24:29Z. Their pre-align/post-align manifests, final PR/run snapshots, runtime hashes and checksum manifest are retained in the protected recovery store outside Git. The earlier `HANDOFF.md` is a pre-merge checkpoint, superseded by `FINALIZATION-HANDOFF.md`. This documentation review reads that evidence; it does not rerun application/database rehearsals or expose private manifests.
+
+| Evidence | Recorded result | Limit / provenance |
+| --- | --- | --- |
+| Owner acceptance | Another known account showed no projects; returning to Momen showed four | Owner-reported UI success; accepted experiment was not repeated |
+| Browser navigation | Five Auth0 authorize History visits with `prompt=login`, adjacent ordinary-login visits unprompted | History corroborates the parameter, not a complete Network trace or upstream-provider parameters/session decisions |
+| Canonical deployment | E: fast-forwarded from old main `e887a4c678ea68060868a57ce3cd020b008bb156` to the merge SHA; clean, no temporary edits remaining; three runtime SHA256 hashes match approved/merged code | Agent finalization evidence; runtime PHP bytes preserved during alignment |
+| Protected database | All ten table snapshots match saved investigation and pre/post alignment, ledger 001–014, five Users/exact matching bindings/distinct Portfolio owners, no mismatches or orphans | No pre-experiment full-row baseline is invented; documentation task performs no new DB audit |
+| Protected content | Four projects, Evidence 12/12, four complete projects, technologies 27 occurrences / 24 distinct mapped / zero unmapped | Sanitized regression invariants, not identity proof |
+| Private storage | All 13 files match paths, hashes and sizes | Saved protected manifests; no storage writes |
+| Original-image scope | Four project originals (18–21) match checksum-verified historical recovery hashes, sizes and dimensions; fifth current reference is one readable profile original | Supersedes the older PR-description limitation about inaccessible project-image digests; no older profile-image baseline claimed |
+| Runtime preservation | Three healthy services; IDs, images, start timestamps, mounts, three named volumes and private configuration hashes unchanged across alignment; HTTP/HTTPS health OK and ready READY | No rebuild, recreation, restart, stop or pause during PR #7 finalization; HTTPS retained trust validation with the documented Windows revocation-lookup workaround |
+| Recovery | Original temporary patch/files and old-main rollback files preserved; recovery ref `refs/recovery/pr7-prealign-20261009T192206Z` and verified old/merged-main bundle retained | Bundle SHA256 `C614BAD960228F577ADA0BB414143E19AC72D8EAB76DBDF6FF00BF08355E2396`; code recovery is not a new DB/media restore claim |
+
+After the reported device restart, the documentation task performed only a brief read-only local checkout/service check: E: remained clean at the merge SHA and the three services were healthy, with recent uptime consistent with restart. No unexpected checkout/service difference was found. The saved unchanged-start-time claim applies to finalization alignment, not to the later device restart.
+
+Current switch and recovery retry use fixed `prompt=login`; the builder retains `select_account` for compatibility and ordinary login remains unprompted. CSRF/input validation, rate limiting, discovery, state/nonce/PKCE, signed-token/callback validation, exact primary issuer/subject resolution, active-User/authz checks, local session retirement/rotation and owner-derived Portfolio access are preserved. No Auth0/provider logout endpoint, identity linking, Auth0 configuration or protected-data change was introduced.
+
+Finalization has no remaining blocker. The broader account/security phase remains incomplete: Landing, full registration/verification/recovery journeys, standard local-plus-Auth0 logout, MFA, identity linking and five-step onboarding are not completed by this fix; migrations 015–017 remain proposals. Next action: locate approved Landing references before implementation. This documentation task does not start Landing, merge or deploy anything, or alter E:, Auth0 or protected data.

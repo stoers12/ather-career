@@ -1,5 +1,7 @@
 # 02 — Architecture decision records
 
+**Implementation annotation (2026-10-09 UTC):** The approved decisions and their original contexts below are retained. Phase 2A now denies unknown identities through deployed exact 014 bindings. Phase 2B's accepted local switch/retry uses `prompt=login`, with ordinary login unchanged and no Auth0/provider logout call. This is a scoped implementation toward AUTH-ADR-005; the local-plus-Auth0 logout design in AUTH-ADR-004/005 remains outstanding. MFA, verification, step-up, linking and five-step onboarding are still future gates. No ADR is superseded by this documentation update. See [current behavior](01-CURRENT-STATE.md) and [finalization](13-PHASE2B-PROMPT-LOGIN-EXPERIMENT.md#finalization-evidence-2026-10-09-utc).
+
 These records convert the owner-approved Phase 0 decisions into stable IDs. Approval date for every ADR: **2026-10-04**. “Approved” means architecture approval, not implemented behavior or legal approval. Official source IDs resolve in [the reference register](09-OFFICIAL-REFERENCES.md). Where a source informs a product choice, that choice is an **engineering inference**, not an external mandate. Supersede an ADR explicitly and update the threat model, tests and changelog in the same commit.
 
 ## AUTH-ADR-001 — Auth0 Universal Login and initial methods
