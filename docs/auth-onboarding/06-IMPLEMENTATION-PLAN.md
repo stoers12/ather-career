@@ -1,6 +1,6 @@
 # 06 — Phased implementation plan
 
-**2026-10-05 status update:** Phase 1 has merged and canonical ledger is 001–014. The local, unpushed Phase 2A callback-resolution slice is documented in [10](10-PHASE2A-CALLBACK-RESOLUTION.md); the earlier Phase 1 status below is historical.
+**2026-10-09 UTC completion update:** Phase 1 is deployed with ledger 001–014. Phase 2A is merged, deployed and accepted; Phase 2B account switching is permanently finalized through PR #7 at `82353dc2d2a709858d0b56852182acce20f06009`. The broader Phase 2 account/security gate remains incomplete. Landing, full registration/verification/recovery journeys, MFA, identity linking and five-step onboarding remain incomplete. Migrations 015–017 remain proposals. Historical local-only statuses and phase plans below are not current deployment instructions.
 
 **Historical Phase 1 review status (2026-10-04; superseded by the status update above):** Phase 1 identity foundation was committed locally at `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e` and reviewed against the approved architecture. The six-file implementation is unpushed and undeployed. 014 passed isolated rehearsal; the canonical ledger remains 001–013. Phases 2–7 remain proposed and blocked by their own gates. Keep open registration disabled until security, privacy, accessibility, recovery, tenant and legal gates pass. [Data plan](04-DATA-MODEL-AND-MIGRATIONS.md) distinguishes implemented 014 from proposed 015–017; [test matrix](07-TEST-AND-ACCEPTANCE-MATRIX.md) records scoped evidence.
 
@@ -22,6 +22,8 @@
 
 ## Phase 1 — Identity foundation
 
+**Completion note (2026-10-09 UTC):** Phase 1 subsequently merged and 014 was deployed using the protected recovery procedure; Phase 2A callback cutover and owner acceptance are also complete. The local-verification/recovery bullets below describe the original Phase 1 review boundary, not outstanding work to redeploy 014.
+
 - **Objective:** Identity foundation.
 - **Prerequisites:** Accepted Phase 0; clean baseline; isolated databases.
 - **Implemented files/components:** `database/identity_foundation.php`, `database/migrate.php`, `database/migrations/014_identity_foundation.sql`, `includes/identity_repository.php`, and two isolated rehearsal scripts. Existing OIDC/callback/session files and Phase 2 tests remain unchanged.
@@ -37,6 +39,8 @@
 - **Documentation files requiring updates:** 01, 03, 04, 06, 07, 08, CHANGELOG, README.
 
 ## Phase 2 — Account and security gate
+
+**Completed slices (2026-10-09 UTC):** [2A](10-PHASE2A-CALLBACK-RESOLUTION.md) accepts only known exact bindings; [2B](11-PHASE2B-ACCOUNT-SELECTION.md) supplies local switching, callback recovery and signed-out retry, strict switch input, deployed CSP redirect support and finalized `prompt=login` for switch/retry. Ordinary login remains unprompted. Owner switch/return acceptance and exact-merge CI are recorded in [13](13-PHASE2B-PROMPT-LOGIN-EXPERIMENT.md#finalization-evidence-2026-10-09-utc). The following broader objectives/definition of done remain open, including two-session standard logout, verified-email holding, privileged MFA and step-up. Callback recovery here is not completion of account/password recovery journeys.
 
 - **Objective:** Account and security gate.
 - **Prerequisites:** Accepted 014; non-production Auth0 tenant; role/recovery decisions.
@@ -137,7 +141,7 @@
 ### Existing component inventory for implementation review
 
 - OIDC/session/authorization: includes/auth0_oidc.php, includes/auth0_identity.php, includes/session.php, includes/owner_session.php, includes/authorization.php, includes/owner_flow.php, includes/csrf.php, includes/rate_limit.php, includes/security_events.php, includes/http.php and includes/runtime_readiness.php.
-- Compatibility entry routes: owner_login.php, owner_oidc_callback.php, owner_logout.php, owner_onboarding.php and owner.php. Public route shims and web-server routing rules must be checked before adding new endpoints.
+- Compatibility entry routes: owner_login.php, owner_switch_account.php, owner_auth_retry.php, owner_oidc_callback.php, owner_logout.php, owner_onboarding.php and owner.php. Public route shims and web-server routing rules must be checked before adding new endpoints.
 - Profile/publication/media: includes/profile_actions.php, includes/portfolio_scoped_data.php, includes/public_lifecycle.php, includes/media_access.php, includes/project_evidence_repository.php, includes/owner_publication_presentation.php, public_portfolio.php, public_projects_json.php, public_media.php, owner_profile.php, owner_projects.php and owner_project_evidence.php.
 - Shared presentation: includes/owner_layout.php, includes/owner_form_feedback.php, includes/portfolio_presentation.php, admin.css, admin.js, evidence_hub.css, owner_theme.js, portfolio.css and portfolio.js. Reuse these and established green/gold tokens rather than duplicate controls.
 - Delivery: database/migrate.php, tests/phase2/, scripts/run-phase2-tests.php, isolated rehearsal scripts, production smoke checks and .github/workflows/ci.yml. A later implementation commit may need workflow changes after explicit review; this documentation commit changes none.
@@ -150,4 +154,4 @@ Stop immediately on account/portfolio ownership mismatch, protected-project fing
 
 ## Next safe action
 
-Obtain owner acceptance of the Phase 1 review and this documentation follow-up. A separate live-migration task must repeat fresh read-only baseline checks, prove a protected database/media restore, define a quiesced maintenance window, then apply 014 through the normal runner and reconcile before traffic resumes. The current Auth0 tenant has no capacity for another isolated tenant under its plan; do not upgrade, delete or mutate it. Isolated Auth0 capability testing and any callback cutover are later gates. Phase 1 does not enable registration, account linking, consolidation or new sign-in UI.
+The four original approved design references have been recovered from `Ather_Approved_Designs_2026-10-04.zip`; README and approval-evidence.json were read and all four sizes/SHA-256 hashes verified. The Landing source is `ather-landing-high-fidelity.html`, approved 2026-10-04 at 20:01:49 Asia/Amman (green/gold; not the earlier young-man/falling-stars concept). Next: complete the documentation follow-up, then implement Landing only in an isolated worktree from approved main; retain originals unchanged and compare desktop/mobile in both themes. No merge or deployment is authorized. Phase 2A/2B finalization requires no further owner browser attempt, temporary-patch alignment, migration or deployment. Broader account/security and registration/onboarding work retains its own gates; Auth0 capability testing, plan constraints and legal/privacy review remain separate. Do not upgrade, delete or mutate the tenant from this record.

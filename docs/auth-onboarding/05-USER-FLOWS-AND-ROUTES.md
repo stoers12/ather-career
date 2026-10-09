@@ -1,10 +1,26 @@
-# 05 — Proposed user flows and route contracts
+# 05 — Implemented routes and proposed user-flow contracts
 
-**2026-10-05 status update:** The local Phase 2A candidate changes only the existing Owner callback's identity lookup; see [10](10-PHASE2A-CALLBACK-RESOLUTION.md). Proposed registration, linking, email verification and onboarding routes below remain disabled.
+**2026-10-09 UTC implementation update:** Phase 2A callback resolution is merged, deployed and accepted; Phase 2B local switch/retry is permanently finalized through PR #7. The implemented routes below are distinct from the later proposed contracts. No Landing or full registration/verification/recovery journey is completed by this fix.
 
-**All routes here are proposals, not implemented filenames.** Existing Owner URLs remain guarded during transition. Each private response is no-store; redirects use fixed allowlists. A route never accepts an owner ID as authorization. Method/URI spelling is subject to route review, while the security contract is binding. State model: anonymous → OIDC pending → unverified holding or verified onboarding → completed private Dashboard → explicit publication. Disabled/restricted states deny protected resources. See [ADRs](02-ARCHITECTURE-DECISIONS.md) and [test IDs](07-TEST-AND-ACCEPTANCE-MATRIX.md).
+## Currently implemented Owner routes
 
-Migration 014 is deployed with five legacy bindings. The canonical main callback uses the legacy resolver; the isolated Phase 2A candidate uses the read-only repository. Neither phase enables registration, linking or the proposed routes below.
+| Route / method | Current behavior | Security and scope |
+| --- | --- | --- |
+| GET `/owner_login.php` | Direct Auth0 Universal Login start; no explicit prompt | Rate limit, validated discovery, state/nonce/PKCE S256; ordinary login unchanged |
+| POST `/owner_switch_account.php` | Retire local session and start fresh OIDC with fixed `prompt=login` | Active authenticated User, exact scalar CSRF-only body, no query/uploads, rate limit/discovery before retirement; fixed callback destination |
+| POST `/owner_auth_retry.php` | Signed-out recovery retry with fixed `prompt=login` | CSRF, no extra query/form fields, signed-out session, rate limit/discovery and fresh anonymous session/transaction |
+| GET `/owner_oidc_callback.php` | Validate one-time transaction and signed token; resolve exact active primary 014 binding; rotate session and route to current Owner destination | Unknown/conflicting identity denied without creation/linking; failures render sanitized no-store recovery in a fresh anonymous session; valid exact `access_denied` classified separately |
+| POST `/owner_logout.php` | CSRF-protected local logout, then Owner login | Does not call Auth0 or provider logout; broader standard logout remains proposed |
+| GET/HEAD/POST `/owner_onboarding.php` | Current single private Portfolio-creation form for authenticated User without a Portfolio | Active User and CSRF on POST; owner comes from server context; this is not five-step onboarding |
+| GET/HEAD `/owner.php` | Existing Owner Dashboard | Current active User/authz version, bounded session and owned Portfolio; no-Portfolio User is directed to current onboarding |
+
+The switch/retry does not call Auth0, Google or Microsoft logout. Upstream sessions remain outside Ather control. `select_account` remains a permitted OIDC builder value for compatibility, but current switch/retry call sites use `login`. See [the detailed implemented contract](11-PHASE2B-ACCOUNT-SELECTION.md).
+
+## Proposed broader journey contracts
+
+**All routes in the following table are proposals, not implemented filenames or a claim of implemented behavior.** Existing Owner URLs remain guarded during transition. Each proposed private response is no-store; redirects use fixed allowlists. A route never accepts an owner ID as authorization. Method/URI spelling is subject to route review, while the security contract is binding. Proposed state model: anonymous → OIDC pending → unverified holding or verified onboarding → completed private Dashboard → explicit publication. Disabled/restricted states deny protected resources. See [ADRs](02-ARCHITECTURE-DECISIONS.md) and [test IDs](07-TEST-AND-ACCEPTANCE-MATRIX.md).
+
+Migration 014 and exact known-identity resolution are deployed. Registration, linking, verified-email holding and the proposed route contracts below are not enabled by 2A/2B.
 
 | Flow | Starting state | Action | Proposed route | Authorization | Security checks | State transition | Success | Safe failure | Audit code | Related ADR suffix | Required test |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -41,7 +57,7 @@ Migration 014 is deployed with five legacy bindings. The canonical main callback
 | Account deletion | signed in | request delete | POST /account/delete | owner + step-up | CSRF, fresh MFA, retention/legal check | active→restricted/deletion | reviewed workflow | safe denial | DELETE_REQUEST | 007/023 | PRIVACY-005 |
 | Consent withdrawal | signed in | withdraw | POST /account/consent/withdraw | owner | CSRF, versioned event, restriction | accepted→withdrawn/restricted | rights workflow | safe denial | CONSENT_WITHDRAW | 023 | PRIVACY-006 |
 
-**Wrong-account distinction:** Ather local session, Auth0 SSO session and upstream Google/Microsoft browser sessions differ. Standard logout clears the first two without federated provider logout. The switch route asks for a fresh chooser or reauthentication but cannot promise upstream session deletion. A privacy-safe remembered hint never grants authority.
+**Proposed broader wrong-account distinction:** Ather local session, Auth0 SSO session and upstream Google/Microsoft browser sessions differ. The approved standard logout design would clear the first two without federated provider logout; current `/owner_logout.php` clears only Ather locally. The switch route asks for a fresh chooser or reauthentication but cannot promise upstream session deletion. A future privacy-safe remembered hint never grants authority; no remembered-hint feature is claimed here.
 
 **Linking distinction:** Link a newly proven issuer/subject to the currently authenticated local account only after step-up and fresh second authentication. If unique binding belongs elsewhere, reject with no portfolio or ownership move. Never use email equality. Auth0-side linking, if used, requires a separately reviewed authority and conflict model.
 

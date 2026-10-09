@@ -1,6 +1,8 @@
 # Phase 2B account-selection redirect investigation
 
-Status: proposed isolated fix; live browser acceptance pending. This note does not close Phase 2B.
+**Completion and supersession (2026-10-09 UTC):** The CSP fix below merged through [PR #6](https://github.com/stoers12/ather-career/pull/6) at `e887a4c678ea68060868a57ce3cd020b008bb156` and was deployed before PR #7. The later `prompt=login` fix is permanently finalized at `82353dc2d2a709858d0b56852182acce20f06009`, with owner switch/return acceptance recorded in [13](13-PHASE2B-PROMPT-LOGIN-EXPERIMENT.md#finalization-evidence-2026-10-09-utc). No activation, rebuild or repeat browser attempt is pending for these fixes.
+
+**Historical investigation/release checkpoint (2026-10-07):** At this point the fix was proposed in isolation and live browser acceptance was pending. The observations, causal uncertainty and activation/rollback plan below are retained as history, not current deployment instructions. Subsequent success does not retroactively provide the missing console violation or Network trace. In particular, the historical `select_account` call sites below were later changed to `login`; ordinary login remained unchanged.
 
 ## Observed path
 
