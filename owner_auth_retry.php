@@ -34,7 +34,7 @@ try {
     $discovery = auth0Discovery($configuration);
     $selectionStarted = true;
     beginFreshOwnerAccountSelectionSession();
-    $authorization = beginAuth0Authorization($configuration, $discovery['authorization_endpoint'], 'select_account');
+    $authorization = beginAuth0Authorization($configuration, $discovery['authorization_endpoint'], 'login');
     header('Location: ' . $authorization['url'], true, 302);
     exit;
 } catch (Auth0OidcException $exception) {

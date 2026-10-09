@@ -30,13 +30,14 @@ final class AccountSelectionStaticTest
             && strpos($route, 'requireOwnerAuthenticatedUser') < strpos($route, 'beginFreshOwnerAccountSelectionSession')
             && strpos($route, 'beginFreshOwnerAccountSelectionSession') < strpos($route, 'beginAuth0Authorization'), 'Account selection POST, CSRF, or session ordering changed.');
         phase2Assert(str_contains($route, "consumeRateLimit('oidc_start'")
-            && str_contains($route, "'select_account'")
+            && str_contains($route, "'login'")
             && !preg_match('/\$_(?:GET|POST|REQUEST)\[(?:.redirect|.return|.next)/', $route), 'Account selection prompt, limiter, or fixed destination changed.');
         phase2Assert(str_contains($session, 'destroyOwnerSession();')
             && str_contains($session, "session_id('');")
             && str_contains($session, 'session_regenerate_id(true)')
             && str_contains($internalSession, 'if (!session_destroy())'), 'Switch must verify retirement and rotate the local session.');
-        phase2Assert(str_contains($oidc, "\$prompt !== 'select_account'")
+        phase2Assert(str_contains($oidc, "\$prompt !== 'login'")
+            && str_contains($oidc, "\$prompt !== 'select_account'")
             && str_contains($oidc, "\$parameters['prompt'] = \$prompt")
             && str_contains($oidc, 'unset($_SESSION[AUTH0_AUTH_TRANSACTION_KEY])'), 'Prompt allow-list or one-time transaction changed.');
         phase2Assert(str_contains($layout, 'ownerAccountSelectionForm();') && str_contains($layout, 'ownerAccountSelectionForm(true);')
@@ -53,8 +54,8 @@ final class AccountSelectionStaticTest
             && strpos($retry, 'requireValidCsrfToken') < strpos($retry, 'beginFreshOwnerAccountSelectionSession')
             && str_contains($retry, 'currentInternalUserSession() !== null')
             && str_contains($retry, "consumeRateLimit('oidc_start'")
-            && str_contains($retry, "'select_account'")
-            && str_contains($retryShim, "require dirname(__DIR__) . '/app/owner_auth_retry.php'"), 'Recovery retry lost its anonymous POST, CSRF, rotation, or chooser contract.');
+            && str_contains($retry, "'login'")
+            && str_contains($retryShim, "require dirname(__DIR__) . '/app/owner_auth_retry.php'"), 'Recovery retry lost its anonymous POST, CSRF, rotation, or login-prompt contract.');
         phase2Assert(str_contains($callback, "=== 'authorization_denied'")
             && str_contains($callback, 'beginFreshOwnerAccountSelectionSession()')
             && str_contains($callback, 'renderOwnerAuthRecoveryPage(')

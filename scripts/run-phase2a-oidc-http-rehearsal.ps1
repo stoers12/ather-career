@@ -481,7 +481,7 @@ function getDatabaseConnection(): PDO {
     $switchQuery = [uri]::UnescapeDataString($switchTarget.Query)
     if ($switchTarget.Scheme -ne 'https' -or $switchTarget.Host -ne '127.0.0.1' -or
         $switchTarget.Port -ne 9443 -or $switchTarget.AbsolutePath -ne '/authorize' -or
-        $switchQuery -notmatch '(?:[?&])prompt=select_account(?:&|$)' -or
+        $switchQuery -notmatch '(?:[?&])prompt=login(?:&|$)' -or
         $switchQuery -notmatch 'redirect_uri=https://phase2a\.invalid/owner_oidc_callback\.php(?:&|$)' -or
         $switchQuery -notmatch '(?:[?&])state=[^&]+' -or
         $switchQuery -notmatch '(?:[?&])nonce=[^&]+' -or
@@ -494,7 +494,7 @@ function getDatabaseConnection(): PDO {
     $retiredCode = 'require "includes/owner_session.php"; session_id("{SID}"); startOwnerSession(); echo currentInternalUserSession()===null?"RETIRED":"STILL_AUTHENTICATED"; session_write_close();'.Replace('{SID}', $switchSessionId)
     $retired = & docker exec $container php -r $retiredCode 2>$null
     if ($LASTEXITCODE -ne 0 -or $retired -cne 'RETIRED') { throw 'Valid account selection did not retire the old Owner session.' }
-    Write-Output 'ACCOUNT_SELECTION_INPUT_CONTRACT=passed OLD_SESSION=retired CHOOSER=select_account'
+    Write-Output 'ACCOUNT_SELECTION_INPUT_CONTRACT=passed OLD_SESSION=retired PROMPT=login'
 
     & curl.exe --silent --show-error --dump-header $headers --output $loginBody --cookie-jar $cookies --max-redirs 0 ("http://127.0.0.1:"+$port+"/owner_login.php")
     $loginCurlExit = $LASTEXITCODE
@@ -597,7 +597,7 @@ function getDatabaseConnection(): PDO {
     $retryState = [uri]::UnescapeDataString($Matches[1])
     $retryTarget = [uri]$retryLocation[0].Substring(9).Trim()
     $decodedRetryQuery = [uri]::UnescapeDataString($retryTarget.Query)
-    if ($retryState -eq $cancelState -or $retryLocation[0] -notmatch '[?&]prompt=select_account(?:&|$)' -or
+    if ($retryState -eq $cancelState -or $retryLocation[0] -notmatch '[?&]prompt=login(?:&|$)' -or
         $retryLocation[0] -notmatch '[?&]code_challenge_method=S256(?:&|$)' -or
         $retryTarget.Scheme -ne 'https' -or $retryTarget.Host -ne '127.0.0.1' -or
         $retryTarget.Port -ne 9443 -or $retryTarget.AbsolutePath -ne '/authorize' -or
@@ -633,7 +633,7 @@ function getDatabaseConnection(): PDO {
         $secondBody -match 'http-equiv="refresh"|<script') {
         throw 'Second cancellation did not stop at a manual recovery page.'
     }
-    Write-Output 'RECOVERY_CANCEL=403 BILINGUAL=yes NO_STORE=yes RETRY_POST=302 PROMPT=select_account REPLAY=403 SECOND_CANCEL=403'
+    Write-Output 'RECOVERY_CANCEL=403 BILINGUAL=yes NO_STORE=yes RETRY_POST=302 PROMPT=login REPLAY=403 SECOND_CANCEL=403'
 } { Write-RunDiagnostics $container } {
     $cleanupFailure = $null
     try { Remove-RunContainer $container $runId $script:containerId } catch { $cleanupFailure = $_.Exception.Message }
