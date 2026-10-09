@@ -12,6 +12,13 @@ startOwnerSession();
 httpRegisterExceptionBoundary('owner_login.php');
 httpRequireMethod(['GET']);
 
+$signInMethod = $_GET['method'] ?? null;
+try {
+    auth0SignInConnection($signInMethod);
+} catch (InvalidArgumentException) {
+    httpAbortHtml(400, 'Sign-in method is unavailable.');
+}
+
 try {
     $limit = consumeRateLimit('oidc_start', rateLimitClientIp(), OIDC_START_RATE_LIMIT_ATTEMPTS, OIDC_START_RATE_LIMIT_WINDOW_SECONDS);
     if (!$limit['allowed']) {
@@ -22,7 +29,7 @@ try {
     }
     $configuration = auth0ConfigurationFromEnvironment();
     $discovery = auth0Discovery($configuration);
-    $authorization = beginAuth0Authorization($configuration, $discovery['authorization_endpoint']);
+    $authorization = beginAuth0Authorization($configuration, $discovery['authorization_endpoint'], null, $signInMethod);
     header('Location: ' . $authorization['url'], true, 302);
     exit;
 } catch (Auth0OidcException $exception) {

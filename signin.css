@@ -1,0 +1,126 @@
+/* Product styles from the approved auth entry reference; see docs/SIGNIN-IMPLEMENTATION.md. */
+@font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 400; font-display: swap; src: url("assets/fonts/noto-sans-arabic-400.ttf") format("truetype"); }
+@font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 500; font-display: swap; src: url("assets/fonts/noto-sans-arabic-500.ttf") format("truetype"); }
+html { color-scheme: light; background: #f3f7f4; }
+html[data-landing-theme="dark"] { color-scheme: dark; background: #071811; }
+body { margin: 0; padding: 12px; font-size: 16px; line-height: 1.625; -webkit-font-smoothing: antialiased; }
+#ather-auth-flow { font-family: "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif; width: 100%; display: flex; justify-content: center; }
+#ather-auth-flow * { box-sizing: border-box; }
+#ather-auth-flow a { text-decoration: none; }
+#ather-auth-flow .hf-icon { width: 16px; height: 16px; stroke-width: 1.6; flex: 0 0 auto; vertical-align: middle; }
+[hidden] { display: none !important; }
+  #ather-auth-flow .af-product {
+    --af-bg: #f3f7f4;
+    --af-surface: #ffffff;
+    --af-surface-soft: #edf4f0;
+    --af-ink: #10251d;
+    --af-muted: #586b61;
+    --af-border: #d3e1d9;
+    --af-green: #103f30;
+    --af-green-deep: #082c20;
+    --af-green-on: #ffffff;
+    --af-gold: #b67b18;
+    --af-gold-bright: #edc665;
+    --af-gold-soft: #fff1cb;
+    --af-danger: #9a3f37;
+    --af-shadow: rgba(20, 61, 46, .15);
+    background: var(--af-bg);
+    border: 1px solid var(--af-border);
+    border-radius: 22px;
+    color: var(--af-ink);
+    max-width: 1050px;
+    overflow: hidden;
+    transition: max-width .22s ease;
+    width: 100%;
+  }
+
+  :root[data-landing-theme="dark"] #ather-auth-flow .af-product {
+    --af-bg: #071811;
+    --af-surface: #0d261c;
+    --af-surface-soft: #14352a;
+    --af-ink: #eef8f2;
+    --af-muted: #afc4b9;
+    --af-border: #2c4e3f;
+    --af-green: #a6d8c0;
+    --af-green-deep: #d7eee2;
+    --af-green-on: #092118;
+    --af-gold: #e6bb62;
+    --af-gold-bright: #f0cc79;
+    --af-gold-soft: #473813;
+    --af-danger: #f0a9a2;
+    --af-shadow: rgba(0, 0, 0, .35);
+  }
+
+  #ather-auth-flow .af-product button,
+  #ather-auth-flow .af-product a { font-family: inherit; }
+
+  #ather-auth-flow .af-layout { display: grid; grid-template-columns: .9fr 1.1fr; min-height: 690px; }
+  #ather-auth-flow .af-story-panel {
+    background: var(--af-green-deep);
+    color: var(--af-green-on);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    padding: 32px;
+    position: relative;
+  }
+
+  #ather-auth-flow .af-story-panel::before,
+  #ather-auth-flow .af-story-panel::after { border-radius: 50%; content: ""; position: absolute; }
+  #ather-auth-flow .af-story-panel::before { border: 1px solid color-mix(in srgb, var(--af-gold-bright) 48%, transparent); height: 330px; left: -165px; top: -115px; width: 330px; }
+  #ather-auth-flow .af-story-panel::after { background: color-mix(in srgb, var(--af-gold-bright) 10%, transparent); bottom: -95px; height: 240px; right: -70px; width: 240px; }
+  #ather-auth-flow .af-brand { align-items: center; display: flex; font-size: 18px; font-weight: 500; gap: 10px; position: relative; z-index: 1; }
+  #ather-auth-flow .af-mark { align-items: center; background: var(--af-gold-bright); border-radius: 12px; color: #14231c; display: flex; height: 41px; justify-content: center; width: 41px; }
+  #ather-auth-flow .af-story-copy { position: relative; z-index: 1; }
+  #ather-auth-flow .af-kicker { color: var(--af-gold-bright); font-size: 13px; font-weight: 500; }
+  #ather-auth-flow .af-story-copy h2 { font-size: 35px; font-weight: 500; line-height: 1.45; margin: 11px 0 0; }
+  #ather-auth-flow .af-story-copy p { font-size: 14px; line-height: 1.9; margin: 13px 0 0; opacity: .82; }
+  #ather-auth-flow .af-story-points { display: grid; gap: 10px; margin-top: 23px; }
+  #ather-auth-flow .af-story-point { align-items: center; display: flex; font-size: 13px; gap: 9px; }
+  #ather-auth-flow .af-story-point .hf-icon { color: var(--af-gold-bright); }
+  #ather-auth-flow .af-story-footer { font-size: 12px; opacity: .72; position: relative; z-index: 1; }
+
+  #ather-auth-flow .af-auth-panel { align-items: center; background: var(--af-bg); display: flex; justify-content: center; padding: 34px; }
+  #ather-auth-flow .af-card { background: var(--af-surface); border: 1px solid var(--af-border); border-radius: 22px; box-shadow: 0 22px 56px var(--af-shadow); max-width: 430px; padding: 28px; width: 100%; }
+  #ather-auth-flow .af-card-top { align-items: center; display: flex; gap: 10px; justify-content: space-between; }
+  #ather-auth-flow .af-card-mark { align-items: center; background: var(--af-green); border-radius: 11px; color: var(--af-green-on); display: flex; height: 38px; justify-content: center; width: 38px; }
+  #ather-auth-flow .af-language { background: transparent; border: 0; color: var(--af-muted); min-height: 44px; padding: 8px; }
+  #ather-auth-flow .af-card h1 { font-size: 27px; font-weight: 500; line-height: 1.45; margin: 20px 0 0; }
+  #ather-auth-flow .af-subtitle { color: var(--af-muted); font-size: 14px; line-height: 1.8; margin: 7px 0 0; }
+  #ather-auth-flow .af-actions { display: grid; gap: 10px; margin-top: 22px; }
+  #ather-auth-flow .af-auth-button { align-items: center; background: var(--af-surface); border: 1px solid var(--af-border); border-radius: 12px; color: var(--af-ink); display: flex; font-size: 14px; gap: 10px; justify-content: center; min-height: 48px; padding: 10px 14px; text-decoration: none; }
+  #ather-auth-flow .af-auth-button:hover { background: var(--af-surface-soft); }
+  #ather-auth-flow .af-auth-button.is-primary { background: var(--af-green); border-color: var(--af-green); color: var(--af-green-on); }
+  #ather-auth-flow .af-provider-icon { align-items: center; border: 1px solid currentColor; border-radius: 50%; display: flex; font-size: 11px; font-weight: 500; height: 25px; justify-content: center; width: 25px; }
+  #ather-auth-flow .af-divider { align-items: center; color: var(--af-muted); display: flex; font-size: 12px; gap: 11px; margin: 16px 0; }
+  #ather-auth-flow .af-divider::before,
+  #ather-auth-flow .af-divider::after { background: var(--af-border); content: ""; flex: 1; height: 1px; }
+  #ather-auth-flow .af-footnote { color: var(--af-muted); font-size: 12px; line-height: 1.75; margin-top: 17px; text-align: center; }
+  #ather-auth-flow .af-safe-note { align-items: start; background: var(--af-surface-soft); border-radius: 12px; color: var(--af-muted); display: flex; font-size: 12px; gap: 8px; line-height: 1.7; margin-top: 16px; padding: 11px; }
+  #ather-auth-flow .af-safe-note .hf-icon { color: var(--af-green); flex: 0 0 auto; margin-top: 2px; }
+
+#ather-auth-flow .af-card-controls { display: flex; align-items: center; gap: 4px; }
+#ather-auth-flow .af-theme { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; border-radius: 11px; background: transparent; color: var(--af-muted); cursor: pointer; }
+#ather-auth-flow .af-language { display: inline-flex; align-items: center; font-size: 14px; }
+#ather-auth-flow .af-brand { color: inherit; }
+#ather-auth-flow .af-auth-button:disabled { cursor: not-allowed; color: var(--af-muted); background: var(--af-surface-soft); }
+#ather-auth-flow .af-method-note { color: var(--af-muted); font-size: 12px; margin: 7px 0 0; }
+#ather-auth-flow .af-safe-note a { color: var(--af-green); text-decoration: underline; }
+#ather-auth-flow :focus-visible { outline: 3px solid var(--af-ink); outline-offset: 4px; }
+#ather-auth-flow .af-story-panel :focus-visible { outline-color: var(--af-green-on); }
+:root[data-landing-theme="dark"] #ather-auth-flow .af-kicker,
+:root[data-landing-theme="dark"] #ather-auth-flow .af-story-point .hf-icon { color: #69501a; }
+.af-skip { position: fixed; z-index: 10; inset-inline-start: 20px; top: 8px; padding: 12px 18px; background: #103f30; color: #fff; font-family: "Noto Sans Arabic", sans-serif; transform: translateY(-200%); }
+.af-skip:focus { transform: none; outline: 3px solid #edc361; outline-offset: 2px; }
+@media (max-width: 720px) {
+    body { padding: 0; }
+    #ather-auth-flow .af-product { border: 0; border-radius: 0; }
+    #ather-auth-flow .af-layout { display: block; min-height: 0; }
+    #ather-auth-flow .af-story-panel { display: none; }
+    #ather-auth-flow .af-auth-panel { min-height: 700px; padding: 16px; }
+    #ather-auth-flow .af-card { border-radius: 18px; padding: 22px 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #ather-auth-flow *, .af-skip { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
