@@ -384,7 +384,6 @@ body { margin: 0; padding: 12px; font-size: 16px; line-height: 1.625; -webkit-fo
 }
 @media (max-width: 350px) {
   #ather-hi-fi .hf-project-head { flex-wrap: wrap; }
-  #ather-hi-fi h1 { font-size: 34px; }
 }
 @media (prefers-reduced-motion: reduce) {
   #ather-hi-fi *, .hf-skip { transition: none !important; animation: none !important; scroll-behavior: auto !important; }

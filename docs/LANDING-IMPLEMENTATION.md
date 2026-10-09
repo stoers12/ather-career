@@ -53,3 +53,39 @@ Browser inventory returned no browser; starting an isolated in-app tab reported 
 A loopback-only PHP preview serves Landing and its asset allowlist. It deliberately blocks sign-in execution and application/internal routes, and uses a synthetic issuer in the existing CSP template. It has no tenant/database configuration and is not the live endpoint. The byte-exact original is separately available at `/reference.html`; its preview wrapper retains its own external scripts, as supplied. Local preview and evidence locations, restart instructions and commit/bundle checksums are in the durable handoff outside Git.
 
 Next: use that original and isolated implementation side by side at all six viewport/theme combinations; capture matching full-page and section screenshots after fonts load. Check horizontal overflow, typography, all section spacing and content, menu open/closed states, Tab/Shift+Tab/Enter/Space/Escape and visible focus, contrast/forced-colors, reduced motion, and Arabic RTL/English LTR. Record remaining visual differences and secure owner visual acceptance. Resolve the two image-test runtime limitations in an appropriate isolated environment before treating the full regression gate as passed. Then make a separate publication/merge/deployment decision; none is authorized here.
+
+## Review finalization — 2026-10-10
+
+This entry supersedes earlier next-action statements about authorization to publish a Draft PR; historical test and browser evidence above is retained. Publication as a Draft PR is now authorized. Merge and deployment remain unauthorized.
+
+Verified starting branch: `feat/approved-landing-20261010`; clean starting HEAD `c0016d395e0b454648c73c787c002bb5257454ef`, following implementation `d76929907cf5230d11655b420c72fcff8cc85514`, from approved main `82353dc2d2a709858d0b56852182acce20f06009`. The final publication SHA, PR and exact-head CI results are recorded in the durable finalization handoff after committing; a document cannot embed its own commit SHA.
+
+Owner acceptance covers the appearance and button arrangement of the displayed version. The Arabic text review found no necessary correction. Retain the bilingual registration-unavailable disclosure, existing-account sign-in CTA, and automatic responsiveness. No phone/desktop preview toggle was added. The approval does not establish all viewport/theme, keyboard, Console or mobile behavior. No approved English visual reference has been established.
+
+Clean Code review: rendering remains in `index.php`, escaped static copy in `includes/landing_copy.php`, static icons in `includes/landing_icons.php`, theme/menu behavior in `landing.js`, and presentation in `landing.css`. Existing HTTP, asset-versioning and theme-preference conventions are retained. No new framework, dependency, general abstraction or unrelated refactor was warranted. The intentional desktop/mobile navigation markup supports progressive enhancement and different control placement.
+
+One CSS cleanup removes the ineffective `#ather-hi-fi h1 { font-size: 34px; }` rule under 350px. The more-specific existing `#ather-hi-fi .hf-page h1 { font-size: 38px; }` mobile rule already won the cascade. Thus the effective declared size remains 38px; the earlier 34px note was inaccurate. The project-card wrapping rule remains. This correction removes dead code without changing intended or accepted appearance; rendered wrapping is still browser-unverified. No copy, button order, CTA destination, rendering or interaction logic changed.
+
+Fresh checks against the finalization working tree (durable evidence under `finalization-20261010/`):
+
+| Check | Actual result and limit |
+| --- | --- |
+| Focused HTTP/source/contrast validation | 93 passed, including both locales, section targets, methods, disclosures, same-origin assets, original hashes, production asset-copy mapping and protected source preservation. Token contrast checks are not rendered contrast acceptance. |
+| Additional finalization checks | 25 passed: both desktop/mobile language link destinations and HTTP locales; versioned CSS/JS and font responses byte-identical to source; font 400/500 weight and required TrueType tables; all 222 repository PHP files; JavaScript syntax for admin/portfolio/Landing; working diff whitespace. |
+| Theme/menu interaction logic | 40 Node DOM-stub checks passed again, covering persistence/storage denial/system fallback, pressed state, open/close, Escape/focus, section focus and desktop resize focus. These are not browser keyboard/focus tests. |
+| Phase 2 static architecture guard | Passed again. |
+| Native Phase 2 regression | Reused unchanged valid evidence: 45 cases plus teardown passed; MediaNormalizationTest and LibvipsImageProcessorTest failed identically on approved main. PHP/JS/auth/database sources and test runtime inputs are unchanged by the dead CSS cleanup. These failures remain failures, not exceptions or passes. |
+| Production container/Apache/security/sign-in gates | Not run locally: no local container, database, storage or authentication changes permitted. Remote CI status must be read on the exact final PR head; failed, skipped or absent checks are not passed. |
+
+The bounded supported browser check returned `Browser is not available: edge`. No further recovery investigation was attempted. Prior native Computer Use attempts had separately failed URL detection or input geometry, as recorded outside Git. Owner approval/videos are not substitutes for browser evidence.
+
+| Language/direction | Widths | Light | Dark |
+| --- | --- | --- | --- |
+| Arabic / RTL | 320, 390, 1440 | Browser-unverified at each width | Browser-unverified at each width |
+| English / LTR | 320, 390, 1440 | Browser-unverified at each width | Browser-unverified at each width |
+
+Outstanding browser checks: loaded-font rendering; text/control wrapping and horizontal overflow; actual section navigation and language/theme controls; mobile menu open/close and resize; Tab/Shift+Tab/Enter/Space/Escape; visible focus and rendered contrast; reduced motion/forced colors; Console errors; and matching Arabic reference/implementation screenshots. No new screenshots exist. English output and destinations passed HTTP checks, but exact English visual parity is not claimed. Footer policy/contact labels remain informational because approved destinations are absent.
+
+The approved original SHA-256 remains `1932223d7353286dfaf0883bc84b5182c2e4d0e0a00e5476397d095c74c818d1`. `/reference-scrollable.html` removes only the reference host's document overflow lock in a separate preview-only copy. That derivative, router change, recovery artifacts, evidence scripts and logs remain outside the production branch. `/reference.html` remains byte-exact. Product preview remains `http://127.0.0.1:8174/` and English `/?lang=en`; `owner_login.php` intentionally returns 503 there without executing authentication. Production keeps the unchanged sign-in destination and public portfolio/security sources.
+
+Smallest next acceptance action: complete real browser keyboard/menu/overflow and Arabic comparison evidence, starting with 1440px light before the other Arabic configurations; check English/LTR behavior separately. Review exact-head CI and its blockers before any later readiness/merge decision. This Draft PR is reviewable with disclosed gaps, not fully accepted or ready to deploy.
