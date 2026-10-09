@@ -36,3 +36,19 @@ exception class, and broad category. Client responses are generic and do not
 include exception messages, SQL, paths, credentials, tokens, cookies, CSRF
 values, or request bodies. Expected domain validation messages remain
 client-safe and are rendered only by their owning workflow.
+
+## Public Sign In presentation
+
+`/signin.php` accepts `GET` and `HEAD`; `lang=en` selects English/LTR,
+otherwise Arabic/RTL is used, including structured locale input. It has no
+credential fields or signup action. Landing existing-account links reach this
+presentation; protected Owner redirects retain the existing login contract.
+
+`/owner_login.php` remains GET-only. An absent `method` retains ordinary OIDC
+login. The optional scalar values `google` and `email` select only the fixed
+verified connection names in `includes/auth0_signin_methods.php`. Empty,
+unknown or structured values receive HTML `400` before discovery or transaction
+creation. Client-provided connection, prompt or redirect identifiers are not
+forwarded. Switch/retry POST+CSRF flows retain `prompt=login` and the existing
+callback/session/identity protections. See [the implementation record](SIGNIN-IMPLEMENTATION.md)
+for configuration evidence and the unperformed real-provider/browser checks.
