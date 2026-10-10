@@ -36,3 +36,26 @@ exception class, and broad category. Client responses are generic and do not
 include exception messages, SQL, paths, credentials, tokens, cookies, CSRF
 values, or request bodies. Expected domain validation messages remain
 client-safe and are rendered only by their owning workflow.
+
+## Public Sign In presentation
+
+`/signin.php` accepts `GET` and `HEAD`; `lang=en` selects English/LTR,
+otherwise Arabic/RTL is used, including structured locale input. It has no
+credential fields or signup action. Landing existing-account links reach this
+presentation; protected Owner redirects retain the existing login contract.
+Google and ordinary login remain available. Email/password and Microsoft use
+native disabled buttons with visible explanations. Email is temporarily disabled
+in this UI because no inspected existing password binding matched the configured
+issuer; connection configuration alone does not establish account eligibility.
+Public registration is unavailable; sign-in is for existing accounts only.
+
+`/owner_login.php` remains GET-only. An absent `method` retains ordinary OIDC
+login. The optional scalar values `google` and `email` select only the fixed
+configured connection names in `includes/auth0_signin_methods.php`. Empty,
+unknown or structured values receive HTML `400` before discovery or transaction
+creation. Client-provided connection, prompt or redirect identifiers are not
+forwarded. Switch/retry POST+CSRF flows retain `prompt=login` and the existing
+callback/session/identity protections. See [the implementation record](SIGNIN-IMPLEMENTATION.md)
+for configuration, recorded Google/browser evidence and remaining acceptance limits.
+The email server allowlist and OIDC route are unchanged; the disabled UI does not
+remove that endpoint or claim successful email login.

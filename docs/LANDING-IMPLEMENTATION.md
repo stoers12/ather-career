@@ -89,3 +89,13 @@ Outstanding browser checks: loaded-font rendering; text/control wrapping and hor
 The approved original SHA-256 remains `1932223d7353286dfaf0883bc84b5182c2e4d0e0a00e5476397d095c74c818d1`. `/reference-scrollable.html` removes only the reference host's document overflow lock in a separate preview-only copy. That derivative, router change, recovery artifacts, evidence scripts and logs remain outside the production branch. `/reference.html` remains byte-exact. Product preview remains `http://127.0.0.1:8174/` and English `/?lang=en`; `owner_login.php` intentionally returns 503 there without executing authentication. Production keeps the unchanged sign-in destination and public portfolio/security sources.
 
 Smallest next acceptance action: complete real browser keyboard/menu/overflow and Arabic comparison evidence, starting with 1440px light before the other Arabic configurations; check English/LTR behavior separately. Review exact-head CI and its blockers before any later readiness/merge decision. This Draft PR is reviewable with disclosed gaps, not fully accepted or ready to deploy.
+
+## Sign In slice entry-link follow-up — 2026-10-10
+
+From approved main `d942cf143522b4a76889c9ff31cc4f2b4bdb38b4`, the separate Sign In
+slice changes only Landing's three existing-account destinations to
+`signin.php?lang=<current locale>`. Accepted appearance, button arrangement,
+Arabic copy and registration disclosure are unchanged. The underlying
+`owner_login.php` entry remains compatible. Historical checks above describe
+their recorded revisions; current Sign In evidence and pending acceptance
+are in [SIGNIN-IMPLEMENTATION.md](SIGNIN-IMPLEMENTATION.md).

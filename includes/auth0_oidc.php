@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/auth0_signin_methods.php';
+
 const AUTH0_AUTH_TRANSACTION_KEY = 'auth0_authorization_transaction';
 const AUTH0_AUTH_TRANSACTION_TTL_SECONDS = 600;
 const OIDC_START_RATE_LIMIT_ATTEMPTS = 5;
@@ -211,7 +213,7 @@ function auth0Discovery(Auth0OidcConfiguration $configuration): array
 }
 
 /** @return array{url: string, state: string, code_challenge: string} */
-function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $authorizationEndpoint, ?string $prompt = null): array
+function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $authorizationEndpoint, ?string $prompt = null, ?string $signInMethod = null): array
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         throw new LogicException('Auth0 authorization requires an active server-side session.');
@@ -219,6 +221,7 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
     if ($prompt !== null && $prompt !== 'select_account' && $prompt !== 'login') {
         throw new InvalidArgumentException('OIDC prompt is invalid.');
     }
+    $connection = auth0SignInConnection($signInMethod);
     $state = auth0Base64Url(random_bytes(32));
     $verifier = auth0Base64Url(random_bytes(64));
     $nonce = auth0Base64Url(random_bytes(32));
@@ -241,6 +244,9 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
     ];
     if ($prompt !== null) {
         $parameters['prompt'] = $prompt;
+    }
+    if ($connection !== null) {
+        $parameters['connection'] = $connection;
     }
     $url = $authorizationEndpoint . '?' . http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
