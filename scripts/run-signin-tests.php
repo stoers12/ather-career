@@ -69,10 +69,16 @@ try {
         require __DIR__ . '/../signin.php';
         $html = (string) ob_get_clean();
         $check(str_contains($html, '<html lang="' . $locale . '" dir="' . $direction . '">'), 'Locale and direction must agree.');
-        $check(str_contains($html, 'owner_login.php?method=google') && str_contains($html, 'owner_login.php?method=email'), 'Verified methods must use the existing OIDC route.');
+        $check(str_contains($html, 'href="owner_login.php?method=google"'), 'Google must retain its existing OIDC route.');
+        $check(str_contains($html, 'href="owner_login.php"'), 'Ordinary login must remain available.');
+        $check(!str_contains($html, 'owner_login.php?method=email'), 'Unavailable email must not advertise a navigation route.');
+        $check(preg_match('/<button[^>]*type="button"[^>]*disabled aria-describedby="email-unavailable"[^>]*>.*?' . preg_quote(signInCopy('email', $locale), '/') . '<\/button>/s', $html) === 1, 'Email must retain its label with native disabled semantics.');
+        $emailNotice = $locale === 'ar' ? 'تسجيل الدخول بالبريد وكلمة المرور غير متاح حاليًا.' : 'Email and password sign-in is currently unavailable.';
+        $check(str_contains($html, '<p class="af-method-note" id="email-unavailable">' . $emailNotice . '</p>'), 'Disabled email must have its approved associated explanation.');
         $check(str_contains($html, 'disabled aria-describedby="microsoft-unavailable"'), 'Microsoft must be visibly disabled.');
         $check(!str_contains($html, '<input') && !str_contains($html, 'data-go-screen') && !str_contains($html, 'af-toolbar'), 'No credentials or prototype navigation may be embedded.');
-        $check(str_contains($html, $locale === 'ar' ? 'التسجيل العام غير متاح بعد' : 'Public registration is not available yet'), 'Registration must be honestly disclosed.');
+        $registrationNotice = $locale === 'ar' ? 'التسجيل العام غير متاح حاليًا؛ تسجيل الدخول للحسابات الحالية فقط.' : 'Public registration is currently unavailable. Sign-in is for existing accounts only.';
+        $check(str_contains($html, '<p class="af-footnote">' . $registrationNotice . '</p>'), 'Registration must use the approved concise disclosure.');
         $check(!str_contains($html, 'signup.php') && !str_contains($html, 'screen_hint'), 'No fake signup route may be advertised.');
     }
     $_GET = ['lang' => ['en'], 'untrusted' => '<script>alert(1)</script>'];

@@ -60,9 +60,10 @@ header('Content-Language: ' . $locale);
                     </div>
                     <p class="af-method-note" id="microsoft-unavailable"><?php echo signInCopy('microsoft_unavailable', $locale); ?></p>
                     <div class="af-divider"><?php echo signInCopy('or', $locale); ?></div>
-                    <a class="af-auth-button is-primary" href="owner_login.php?method=email"><?php echo signInIcon('mail'); ?><?php echo signInCopy('email', $locale); ?></a>
+                    <button class="af-auth-button is-primary" type="button" disabled aria-describedby="email-unavailable"><?php echo signInIcon('mail'); ?><?php echo signInCopy('email', $locale); ?></button>
+                    <p class="af-method-note" id="email-unavailable"><?php echo signInCopy('email_unavailable', $locale); ?></p>
                     <div class="af-safe-note"><?php echo signInIcon('external-link'); ?><span><?php echo signInCopy('safe', $locale); ?> <a href="owner_login.php"><?php echo signInCopy('ordinary', $locale); ?></a></span></div>
-                    <p class="af-footnote"><?php echo signInCopy('no_account', $locale); ?> <span><?php echo signInCopy('unavailable', $locale); ?></span></p>
+                    <p class="af-footnote"><?php echo signInCopy('unavailable', $locale); ?></p>
                 </article>
             </div>
         </div>
