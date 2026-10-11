@@ -15,6 +15,7 @@ function signUpCopy(string $key, string $locale): string
         'google' => ['ar' => 'الإنشاء باستخدام Google', 'en' => 'Create with Google'],
         'microsoft' => ['ar' => 'الإنشاء باستخدام Microsoft', 'en' => 'Create with Microsoft'],
         'email' => ['ar' => 'الإنشاء بالبريد وكلمة المرور', 'en' => 'Create with email and password'],
+        'email_unavailable' => ['ar' => 'إنشاء الحساب بالبريد وكلمة المرور غير متاح حاليًا.', 'en' => 'Account creation with email and password is currently unavailable.'],
         'age' => ['ar' => 'النسخة التجريبية مخصصة لمن أعمارهم 18 عامًا فأكثر. ستراجع الشروط والخصوصية قبل إكمال ملفك.', 'en' => 'The beta is intended for people aged 18 and over. You will review the terms and privacy policy before completing your portfolio.'],
         'existing' => ['ar' => 'لديك حساب بالفعل؟', 'en' => 'Already have an account?'],
         'signin' => ['ar' => 'سجّل الدخول', 'en' => 'Sign in'],
