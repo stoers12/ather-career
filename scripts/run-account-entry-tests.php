@@ -34,7 +34,7 @@ try {
     // A fixture must not turn browser-selected claims into local authentication state.
     $_SESSION = ['existing_marker' => 'unchanged'];
     $expectedSession = $_SESSION;
-    foreach (['signup', 'pending', 'verified'] as $screen) {
+    foreach (['signup', 'pending', 'verified', 'resent', 'expired'] as $screen) {
         foreach (['ar' => 'rtl', 'en' => 'ltr'] as $locale => $direction) {
             $html = $render($screen, ['lang' => $locale]);
             $dom = new DOMDocument();
@@ -45,7 +45,7 @@ try {
             $check($xpath->query('//form|//input|//iframe')->length === 0, 'No credential collection or submit surface is allowed.');
             $check(!str_contains($html, 'owner_login.php') && !str_contains($html, 'owner_onboarding.php') && !str_contains($html, 'owner_switch_account.php'), 'Presentation must not advertise authentication/mutation destinations.');
             $buttons = $xpath->query('//button[not(contains(@class, "hf-theme"))]');
-            $check($buttons->length === ['signup' => 3, 'pending' => 2, 'verified' => 1][$screen], 'Unexpected action count.');
+            $check($buttons->length === ['signup' => 3, 'pending' => 2, 'verified' => 1, 'resent' => 2, 'expired' => 1][$screen], 'Unexpected action count.');
             foreach ($buttons as $button) {
                 $check($button->hasAttribute('disabled') && $button->getAttribute('type') === 'button', 'Unsupported action must be natively disabled.');
                 $check(!$button->hasAttribute('onclick') && !$button->hasAttribute('formaction'), 'Disabled action must have no handler/destination.');
@@ -64,11 +64,18 @@ try {
                 $check(str_contains($html, signInCopy('unavailable', $locale)), 'Approved registration policy must be visible.');
                 $check(str_contains($html, 'href="signin.php?lang=' . $locale . '"'), 'Existing users need the supported Sign In destination.');
             } else {
-                $check(str_contains($html, emailVerificationCopy('preview', $locale)), 'Verification fixture needs an explicit no-send/no-access disclosure.');
+                $newFixture = in_array($screen, ['resent', 'expired'], true);
+                $check(str_contains($html, emailVerificationCopy($newFixture ? 'preview_unchanged' : 'preview', $locale)), 'Verification fixture needs an explicit no-send/no-access disclosure.');
                 $check(str_contains($html, emailVerificationCopy($screen . '_heading', $locale)), 'Fixture heading must be correct.');
+                if ($newFixture) {
+                    $check(str_contains($html, 'href="signin.php?lang=' . $locale . '"'), 'Fixture needs safe localized Sign In navigation.');
+                    $check(!preg_match('/\b\d{2}:\d{2}\b|setInterval|setTimeout/', $html), 'Fixture must not simulate a countdown.');
+                }
             }
             $tampered = $render($screen, ['lang' => $locale, 'state' => 'verified', 'verified' => '1', 'email_verified' => 'true', 'email' => '<script>alert(1)</script>', 'screen' => 'verified']);
             $check($tampered === $html, 'Client-selected state/address must not affect rendering.');
+            $_COOKIE = ['verificationFixture' => 'verified', 'email_verified' => 'true', 'ather_verified' => '1'];
+            $check($render($screen, ['lang' => $locale]) === $html, 'Cookies must not select verification state.');
             $check($_SESSION === $expectedSession && session_status() === PHP_SESSION_NONE, 'Rendering must not start or mutate authentication/session state.');
         }
         $check($render($screen, ['lang' => ['en']]) === $render($screen, []), 'Structured language must safely fall back to Arabic.');

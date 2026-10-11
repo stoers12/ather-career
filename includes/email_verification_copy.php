@@ -28,6 +28,15 @@ function emailVerificationCopy(string $key, string $locale): string
         'onboarding' => ['ar' => 'ابدأ إعداد ملفك', 'en' => 'Start setting up your portfolio'],
         'onboarding_unavailable' => ['ar' => 'الانتقال إلى إعداد الملف من هذه الصفحة غير متاح حاليًا.', 'en' => 'Continuing to portfolio setup from this page is currently unavailable.'],
         'verified_info' => ['ar' => 'في المسار المخطط، سيبقى ملفك خاصًا حتى تنهي الإعداد وتختار النشر بنفسك.', 'en' => 'In the planned flow, your portfolio stays private until you finish setup and choose to publish.'],
+        'preview_unchanged' => ['ar' => 'معاينة معزولة ببيانات تجريبية. لم تُرسل أي رسالة ولم يتغير أي حساب أو حالة تأكيد أو صلاحية وصول. لا تمنح هذه الصفحة أي وصول.', 'en' => 'Isolated preview with fixture data. No email was sent and no account, verification status or access changed. This page grants no access.'],
+        'resent_heading' => ['ar' => 'أرسلنا رسالة جديدة', 'en' => 'We sent a new email'],
+        'resent_copy' => ['ar' => 'حالة إعادة إرسال تجريبية. في المسار المخطط، راجع بريدك بحثًا عن رسالة التأكيد.', 'en' => 'A fixture resend state. In the planned flow, check your inbox for the verification email.'],
+        'resent_info' => ['ar' => 'في المسار المخطط، يجب ألا يكشف طلب إعادة الإرسال ما إذا كان البريد مرتبطًا بحسابات أخرى.', 'en' => 'In the planned flow, a resend request should not disclose whether the address is linked to other accounts.'],
+        'expired_heading' => ['ar' => 'انتهت صلاحية الرابط', 'en' => 'This link has expired'],
+        'expired_copy' => ['ar' => 'حالة انتهاء صلاحية تجريبية. في المسار المخطط، تكون الخطوة التالية طلب رابط تأكيد جديد.', 'en' => 'A fixture expired-link state. In the planned flow, the next step is to request a new verification link.'],
+        'new_link' => ['ar' => 'إرسال رابط جديد', 'en' => 'Send a new link'],
+        'expired_unavailable' => ['ar' => 'طلب رابط تأكيد جديد غير متاح حاليًا. يمكنك العودة إلى تسجيل الدخول.', 'en' => 'Requesting a new verification link is currently unavailable. You can return to sign in.'],
+        'expired_info' => ['ar' => 'لا تشارك رابط التأكيد مع أي شخص؛ يعامَل كرابط أمني مؤقت.', 'en' => 'Do not share a verification link with anyone; treat it as a temporary security link.'],
     ];
 
     return htmlspecialchars($catalog[$key][$locale], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
