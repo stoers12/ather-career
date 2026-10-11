@@ -105,6 +105,7 @@ body { margin: 0; padding: 12px; font-size: 16px; line-height: 1.625; -webkit-fo
 #ather-email-states .es-preview-note { background: var(--es-gold-soft); border-radius: 12px; color: var(--es-ink); font-size: 12px; line-height: 1.75; margin: 16px 0 0; padding: 11px; }
 #ather-email-states .es-method-note { color: var(--es-muted); font-size: 12px; line-height: 1.75; margin: 10px 0 0; }
 #ather-email-states :focus-visible { outline: 3px solid var(--es-ink); outline-offset: 4px; }
+#ather-email-states .es-text-action:focus-visible { outline-offset: -6px; }
 #ather-email-states .es-side :focus-visible { outline-color: var(--es-green-on); }
 :root[data-landing-theme="dark"] #ather-email-states .es-kicker,
 :root[data-landing-theme="dark"] #ather-email-states .es-side-item .hf-icon { color: #69501a; }
