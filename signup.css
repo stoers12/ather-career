@@ -1,0 +1,10 @@
+/* Approved Sign Up additions; shared auth layout remains in signin.css. */
+#ather-auth-flow .af-auth-button { width: 100%; }
+#ather-auth-flow .af-auth-button.is-gold { background: var(--af-gold-bright); border-color: var(--af-gold-bright); color: #14231c; }
+#ather-auth-flow .af-auth-button:disabled { background: var(--af-surface-soft); border-color: var(--af-border); color: var(--af-muted); }
+#ather-auth-flow .af-provider-icon { flex: 0 0 25px; }
+#ather-auth-flow .af-card, #ather-auth-flow .af-story-panel { min-width: 0; overflow-wrap: anywhere; }
+#ather-auth-flow .af-warning { align-items: start; background: var(--af-gold-soft); border-radius: 12px; color: var(--af-ink); display: flex; font-size: 12px; gap: 8px; line-height: 1.7; margin-top: 16px; padding: 11px; }
+#ather-auth-flow .af-warning .hf-icon { color: var(--af-gold); margin-top: 2px; }
+#ather-auth-flow .af-footnote a { color: var(--af-green); text-decoration: underline; }
+#ather-auth-flow .af-footnote a:focus-visible { outline-offset: -3px; }

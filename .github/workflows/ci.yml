@@ -58,6 +58,7 @@ jobs:
         run: |
           docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/run-phase2-tests.php
           docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/run-signin-tests.php
+          docker run --rm --entrypoint php -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/run-account-entry-tests.php
 
       - name: Start isolated CI database
         run: docker compose -p ather-career-ci -f docker-compose.production.yml up -d --no-build db
@@ -241,6 +242,11 @@ jobs:
           curl --fail http://127.0.0.1:8098/signin.php | grep 'lang="ar" dir="rtl"'
           curl --fail 'http://127.0.0.1:8098/signin.php?lang=en' | grep 'lang="en" dir="ltr"'
           curl --fail http://127.0.0.1:8098/signin.css >/dev/null
+          curl --fail http://127.0.0.1:8098/signup.php | grep 'lang="ar" dir="rtl"'
+          curl --fail 'http://127.0.0.1:8098/signup.php?lang=en' | grep 'lang="en" dir="ltr"'
+          curl --fail http://127.0.0.1:8098/signup.css >/dev/null
+          test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/signup.php)" = 405
+          for route in /verification-pending.php /verification-success.php /tests/phase2/support/email-verification-preview.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done
           test "$(curl -g -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8098/owner_login.php?method[]=google')" = 400
           for route in /admin.php /login.php /logout.php /personal_info.php /projects.php /messages.php /api/projects.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done
           curl --fail http://127.0.0.1:8098/p/a-public

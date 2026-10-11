@@ -1,0 +1,125 @@
+/* Pending/success geometry from the approved email-account-states original. */
+@font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 400; font-display: swap; src: url("assets/fonts/noto-sans-arabic-400.ttf") format("truetype"); }
+@font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 500; font-display: swap; src: url("assets/fonts/noto-sans-arabic-500.ttf") format("truetype"); }
+html { color-scheme: light; background: #f3f7f4; }
+html[data-landing-theme="dark"] { color-scheme: dark; background: #071811; }
+body { margin: 0; padding: 12px; font-size: 16px; line-height: 1.625; -webkit-font-smoothing: antialiased; }
+[hidden] { display: none !important; }
+#ather-email-states { display: flex; justify-content: center; font-family: "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif; width: 100%; }
+#ather-email-states * { box-sizing: border-box; }
+#ather-email-states .hf-icon { width: 16px; height: 16px; stroke-width: 1.6; flex: 0 0 auto; vertical-align: middle; }
+  #ather-email-states .es-product {
+    --es-bg: #f3f7f4;
+    --es-surface: #ffffff;
+    --es-surface-soft: #edf4f0;
+    --es-ink: #10251d;
+    --es-muted: #586b61;
+    --es-border: #d3e1d9;
+    --es-green: #103f30;
+    --es-green-deep: #082c20;
+    --es-green-on: #ffffff;
+    --es-gold: #b67b18;
+    --es-gold-bright: #edc665;
+    --es-gold-soft: #fff1cb;
+    --es-red: #9c4037;
+    --es-red-soft: #fdebea;
+    --es-shadow: rgba(20, 61, 46, .15);
+    background: var(--es-bg);
+    border: 1px solid var(--es-border);
+    border-radius: 22px;
+    color: var(--es-ink);
+    max-width: 1050px;
+    overflow: hidden;
+    transition: max-width .22s ease;
+    width: 100%;
+  }
+
+  :root[data-landing-theme="dark"] #ather-email-states .es-product {
+    --es-bg: #071811;
+    --es-surface: #0d261c;
+    --es-surface-soft: #14352a;
+    --es-ink: #eef8f2;
+    --es-muted: #afc4b9;
+    --es-border: #2c4e3f;
+    --es-green: #a6d8c0;
+    --es-green-deep: #d7eee2;
+    --es-green-on: #092118;
+    --es-gold: #e6bb62;
+    --es-gold-bright: #f0cc79;
+    --es-gold-soft: #473813;
+    --es-red: #f0a9a2;
+    --es-red-soft: #482421;
+    --es-shadow: rgba(0, 0, 0, .35);
+  }
+
+  #ather-email-states .es-product button,
+  #ather-email-states .es-product a { font-family: inherit; }
+  #ather-email-states .es-layout { display: grid; grid-template-columns: .88fr 1.12fr; min-height: 690px; }
+  #ather-email-states .es-side { background: var(--es-green-deep); color: var(--es-green-on); display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding: 32px; position: relative; }
+  #ather-email-states .es-side::before { border: 1px solid color-mix(in srgb, var(--es-gold-bright) 48%, transparent); border-radius: 50%; content: ""; height: 330px; left: -165px; position: absolute; top: -115px; width: 330px; }
+  #ather-email-states .es-brand { align-items: center; display: flex; font-size: 18px; font-weight: 500; gap: 10px; position: relative; z-index: 1; }
+  #ather-email-states .es-mark { align-items: center; background: var(--es-gold-bright); border-radius: 12px; color: #14231c; display: flex; height: 41px; justify-content: center; width: 41px; }
+  #ather-email-states .es-side-copy { position: relative; z-index: 1; }
+  #ather-email-states .es-kicker { color: var(--es-gold-bright); font-size: 13px; font-weight: 500; }
+  #ather-email-states .es-side h2 { font-size: 35px; font-weight: 500; line-height: 1.45; margin: 11px 0 0; }
+  #ather-email-states .es-side p { font-size: 14px; line-height: 1.9; margin: 13px 0 0; opacity: .82; }
+  #ather-email-states .es-side-list { display: grid; gap: 11px; margin-top: 23px; }
+  #ather-email-states .es-side-item { align-items: center; display: flex; font-size: 13px; gap: 9px; }
+  #ather-email-states .es-side-item .hf-icon { color: var(--es-gold-bright); }
+  #ather-email-states .es-side-footer { font-size: 12px; opacity: .72; position: relative; z-index: 1; }
+
+  #ather-email-states .es-main { align-items: center; background: var(--es-bg); display: flex; justify-content: center; padding: 34px; }
+  #ather-email-states .es-card { background: var(--es-surface); border: 1px solid var(--es-border); border-radius: 22px; box-shadow: 0 22px 56px var(--es-shadow); max-width: 435px; padding: 29px; width: 100%; }
+  #ather-email-states .es-card-top { align-items: center; display: flex; gap: 10px; justify-content: space-between; }
+  #ather-email-states .es-card-logo { align-items: center; background: var(--es-green); border-radius: 11px; color: var(--es-green-on); display: flex; height: 38px; justify-content: center; width: 38px; }
+  #ather-email-states .es-language { background: transparent; border: 0; color: var(--es-muted); min-height: 44px; padding: 8px; }
+  #ather-email-states .es-state-icon { align-items: center; background: var(--es-gold-soft); border-radius: 18px; color: var(--es-gold); display: flex; height: 64px; justify-content: center; margin-top: 20px; width: 64px; }
+  #ather-email-states .es-state-icon.is-success { background: var(--es-surface-soft); color: var(--es-green); }
+  #ather-email-states .es-state-icon.is-error { background: var(--es-red-soft); color: var(--es-red); }
+  #ather-email-states .es-card h1 { font-size: 27px; font-weight: 500; line-height: 1.45; margin: 17px 0 0; }
+  #ather-email-states .es-subtitle { color: var(--es-muted); font-size: 14px; line-height: 1.8; margin: 7px 0 0; }
+  #ather-email-states .es-email { background: var(--es-surface-soft); border: 1px solid var(--es-border); border-radius: 12px; direction: ltr; font-size: 13px; margin-top: 18px; padding: 12px; text-align: center; }
+  #ather-email-states .es-actions { display: grid; gap: 10px; margin-top: 21px; }
+  #ather-email-states .es-button { align-items: center; background: var(--es-surface); border: 1px solid var(--es-border); border-radius: 12px; color: var(--es-ink); display: flex; gap: 8px; justify-content: center; min-height: 48px; padding: 10px 14px; text-decoration: none; }
+  #ather-email-states .es-button.is-primary { background: var(--es-green); border-color: var(--es-green); color: var(--es-green-on); }
+  #ather-email-states .es-button.is-gold { background: var(--es-gold-bright); border-color: var(--es-gold-bright); color: #14231c; }
+  #ather-email-states .es-button:disabled { background: var(--es-surface-soft); color: var(--es-muted); opacity: .78; }
+  #ather-email-states .es-text-action { background: transparent; border: 0; color: var(--es-green); min-height: 44px; padding: 8px; }
+  #ather-email-states .es-info { align-items: start; background: var(--es-surface-soft); border-radius: 12px; color: var(--es-muted); display: flex; font-size: 12px; gap: 8px; line-height: 1.75; margin-top: 17px; padding: 11px; }
+  #ather-email-states .es-info .hf-icon { color: var(--es-green); flex: 0 0 auto; margin-top: 2px; }
+  #ather-email-states .es-info.is-warning { background: var(--es-gold-soft); color: var(--es-ink); }
+  #ather-email-states .es-info.is-warning i { color: var(--es-gold); }
+  #ather-email-states .es-info.is-error { background: var(--es-red-soft); color: var(--es-ink); }
+  #ather-email-states .es-info.is-error i { color: var(--es-red); }
+  #ather-email-states .es-reference { color: var(--es-muted); direction: ltr; font-size: 11px; margin-top: 16px; text-align: center; }
+
+#ather-email-states .es-card-controls { display: flex; align-items: center; gap: 4px; }
+#ather-email-states .es-theme { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; border-radius: 11px; background: transparent; color: var(--es-muted); cursor: pointer; }
+#ather-email-states .es-language { display: inline-flex; align-items: center; font-size: 14px; text-decoration: none; }
+#ather-email-states .es-brand { color: inherit; text-decoration: none; }
+#ather-email-states .es-card-logo { text-decoration: none; }
+#ather-email-states .es-text-action { display: flex; justify-content: center; align-items: center; text-decoration: underline; font-size: 14px; }
+#ather-email-states .es-button { width: 100%; font-size: 14px; }
+#ather-email-states .es-button:disabled { border-color: var(--es-border); cursor: not-allowed; opacity: 1; }
+#ather-email-states .es-card, #ather-email-states .es-side { min-width: 0; overflow-wrap: anywhere; }
+#ather-email-states .es-preview-note { background: var(--es-gold-soft); border-radius: 12px; color: var(--es-ink); font-size: 12px; line-height: 1.75; margin: 16px 0 0; padding: 11px; }
+#ather-email-states .es-method-note { color: var(--es-muted); font-size: 12px; line-height: 1.75; margin: 10px 0 0; }
+#ather-email-states :focus-visible { outline: 3px solid var(--es-ink); outline-offset: 4px; }
+#ather-email-states .es-text-action:focus-visible { outline-offset: -6px; }
+#ather-email-states .es-side :focus-visible { outline-color: var(--es-green-on); }
+:root[data-landing-theme="dark"] #ather-email-states .es-kicker,
+:root[data-landing-theme="dark"] #ather-email-states .es-side-item .hf-icon { color: #69501a; }
+html[dir="ltr"] #ather-email-states .es-next-icon { transform: rotate(180deg); }
+.es-skip { position: fixed; z-index: 10; inset-inline-start: 20px; top: 8px; padding: 12px 18px; background: #103f30; color: #fff; font-family: "Noto Sans Arabic", sans-serif; transform: translateY(-200%); }
+.es-skip:focus { transform: none; outline: 3px solid #edc361; outline-offset: 2px; }
+@media (max-width: 720px) {
+    body { padding: 0; }
+    #ather-email-states .es-product { border: 0; border-radius: 0; }
+    #ather-email-states .es-layout { display: block; min-height: 0; }
+    #ather-email-states .es-side { display: none; }
+    #ather-email-states .es-main { min-height: 690px; padding: 16px; }
+    #ather-email-states .es-card { border-radius: 18px; padding: 22px 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #ather-email-states *, .es-skip { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
