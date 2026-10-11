@@ -1,4 +1,4 @@
-/* Pending/success geometry from the approved email-account-states original. */
+/* Verification fixture geometry from the approved email-account-states original. */
 @font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 400; font-display: swap; src: url("assets/fonts/noto-sans-arabic-400.ttf") format("truetype"); }
 @font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 500; font-display: swap; src: url("assets/fonts/noto-sans-arabic-500.ttf") format("truetype"); }
 html { color-scheme: light; background: #f3f7f4; }
@@ -88,7 +88,7 @@ body { margin: 0; padding: 12px; font-size: 16px; line-height: 1.625; -webkit-fo
   #ather-email-states .es-info { align-items: start; background: var(--es-surface-soft); border-radius: 12px; color: var(--es-muted); display: flex; font-size: 12px; gap: 8px; line-height: 1.75; margin-top: 17px; padding: 11px; }
   #ather-email-states .es-info .hf-icon { color: var(--es-green); flex: 0 0 auto; margin-top: 2px; }
   #ather-email-states .es-info.is-warning { background: var(--es-gold-soft); color: var(--es-ink); }
-  #ather-email-states .es-info.is-warning i { color: var(--es-gold); }
+  #ather-email-states .es-info.is-warning .hf-icon { color: var(--es-gold); }
   #ather-email-states .es-info.is-error { background: var(--es-red-soft); color: var(--es-ink); }
   #ather-email-states .es-info.is-error i { color: var(--es-red); }
   #ather-email-states .es-reference { color: var(--es-muted); direction: ltr; font-size: 11px; margin-top: 16px; text-align: center; }
