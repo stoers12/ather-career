@@ -29,7 +29,7 @@ function emailVerificationCopy(string $key, string $locale): string
         'onboarding_unavailable' => ['ar' => 'الانتقال إلى إعداد الملف من هذه الصفحة غير متاح حاليًا.', 'en' => 'Continuing to portfolio setup from this page is currently unavailable.'],
         'verified_info' => ['ar' => 'في المسار المخطط، سيبقى ملفك خاصًا حتى تنهي الإعداد وتختار النشر بنفسك.', 'en' => 'In the planned flow, your portfolio stays private until you finish setup and choose to publish.'],
         'preview_unchanged' => ['ar' => 'معاينة معزولة ببيانات تجريبية. لم تُرسل أي رسالة ولم يتغير أي حساب أو حالة تأكيد أو صلاحية وصول. لا تمنح هذه الصفحة أي وصول.', 'en' => 'Isolated preview with fixture data. No email was sent and no account, verification status or access changed. This page grants no access.'],
-        'resent_heading' => ['ar' => 'أرسلنا رسالة جديدة', 'en' => 'We sent a new email'],
+        'resent_heading' => ['ar' => 'معاينة إعادة إرسال التأكيد', 'en' => 'Verification resend preview'],
         'resent_copy' => ['ar' => 'حالة إعادة إرسال تجريبية. في المسار المخطط، راجع بريدك بحثًا عن رسالة التأكيد.', 'en' => 'A fixture resend state. In the planned flow, check your inbox for the verification email.'],
         'resent_info' => ['ar' => 'في المسار المخطط، يجب ألا يكشف طلب إعادة الإرسال ما إذا كان البريد مرتبطًا بحسابات أخرى.', 'en' => 'In the planned flow, a resend request should not disclose whether the address is linked to other accounts.'],
         'expired_heading' => ['ar' => 'انتهت صلاحية الرابط', 'en' => 'This link has expired'],
