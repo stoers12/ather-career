@@ -58,4 +58,19 @@ forwarded. Switch/retry POST+CSRF flows retain `prompt=login` and the existing
 callback/session/identity protections. See [the implementation record](SIGNIN-IMPLEMENTATION.md)
 for configuration, recorded Google/browser evidence and remaining acceptance limits.
 The email server allowlist and OIDC route are unchanged; the disabled UI does not
-remove that endpoint or claim successful email login.
+  remove that endpoint or claim successful email login.
+
+## Inactive Sign Up and verification preview presentation
+
+`/signup.php` accepts `GET`/`HEAD`, default Arabic/RTL or exact scalar
+`lang=en` for English/LTR. Other/structured language input falls back to Arabic.
+All registration providers are native disabled buttons with visible availability
+explanations. There are no forms, credentials, authentication links or account
+mutations; the existing-account link navigates to `/signin.php`.
+
+Pending/success email screens are isolated fixtures under `tests/phase2/support/`,
+without public route shims. The separate loopback preview chooses a fixed fixture;
+client query claims do not alter it. Direct fixture requests are denied. Fixtures
+start no session, send no email, create no account and grant no verified status or
+access. Refresh/resend/onboarding controls are natively disabled. See the
+[implementation and prerequisite record](SIGNUP-VERIFICATION-IMPLEMENTATION.md).
