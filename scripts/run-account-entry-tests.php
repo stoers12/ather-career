@@ -34,7 +34,10 @@ try {
     // A fixture must not turn browser-selected claims into local authentication state.
     $_SESSION = ['existing_marker' => 'unchanged'];
     $expectedSession = $_SESSION;
-    foreach (['signup', 'pending', 'verified', 'resent', 'expired'] as $screen) {
+    $supportedScreens = ['signup', 'pending', 'verified', 'resent', 'expired', 'error', 'disabled'];
+    $screens = array_slice($argv, 1) ?: $supportedScreens;
+    foreach ($screens as $screen) {
+        $check(in_array($screen, $supportedScreens, true), 'Unknown requested presentation test.');
         foreach (['ar' => 'rtl', 'en' => 'ltr'] as $locale => $direction) {
             $html = $render($screen, ['lang' => $locale]);
             $dom = new DOMDocument();
@@ -45,7 +48,7 @@ try {
             $check($xpath->query('//form|//input|//iframe')->length === 0, 'No credential collection or submit surface is allowed.');
             $check(!str_contains($html, 'owner_login.php') && !str_contains($html, 'owner_onboarding.php') && !str_contains($html, 'owner_switch_account.php'), 'Presentation must not advertise authentication/mutation destinations.');
             $buttons = $xpath->query('//button[not(contains(@class, "hf-theme"))]');
-            $check($buttons->length === ['signup' => 3, 'pending' => 2, 'verified' => 1, 'resent' => 2, 'expired' => 1][$screen], 'Unexpected action count.');
+            $check($buttons->length === ['signup' => 3, 'pending' => 2, 'verified' => 1, 'resent' => 2, 'expired' => 1, 'error' => 1, 'disabled' => 2][$screen], 'Unexpected action count.');
             foreach ($buttons as $button) {
                 $check($button->hasAttribute('disabled') && $button->getAttribute('type') === 'button', 'Unsupported action must be natively disabled.');
                 $check(!$button->hasAttribute('onclick') && !$button->hasAttribute('formaction'), 'Disabled action must have no handler/destination.');
@@ -64,9 +67,19 @@ try {
                 $check(str_contains($html, signInCopy('unavailable', $locale)), 'Approved registration policy must be visible.');
                 $check(str_contains($html, 'href="signin.php?lang=' . $locale . '"'), 'Existing users need the supported Sign In destination.');
             } else {
-                $newFixture = in_array($screen, ['resent', 'expired'], true);
+                $newFixture = in_array($screen, ['resent', 'expired', 'error', 'disabled'], true);
                 $check(str_contains($html, emailVerificationCopy($newFixture ? 'preview_unchanged' : 'preview', $locale)), 'Verification fixture needs an explicit no-send/no-access disclosure.');
                 $check(str_contains($html, emailVerificationCopy($screen . '_heading', $locale)), 'Fixture heading must be correct.');
+                if (in_array($screen, ['error', 'disabled'], true)) {
+                    $check(str_contains($html, emailVerificationCopy($screen . '_copy', $locale)), 'Fixture must identify an illustrative state.');
+                    $check(str_contains($html, emailVerificationCopy($screen . '_unavailable', $locale)), 'Unavailable operations must be explained.');
+                    $check(str_contains($html, emailVerificationCopy('example_reference', $locale)), 'Reference code must be labelled as an example.');
+                    $check($xpath->query('//*[contains(@class, "es-email")]')->length === 0, 'No real or fixture account address is needed.');
+                    $check($xpath->query('//div[@class="es-actions"]/*')->length === ($screen === 'error' ? 2 : 3), 'Reference action arrangement must be retained.');
+                    foreach ($xpath->query('//a[@href]') as $link) {
+                        $check(in_array($link->getAttribute('href'), ['#verification-fixture', './?lang=' . $locale, '?lang=' . ($locale === 'ar' ? 'en' : 'ar'), 'signin.php?lang=' . $locale], true), 'Only safe localized navigation is permitted.');
+                    }
+                }
                 if ($newFixture) {
                     $check(str_contains($html, 'href="signin.php?lang=' . $locale . '"'), 'Fixture needs safe localized Sign In navigation.');
                     $check(!preg_match('/\b\d{2}:\d{2}\b|setInterval|setTimeout/', $html), 'Fixture must not simulate a countdown.');

@@ -90,7 +90,7 @@ body { margin: 0; padding: 12px; font-size: 16px; line-height: 1.625; -webkit-fo
   #ather-email-states .es-info.is-warning { background: var(--es-gold-soft); color: var(--es-ink); }
   #ather-email-states .es-info.is-warning .hf-icon { color: var(--es-gold); }
   #ather-email-states .es-info.is-error { background: var(--es-red-soft); color: var(--es-ink); }
-  #ather-email-states .es-info.is-error i { color: var(--es-red); }
+  #ather-email-states .es-info.is-error .hf-icon { color: var(--es-red); }
   #ather-email-states .es-reference { color: var(--es-muted); direction: ltr; font-size: 11px; margin-top: 16px; text-align: center; }
 
 #ather-email-states .es-card-controls { display: flex; align-items: center; gap: 4px; }

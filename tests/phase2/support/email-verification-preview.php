@@ -8,7 +8,7 @@ if (!defined('ATHER_EMAIL_PREVIEW') || ATHER_EMAIL_PREVIEW !== true || !in_array
     http_response_code(404);
     exit;
 }
-if (!isset($verificationFixture) || !in_array($verificationFixture, ['pending', 'verified', 'resent', 'expired'], true)) {
+if (!isset($verificationFixture) || !in_array($verificationFixture, ['pending', 'verified', 'resent', 'expired', 'error', 'disabled'], true)) {
     throw new InvalidArgumentException('Unknown verification fixture.');
 }
 
@@ -23,16 +23,21 @@ $locale = ($_GET['lang'] ?? null) === 'en' ? 'en' : 'ar';
 $isVerifiedFixture = $verificationFixture === 'verified';
 $isExpiredFixture = $verificationFixture === 'expired';
 $isResentFixture = $verificationFixture === 'resent';
+$isErrorFixture = $verificationFixture === 'error';
+$isDisabledFixture = $verificationFixture === 'disabled';
 $stateIcon = match ($verificationFixture) {
     'verified' => 'badge-check',
     'resent' => 'send',
     'expired' => 'clock-alert',
+    'error' => 'circle-alert',
+    'disabled' => 'user-x',
     default => 'mail',
 };
 $infoIcon = match ($verificationFixture) {
     'verified' => 'lock',
     'resent' => 'shield-check',
     'expired' => 'triangle-alert',
+    'error' => 'shield-alert',
     default => 'info',
 };
 header('Content-Type: text/html; charset=utf-8');
@@ -79,11 +84,22 @@ header('X-Robots-Tag: noindex, nofollow');
                             <a class="es-language" href="?lang=<?php echo $locale === 'ar' ? 'en' : 'ar'; ?>" lang="<?php echo $locale === 'ar' ? 'en' : 'ar'; ?>" hreflang="<?php echo $locale === 'ar' ? 'en' : 'ar'; ?>" dir="auto" aria-label="<?php echo signInCopy('language', $locale); ?>"><?php echo $locale === 'ar' ? 'EN' : 'العربية'; ?></a>
                         </div>
                     </div>
-                    <p class="es-preview-note" id="preview-disclosure"><?php echo emailVerificationCopy($isResentFixture || $isExpiredFixture ? 'preview_unchanged' : 'preview', $locale); ?></p>
-                    <div class="es-state-icon<?php echo $isVerifiedFixture || $isResentFixture ? ' is-success' : ''; ?>"><?php echo accountEntryIcon($stateIcon); ?></div>
+                    <p class="es-preview-note" id="preview-disclosure"><?php echo emailVerificationCopy($isResentFixture || $isExpiredFixture || $isErrorFixture || $isDisabledFixture ? 'preview_unchanged' : 'preview', $locale); ?></p>
+                    <div class="es-state-icon<?php echo $isVerifiedFixture || $isResentFixture ? ' is-success' : ($isErrorFixture || $isDisabledFixture ? ' is-error' : ''); ?>"><?php echo accountEntryIcon($stateIcon); ?></div>
                     <h1 id="verification-heading"><?php echo emailVerificationCopy($verificationFixture . '_heading', $locale); ?></h1>
                     <p class="es-subtitle"><?php echo emailVerificationCopy($verificationFixture . '_copy', $locale); ?></p>
-                    <?php if ($isExpiredFixture): ?>
+                    <?php if ($isErrorFixture || $isDisabledFixture): ?>
+                    <div class="es-actions">
+                        <button class="es-button is-primary" type="button" disabled aria-describedby="verification-unavailable"><?php echo accountEntryIcon($isErrorFixture ? 'rotate-ccw' : 'message-circle'); ?><?php echo emailVerificationCopy($isErrorFixture ? 'retry' : 'request_review', $locale); ?></button>
+                        <?php if ($isDisabledFixture): ?>
+                        <button class="es-button" type="button" disabled aria-describedby="verification-unavailable"><?php echo emailVerificationCopy('signout', $locale); ?></button>
+                        <a class="es-text-action" href="signin.php?lang=<?php echo $locale; ?>"><?php echo emailVerificationCopy('signin', $locale); ?></a>
+                        <?php else: ?>
+                        <a class="es-button" href="signin.php?lang=<?php echo $locale; ?>"><?php echo emailVerificationCopy('signin', $locale); ?></a>
+                        <?php endif; ?>
+                    </div>
+                    <p class="es-method-note" id="verification-unavailable"><?php echo emailVerificationCopy($verificationFixture . '_unavailable', $locale); ?></p>
+                    <?php elseif ($isExpiredFixture): ?>
                     <div class="es-actions">
                         <button class="es-button is-primary" type="button" disabled aria-describedby="verification-unavailable"><?php echo accountEntryIcon('send'); ?><?php echo emailVerificationCopy('new_link', $locale); ?></button>
                         <a class="es-button" href="signin.php?lang=<?php echo $locale; ?>"><?php echo emailVerificationCopy('signin', $locale); ?></a>
@@ -103,7 +119,10 @@ header('X-Robots-Tag: noindex, nofollow');
                     </div>
                     <p class="es-method-note" id="verification-unavailable"><?php echo emailVerificationCopy('onboarding_unavailable', $locale); ?></p>
                     <?php endif; ?>
-                    <div class="es-info<?php echo $isExpiredFixture ? ' is-warning' : ''; ?>"><?php echo accountEntryIcon($infoIcon); ?><span><?php echo emailVerificationCopy($verificationFixture . '_info', $locale); ?></span></div>
+                    <div class="es-info<?php echo $isExpiredFixture || $isDisabledFixture ? ' is-warning' : ($isErrorFixture ? ' is-error' : ''); ?>"><?php echo accountEntryIcon($infoIcon); ?><span><?php echo emailVerificationCopy($verificationFixture . '_info', $locale); ?></span></div>
+                    <?php if ($isErrorFixture || $isDisabledFixture): ?>
+                    <div class="es-reference"><?php echo emailVerificationCopy('example_reference', $locale); ?> <bdi dir="ltr"><?php echo $isErrorFixture ? 'ATH-VER-8F2K' : 'ATH-ACC-4D7M'; ?></bdi></div>
+                    <?php endif; ?>
                 </article>
             </div>
         </div>
