@@ -37,6 +37,18 @@ function emailVerificationCopy(string $key, string $locale): string
         'new_link' => ['ar' => 'إرسال رابط جديد', 'en' => 'Send a new link'],
         'expired_unavailable' => ['ar' => 'طلب رابط تأكيد جديد غير متاح حاليًا. يمكنك العودة إلى تسجيل الدخول.', 'en' => 'Requesting a new verification link is currently unavailable. You can return to sign in.'],
         'expired_info' => ['ar' => 'لا تشارك رابط التأكيد مع أي شخص؛ يعامَل كرابط أمني مؤقت.', 'en' => 'Do not share a verification link with anyone; treat it as a temporary security link.'],
+        'error_heading' => ['ar' => 'معاينة تعذّر التأكيد', 'en' => 'Verification error preview'],
+        'error_copy' => ['ar' => 'حالة خطأ توضيحية في تأكيد البريد. لم يفشل أي طلب تأكيد حقيقي ولم يتغير أي ملف.', 'en' => 'An illustrative email verification error. No real verification request failed and no portfolio changed.'],
+        'retry' => ['ar' => 'المحاولة مرة أخرى', 'en' => 'Try again'],
+        'error_unavailable' => ['ar' => 'إعادة محاولة التأكيد غير متاحة في هذه المعاينة. يمكنك العودة إلى تسجيل الدخول.', 'en' => 'Retrying verification is unavailable in this preview. You can return to sign in.'],
+        'error_info' => ['ar' => 'في المسار المخطط، شارك رمز المرجع فقط مع الدعم إذا استمرت المشكلة، ولا ترسل رابط التأكيد. الرمز أدناه مثال فقط.', 'en' => 'In the planned flow, share only the reference code with support if the problem persists; never send the verification link. The code below is an example only.'],
+        'disabled_heading' => ['ar' => 'معاينة حساب معطّل', 'en' => 'Disabled account preview'],
+        'disabled_copy' => ['ar' => 'حالة حساب معطّل توضيحية. لم يُعطّل أي حساب حقيقي. في المسار المخطط، يتوقف الوصول إلى لوحة التحكم وتعديل الملفات.', 'en' => 'An illustrative disabled-account state. No real account was disabled. In the planned flow, dashboard access and portfolio editing are unavailable.'],
+        'request_review' => ['ar' => 'طلب مراجعة آمنة', 'en' => 'Request a secure review'],
+        'signout' => ['ar' => 'تسجيل الخروج', 'en' => 'Sign out'],
+        'disabled_unavailable' => ['ar' => 'طلب المراجعة وتسجيل الخروج وتبديل الحساب غير متاحة في هذه المعاينة. رابط العودة يفتح صفحة تسجيل الدخول فقط.', 'en' => 'Review requests, sign-out and account switching are unavailable in this preview. The return link only opens the sign-in page.'],
+        'disabled_info' => ['ar' => 'في المسار المخطط، لا تعرض الصفحة أسباب الإيقاف الداخلية، وتحتاج المراجعة إلى قناة موثقة. لا تُرسل هذه المعاينة أي طلب مراجعة.', 'en' => 'In the planned flow, internal reasons for disabling an account stay private and review requires a trusted channel. This preview sends no review request.'],
+        'example_reference' => ['ar' => 'رمز مرجع توضيحي:', 'en' => 'Example reference:'],
     ];
 
     return htmlspecialchars($catalog[$key][$locale], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
