@@ -10,6 +10,28 @@ if (PHP_SAPI !== 'cli') {
 define('ATHER_RECOVERY_PREVIEW', true);
 $root = dirname(__DIR__);
 $checks = 0;
+$expectedExplanations = [
+    'forgot' => [
+        'ar' => [
+            'notice' => 'إذا كان البريد مرتبطًا بحساب مؤهل للاستعادة، فستصلك تعليمات المتابعة. لن نعرض معلومات عن وجود الحساب.',
+            'footer' => 'معاينة تصميم فقط؛ حقول الاستعادة والإرسال غير مفعّلة.',
+        ],
+        'en' => [
+            'notice' => 'If this email belongs to an account eligible for recovery, you will receive instructions. We will not reveal whether an account exists.',
+            'footer' => 'Design preview only. Recovery fields and sending are inactive.',
+        ],
+    ],
+    'reset' => [
+        'ar' => [
+            'notice' => 'في المسار الفعلي، تُدخل كلمة المرور وتحدّثها عبر صفحة Auth0 الآمنة.',
+            'footer' => 'معاينة تصميم فقط؛ لا تُدخل أو تُحفظ أي كلمة مرور.',
+        ],
+        'en' => [
+            'notice' => 'In the actual flow, password entry and updates take place on the secure Auth0 page.',
+            'footer' => 'Design preview only. No password can be entered or saved.',
+        ],
+    ],
+];
 $check = static function (bool $condition, string $message) use (&$checks): void {
     if (!$condition) {
         throw new RuntimeException($message);
@@ -48,7 +70,10 @@ try {
             $action = $xpath->query('//button[contains(@class, "ap-primary")]')->item(0);
             $check($action instanceof DOMElement && $action->hasAttribute('disabled') && $action->getAttribute('type') === 'button', 'Recovery action must remain inactive.');
             $check($xpath->query('//button[not(contains(@class, "hf-theme")) and not(@disabled)]')->length === 0, 'Unexpected active action.');
-            $check(str_contains($html, recoveryCopy($screen . '_footer', $locale)) && str_contains($html, recoveryCopy($screen . '_notice', $locale)), 'Preview explanation is missing.');
+            $notice = $xpath->query('//div[contains(@class, "ap-safe")]/span')->item(0);
+            $footer = $xpath->query('//p[@id="recovery-footer"]')->item(0);
+            $check($notice instanceof DOMElement && $notice->textContent === $expectedExplanations[$screen][$locale]['notice'], 'Recovery notice copy or locale mismatch.');
+            $check($footer instanceof DOMElement && $footer->textContent === $expectedExplanations[$screen][$locale]['footer'], 'Recovery footer copy or locale mismatch.');
             $check(!str_contains($html, '&lt;br&gt;'), 'Heading line break must render as text layout.');
             $allowedLinks = ['#recovery-card', './?lang=' . $locale, 'signin.php?lang=' . $locale, ($screen === 'reset' ? 'reset' : 'forgot') . '-password.php?lang=' . ($locale === 'ar' ? 'en' : 'ar')];
             foreach ($xpath->query('//a[@href]') as $link) {
