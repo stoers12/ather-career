@@ -1,0 +1,93 @@
+/* Approved recovery composition, using the local Ather font and theme convention. */
+@font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 400; font-display: swap; src: url("assets/fonts/noto-sans-arabic-400.ttf") format("truetype"); }
+@font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 500; font-display: swap; src: url("assets/fonts/noto-sans-arabic-500.ttf") format("truetype"); }
+html { color-scheme: light; background: #f3f7f4; }
+html[data-landing-theme="dark"] { color-scheme: dark; background: #071811; }
+body { margin: 0; padding: 12px; font-size: 16px; line-height: 1.625; -webkit-font-smoothing: antialiased; }
+[hidden] { display: none !important; }
+#ather-recovery-design { width: 100%; font-family: "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif; }
+#ather-recovery-design * { box-sizing: border-box; }
+#ather-recovery-design .hf-icon { width: 18px; height: 18px; flex-shrink: 0; }
+#ather-recovery-design .ap-product {
+    --ap-bg: #f3f7f4; --ap-surface: #ffffff; --ap-soft: #edf4f0; --ap-ink: #10251d;
+    --ap-muted: #586b61; --ap-border: #d3e1d9; --ap-green: #103f30; --ap-on: #ffffff;
+    --ap-deep: #082c20; --ap-gold: #edc665; --ap-gold-ink: #b67b18;
+    --ap-shadow: rgba(20, 61, 46, .12);
+    background: var(--ap-bg); color: var(--ap-ink); border: 1px solid var(--ap-border);
+    border-radius: 22px; display: grid; grid-template-columns: .9fr 1.1fr;
+    width: 100%; max-width: 1050px; margin-inline: auto; overflow: hidden;
+}
+html[data-landing-theme="dark"] #ather-recovery-design .ap-product {
+    --ap-bg: #071811; --ap-surface: #0d261c; --ap-soft: #14352a; --ap-ink: #eef8f2;
+    --ap-muted: #afc4b9; --ap-border: #2c4e3f; --ap-green: #a6d8c0; --ap-on: #092118;
+    --ap-deep: #d7eee2; --ap-gold: #f0cc79; --ap-gold-ink: #9a6b16;
+    --ap-shadow: rgba(0, 0, 0, .32);
+}
+#ather-recovery-design a, #ather-recovery-design button, #ather-recovery-design input { font-family: inherit; }
+#ather-recovery-design .ap-story { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 46px; background: var(--ap-deep); color: var(--ap-on); padding: 36px 32px; overflow: hidden; }
+#ather-recovery-design .ap-story::before { content: ""; position: absolute; width: 330px; height: 330px; border: 1px solid color-mix(in srgb, var(--ap-gold) 48%, transparent); border-radius: 50%; inset-inline-end: -165px; top: -115px; }
+#ather-recovery-design .ap-story::after { content: ""; position: absolute; width: 240px; height: 240px; border-radius: 50%; background: color-mix(in srgb, var(--ap-gold) 10%, transparent); inset-inline-start: -70px; bottom: -95px; }
+#ather-recovery-design .ap-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 500; color: inherit; text-decoration: none; }
+#ather-recovery-design .ap-brand-mark { width: 41px; height: 41px; display: grid; place-items: center; background: var(--ap-gold); color: #14231c; border-radius: 12px; flex-shrink: 0; }
+#ather-recovery-design .ap-story-copy { position: relative; z-index: 1; }
+#ather-recovery-design .ap-kicker { color: var(--ap-gold); font-size: 13px; font-weight: 500; }
+html[data-landing-theme="dark"] #ather-recovery-design .ap-story .ap-kicker { color: #8a5e12; }
+#ather-recovery-design .ap-story h2 { font-size: 35px; font-weight: 500; line-height: 1.5; margin: 12px 0 0; white-space: pre-line; }
+#ather-recovery-design .ap-story p { font-size: 14px; line-height: 1.95; margin: 14px 0 0; }
+#ather-recovery-design .ap-points { display: grid; gap: 12px; margin-top: 26px; }
+#ather-recovery-design .ap-point { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.8; }
+#ather-recovery-design .ap-point .hf-icon { margin-top: 3px; color: var(--ap-gold); }
+#ather-recovery-design .ap-story-footer { position: relative; z-index: 1; font-size: 12px; line-height: 1.8; opacity: .82; }
+#ather-recovery-design .ap-main { display: flex; align-items: center; justify-content: center; min-width: 0; padding: 34px; }
+#ather-recovery-design .ap-card { background: var(--ap-surface); border: 1px solid var(--ap-border); border-radius: 22px; box-shadow: 0 22px 56px var(--ap-shadow); padding: 28px; width: 100%; max-width: 430px; min-width: 0; overflow-wrap: anywhere; }
+#ather-recovery-design .ap-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+#ather-recovery-design .ap-card-mark { display: grid; place-items: center; width: 40px; height: 40px; background: var(--ap-green); color: var(--ap-on); border-radius: 11px; }
+#ather-recovery-design .ap-controls { display: flex; align-items: center; gap: 2px; }
+#ather-recovery-design .ap-control { display: flex; align-items: center; justify-content: center; color: var(--ap-muted); background: transparent; border: 0; min-height: 44px; min-width: 44px; padding: 8px; border-radius: 9px; font-size: 13px; text-decoration: none; cursor: pointer; }
+#ather-recovery-design .ap-control:hover { background: var(--ap-soft); }
+#ather-recovery-design .ap-state-mark { width: 60px; height: 60px; background: var(--ap-soft); color: var(--ap-green); display: grid; place-items: center; border-radius: 17px; margin-top: 28px; }
+#ather-recovery-design .ap-state-mark .hf-icon { width: 26px; height: 26px; }
+#ather-recovery-design .ap-card h1 { font-size: 27px; line-height: 1.5; font-weight: 500; margin: 17px 0 8px; }
+#ather-recovery-design .ap-card h1 { white-space: pre-line; }
+#ather-recovery-design .ap-subtitle { font-size: 14px; line-height: 1.9; color: var(--ap-muted); margin: 0; }
+#ather-recovery-design .ap-fields { display: grid; gap: 18px; margin-top: 26px; }
+#ather-recovery-design .ap-label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+#ather-recovery-design .ap-field { display: flex; align-items: center; gap: 10px; border: 1px solid var(--ap-border); background: var(--ap-surface); border-radius: 12px; min-height: 50px; padding: 0 13px; }
+#ather-recovery-design .ap-field .hf-icon { color: var(--ap-muted); }
+#ather-recovery-design .ap-field input { color: var(--ap-ink); background: transparent; border: 0; min-width: 0; width: 100%; min-height: 48px; font-size: 14px; padding: 8px 0; direction: ltr; text-align: start; }
+#ather-recovery-design .ap-field input::placeholder { color: var(--ap-muted); opacity: .85; }
+#ather-recovery-design .ap-hint { color: var(--ap-muted); font-size: 12px; line-height: 1.8; margin: 8px 0 0; }
+#ather-recovery-design .ap-primary { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; min-height: 49px; padding: 11px 14px; border: 1px solid var(--ap-green); background: var(--ap-green); color: var(--ap-on); border-radius: 12px; font-size: 14px; font-weight: 500; margin-top: 24px; opacity: 1; cursor: not-allowed; }
+#ather-recovery-design .ap-safe { display: flex; align-items: flex-start; gap: 9px; padding: 12px; margin-top: 17px; background: var(--ap-soft); color: var(--ap-muted); border-radius: 12px; font-size: 12px; line-height: 1.85; }
+#ather-recovery-design .ap-safe .hf-icon { color: var(--ap-green); margin-top: 3px; }
+#ather-recovery-design .ap-return { margin: 22px 0 0; text-align: center; }
+#ather-recovery-design .ap-return a { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; color: var(--ap-green); font-size: 13px; text-decoration: underline; padding: 7px 10px; }
+#ather-recovery-design .ap-footer { color: var(--ap-muted); font-size: 11px; line-height: 1.85; margin: 16px 0 0; text-align: center; }
+#ather-recovery-design :focus-visible { outline: 3px solid var(--ap-ink); outline-offset: 3px; }
+#ather-recovery-design .ap-story :focus-visible { outline-color: var(--ap-on); }
+#ather-recovery-design .ap-field:focus-within { outline: 3px solid var(--ap-ink); outline-offset: 3px; }
+#ather-recovery-design .ap-field input:focus-visible { outline: 0; }
+#ather-recovery-design .ap-return a:focus-visible { outline-offset: -2px; }
+.ap-skip { position: fixed; z-index: 10; inset-inline-start: 20px; top: 8px; padding: 12px 18px; background: #103f30; color: #fff; font-family: "Noto Sans Arabic", sans-serif; transform: translateY(-200%); }
+.ap-skip:focus { transform: none; outline: 3px solid #edc665; outline-offset: 2px; }
+html[dir="ltr"] #ather-recovery-design .ap-return .hf-icon { transform: rotate(180deg); }
+@media (max-width: 760px) {
+    body { padding: 0; }
+    #ather-recovery-design .ap-product { grid-template-columns: 1fr; border-radius: 0; }
+    #ather-recovery-design .ap-story { padding: 22px 24px; gap: 22px; }
+    #ather-recovery-design .ap-story h2 { font-size: 25px; line-height: 1.6; }
+    #ather-recovery-design .ap-story p { margin-top: 8px; font-size: 13px; }
+    #ather-recovery-design .ap-points, #ather-recovery-design .ap-story-footer, #ather-recovery-design .ap-kicker { display: none; }
+    #ather-recovery-design .ap-main { padding: 22px; }
+}
+@media (max-width: 430px) {
+    #ather-recovery-design .ap-story { padding: 20px; }
+    #ather-recovery-design .ap-story-copy { display: none; }
+    #ather-recovery-design .ap-main { padding: 16px 12px 22px; }
+    #ather-recovery-design .ap-card { padding: 21px 18px; border-radius: 18px; }
+    #ather-recovery-design .ap-card h1 { font-size: 24px; }
+    #ather-recovery-design .ap-state-mark { margin-top: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #ather-recovery-design *, .ap-skip { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
