@@ -31,6 +31,7 @@ html[data-landing-theme="dark"] #ather-recovery-design .ap-product {
 #ather-recovery-design .ap-brand-mark { width: 41px; height: 41px; display: grid; place-items: center; background: var(--ap-gold); color: #14231c; border-radius: 12px; flex-shrink: 0; }
 #ather-recovery-design .ap-story-copy { position: relative; z-index: 1; }
 #ather-recovery-design .ap-kicker { color: var(--ap-gold); font-size: 13px; font-weight: 500; }
+html[data-landing-theme="dark"] #ather-recovery-design .ap-story .ap-kicker { color: #8a5e12; }
 #ather-recovery-design .ap-story h2 { font-size: 35px; font-weight: 500; line-height: 1.5; margin: 12px 0 0; white-space: pre-line; }
 #ather-recovery-design .ap-story p { font-size: 14px; line-height: 1.95; margin: 14px 0 0; }
 #ather-recovery-design .ap-points { display: grid; gap: 12px; margin-top: 26px; }
