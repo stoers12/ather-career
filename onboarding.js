@@ -9,15 +9,20 @@
     var steps = root.querySelectorAll('[data-step-jump]');
     var back = root.querySelector('[data-back]');
     var next = root.querySelector('[data-next]');
-    var nextUnavailable = root.querySelector('[data-next-unavailable]');
-    var nextNote = root.querySelector('[data-next-note]');
+    var create = root.querySelector('[data-create]');
     var languageSwitch = root.querySelector('[data-language-switch]');
     var languageStatus = root.querySelector('[data-language-status]');
     var previewToggle = root.querySelector('[data-preview-toggle]');
     var previewColumn = root.querySelector('[data-preview-column]');
     var nameInput = root.querySelector('[data-profile-name]');
     var countrySelect = root.querySelector('[data-country]');
-    var currentStep = Number(root.dataset.initialStep) === 2 ? 2 : 1;
+    var statusSelect = root.querySelector('[data-career-status]');
+    var fieldInput = root.querySelector('[data-field]');
+    var headlineInput = root.querySelector('[data-headline]');
+    var slugInput = root.querySelector('[data-slug]');
+    var showEmail = root.querySelector('[data-show-email]');
+    var showPhone = root.querySelector('[data-show-phone]');
+    var currentStep = Math.min(5, Math.max(1, Number(root.dataset.initialStep) || 1));
     var switchingLanguage = false;
     var languageTimeoutMs = 5000;
 
@@ -65,6 +70,8 @@
         });
         var attributes = ['aria-label', 'title', 'placeholder', 'data-title', 'data-position',
             'data-open-label', 'data-close-label', 'data-preview-name', 'data-preview-country',
+            'data-preview-status', 'data-preview-field', 'data-preview-headline', 'data-not-entered',
+            'data-review-email-on', 'data-review-email-off', 'data-review-phone-on', 'data-review-phone-off',
             'data-error-message', 'lang', 'hreflang', 'href'];
         pairs.forEach(function (pair) {
             pair.currentText.forEach(function (node, index) { node.data = pair.translatedText[index].data; });
@@ -83,10 +90,11 @@
     }
 
     function showStep(step, moveFocus) {
-        var selected = step === 2 ? 2 : 1;
+        var selected = Math.min(5, Math.max(1, step));
         currentStep = selected;
-        root.classList.toggle('is-step-2', selected === 2);
-        root.classList.toggle('is-step-1', selected === 1);
+        for (var number = 1; number <= 5; number += 1) {
+            root.classList.toggle('is-step-' + number, selected === number);
+        }
         panels.forEach(function (panel) {
             panel.hidden = Number(panel.dataset.stepPanel) !== selected;
         });
@@ -105,9 +113,10 @@
             }
         });
         back.hidden = selected === 1;
-        next.hidden = selected === 2;
-        nextUnavailable.hidden = selected === 1;
-        nextNote.hidden = selected === 1;
+        back.href = '?lang=' + locale + '&step=' + Math.max(1, selected - 1);
+        next.hidden = selected === 5;
+        next.href = '?lang=' + locale + '&step=' + Math.min(5, selected + 1);
+        create.hidden = selected !== 5;
         languageSwitch.href = '?lang=' + (locale === 'ar' ? 'en' : 'ar') + '&step=' + selected;
         window.history.replaceState(null, '', '?lang=' + locale + '&step=' + selected);
         if (moveFocus) root.querySelector('#step-' + selected + '-heading').focus();
@@ -116,15 +125,31 @@
     function updatePreview() {
         var name = nameInput.value.trim();
         var chosenCountry = countrySelect.value ? countrySelect.options[countrySelect.selectedIndex].textContent : '';
+        var chosenStatus = statusSelect.value ? statusSelect.options[statusSelect.selectedIndex].textContent : '';
+        var field = fieldInput.value.trim();
+        var headline = headlineInput.value.trim();
+        var slug = slugInput.value.trim();
+        var selectedLanguage = root.querySelector('input[name="preview_preferred_language"]:checked');
+        var profileLanguage = selectedLanguage ? selectedLanguage.parentElement.textContent.trim() : '';
         root.querySelector('[data-preview-name]').textContent = name || root.dataset.previewName;
         root.querySelector('[data-preview-initials]').textContent = name ? Array.from(name)[0] : 'أ';
         root.querySelector('[data-preview-country]').textContent = chosenCountry || root.dataset.previewCountry;
+        root.querySelector('[data-preview-status]').textContent = chosenStatus || root.dataset.previewStatus;
+        root.querySelector('[data-preview-field]').textContent = field || root.dataset.previewField;
+        root.querySelector('[data-preview-headline]').textContent = headline || root.dataset.previewHeadline;
+        root.querySelector('[data-review-identity]').textContent = [name, chosenCountry, profileLanguage].map(function (value) { return value || root.dataset.notEntered; }).join(' · ');
+        root.querySelector('[data-review-profession]').textContent = [chosenStatus, field, headline].map(function (value) { return value || root.dataset.notEntered; }).join(' · ');
+        root.querySelector('[data-review-slug]').textContent = slug ? 'ather.app/' + slug : root.dataset.notEntered;
+        root.querySelector('[data-review-privacy]').textContent = [showEmail.checked ? root.dataset.reviewEmailOn : root.dataset.reviewEmailOff,
+            showPhone.checked ? root.dataset.reviewPhoneOn : root.dataset.reviewPhoneOff].join(' · ');
     }
 
-    root.querySelectorAll('[data-step-jump], [data-back], [data-next]').forEach(function (link) {
+    root.querySelectorAll('[data-step-jump], [data-back], [data-next], [data-edit-step]').forEach(function (link) {
         link.addEventListener('click', function (event) {
             event.preventDefault();
-            showStep(Number(link.dataset.stepJump || (link.hasAttribute('data-back') ? 1 : 2)), true);
+            var destination = Number(link.dataset.stepJump || link.dataset.editStep ||
+                (link.hasAttribute('data-back') ? currentStep - 1 : currentStep + 1));
+            showStep(destination, true);
         });
     });
     languageSwitch.addEventListener('click', function (event) {
@@ -144,8 +169,11 @@
             languageStatus.hidden = false;
         }).finally(function () { switchingLanguage = false; });
     });
-    nameInput.addEventListener('input', updatePreview);
-    countrySelect.addEventListener('change', updatePreview);
+    [nameInput, fieldInput, headlineInput, slugInput].forEach(function (input) { input.addEventListener('input', updatePreview); });
+    [countrySelect, statusSelect, showEmail, showPhone].forEach(function (input) { input.addEventListener('change', updatePreview); });
+    root.querySelectorAll('input[name="preview_preferred_language"]').forEach(function (input) {
+        input.addEventListener('change', updatePreview);
+    });
     previewToggle.addEventListener('click', function () {
         var open = previewColumn.classList.toggle('is-open');
         previewToggle.setAttribute('aria-expanded', String(open));
@@ -153,4 +181,5 @@
     });
 
     showStep(currentStep, false);
+    updatePreview();
 }());
