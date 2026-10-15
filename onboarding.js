@@ -23,6 +23,7 @@
     var showEmail = root.querySelector('[data-show-email]');
     var showPhone = root.querySelector('[data-show-phone]');
     var currentStep = Math.min(5, Math.max(1, Number(root.dataset.initialStep) || 1));
+    var returningFromEdit = false;
     var switchingLanguage = false;
     var languageTimeoutMs = 5000;
 
@@ -147,8 +148,19 @@
     root.querySelectorAll('[data-step-jump], [data-back], [data-next], [data-edit-step]').forEach(function (link) {
         link.addEventListener('click', function (event) {
             event.preventDefault();
-            var destination = Number(link.dataset.stepJump || link.dataset.editStep ||
-                (link.hasAttribute('data-back') ? currentStep - 1 : currentStep + 1));
+            // A second pointer activation of the same Continue control must not consume another step.
+            if (link === next && event.detail > 1) return;
+            var destination;
+            if (link.hasAttribute('data-edit-step')) {
+                returningFromEdit = true;
+                destination = Number(link.dataset.editStep);
+            } else if (link === next) {
+                destination = returningFromEdit ? 5 : currentStep + 1;
+                returningFromEdit = false;
+            } else {
+                returningFromEdit = false;
+                destination = link === back ? currentStep - 1 : Number(link.dataset.stepJump);
+            }
             showStep(destination, true);
         });
     });

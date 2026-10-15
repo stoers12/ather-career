@@ -101,6 +101,9 @@ html[dir="ltr"] #ather-onboarding-preview .ao-controls { margin: -12px 0 15px -1
 #ather-onboarding-preview .ao-note { padding: 14px 15px; border-inline-start: 4px solid var(--ao-gold); border-radius: 10px; background: var(--ao-gold-soft); color: var(--ao-text); font-size: 13px; }
 #ather-onboarding-preview .ao-field { display: grid; gap: 7px; min-width: 0; }
 #ather-onboarding-preview .ao-field-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 15px; }
+#ather-onboarding-preview [data-step-panel="3"] .ao-field-row { align-items: start; }
+#ather-onboarding-preview [data-step-panel="3"] .ao-field-row .ao-input,
+#ather-onboarding-preview [data-step-panel="3"] .ao-field-row .ao-select { height: 60px; }
 #ather-onboarding-preview .ao-label { color: var(--ao-text); font-size: 14px; font-weight: 500; }
 #ather-onboarding-preview .ao-label-note { color: var(--ao-muted); font-size: 12px; }
 #ather-onboarding-preview .ao-required { color: var(--ao-muted); font-size: 11px; font-weight: 400; }
