@@ -74,7 +74,11 @@ try {
             $check($xpath->query('//a[@data-step-jump]')->length === 5, 'All five steps must navigate.');
             foreach ($copy['steps'] as $index => $label) {
                 $check($node('(//nav[contains(@class,"ao-progress-steps")]/*)[' . ($index + 1) . ']')?->textContent === $label, 'Step label or locale mismatch.');
+                $check($node('//a[@data-step-jump="' . ($index + 1) . '"]')?->attributes?->getNamedItem('href')?->nodeValue === '?lang=' . $locale . '&step=' . ($index + 1), 'Step jump destination mismatch.');
             }
+            $check($node('//a[@data-back]')?->attributes?->getNamedItem('href')?->nodeValue === '?lang=' . $locale . '&step=' . max(1, $step - 1), 'Back destination mismatch.');
+            $check($node('//a[@data-next]')?->attributes?->getNamedItem('href')?->nodeValue === '?lang=' . $locale . '&step=' . min(5, $step + 1), 'Continue destination mismatch.');
+            $check($node('//a[@data-language-switch]')?->attributes?->getNamedItem('href')?->nodeValue === '?lang=' . ($locale === 'ar' ? 'en' : 'ar') . '&step=' . $step, 'Language switch destination mismatch.');
             $check($node('//section[@data-step-panel="' . $step . '"]/h1')?->textContent === $copy['headings'][$step - 1], 'Active heading or locale mismatch.');
             $check($node('//section[@data-step-panel="1"]/p[contains(@class,"ao-lead")]')?->textContent === $copy['readiness'], 'Account-readiness subtitle mismatch.');
             $check($node('//section[@data-step-panel="2"]//div[contains(@class,"ao-note")]')?->textContent === $copy['phone'], 'Private phone disclosure mismatch.');
@@ -94,9 +98,11 @@ try {
             $check($xpath->query('//input[@type="radio" and @checked]')->length === 0, 'Preferred profile language must start unselected.');
             $check($xpath->query('//button[contains(@class,"ao-header-action") and @disabled] | //button[contains(@class,"ao-save-exit") and @disabled]')->length === 2, 'Save actions must be inactive.');
             $check($xpath->query('//select[@data-career-status]/option[@value="student" or @value="graduate" or @value="early" or @value="experienced" or @value="independent"]')->length === 5, 'Approved status examples missing.');
+            $selectedStatus = $node('(//select[@data-career-status]/option[@selected])[last()]') ?? $node('(//select[@data-career-status]/option)[1]');
+            $check($selectedStatus?->attributes?->getNamedItem('value')?->nodeValue === '', 'Professional status must start empty.');
             $check($xpath->query('//input[@data-field or @data-headline or @data-slug][@value or @name or @maxlength or @pattern]')->length === 0, 'New presentation fields must start empty without final validation rules.');
             $check($xpath->query('//button[@data-edit-step]')->length === 4, 'Review edit controls missing.');
-            $check($xpath->query('//a[@data-next]')->length === 1 && $xpath->query('//button[@data-create and @disabled]')->length === 1, 'Creation must remain disabled.');
+            $check($xpath->query('//a[@data-next]')->length === 1 && $xpath->query('//*[@data-create]')->length === 1 && $xpath->query('//button[@data-create and @disabled]')->length === 1, 'Exactly one disabled Create button is required.');
             $check($node('//section[@data-step-panel="4"]//small[contains(@class,"ao-label-note")]')?->textContent === $copy['slug'], 'Slug limitation mismatch.');
             $check($node('//section[@data-step-panel="5"]//div[contains(@class,"ao-create-note")]')?->textContent === $copy['create'], 'Creation limitation mismatch.');
             foreach ($xpath->query('//a[@href]') as $link) {

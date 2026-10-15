@@ -24,6 +24,7 @@
     var showPhone = root.querySelector('[data-show-phone]');
     var currentStep = Math.min(5, Math.max(1, Number(root.dataset.initialStep) || 1));
     var returningFromEdit = false;
+    var lastContinuePointerAt = -Infinity;
     var switchingLanguage = false;
     var languageTimeoutMs = 5000;
 
@@ -148,8 +149,13 @@
     root.querySelectorAll('[data-step-jump], [data-back], [data-next], [data-edit-step]').forEach(function (link) {
         link.addEventListener('click', function (event) {
             event.preventDefault();
-            // A second pointer activation of the same Continue control must not consume another step.
-            if (link === next && event.detail > 1) return;
+            if (link === next && event.detail > 0) {
+                // Suppress a rapid second pointer activation even when both clicks report detail 1.
+                if (event.detail > 1 || event.timeStamp - lastContinuePointerAt < 500) return;
+                lastContinuePointerAt = event.timeStamp;
+            } else {
+                lastContinuePointerAt = -Infinity;
+            }
             var destination;
             if (link.hasAttribute('data-edit-step')) {
                 returningFromEdit = true;
