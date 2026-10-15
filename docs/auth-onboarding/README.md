@@ -4,6 +4,8 @@
 
 **Focused local correction (2026-10-15):** Repeated pointer activation of Continue no longer consumes a second step. Review Edit returns through Continue to the review panel; a top-step jump or Back clears that return. Step-3 desktop status/specialization labels and controls align, with natural mobile stacking. Presentation-only limits and pending owner review remain.
 
+**Step-2 visual follow-up (2026-10-15):** The owner reports that the earlier navigation and step-3 corrections work as expected. The country select and adjacent preferred-language cards now share a 60px control height in the Public identity preview; owner visual acceptance of this separate alignment correction is pending.
+
 **Current status (2026-10-06):** Phase 2A is merged, deployed, and accepted after two intentional signed Owner callbacks. Canonical main is `e1cd58d41d9996d3a97df425e9fd098d98258fbb`; Migration 014 and five exact bindings remain. Phase 2B account selection is being developed only in an isolated branch; see [its scoped contract](11-PHASE2B-ACCOUNT-SELECTION.md). No Phase 2B runtime or Auth0 change is authorized. The older phase records below retain their historical dates.
 
 Ather is a broader professional platform, initially focused on students and graduates in Jordan. It preserves the story, decisions, role, evidence, lessons and impact behind work. The established green-and-gold identity carries into later design work. AI recommendations and recruiter/company accounts are future capabilities.
