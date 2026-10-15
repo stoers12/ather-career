@@ -1,5 +1,7 @@
 # Ather authentication and onboarding project record
 
+**Isolated presentation update (2026-10-15):** Branch `feat/onboarding-steps1-2-20261015` previews only Account readiness and Public identity with a shared shell. It is outside production routes and neither records consent nor saves a draft or creates a portfolio. The verified Main baseline is `0f62c36615caa03bcac1503740ca92f2fcf3a5f4`; this local batch is unmerged and undeployed. Owner review is pending. The full five-step and functional gates below remain open.
+
 **Current status (2026-10-06):** Phase 2A is merged, deployed, and accepted after two intentional signed Owner callbacks. Canonical main is `e1cd58d41d9996d3a97df425e9fd098d98258fbb`; Migration 014 and five exact bindings remain. Phase 2B account selection is being developed only in an isolated branch; see [its scoped contract](11-PHASE2B-ACCOUNT-SELECTION.md). No Phase 2B runtime or Auth0 change is authorized. The older phase records below retain their historical dates.
 
 Ather is a broader professional platform, initially focused on students and graduates in Jordan. It preserves the story, decisions, role, evidence, lessons and impact behind work. The established green-and-gold identity carries into later design work. AI recommendations and recruiter/company accounts are future capabilities.

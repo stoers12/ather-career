@@ -1,5 +1,7 @@
 # 07 — Test and acceptance matrix
 
+**2026-10-15 presentation subset:** The isolated steps 1–2 preview passed focused content/boundary checks and 24 rendered Arabic/English × light/dark × desktop/320px/390px states. This is evidence for only the first two visual sections; ONBOARD-UI-001, draft, consent, private authenticated preview and completion gates remain blockers until their full scoped implementations are tested. The fixture is excluded from production routes.
+
 **2026-10-05 status update:** Phase 2A locally characterizes the existing callback and exercises exact identity binding, denial, session rotation and foreign-Portfolio isolation in a disposable 001–014 database; see [10](10-PHASE2A-CALLBACK-RESOLUTION.md). The existing Phase 2 suite, disposable production smoke and isolated 014 fresh/upgraded rehearsals passed. Historical Phase 1 evidence below remains scoped to its date. No live Auth0/provider acceptance is claimed.
 
 **Status:** requirements with scoped Phase 1 evidence below, not a blanket pass. Stable IDs must not be reused for different behavior. “Blocker” means the row must pass before the listed phase can be accepted or before public beta where the phase is 7. Existing tests in tests/phase2 include OIDC static/session contract, tenant authorization, ownership migration, public lifecycle and Evidence checks; these characterize parts of current behavior but do not satisfy new gates. Use synthetic fixtures and redact result artifacts.
