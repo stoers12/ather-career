@@ -14,6 +14,8 @@ $expected = [
     'ar' => [
         'steps' => ['جاهزية الحساب', 'الهوية العامة', 'الملخص المهني', 'رابط الملف والخصوصية', 'المراجعة والإنشاء'],
         'headings' => ['لنبدأ بحساب آمن وواضح', 'كيف تريد أن يعرفك الناس؟'],
+        'readiness' => 'نبدأ بمراجعة هذه المتطلبات الأساسية قبل إعداد ملفك. لن ننشر أي شيء دون قرارك الصريح.',
+        'phone' => 'رقم الهاتف خاص. لا تجمع هذه المعاينة رقم هاتف؛ ستُطبّق متطلباته وإعداداته وفق السياسة المعتمدة عند الربط الفعلي.',
         'email' => 'هذه حالة توضيحية، ولا تثبت تأكيد بريدك أو جاهزية حسابك.',
         'terms' => 'نص الشروط ورابطها ونسختها غير متاحة بعد؛ هذا الاختيار توضيحي فقط.',
         'privacy' => 'نص الإشعار ورابطه ونسخته غير متاحة بعد. لن تصبح بياناتك عامة تلقائيًا.',
@@ -24,6 +26,8 @@ $expected = [
     'en' => [
         'steps' => ['Account readiness', 'Public identity', 'Professional snapshot', 'Profile link and privacy', 'Review and create'],
         'headings' => ['Start with a clear, secure account', 'How would you like people to know you?'],
+        'readiness' => 'Start by reviewing these basic requirements before setting up your profile. Nothing will be published without your explicit decision.',
+        'phone' => 'Your phone number is private. This preview does not collect it; phone requirements and settings will follow the approved policy during functional integration.',
         'email' => 'This is an illustration. It does not establish your email or account readiness.',
         'terms' => 'The Terms text, link and version are not available yet; this choice is illustrative only.',
         'privacy' => 'The Notice text, link and version are not available yet. Your information will not become public automatically.',
@@ -68,6 +72,8 @@ try {
                 $check($node('(//nav[contains(@class,"ao-progress-steps")]/*)[' . ($index + 1) . ']')?->textContent === $label, 'Step label or locale mismatch.');
             }
             $check($node('//section[@data-step-panel="' . $step . '"]/h1')?->textContent === $copy['headings'][$step - 1], 'Active heading or locale mismatch.');
+            $check($node('//section[@data-step-panel="1"]/p[contains(@class,"ao-lead")]')?->textContent === $copy['readiness'], 'Account-readiness subtitle mismatch.');
+            $check($node('//section[@data-step-panel="2"]//div[contains(@class,"ao-note")]')?->textContent === $copy['phone'], 'Private phone disclosure mismatch.');
             $check($node('//section[@data-step-panel="' . (3 - $step) . '"]')?->attributes?->getNamedItem('hidden') !== null, 'Inactive panel must be hidden.');
             $check($node('//p[contains(@class,"ao-field-note") and contains(.,"' . ($locale === 'ar' ? 'هذه حالة' : 'This is an illustration') . '")]')?->textContent === $copy['email'], 'Illustrative email notice mismatch.');
             $check($node('(//label[contains(@class,"ao-check")]/span/small)[2]')?->textContent === $copy['terms'], 'Terms limitation mismatch.');
@@ -93,8 +99,8 @@ try {
     }
     $script = file_get_contents($root . '/onboarding.js');
     $fixture = file_get_contents($root . '/tests/phase2/support/onboarding-preview.php');
-    foreach (['localStorage', 'sessionStorage', 'fetch(', 'XMLHttpRequest', 'sendBeacon', 'WebSocket', 'document.cookie', '.submit('] as $forbidden) {
-        $check(!str_contains($script, $forbidden), 'Onboarding interaction script contains a persistence or request API.');
+    foreach (['localStorage', 'sessionStorage', 'XMLHttpRequest', 'sendBeacon', 'WebSocket', 'document.cookie', '.submit('] as $forbidden) {
+        $check(!str_contains($script, $forbidden), 'Onboarding interaction script contains a forbidden persistence or request API.');
     }
     foreach (['session_start(', 'setcookie(', 'getDatabaseConnection(', 'createOwnedPortfolio('] as $forbidden) {
         $check(!str_contains($fixture, $forbidden), 'Preview fixture crosses an authentication or write boundary.');

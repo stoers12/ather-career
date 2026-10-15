@@ -25,7 +25,7 @@ header('Content-Type: text/html; charset=utf-8');
 header('Content-Language: ' . $locale);
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
-header("Content-Security-Policy: default-src 'none'; style-src 'self'; script-src 'self'; font-src 'self'");
+header("Content-Security-Policy: default-src 'none'; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'self'");
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $locale; ?>" dir="<?php echo $locale === 'ar' ? 'rtl' : 'ltr'; ?>">
@@ -79,6 +79,7 @@ header("Content-Security-Policy: default-src 'none'; style-src 'self'; script-sr
                         <a class="ao-language" data-language-switch href="?lang=<?php echo $oppositeLocale; ?>&amp;step=<?php echo $step; ?>" lang="<?php echo $oppositeLocale; ?>" hreflang="<?php echo $oppositeLocale; ?>" aria-label="<?php echo onboardingCopy('interface_language', $locale); ?>: <?php echo onboardingCopy('switch_language', $locale); ?>"><?php echo onboardingCopy('switch_language', $locale); ?></a>
                         <button class="ao-theme hf-theme" type="button" hidden aria-label="<?php echo onboardingCopy('theme', $locale); ?>" aria-pressed="false">◐</button>
                     </div>
+                    <p class="ao-field-note" data-language-status data-error-message="<?php echo onboardingCopy('language_unavailable', $locale); ?>" role="status" hidden></p>
                     <button class="ao-secondary ao-preview-toggle" type="button" data-preview-toggle aria-expanded="false"
                             data-open-label="<?php echo onboardingCopy('preview_toggle_open', $locale); ?>"
                             data-close-label="<?php echo onboardingCopy('preview_toggle_close', $locale); ?>"><?php echo onboardingCopy('preview_toggle_open', $locale); ?></button>
