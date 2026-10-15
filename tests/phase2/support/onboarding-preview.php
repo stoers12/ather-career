@@ -14,12 +14,13 @@ require_once dirname(__DIR__, 3) . '/includes/onboarding_copy.php';
 
 httpRequireMethod(['GET', 'HEAD']);
 $locale = ($_GET['lang'] ?? null) === 'en' ? 'en' : 'ar';
-$step = ($_GET['step'] ?? null) === '2' ? 2 : 1;
+$step = in_array($_GET['step'] ?? null, ['1', '2', '3', '4', '5'], true) ? (int) $_GET['step'] : 1;
 $oppositeLocale = $locale === 'ar' ? 'en' : 'ar';
 $stepName = onboardingCopy('step_' . $step, $locale);
 $stepTitle = sprintf(onboardingCopy('step_of', $locale), $step, $stepName);
 $position = sprintf(onboardingCopy('position', $locale), $step);
 $countries = ['JO' => 'country_jo', 'PS' => 'country_ps', 'SA' => 'country_sa', 'AE' => 'country_ae', 'EG' => 'country_eg'];
+$statuses = ['student' => 'status_student', 'graduate' => 'status_graduate', 'early' => 'status_early', 'experienced' => 'status_experienced', 'independent' => 'status_independent'];
 
 header('Content-Type: text/html; charset=utf-8');
 header('Content-Language: ' . $locale);
@@ -43,7 +44,15 @@ header("Content-Security-Policy: default-src 'none'; style-src 'self'; script-sr
 <a class="ao-skip" href="#onboarding-card"><?php echo onboardingCopy('skip', $locale); ?></a>
 <div id="ather-onboarding-preview" class="is-step-<?php echo $step; ?>" data-initial-step="<?php echo $step; ?>"
      data-preview-name="<?php echo onboardingCopy('preview_name', $locale); ?>"
-     data-preview-country="<?php echo onboardingCopy('preview_country', $locale); ?>">
+     data-preview-country="<?php echo onboardingCopy('preview_country', $locale); ?>"
+     data-preview-status="<?php echo onboardingCopy('preview_status', $locale); ?>"
+     data-preview-field="<?php echo onboardingCopy('preview_field', $locale); ?>"
+     data-preview-headline="<?php echo onboardingCopy('preview_headline_later', $locale); ?>"
+     data-not-entered="<?php echo onboardingCopy('not_entered', $locale); ?>"
+     data-review-email-on="<?php echo onboardingCopy('review_email_on', $locale); ?>"
+     data-review-email-off="<?php echo onboardingCopy('review_email_off', $locale); ?>"
+     data-review-phone-on="<?php echo onboardingCopy('review_phone_on', $locale); ?>"
+     data-review-phone-off="<?php echo onboardingCopy('review_phone_off', $locale); ?>">
     <div class="ao-stage">
         <main class="ao-product-frame">
             <header class="ao-topbar">
@@ -62,13 +71,10 @@ header("Content-Security-Policy: default-src 'none'; style-src 'self'; script-sr
                 </div>
                 <div class="ao-progress-track" aria-hidden="true"><div class="ao-progress-fill" data-progress-fill></div></div>
                 <nav class="ao-progress-steps" aria-label="<?php echo $stepTitle; ?>">
-                    <?php foreach ([1, 2] as $availableStep): ?>
+                    <?php foreach ([1, 2, 3, 4, 5] as $availableStep): ?>
                     <a class="ao-step-jump<?php echo $availableStep === $step ? ' is-current' : ''; ?>" href="?lang=<?php echo $locale; ?>&amp;step=<?php echo $availableStep; ?>" data-step-jump="<?php echo $availableStep; ?>"
                        data-title="<?php echo sprintf(onboardingCopy('step_of', $locale), $availableStep, onboardingCopy('step_' . $availableStep, $locale)); ?>"
                        data-position="<?php echo sprintf(onboardingCopy('position', $locale), $availableStep); ?>"<?php echo $availableStep === $step ? ' aria-current="step"' : ''; ?>><?php echo onboardingCopy('step_' . $availableStep, $locale); ?></a>
-                    <?php endforeach; ?>
-                    <?php foreach ([3, 4, 5] as $futureStep): ?>
-                    <span class="ao-step-future" aria-disabled="true" title="<?php echo onboardingCopy('future_step', $locale); ?>"><?php echo onboardingCopy('step_' . $futureStep, $locale); ?></span>
                     <?php endforeach; ?>
                 </nav>
             </section>
@@ -121,15 +127,56 @@ header("Content-Security-Policy: default-src 'none'; style-src 'self'; script-sr
                         </div>
                     </section>
 
+                    <section class="ao-panel" data-step-panel="3"<?php echo $step === 3 ? '' : ' hidden'; ?> aria-labelledby="step-3-heading">
+                        <p class="ao-eyebrow"><?php echo onboardingCopy('step_3_eyebrow', $locale); ?></p>
+                        <h1 class="ao-heading" id="step-3-heading" tabindex="-1"><?php echo onboardingCopy('step_3_heading', $locale); ?></h1>
+                        <p class="ao-lead"><?php echo onboardingCopy('step_3_lead', $locale); ?></p>
+                        <div class="ao-fields">
+                            <p class="ao-field-note"><?php echo onboardingCopy('required_note', $locale); ?></p>
+                            <div class="ao-field-row">
+                                <label class="ao-field"><span class="ao-label"><?php echo onboardingCopy('career_status', $locale); ?></span><small class="ao-required"><?php echo onboardingCopy('required_mark', $locale); ?></small><select class="ao-select" data-career-status><option value=""><?php echo onboardingCopy('status_placeholder', $locale); ?></option><?php foreach ($statuses as $statusValue => $copyKey): ?><option value="<?php echo $statusValue; ?>"><?php echo onboardingCopy($copyKey, $locale); ?></option><?php endforeach; ?></select><small class="ao-label-note"><?php echo onboardingCopy('status_limit', $locale); ?></small></label>
+                                <label class="ao-field"><span class="ao-label"><?php echo onboardingCopy('specialization', $locale); ?></span><small class="ao-required"><?php echo onboardingCopy('required_mark', $locale); ?></small><input class="ao-input" type="text" data-field autocomplete="off" dir="auto"></label>
+                            </div>
+                            <label class="ao-field"><span class="ao-label"><?php echo onboardingCopy('headline', $locale); ?> <small class="ao-required"><?php echo onboardingCopy('required_mark', $locale); ?></small></span><input class="ao-input" type="text" data-headline autocomplete="off" dir="auto"><small class="ao-label-note"><?php echo onboardingCopy('headline_hint', $locale); ?></small></label>
+                            <div class="ao-note"><?php echo onboardingCopy('projects_later', $locale); ?></div>
+                        </div>
+                    </section>
+
+                    <section class="ao-panel" data-step-panel="4"<?php echo $step === 4 ? '' : ' hidden'; ?> aria-labelledby="step-4-heading">
+                        <p class="ao-eyebrow"><?php echo onboardingCopy('step_4_eyebrow', $locale); ?></p>
+                        <h1 class="ao-heading" id="step-4-heading" tabindex="-1"><?php echo onboardingCopy('step_4_heading', $locale); ?></h1>
+                        <p class="ao-lead"><?php echo onboardingCopy('step_4_lead', $locale); ?></p>
+                        <div class="ao-fields">
+                            <label class="ao-field"><span class="ao-label"><?php echo onboardingCopy('profile_link', $locale); ?> <small class="ao-required"><?php echo onboardingCopy('required_mark', $locale); ?></small></span><span class="ao-input-prefix"><span dir="ltr">ather.app/</span><input class="ao-input" type="text" data-slug autocomplete="off" dir="ltr"></span><small class="ao-label-note"><?php echo onboardingCopy('slug_hint', $locale); ?></small></label>
+                            <div class="ao-visibility-options">
+                                <label class="ao-toggle-row"><span class="ao-toggle-copy"><strong><?php echo onboardingCopy('show_email', $locale); ?></strong><small><?php echo onboardingCopy('email_visibility_hint', $locale); ?></small></span><span class="ao-switch"><input type="checkbox" data-show-email autocomplete="off"><span aria-hidden="true"></span></span></label>
+                                <label class="ao-toggle-row"><span class="ao-toggle-copy"><strong><?php echo onboardingCopy('show_phone', $locale); ?></strong><small><?php echo onboardingCopy('phone_visibility_hint', $locale); ?></small></span><span class="ao-switch"><input type="checkbox" data-show-phone autocomplete="off"><span aria-hidden="true"></span></span></label>
+                            </div>
+                            <div class="ao-note"><?php echo onboardingCopy('privacy_note', $locale); ?></div>
+                        </div>
+                    </section>
+
+                    <section class="ao-panel" data-step-panel="5"<?php echo $step === 5 ? '' : ' hidden'; ?> aria-labelledby="step-5-heading">
+                        <p class="ao-eyebrow"><?php echo onboardingCopy('step_5_eyebrow', $locale); ?></p>
+                        <h1 class="ao-heading" id="step-5-heading" tabindex="-1"><?php echo onboardingCopy('step_5_heading', $locale); ?></h1>
+                        <p class="ao-lead"><?php echo onboardingCopy('step_5_lead', $locale); ?></p>
+                        <div class="ao-review-list">
+                            <div class="ao-review-item"><div><small><?php echo onboardingCopy('review_identity', $locale); ?></small><strong data-review-identity><?php echo onboardingCopy('not_entered', $locale); ?></strong></div><button class="ao-edit-link" type="button" data-edit-step="2"><?php echo onboardingCopy('edit', $locale); ?></button></div>
+                            <div class="ao-review-item"><div><small><?php echo onboardingCopy('review_profession', $locale); ?></small><strong data-review-profession><?php echo onboardingCopy('not_entered', $locale); ?></strong></div><button class="ao-edit-link" type="button" data-edit-step="3"><?php echo onboardingCopy('edit', $locale); ?></button></div>
+                            <div class="ao-review-item"><div><small><?php echo onboardingCopy('review_link', $locale); ?></small><strong data-review-slug dir="ltr"><?php echo onboardingCopy('not_entered', $locale); ?></strong></div><button class="ao-edit-link" type="button" data-edit-step="4"><?php echo onboardingCopy('edit', $locale); ?></button></div>
+                            <div class="ao-review-item"><div><small><?php echo onboardingCopy('review_privacy', $locale); ?></small><strong data-review-privacy><?php echo onboardingCopy('review_private', $locale); ?></strong></div><button class="ao-edit-link" type="button" data-edit-step="4"><?php echo onboardingCopy('edit', $locale); ?></button></div>
+                        </div>
+                        <div class="ao-note ao-create-note"><?php echo onboardingCopy('create_unavailable', $locale); ?></div>
+                    </section>
+
                     <div class="ao-actions">
                         <button class="ao-save-exit" type="button" disabled title="<?php echo onboardingCopy('save_unavailable', $locale); ?>"><?php echo onboardingCopy('save_exit_safe', $locale); ?></button>
                         <div class="ao-action-group">
-                            <a class="ao-secondary" data-back href="?lang=<?php echo $locale; ?>&amp;step=1"<?php echo $step === 1 ? ' hidden' : ''; ?>><?php echo onboardingCopy('back', $locale); ?></a>
-                            <a class="ao-primary" data-next href="?lang=<?php echo $locale; ?>&amp;step=2"<?php echo $step === 2 ? ' hidden' : ''; ?>><?php echo onboardingCopy('continue', $locale); ?></a>
-                            <button class="ao-primary" type="button" data-next-unavailable disabled<?php echo $step === 1 ? ' hidden' : ''; ?> title="<?php echo onboardingCopy('next_unavailable', $locale); ?>"><?php echo onboardingCopy('continue', $locale); ?></button>
+                            <a class="ao-secondary" data-back href="?lang=<?php echo $locale; ?>&amp;step=<?php echo max(1, $step - 1); ?>"<?php echo $step === 1 ? ' hidden' : ''; ?>><?php echo onboardingCopy('back', $locale); ?></a>
+                            <a class="ao-primary" data-next href="?lang=<?php echo $locale; ?>&amp;step=<?php echo min(5, $step + 1); ?>"<?php echo $step === 5 ? ' hidden' : ''; ?>><?php echo onboardingCopy('continue', $locale); ?></a>
+                            <button class="ao-primary" type="button" data-create disabled<?php echo $step === 5 ? '' : ' hidden'; ?> title="<?php echo onboardingCopy('create_unavailable', $locale); ?>"><?php echo onboardingCopy('create', $locale); ?></button>
                         </div>
                     </div>
-                    <p class="ao-next-note" data-next-note<?php echo $step === 1 ? ' hidden' : ''; ?>><?php echo onboardingCopy('next_unavailable', $locale); ?></p>
                     <p class="ao-preview-footer"><?php echo onboardingCopy('preview_footer', $locale); ?></p>
                 </section>
 
@@ -140,8 +187,8 @@ header("Content-Security-Policy: default-src 'none'; style-src 'self'; script-sr
                         <div class="ao-preview-body">
                             <div class="ao-avatar" data-preview-initials aria-hidden="true">أ</div>
                             <h2 class="ao-preview-name" data-preview-name dir="auto"><?php echo onboardingCopy('preview_name', $locale); ?></h2>
-                            <p class="ao-preview-headline"><?php echo onboardingCopy('preview_headline', $locale); ?></p>
-                            <div class="ao-preview-meta"><span><?php echo onboardingCopy('preview_status', $locale); ?></span><span><?php echo onboardingCopy('preview_field', $locale); ?></span><span data-preview-country><?php echo onboardingCopy('preview_country', $locale); ?></span></div>
+                            <p class="ao-preview-headline" data-preview-headline><?php echo onboardingCopy('preview_headline_later', $locale); ?></p>
+                            <div class="ao-preview-meta"><span data-preview-status><?php echo onboardingCopy('preview_status', $locale); ?></span><span data-preview-field><?php echo onboardingCopy('preview_field', $locale); ?></span><span data-preview-country><?php echo onboardingCopy('preview_country', $locale); ?></span></div>
                             <section class="ao-preview-section"><h3><?php echo onboardingCopy('preview_section', $locale); ?></h3><p><?php echo onboardingCopy('preview_section_copy', $locale); ?></p><div class="ao-empty-project"><?php echo onboardingCopy('preview_project', $locale); ?></div></section>
                         </div>
                     </article>
