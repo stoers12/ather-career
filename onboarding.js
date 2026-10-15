@@ -19,6 +19,30 @@
     var countrySelect = root.querySelector('[data-country]');
     var currentStep = Number(root.dataset.initialStep) === 2 ? 2 : 1;
     var switchingLanguage = false;
+    var languageTimeoutMs = 5000;
+
+    function fetchLocalizedPage(targetLocale, step) {
+        var controller = new AbortController();
+        var timeoutId;
+        var timeout = new Promise(function (_resolve, reject) {
+            timeoutId = window.setTimeout(function () {
+                controller.abort();
+                reject(new Error('Preview translation timed out'));
+            }, languageTimeoutMs);
+        });
+        var request = Promise.resolve().then(function () {
+            return fetch('?lang=' + targetLocale + '&step=' + step, {
+                method: 'GET', credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store',
+                signal: controller.signal
+            });
+        }).then(function (response) {
+            if (!response.ok) throw new Error('Preview translation unavailable');
+            return response.text();
+        });
+        return Promise.race([request, timeout]).finally(function () {
+            window.clearTimeout(timeoutId);
+        });
+    }
 
     function directTextNodes(element) {
         return Array.from(element.childNodes).filter(function (node) { return node.nodeType === Node.TEXT_NODE; });
@@ -111,11 +135,8 @@
         languageStatus.hidden = true;
         languageStatus.textContent = '';
         var targetLocale = locale === 'ar' ? 'en' : 'ar';
-        fetch('?lang=' + targetLocale + '&step=' + currentStep, {
-            method: 'GET', credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store'
-        }).then(function (response) {
-            if (!response.ok) throw new Error('Preview translation unavailable');
-            return response.text();
+        Promise.resolve().then(function () {
+            return fetchLocalizedPage(targetLocale, currentStep);
         }).then(function (html) {
             applyLocalizedPage(new DOMParser().parseFromString(html, 'text/html'), targetLocale);
         }).catch(function () {

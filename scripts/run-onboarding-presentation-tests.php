@@ -99,7 +99,7 @@ try {
     }
     $script = file_get_contents($root . '/onboarding.js');
     $fixture = file_get_contents($root . '/tests/phase2/support/onboarding-preview.php');
-    foreach (['localStorage', 'sessionStorage', 'XMLHttpRequest', 'sendBeacon', 'WebSocket', 'document.cookie', '.submit('] as $forbidden) {
+    foreach (['localStorage', 'sessionStorage', 'XMLHttpRequest', 'sendBeacon', 'WebSocket', 'document.cookie', 'window.name', '.submit('] as $forbidden) {
         $check(!str_contains($script, $forbidden), 'Onboarding interaction script contains a forbidden persistence or request API.');
     }
     foreach (['session_start(', 'setcookie(', 'getDatabaseConnection(', 'createOwnedPortfolio('] as $forbidden) {
