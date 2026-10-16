@@ -37,7 +37,8 @@ try {
         $transaction = $_SESSION[AUTH0_AUTH_TRANSACTION_KEY];
         $check(($query['connection'] ?? null) === $connection, 'Method must select only its allowlisted connection.');
         $check(!isset($query['prompt']) && !isset($query['screen_hint']), 'Ordinary method login must not request switching or registration.');
-        $check($query['redirect_uri'] === $configuration->redirectUri && $query['scope'] === 'openid', 'Configured redirect and scope must remain fixed.');
+        $expectedScope = $method === 'google' ? 'openid email' : 'openid';
+        $check($query['redirect_uri'] === $configuration->redirectUri && $query['scope'] === $expectedScope, 'Configured redirect and scope must remain fixed.');
         $check($query['state'] === $transaction['state'] && $query['nonce'] === $transaction['nonce'], 'State and nonce must bind to the server transaction.');
         $check($query['code_challenge_method'] === 'S256' && $query['code_challenge'] === auth0Base64Url(hash('sha256', $transaction['code_verifier'], true)), 'PKCE must bind to the server verifier.');
         $check(strlen($query['state']) >= 43 && strlen($query['nonce']) >= 43, 'State and nonce must retain their entropy.');

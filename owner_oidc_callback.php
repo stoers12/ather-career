@@ -19,6 +19,7 @@ try {
     $identity = completeAuth0Authorization($configuration, $_GET);
     $user = resolveAuth0InternalUser(getDatabaseConnection(), $configuration, $identity);
     establishVerifiedInternalUserSession($user['user_id'], $user['authz_version']);
+    recordOwnerEmailVerificationAfterLogin($user['user_id'], $user['authz_version'], auth0EmailVerifiedClassification($identity->emailVerifiedClaim, $identity->hasNonemptyEmail));
     $database = getDatabaseConnection();
     httpRedirect(ownerHasPortfolio($database, AuthenticatedUserContext::fromValidatedUser($user['user_id'])) ? 'owner.php' : 'owner_onboarding.php');
 } catch (Auth0OidcException $exception) {

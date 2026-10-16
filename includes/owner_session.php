@@ -25,6 +25,16 @@ function destroyOwnerSession(): void
     destroyInternalUserSession();
 }
 
+function recordOwnerEmailVerificationAfterLogin(int $userId, int $authzVersion, ?bool $emailVerified): void
+{
+    try {
+        recordOwnerReadinessObservation($userId, $authzVersion, $emailVerified, true);
+    } catch (Throwable) {
+        // An optional observation must never change the successful login path.
+        unset($_SESSION[OWNER_READINESS_SESSION_KEY]);
+    }
+}
+
 function beginFreshOwnerAccountSelectionSession(): void
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {

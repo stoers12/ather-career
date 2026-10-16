@@ -129,6 +129,23 @@ function requireAuthenticatedUser(PDO $database): AuthenticatedUserContext
 }
 
 /**
+ * Reads an observation only after the current User, authorization version,
+ * and authenticated session lifetime have passed the existing Owner check.
+ * This result does not grant access to any route.
+ *
+ * @return array{observed_at: int, email_verified: ?bool}|null
+ */
+function readAuthorizedOwnerReadinessObservation(PDO $database): ?array
+{
+    $user = requireAuthenticatedUser($database);
+    $session = currentInternalUserSession();
+
+    return $session === null
+        ? null
+        : readOwnerReadinessObservation($user->userId, $session['authz_version']);
+}
+
+/**
  * Derives the sole owner Portfolio from the validated User. A valid User with
  * no portfolios row intentionally has no AuthorizedPortfolioContext.
  *
