@@ -1,6 +1,7 @@
 <?php
 
 const INTERNAL_USER_SESSION_KEY = 'internal_user_session';
+const OWNER_READINESS_SESSION_KEY = 'owner_readiness_observation';
 const INTERNAL_SESSION_IDLE_TIMEOUT_SECONDS = 1800;
 const INTERNAL_SESSION_ABSOLUTE_LIFETIME_SECONDS = 43200;
 const INTERNAL_SESSION_CLOCK_TOLERANCE_SECONDS = 60;
@@ -148,6 +149,60 @@ function refreshInternalSessionActivity(int $now): void
     if (isset($_SESSION[INTERNAL_USER_SESSION_KEY]) && is_array($_SESSION[INTERNAL_USER_SESSION_KEY])) {
         $_SESSION[INTERNAL_USER_SESSION_KEY]['last_activity_at'] = $now;
     }
+}
+
+/**
+ * Records the classified result of a trusted callback observation. The caller
+ * must first validate the token and resolve its exact internal User binding.
+ * A non-boolean value is unknown; it always replaces any previous result.
+ */
+function recordOwnerReadinessObservation(int $internalUserId, int $authzVersion, mixed $emailVerified, bool $trusted, ?int $observedAt = null): void
+{
+    unset($_SESSION[OWNER_READINESS_SESSION_KEY]);
+    $session = currentInternalUserSession();
+    $now = $observedAt ?? time();
+    if (session_status() !== PHP_SESSION_ACTIVE || $session === null
+        || $session['internal_user_id'] !== $internalUserId
+        || $session['authz_version'] !== $authzVersion
+        || internalSessionLifetimeFailure($session, $now) !== null
+        || $now < $session['authenticated_at']) {
+        throw new LogicException('Readiness observation requires the current authenticated identity.');
+    }
+
+    $_SESSION[OWNER_READINESS_SESSION_KEY] = [
+        'internal_user_id' => $internalUserId,
+        'authz_version' => $authzVersion,
+        'authenticated_at' => $session['authenticated_at'],
+        'observed_at' => $now,
+        'email_verified' => $trusted && is_bool($emailVerified) ? $emailVerified : null,
+    ];
+}
+
+/** @return array{observed_at: int, email_verified: ?bool}|null */
+function readOwnerReadinessObservation(int $internalUserId, int $authzVersion, ?int $now = null): ?array
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        return null;
+    }
+    $session = currentInternalUserSession();
+    $record = $_SESSION[OWNER_READINESS_SESSION_KEY] ?? null;
+    if ($session === null || internalSessionLifetimeFailure($session, $now) !== null
+        || $session['internal_user_id'] !== $internalUserId
+        || $session['authz_version'] !== $authzVersion
+        || !is_array($record) || count($record) !== 5
+        || ($record['internal_user_id'] ?? null) !== $internalUserId
+        || ($record['authz_version'] ?? null) !== $authzVersion
+        || ($record['authenticated_at'] ?? null) !== $session['authenticated_at']
+        || !is_int($record['observed_at'] ?? null)
+        || $record['observed_at'] < $session['authenticated_at']
+        || $record['observed_at'] > ($now ?? time()) + INTERNAL_SESSION_CLOCK_TOLERANCE_SECONDS
+        || !array_key_exists('email_verified', $record)
+        || ($record['email_verified'] !== null && !is_bool($record['email_verified']))) {
+        unset($_SESSION[OWNER_READINESS_SESSION_KEY]);
+        return null;
+    }
+
+    return ['observed_at' => $record['observed_at'], 'email_verified' => $record['email_verified']];
 }
 
 /**

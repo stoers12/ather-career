@@ -104,9 +104,14 @@ final readonly class Auth0OidcConfiguration
 
 final readonly class Auth0ValidatedIdentity
 {
-    public function __construct(public string $issuer, public string $subject)
+    public function __construct(public string $issuer, public string $subject, public mixed $emailVerifiedClaim = null)
     {
     }
+}
+
+function auth0EmailVerifiedClassification(mixed $value): ?bool
+{
+    return is_bool($value) ? $value : null;
 }
 
 function auth0Base64Url(string $value): string
@@ -236,7 +241,7 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
         'client_id' => $configuration->clientId,
         'response_type' => 'code',
         'redirect_uri' => $configuration->redirectUri,
-        'scope' => 'openid',
+        'scope' => $connection === 'google-oauth2' ? 'openid email' : 'openid',
         'state' => $state,
         'nonce' => $nonce,
         'code_challenge' => $challenge,
@@ -351,6 +356,13 @@ function validateAuth0AuthorizationCode(Auth0OidcConfiguration $configuration, s
         }
         $issuer = $token->getIssuer();
         $subject = $token->getSubject();
+        $emailVerifiedClaim = null;
+        try {
+            $claims = $token->toArray();
+            $emailVerifiedClaim = is_array($claims) ? ($claims['email_verified'] ?? null) : null;
+        } catch (Throwable) {
+            // An optional claim observation cannot change a validated login.
+        }
     } catch (Auth0OidcException $exception) {
         throw $exception;
     } catch (Throwable) {
@@ -363,7 +375,7 @@ function validateAuth0AuthorizationCode(Auth0OidcConfiguration $configuration, s
         throw new Auth0OidcException('subject_missing');
     }
 
-    return new Auth0ValidatedIdentity($issuer, $subject);
+    return new Auth0ValidatedIdentity($issuer, $subject, $emailVerifiedClaim);
 }
 
 /** @param null|callable(Auth0OidcConfiguration, string, string, string): Auth0ValidatedIdentity $validator */
