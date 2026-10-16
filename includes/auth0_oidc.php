@@ -104,14 +104,19 @@ final readonly class Auth0OidcConfiguration
 
 final readonly class Auth0ValidatedIdentity
 {
-    public function __construct(public string $issuer, public string $subject, public mixed $emailVerifiedClaim = null)
+    public function __construct(public string $issuer, public string $subject, public mixed $emailVerifiedClaim = null, public bool $hasNonemptyEmail = false)
     {
     }
 }
 
-function auth0EmailVerifiedClassification(mixed $value): ?bool
+function auth0HasNonemptyEmailClaim(mixed $value): bool
 {
-    return is_bool($value) ? $value : null;
+    return is_string($value) && preg_match('/(*UCP)\S/u', $value) === 1;
+}
+
+function auth0EmailVerifiedClassification(mixed $value, bool $hasNonemptyEmail): ?bool
+{
+    return $value === false ? false : ($value === true && $hasNonemptyEmail ? true : null);
 }
 
 function auth0Base64Url(string $value): string
@@ -357,9 +362,11 @@ function validateAuth0AuthorizationCode(Auth0OidcConfiguration $configuration, s
         $issuer = $token->getIssuer();
         $subject = $token->getSubject();
         $emailVerifiedClaim = null;
+        $hasNonemptyEmail = false;
         try {
             $claims = $token->toArray();
             $emailVerifiedClaim = is_array($claims) ? ($claims['email_verified'] ?? null) : null;
+            $hasNonemptyEmail = auth0HasNonemptyEmailClaim(is_array($claims) ? ($claims['email'] ?? null) : null);
         } catch (Throwable) {
             // An optional claim observation cannot change a validated login.
         }
@@ -375,7 +382,7 @@ function validateAuth0AuthorizationCode(Auth0OidcConfiguration $configuration, s
         throw new Auth0OidcException('subject_missing');
     }
 
-    return new Auth0ValidatedIdentity($issuer, $subject, $emailVerifiedClaim);
+    return new Auth0ValidatedIdentity($issuer, $subject, $emailVerifiedClaim, $hasNonemptyEmail);
 }
 
 /** @param null|callable(Auth0OidcConfiguration, string, string, string): Auth0ValidatedIdentity $validator */

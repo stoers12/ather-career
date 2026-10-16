@@ -29,7 +29,8 @@ function syntheticValidatedCallback(Auth0OidcConfiguration $configuration, mixed
         static fn (Auth0OidcConfiguration $config): Auth0ValidatedIdentity => new Auth0ValidatedIdentity(
             $config->issuer,
             'auth0|synthetic',
-            is_array($claims) ? ($claims['email_verified'] ?? null) : null
+            is_array($claims) ? ($claims['email_verified'] ?? null) : null,
+            auth0HasNonemptyEmailClaim(is_array($claims) ? ($claims['email'] ?? null) : null)
         )
     );
     claimSame('auth0|synthetic', $identity->subject, 'Validated identity changed.');
@@ -44,6 +45,8 @@ try {
     $oidc = (string) file_get_contents(__DIR__ . '/../includes/auth0_oidc.php');
     claimCheck(strpos($oidc, '$token->validate(') < strpos($oidc, '$emailVerifiedClaim = is_array($claims)'),
         'Claim extraction must follow signed-token validation.');
+    claimCheck(strpos($oidc, '$token->validate(') < strpos($oidc, '$hasNonemptyEmail = auth0HasNonemptyEmailClaim('),
+        'Email shape extraction must follow signed-token validation.');
     $resolution = strpos($callback, 'resolveAuth0InternalUser(');
     $establishment = strpos($callback, 'establishVerifiedInternalUserSession(');
     $observation = strpos($callback, 'recordOwnerEmailVerificationAfterLogin(');
@@ -52,23 +55,44 @@ try {
     claimCheck($resolution !== false && $establishment !== false && $observation !== false && $classification !== false && $redirect !== false
         && $resolution < $establishment && $establishment < $observation && $observation < $classification && $classification < $redirect,
         'Callback identity, session, observation, or redirect order changed.');
+    claimCheck(substr_count($callback, 'beginFreshOwnerAccountSelectionSession();') === 2,
+        'Rejected callback cleanup changed.');
 
     foreach ([
-        [['email_verified' => true], true],
+        [['email' => 'private@example.test', 'email_verified' => true], true],
+        [['email_verified' => true], null],
+        [['email' => '', 'email_verified' => true], null],
+        [['email' => " \t\n", 'email_verified' => true], null],
+        [['email' => "\u{00A0}", 'email_verified' => true], null],
+        [['email' => 42, 'email_verified' => true], null],
+        [['email' => [], 'email_verified' => true], null],
         [['email_verified' => false], false],
-        [[], null],
-        [['email_verified' => 'true'], null],
-        [['email_verified' => 1], null],
-        [['email_verified' => []], null],
+        [['email' => 'private@example.test'], null],
+        [['email' => 'private@example.test', 'email_verified' => 'true'], null],
+        [['email' => 'private@example.test', 'email_verified' => 1], null],
+        [['email' => 'private@example.test', 'email_verified' => []], null],
         [null, null],
     ] as [$claims, $expected]) {
         $identity = syntheticValidatedCallback($configuration, $claims);
         establishVerifiedInternalUserSession(101, 7);
-        recordOwnerEmailVerificationAfterLogin(101, 7, auth0EmailVerifiedClassification($identity->emailVerifiedClaim));
+        recordOwnerEmailVerificationAfterLogin(101, 7, auth0EmailVerifiedClassification($identity->emailVerifiedClaim, $identity->hasNonemptyEmail));
         $record = readOwnerReadinessObservation(101, 7);
         claimCheck($record !== null, 'Authenticated callback did not create a session observation.');
         claimSame($expected, $record['email_verified'], 'Claim classification changed.');
         claimCheck($record['observed_at'] >= currentInternalUserSession()['authenticated_at'], 'Observation predates authentication.');
+    }
+
+    foreach ([
+        ['email_verified' => true],
+        ['email' => '', 'email_verified' => true],
+        ['email' => " \t\n", 'email_verified' => true],
+        ['email' => "\u{00A0}", 'email_verified' => true],
+        ['email' => 42, 'email_verified' => true],
+    ] as $claims) {
+        recordOwnerEmailVerificationAfterLogin(101, 7, true);
+        $identity = syntheticValidatedCallback($configuration, $claims);
+        recordOwnerEmailVerificationAfterLogin(101, 7, auth0EmailVerifiedClassification($identity->emailVerifiedClaim, $identity->hasNonemptyEmail));
+        claimSame(null, readOwnerReadinessObservation(101, 7)['email_verified'], 'Malformed email preserved a positive observation.');
     }
 
     recordOwnerEmailVerificationAfterLogin(101, 7, true);
@@ -85,9 +109,21 @@ try {
 
     $identity = syntheticValidatedCallback($configuration, ['email' => 'private@example.test', 'email_verified' => true]);
     establishVerifiedInternalUserSession(101, 7);
-    recordOwnerEmailVerificationAfterLogin(101, 7, auth0EmailVerifiedClassification($identity->emailVerifiedClaim));
+    recordOwnerEmailVerificationAfterLogin(101, 7, auth0EmailVerifiedClassification($identity->emailVerifiedClaim, $identity->hasNonemptyEmail));
     claimCheck(!str_contains(serialize($_SESSION), 'private@example.test'), 'Raw email entered server session.');
+    claimCheck(!str_contains(serialize($identity), 'private@example.test'), 'Raw email entered validated identity.');
     claimCheck(currentInternalUserSession()['internal_user_id'] === 101, 'Authenticated session identity changed.');
+
+    $start = beginAuth0Authorization($configuration, 'https://issuer.example.test/authorize');
+    try {
+        completeAuth0Authorization($configuration, ['state' => $start['state'], 'code' => 'rejected'],
+            static function (): never { throw new Auth0OidcException('token_validation_failed'); });
+        throw new RuntimeException('Rejected validation unexpectedly returned.');
+    } catch (Auth0OidcException) {
+        beginFreshOwnerAccountSelectionSession();
+    }
+    claimSame(null, readOwnerReadinessObservation(101, 7), 'Rejected callback retained a positive observation.');
+    claimSame(null, currentInternalUserSession(), 'Rejected callback retained authentication.');
     destroyOwnerSession();
     claimSame(null, readOwnerReadinessObservation(101, 7), 'Logout retained the observation.');
     echo "Owner readiness claim integration: PASS\n";
