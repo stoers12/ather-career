@@ -87,6 +87,15 @@ Add explicit account/verification/onboarding state and provenance, auditable rol
 
 ### 016 — Private drafts and profile fields
 
+**2026-10-18 bounded local implementation:** Actual migration `016_onboarding_drafts`
+adds only one private, bounded, versioned draft per User, with partial section saves,
+resume and a latest-operation retry receipt. It adds no profile fields, completion
+workflow, slug reservation/history or publication authority; the broader paragraph
+below remains a proposal. The field/API contract, candidate-validation limits and
+unresolved lifecycle are in [handoff 19](19-ONBOARDING-DRAFT-PERSISTENCE-HANDOFF.md).
+Registration stays Google-only/default off and real policies remain unavailable.
+Operator/contact/hosting details and policy drafting are deferred to launch preparation.
+
 Add one owner-scoped versioned draft per user, bounded idempotency and timestamps. Map display name, ISO country, language, professional status, specialization and headline without silently overwriting existing full_name, professional_title or hero_headline meanings. The write contract uses active-step allow-list and optimistic version; final completion validates all fields and creates/updates private profile and portfolio in one transaction. Optional fields stay optional. Slug reservation remains private and atomic; create slug-history structure here or by 017 before changes are enabled.
 
 ### 017 — Independent project and Evidence publication

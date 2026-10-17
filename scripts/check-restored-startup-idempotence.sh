@@ -28,7 +28,7 @@ docker exec "$db_container" sh -ec \
 
 ledger_before=$(docker exec "$db_container" mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf \
     -N -B "$restore_db" -e "SELECT GROUP_CONCAT(version ORDER BY version SEPARATOR ',') FROM schema_migrations;")
-expected_ledger='001,002,003,004,005,006,007,008,009,010,011,012,013,014,015'
+expected_ledger='001,002,003,004,005,006,007,008,009,010,011,012,013,014,015,016'
 test "$ledger_before" = "$expected_ledger"
 
 dump_restored() {
@@ -57,4 +57,4 @@ test "$ledger_after" = "$ledger_before"
 before_sha=$(docker exec "$db_container" cat /tmp/phase2b-startup-before.sql | sha256sum | cut -d' ' -f1)
 after_sha=$(docker exec "$db_container" cat /tmp/phase2b-startup-after.sql | sha256sum | cut -d' ' -f1)
 test "$before_sha" = "$after_sha"
-echo 'Restored database startup preserved all dump contents and migrations 001-015.'
+echo 'Restored database startup preserved all dump contents and migrations 001-016.'

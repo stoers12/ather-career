@@ -36,6 +36,10 @@ Local persistence-only follow-up: [18 — onboarding-attestation persistence
 handoff](18-ONBOARDING-ATTESTATION-PERSISTENCE-HANDOFF.md). Migration 015 is narrow;
 policy availability and registration activation remain off.
 
+Local private draft follow-up: [19 — onboarding draft persistence/resume
+handoff](19-ONBOARDING-DRAFT-PERSISTENCE-HANDOFF.md). Migration 016 is persistence
+only, without completion/profile/route integration or policy activation.
+
 ## Status vocabulary
 
 | Status | Meaning |
