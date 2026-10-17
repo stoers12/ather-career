@@ -32,6 +32,10 @@ Read current behavior before changing code; use the ADRs for approved choices, t
 
 “This documentation-expansion commit” identifies the containing commit without an impossible self-referential SHA. Its parent is 2c486f11de660a6587e8dd33e66b0ebfbe3ca5bd.
 
+Local persistence-only follow-up: [18 — onboarding-attestation persistence
+handoff](18-ONBOARDING-ATTESTATION-PERSISTENCE-HANDOFF.md). Migration 015 is narrow;
+policy availability and registration activation remain off.
+
 ## Status vocabulary
 
 | Status | Meaning |

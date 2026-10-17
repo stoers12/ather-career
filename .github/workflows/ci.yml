@@ -160,6 +160,7 @@ jobs:
           docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf \
             -e "CREATE USER '$REGISTRATION_DB_USER'@'%' IDENTIFIED BY '$REGISTRATION_DB_PASSWORD'; GRANT ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* TO '$REGISTRATION_DB_USER'@'%';"
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-registration-core-rehearsal.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-attestation-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-registration-routing-tests.php
 
       - name: Remove isolated rehearsal database
@@ -198,7 +199,7 @@ jobs:
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php database/migrate.php | grep -x 'No pending migrations.'
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php scripts/check-production-security.php
 
-      - name: Verify startup on restored migrations 001-014
+      - name: Verify startup on restored migrations 001-015
         run: bash scripts/check-restored-startup-idempotence.sh
 
       - name: Seed isolated public HTTP fixture
