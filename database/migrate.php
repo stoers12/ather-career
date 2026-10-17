@@ -10,6 +10,7 @@ if (PHP_SAPI !== 'cli') {
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/ownership_backfill.php';
 require_once __DIR__ . '/identity_foundation.php';
+require_once __DIR__ . '/onboarding_attestations.php';
 
 class MigrationPreconditionException extends RuntimeException
 {
@@ -709,6 +710,10 @@ function executeOptionalProjectGithubUrlMigration(PDO $database): void
 
 function executeSqlMigration(PDO $database, array $migration): void
 {
+    if ($migration['version'] === '015' && $migration['name'] === 'onboarding_attestations') {
+        executeOnboardingAttestationMigration($database);
+        return;
+    }
     if ($migration['version'] === '002' && $migration['name'] === 'integrity_constraints') {
         executeIntegrityConstraintsMigration($database);
         return;
@@ -797,6 +802,7 @@ function runMigrations(): void
                 break;
             }
             if (isset($applied[$migration['version']])) {
+                if ($migration['version'] === '015') { verifyOnboardingAttestationSchema($database); }
                 continue;
             }
 

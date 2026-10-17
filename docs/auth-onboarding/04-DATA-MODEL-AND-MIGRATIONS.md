@@ -74,6 +74,15 @@ This slice implements the identity and preservation portions of [AUTH-ADR-001, A
 
 ### 015 — Account verification, roles/security, onboarding and consent
 
+**2026-10-17 bounded local implementation:** The actual unused number 015 now names
+`onboarding_attestations` only. It creates one additive, historical evidence table
+with no legacy acceptance backfill. The broader paragraph below remains a proposal,
+not this migration's scope. No verification, roles, security/workflow state, drafts,
+route gates or production policy availability are implemented by 015. See
+[handoff 18](18-ONBOARDING-ATTESTATION-PERSISTENCE-HANDOFF.md) for the exact contract,
+validation, server descriptor trust boundary and rollout dependencies. No live
+migration is authorized or performed by this local implementation.
+
 Add explicit account/verification/onboarding state and provenance, auditable role/assurance state, age eligibility event and versioned Terms/Privacy events. Preserve existing authorization-version semantics; define transitions for legacy accounts and disabled/unverified accounts. Server session registry is optional until storage/recovery review. Gate every legacy Owner route before registration can open. Avoid mutable profile email as verified identity authority.
 
 ### 016 — Private drafts and profile fields

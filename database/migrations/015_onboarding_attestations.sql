@@ -1,0 +1,3 @@
+-- Narrow persistence-only scope, replacing the old broad migration 015 proposal.
+-- Executed and verified by database/migrate.php via onboarding_attestations.php.
+-- No policy configuration, legacy acceptance backfill, or account changes.
