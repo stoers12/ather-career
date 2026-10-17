@@ -1,0 +1,2 @@
+-- Narrow private draft store only; no profile/workflow/completion or slug changes.
+-- The guarded normal runner executes/verifies database/onboarding_drafts.php.
