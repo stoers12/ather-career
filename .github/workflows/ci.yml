@@ -101,7 +101,7 @@ jobs:
           tables=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(TABLE_NAME ORDER BY TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$REHEARSAL_DB_NAME';")
           test "$tables" = 'messages,personal_info,projects,skills' || { echo 'Rehearsal database is not a fresh V1 baseline.' >&2; exit 1; }
 
-      - name: Run seven isolated CLI rehearsals
+      - name: Run eight isolated CLI rehearsals
         run: |
           set -euo pipefail
           [[ "$REHEARSAL_DB_NAME" =~ ^ather_career_test_[a-f0-9]{24}$ ]] || { echo 'Invalid rehearsal database name.' >&2; exit 1; }
@@ -160,6 +160,7 @@ jobs:
           docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf \
             -e "CREATE USER '$REGISTRATION_DB_USER'@'%' IDENTIFIED BY '$REGISTRATION_DB_PASSWORD'; GRANT ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* TO '$REGISTRATION_DB_USER'@'%';"
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-registration-core-rehearsal.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-registration-routing-tests.php
 
       - name: Remove isolated rehearsal database
         run: |
@@ -271,6 +272,7 @@ jobs:
           curl --fail 'http://127.0.0.1:8098/signup.php?lang=en' | grep 'lang="en" dir="ltr"'
           curl --fail http://127.0.0.1:8098/signup.css >/dev/null
           test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/signup.php)" = 405
+          test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/owner_register.php)" = 404
           for route in /verification-pending.php /verification-success.php /verification-resent.php /verification-expired.php /verification-error.php /account-disabled.php /tests/phase2/support/email-verification-preview.php /forgot-password.php /reset-password.php /tests/phase2/support/recovery-preview.php /onboarding-preview.php /tests/phase2/support/onboarding-preview.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done
           test "$(curl -g -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8098/owner_login.php?method[]=google')" = 400
           for route in /admin.php /login.php /logout.php /personal_info.php /projects.php /messages.php /api/projects.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done

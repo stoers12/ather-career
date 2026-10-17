@@ -8,8 +8,15 @@ require_once __DIR__ . '/includes/signin_copy.php';
 require_once __DIR__ . '/includes/signup_copy.php';
 require_once __DIR__ . '/includes/account_entry_icons.php';
 
+require_once __DIR__ . '/includes/auth0_oidc.php';
+require_once __DIR__ . '/includes/owner_session.php';
+require_once __DIR__ . '/includes/csrf.php';
+
 httpRegisterExceptionBoundary('signup.php');
 httpRequireMethod(['GET', 'HEAD']);
+$registrationEnabled = auth0RegistrationIsEnabled();
+if ($registrationEnabled) { startOwnerSession(); }
+$canRegister = $registrationEnabled && !array_key_exists(INTERNAL_USER_SESSION_KEY, $_SESSION ?? []);
 $locale = ($_GET['lang'] ?? null) === 'en' ? 'en' : 'ar';
 header('Content-Type: text/html; charset=utf-8');
 header('Content-Language: ' . $locale);
@@ -20,7 +27,7 @@ header('Content-Language: ' . $locale);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
-    <meta name="description" content="<?php echo signUpCopy('description', $locale); ?>">
+    <meta name="description" content="<?php echo signUpCopy($canRegister ? 'description_enabled' : 'description', $locale); ?>">
     <title><?php echo signUpCopy('title', $locale); ?></title>
     <script src="<?php echo versionedAssetUrl('landing.js'); ?>"></script>
     <link rel="stylesheet" href="<?php echo versionedAssetUrl('signin.css'); ?>">
@@ -57,14 +64,21 @@ header('Content-Language: ' . $locale);
                     <h1 id="signup-heading"><?php echo signUpCopy('heading', $locale); ?></h1>
                     <p class="af-subtitle"><?php echo signUpCopy('subtitle', $locale); ?></p>
                     <div class="af-actions">
+                        <?php if ($canRegister): ?>
+                        <form action="/owner_register.php" method="POST">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                            <button class="af-auth-button" type="submit"><span class="af-provider-icon" aria-hidden="true">G</span><?php echo signUpCopy('google', $locale); ?></button>
+                        </form>
+                        <?php else: ?>
                         <button class="af-auth-button" type="button" disabled aria-describedby="registration-unavailable"><span class="af-provider-icon" aria-hidden="true">G</span><?php echo signUpCopy('google', $locale); ?></button>
+                        <?php endif; ?>
                         <button class="af-auth-button" type="button" disabled aria-describedby="registration-unavailable microsoft-unavailable"><span class="af-provider-icon" aria-hidden="true">M</span><?php echo signUpCopy('microsoft', $locale); ?></button>
                     </div>
                     <p class="af-method-note" id="microsoft-unavailable"><?php echo signInCopy('microsoft_unavailable', $locale); ?></p>
                     <div class="af-divider"><?php echo signInCopy('or', $locale); ?></div>
                     <button class="af-auth-button is-gold" type="button" disabled aria-describedby="registration-unavailable email-unavailable"><?php echo accountEntryIcon('mail-plus'); ?><?php echo signUpCopy('email', $locale); ?></button>
                     <p class="af-method-note" id="email-unavailable"><?php echo signUpCopy('email_unavailable', $locale); ?></p>
-                    <p class="af-method-note" id="registration-unavailable"><?php echo signInCopy('unavailable', $locale); ?></p>
+                    <p class="af-method-note" id="registration-unavailable"><?php echo $canRegister ? signUpCopy('google_available', $locale) : ($registrationEnabled ? signUpCopy('signed_in', $locale) : signInCopy('unavailable', $locale)); ?></p>
                     <div class="af-warning"><?php echo accountEntryIcon('info'); ?><span><?php echo signUpCopy('age', $locale); ?></span></div>
                     <p class="af-footnote"><?php echo signUpCopy('existing', $locale); ?> <a href="signin.php?lang=<?php echo $locale; ?>"><?php echo signUpCopy('signin', $locale); ?></a></p>
                 </article>

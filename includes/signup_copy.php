@@ -6,6 +6,9 @@ function signUpCopy(string $key, string $locale): string
 {
     static $catalog = [
         'description' => ['ar' => 'خيارات إنشاء حساب أثر. التسجيل العام غير متاح حاليًا.', 'en' => 'Ather account creation options. Public registration is currently unavailable.'],
+        'description_enabled' => ['ar' => 'ابدأ إنشاء حساب أثر باستخدام Google.', 'en' => 'Start Ather account registration with Google.'],
+        'google_available' => ['ar' => 'إنشاء الحساب متاح باستخدام Google فقط.', 'en' => 'Registration is available with Google only.'],
+        'signed_in' => ['ar' => 'استخدم خيار تغيير الحساب أو تسجيل الخروج قبل إنشاء حساب.', 'en' => 'Use the account-switch or logout option before starting registration.'],
         'title' => ['ar' => 'إنشاء حساب | أثر · Ather', 'en' => 'Sign up | Ather'],
         'main' => ['ar' => 'إنشاء حساب أثر', 'en' => 'Ather sign up'],
         'skip' => ['ar' => 'انتقل إلى خيارات إنشاء الحساب', 'en' => 'Skip to account creation options'],

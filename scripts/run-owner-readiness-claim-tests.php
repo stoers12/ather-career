@@ -51,11 +51,11 @@ try {
     $establishment = strpos($callback, 'establishVerifiedInternalUserSession(');
     $observation = strpos($callback, 'recordOwnerEmailVerificationAfterLogin(');
     $classification = strpos($callback, 'auth0EmailVerifiedClassification(');
-    $redirect = strpos($callback, 'httpRedirect(ownerHasPortfolio(');
+    $redirect = strpos($callback, 'httpRedirect($destination)');
     claimCheck($resolution !== false && $establishment !== false && $observation !== false && $classification !== false && $redirect !== false
         && $resolution < $establishment && $establishment < $observation && $observation < $classification && $classification < $redirect,
         'Callback identity, session, observation, or redirect order changed.');
-    claimCheck(substr_count($callback, 'beginFreshOwnerAccountSelectionSession();') === 2,
+    claimCheck(substr_count($callback, 'resetFailedOwnerCallbackSession();') === 3,
         'Rejected callback cleanup changed.');
 
     foreach ([
