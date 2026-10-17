@@ -85,6 +85,7 @@ final class HttpValidationContractTest
         $approvedRedirects = [
             'includes/http.php' => "header('Location: ' . \$target, true, \$status)",
             'owner_login.php' => "header('Location: ' . \$authorization['url'], true, 302)",
+            'owner_register.php' => "header('Location: ' . \$authorization['url'], true, 302)",
             'owner_switch_account.php' => "header('Location: ' . \$authorization['url'], true, 302)",
             'owner_auth_retry.php' => "header('Location: ' . \$authorization['url'], true, 302)",
         ];

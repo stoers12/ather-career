@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/auth0_signin_methods.php';
 
+const AUTH0_PURPOSE_SIGN_IN = 'sign-in';
+const AUTH0_PURPOSE_REGISTRATION = 'registration';
+
+function auth0RegistrationIsEnabled(): bool
+{
+    return getenv('ATHERCAR_REGISTRATION_ENABLED') === '1';
+}
+
 const AUTH0_AUTH_TRANSACTION_KEY = 'auth0_authorization_transaction';
 const AUTH0_AUTH_TRANSACTION_TTL_SECONDS = 600;
 const OIDC_START_RATE_LIMIT_ATTEMPTS = 5;
@@ -222,8 +230,15 @@ function auth0Discovery(Auth0OidcConfiguration $configuration): array
     return $metadata;
 }
 
+final readonly class Auth0CompletedAuthorization
+{
+    public function __construct(public Auth0ValidatedIdentity $identity, public string $purpose)
+    {
+    }
+}
+
 /** @return array{url: string, state: string, code_challenge: string} */
-function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $authorizationEndpoint, ?string $prompt = null, ?string $signInMethod = null): array
+function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $authorizationEndpoint, ?string $prompt = null, ?string $signInMethod = null, string $purpose = AUTH0_PURPOSE_SIGN_IN): array
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         throw new LogicException('Auth0 authorization requires an active server-side session.');
@@ -231,7 +246,13 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
     if ($prompt !== null && $prompt !== 'select_account' && $prompt !== 'login') {
         throw new InvalidArgumentException('OIDC prompt is invalid.');
     }
+    if (!in_array($purpose, [AUTH0_PURPOSE_SIGN_IN, AUTH0_PURPOSE_REGISTRATION], true)) {
+        throw new InvalidArgumentException('Authorization purpose is invalid.');
+    }
     $connection = auth0SignInConnection($signInMethod);
+    if ($purpose === AUTH0_PURPOSE_REGISTRATION && (!auth0RegistrationIsEnabled() || $signInMethod !== 'google')) {
+        throw new Auth0OidcException('registration_unavailable');
+    }
     $state = auth0Base64Url(random_bytes(32));
     $verifier = auth0Base64Url(random_bytes(64));
     $nonce = auth0Base64Url(random_bytes(32));
@@ -241,6 +262,7 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
         'code_verifier' => $verifier,
         'nonce' => $nonce,
         'created_at' => time(),
+        'purpose' => $purpose,
     ];
     $parameters = [
         'client_id' => $configuration->clientId,
@@ -263,12 +285,13 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
     return ['url' => $url, 'state' => $state, 'code_challenge' => $challenge];
 }
 
-/** @return array{code_verifier: string, nonce: string} */
+/** @return array{code_verifier: string, nonce: string, purpose: string} */
 function consumeAuth0AuthorizationTransaction(array $query): array
 {
     $transaction = $_SESSION[AUTH0_AUTH_TRANSACTION_KEY] ?? null;
     $state = $query['state'] ?? null;
     if (!is_array($transaction) || !is_string($state) || !isset($transaction['state'], $transaction['code_verifier'], $transaction['nonce'], $transaction['created_at'])
+        || !in_array($transaction['purpose'] ?? null, [AUTH0_PURPOSE_SIGN_IN, AUTH0_PURPOSE_REGISTRATION], true)
         || !is_string($transaction['state']) || !is_string($transaction['code_verifier']) || !is_string($transaction['nonce']) || !is_int($transaction['created_at'])) {
         unset($_SESSION[AUTH0_AUTH_TRANSACTION_KEY]);
         throw new Auth0OidcException('transaction_missing');
@@ -300,7 +323,7 @@ function consumeAuth0AuthorizationTransaction(array $query): array
         throw new Auth0OidcException('code_missing');
     }
 
-    return ['code_verifier' => $transaction['code_verifier'], 'nonce' => $transaction['nonce']];
+    return ['code_verifier' => $transaction['code_verifier'], 'nonce' => $transaction['nonce'], 'purpose' => $transaction['purpose']];
 }
 
 function validateAuth0AuthorizationCode(Auth0OidcConfiguration $configuration, string $code, string $verifier, string $nonce): Auth0ValidatedIdentity
@@ -388,11 +411,25 @@ function validateAuth0AuthorizationCode(Auth0OidcConfiguration $configuration, s
 /** @param null|callable(Auth0OidcConfiguration, string, string, string): Auth0ValidatedIdentity $validator */
 function completeAuth0Authorization(Auth0OidcConfiguration $configuration, array $query, ?callable $validator = null): Auth0ValidatedIdentity
 {
+    $completed = completeAuth0AuthorizationWithPurpose($configuration, $query, $validator);
+    // Existing identity-only callers must never discard a registration purpose.
+    if ($completed->purpose !== AUTH0_PURPOSE_SIGN_IN) {
+        throw new Auth0OidcException('authorization_purpose_invalid');
+    }
+    return $completed->identity;
+}
+
+/** @param null|callable(Auth0OidcConfiguration, string, string, string): Auth0ValidatedIdentity $validator */
+function completeAuth0AuthorizationWithPurpose(Auth0OidcConfiguration $configuration, array $query, ?callable $validator = null): Auth0CompletedAuthorization
+{
     $transaction = consumeAuth0AuthorizationTransaction($query);
+    if ($transaction['purpose'] === AUTH0_PURPOSE_REGISTRATION && !auth0RegistrationIsEnabled()) {
+        throw new Auth0OidcException('registration_unavailable');
+    }
     $identity = ($validator ?? 'validateAuth0AuthorizationCode')($configuration, (string) $query['code'], $transaction['code_verifier'], $transaction['nonce']);
     if (!$identity instanceof Auth0ValidatedIdentity || !hash_equals($configuration->issuer, $identity->issuer) || $identity->subject === '' || strlen($identity->subject) > 255) {
         throw new Auth0OidcException('identity_invalid');
     }
 
-    return $identity;
+    return new Auth0CompletedAuthorization($identity, $transaction['purpose']);
 }

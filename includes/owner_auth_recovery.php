@@ -45,3 +45,24 @@ function renderOwnerAuthRecoveryPage(bool $authorizationDenied, int $status = 40
 <?php
     exit;
 }
+
+/** A committed registration must never be described as "no data changed". */
+function renderOwnerRegistrationRecoveryPage(bool $accountMayExist, int $status): never
+{
+    httpSetHtmlResponse($status);
+    $detail = $accountMayExist
+        ? 'An account may already exist. You can try registration again or sign in.'
+        : 'Registration could not be completed. You can return to registration or sign in.';
+    $arabic = $accountMayExist
+        ? 'قد يكون الحساب موجودًا بالفعل. يمكنك محاولة إنشاء الحساب مرة أخرى أو تسجيل الدخول.'
+        : 'تعذر إكمال إنشاء الحساب. يمكنك العودة لإنشاء الحساب أو تسجيل الدخول.';
+    ?><!DOCTYPE html>
+<html lang="en" dir="ltr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Registration not completed | تعذر إنشاء الحساب</title><link rel="stylesheet" href="/style.css"></head>
+<body class="owner-auth-recovery"><main class="owner-auth-recovery-card">
+<h1>Registration was not completed <span lang="ar" dir="rtl">لم يكتمل إنشاء الحساب</span></h1>
+<p><?= htmlspecialchars($detail, ENT_QUOTES, 'UTF-8') ?></p><p lang="ar" dir="rtl"><?= htmlspecialchars($arabic, ENT_QUOTES, 'UTF-8') ?></p>
+<a href="/signup.php">Return to registration <span lang="ar" dir="rtl">العودة لإنشاء الحساب</span></a>
+<a href="/signin.php">Sign in <span lang="ar" dir="rtl">تسجيل الدخول</span></a>
+</main></body></html><?php
+    exit;
+}
