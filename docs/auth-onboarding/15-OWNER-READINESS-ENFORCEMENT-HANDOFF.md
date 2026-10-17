@@ -1,0 +1,14 @@
+# Owner creation readiness slice handoff — 2026-10-17
+
+Branch: `feat/owner-readiness-enforcement-20261017`, isolated worktree based on `cea8982715fa753d277bfffe392ad3090041937c`. This is a local implementation only. No push, merge, deployment, Auth0 change, canonical data/container change, real login, or Notion update was performed.
+
+Scope: `createOwnedPortfolio()` revalidates the active internal User, rejects a mismatched context, and requires the PR #18 authorized current-session observation to be strictly true before INSERT. Existing owner access and the database unique owner constraint remain intact. The production `owner_onboarding.php` GET/HEAD view presents an unavailable state without a creation form when the observation is insufficient; its POST keeps CSRF and independently reaches the insert guard. Logout and account switching remain in Owner navigation. See the adjacent policy record for limits.
+
+Validation completed:
+
+- Real route test: `scripts/run-owner-readiness-creation-route-tests.php` PASS with a generated, dropped MySQL database and persisted PHP sessions. It executes the actual route for GET and POST, covers strict true, false, null, missing, malformed, stale, identity/version mismatch, invalid/expired session, disabled account, bad CSRF, request-field tampering, owner grandfathering, duplicate behavior, and both available/unavailable HTML states. Its direct helper case rejects a mismatched server User context.
+- Existing disposable database rehearsals: ownership migration, public lifecycle, and owner flow PASS; the latter includes competing Portfolio insert attempts and one-row outcome.
+- Readiness claim and session tests PASS; Sign In contracts PASS (62 checks); five-step preview presentation boundaries PASS (572 checks). In the broader Phase 2 foundation suite, relevant identity, Owner flow, callback, account selection, tenant authorization, frontend, and route static contracts PASS. The full host run has eight unrelated failures caused by unavailable SQLite, GD, libvips, and intl/mbstring extensions.
+- PHP lint PASS for all changed PHP files; staged `git diff --check` PASS. The canonical checkout's unrelated script modification was left untouched.
+
+Limits: the session record reflects a validated Auth0 ID-token claim observed by Ather. It does not establish provider verification time, fresh upstream authentication, or propagation after an upstream change. This slice is not the full registration or five-step onboarding journey. It does not add a maximum observation age beyond the existing current-session lifetime checks. The isolated route test uses a minimal schema fixture; the existing migrated-schema Owner flow rehearsal covers integration with repository tables. No browser screenshot was captured; UI evidence is the real GET response assertions for status text, create control, account switch, and logout.

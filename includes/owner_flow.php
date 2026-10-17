@@ -7,6 +7,10 @@ require_once __DIR__ . '/error_reporting.php';
 require_once __DIR__ . '/http.php';
 require_once __DIR__ . '/owner_session.php';
 
+class OwnerReadinessDeniedException extends RuntimeException
+{
+}
+
 function ownerAuthorizationDenied(): never
 {
     httpAbortHtml(403, 'You are not authorized to access this resource.');
@@ -63,14 +67,24 @@ function requireOwnerPortfolioContext(PDO $database): AuthorizedPortfolioContext
 }
 
 /**
- * Creates the only Portfolio for an already-validated User. The caller never
- * supplies an owner ID; the database unique constraint remains the race
- * authority when two valid requests arrive together.
+ * Creates the only Portfolio for the currently authorized User after a
+ * positive current-session readiness observation. The caller never supplies
+ * an owner ID; the database unique constraint remains the race authority.
  */
 function createOwnedPortfolio(PDO $database, AuthenticatedUserContext $user): ?int
 {
+    $currentUser = requireAuthenticatedUser($database);
+    if ($currentUser->userId !== $user->userId) {
+        throw new AuthorizationDeniedException('Portfolio creation identity mismatch.');
+    }
+
     if (ownerHasPortfolio($database, $user)) {
         return null;
+    }
+
+    $observation = readAuthorizedOwnerReadinessObservation($database);
+    if (($observation['email_verified'] ?? null) !== true) {
+        throw new OwnerReadinessDeniedException('Current-session email verification is required.');
     }
 
     try {

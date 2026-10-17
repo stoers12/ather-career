@@ -159,6 +159,7 @@ try {
     $userNoPortfolio = ownerFlowCreateUser($database, 'user-no-portfolio', 3);
 
     ownerFlowEstablishSession($userNoPortfolio, 3);
+    recordOwnerReadinessObservation($userNoPortfolio, 3, true, true);
     phase2AssertSame($userNoPortfolio, requireAuthenticatedUser($database)->userId, 'No-Portfolio User did not retain authenticated account context.');
     phase2AssertSame(false, ownerHasPortfolio($database, requireAuthenticatedUser($database)), 'No-Portfolio User was treated as an owner.');
     try {

@@ -31,7 +31,13 @@ try {
         $statement = $database->prepare('INSERT INTO portfolios (owner_user_id) VALUES (:user_id)');
         $statement->execute(['user_id' => (int) $argv[2]]);
     } elseif ($mode === 'owner_portfolio' && $argc === 3 && ctype_digit($argv[2])) {
-        createOwnedPortfolio($database, AuthenticatedUserContext::fromValidatedUser((int) $argv[2]));
+        $userId = (int) $argv[2];
+        $version = $database->prepare('SELECT authz_version FROM users WHERE id = :id');
+        $version->execute(['id' => $userId]);
+        $authzVersion = (int) $version->fetchColumn();
+        establishVerifiedInternalUserSession($userId, $authzVersion);
+        recordOwnerReadinessObservation($userId, $authzVersion, true, true);
+        createOwnedPortfolio($database, AuthenticatedUserContext::fromValidatedUser($userId));
     } elseif ($mode === 'skill' && $argc === 4 && ctype_digit($argv[2])) {
         $statement = $database->prepare('INSERT INTO skills (portfolio_id, skill_name) VALUES (:portfolio_id, :skill_name)');
         $statement->execute(['portfolio_id' => (int) $argv[2], 'skill_name' => $argv[3]]);

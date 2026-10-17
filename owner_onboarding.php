@@ -15,6 +15,7 @@ httpRegisterExceptionBoundary('owner_onboarding.php');
 httpRequireMethod(['GET', 'HEAD', 'POST']);
 
 $error = '';
+$canCreate = false;
 try {
     $database = getDatabaseConnection();
     $user = requireOwnerAuthenticatedUser($database);
@@ -22,11 +23,17 @@ try {
         httpRedirect('owner.php');
     }
 
+    $observation = readAuthorizedOwnerReadinessObservation($database);
+    $canCreate = ($observation['email_verified'] ?? null) === true;
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
         createOwnedPortfolio($database, $user);
         httpRedirect('owner.php');
     }
+} catch (OwnerReadinessDeniedException) {
+    http_response_code(403);
+    $error = 'Portfolio creation is unavailable because this session does not have a verified email observation.';
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'owner_onboarding.php', 'owner_portfolio_create');
     http_response_code(503);
@@ -43,8 +50,12 @@ ownerLayoutStart('Create Your Portfolio', '');
     </div>
 </div>
 <?php ownerRenderFormFeedback('', $error === '' ? [] : [$error]); ?>
+<?php if ($canCreate): ?>
 <form method="POST" action="owner_onboarding.php" class="profile-form" data-owner-form>
     <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
     <div class="form-actions"><button class="button-primary" type="submit" data-pending-label="Creating Portfolio…">Create Portfolio</button></div>
 </form>
+<?php else: ?>
+<p role="status">Portfolio creation is unavailable because this session does not have a verified email observation. You can use another account or log out from the navigation.</p>
+<?php endif; ?>
 <?php ownerLayoutEnd();

@@ -1,0 +1,9 @@
+# Limited Owner Portfolio creation readiness
+
+Approved rollout scope: existing Portfolio owners keep their current routes and access, subject to the existing authenticated, active-account, authorization-version, ownership, and session checks. This decision does not replace the earlier proposals for broader onboarding or every-route readiness gates; those remain separate, unimplemented decisions.
+
+For a User without a Portfolio, `owner_onboarding.php` continues to serve GET, HEAD, and CSRF-protected POST. The page shows creation only when the current authorized session has an `email_verified === true` observation. `createOwnedPortfolio()` independently repeats current-User authorization, compares that User with its server-supplied context, and requires the authorized readiness observation before INSERT. False, null, absent, malformed, expired, or identity/version-mismatched observations cannot authorize creation. Request fields cannot provide the User, email, or readiness value. The database's unique owner constraint and existing duplicate handling remain the final race boundary.
+
+An unavailable page retains account switching and logout. This observation is the Auth0-validated ID-token classification from the current session, not a provider verification timestamp or evidence that a changed upstream claim refreshed. Signing in again is not promised to refresh Google data. No registration, preview creation, draft persistence, consent storage, migration, or five-step completion flow is enabled.
+
+Validation: `scripts/run-owner-readiness-creation-route-tests.php` executes the actual onboarding POST and GET files with disposable database rows and persisted PHP sessions. The test drops its generated database in `finally`. Existing Owner and readiness regressions remain required. No real provider login or Auth0 setting is involved.
