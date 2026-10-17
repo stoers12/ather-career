@@ -77,6 +77,13 @@ jobs:
           echo 'Isolated CI database did not become healthy.' >&2
           exit 1
 
+      - name: Owner readiness creation route
+        run: |
+          docker compose -p ather-career-ci -f docker-compose.production.yml run --rm --no-deps --entrypoint php \
+            -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e ATHERCAR_TEST_DB_HOST=db -e DB_PORT=3306 \
+            -e "ATHERCAR_TEST_DB_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" \
+            web scripts/run-owner-readiness-creation-route-tests.php
+
       - name: Create fresh V1 rehearsal database
         run: |
           set -euo pipefail
