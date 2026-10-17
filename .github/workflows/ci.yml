@@ -101,7 +101,7 @@ jobs:
           tables=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(TABLE_NAME ORDER BY TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$REHEARSAL_DB_NAME';")
           test "$tables" = 'messages,personal_info,projects,skills' || { echo 'Rehearsal database is not a fresh V1 baseline.' >&2; exit 1; }
 
-      - name: Run six isolated CLI rehearsals
+      - name: Run seven isolated CLI rehearsals
         run: |
           set -euo pipefail
           [[ "$REHEARSAL_DB_NAME" =~ ^ather_career_test_[a-f0-9]{24}$ ]] || { echo 'Invalid rehearsal database name.' >&2; exit 1; }
@@ -146,6 +146,20 @@ jobs:
           rehearse scripts/run-phase2-owner-flow-rehearsal.php
           rehearse scripts/run-phase2-experience-rehearsal.php
           rehearse scripts/run-phase2-auth0-rehearsal.php
+          # Give this registration rehearsal a generated, database-scoped user.
+          REGISTRATION_DB_USER="reg_$(openssl rand -hex 8)"
+          REGISTRATION_DB_PASSWORD="$(openssl rand -hex 32)"
+          echo "::add-mask::$REGISTRATION_DB_PASSWORD"
+          echo "REGISTRATION_DB_USER=$REGISTRATION_DB_USER" >> "$GITHUB_ENV"
+          cleanup_registration_user() {
+            [[ "$REGISTRATION_DB_USER" =~ ^reg_[a-f0-9]{16}$ ]] || return 1
+            docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf \
+              -e "DROP USER IF EXISTS '$REGISTRATION_DB_USER'@'%';"
+          }
+          trap cleanup_registration_user EXIT
+          docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf \
+            -e "CREATE USER '$REGISTRATION_DB_USER'@'%' IDENTIFIED BY '$REGISTRATION_DB_PASSWORD'; GRANT ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* TO '$REGISTRATION_DB_USER'@'%';"
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-registration-core-rehearsal.php
 
       - name: Remove isolated rehearsal database
         run: |
@@ -344,6 +358,15 @@ jobs:
               fi
             else
               echo 'Invalid CI rehearsal cleanup target.' >&2
+              cleanup_failed=1
+            fi
+          fi
+          if [[ -n "${REGISTRATION_DB_USER:-}" ]]; then
+            if [[ "$REGISTRATION_DB_USER" =~ ^reg_[a-f0-9]{16}$ ]]; then
+              docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf \
+                -e "DROP USER IF EXISTS '$REGISTRATION_DB_USER'@'%';" || { echo 'Registration rehearsal user cleanup failed.' >&2; cleanup_failed=1; }
+            else
+              echo 'Invalid registration rehearsal user cleanup target.' >&2
               cleanup_failed=1
             fi
           fi
