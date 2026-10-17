@@ -40,6 +40,10 @@ Local private draft follow-up: [19 — onboarding draft persistence/resume
 handoff](19-ONBOARDING-DRAFT-PERSISTENCE-HANDOFF.md). Migration 016 is persistence
 only, without completion/profile/route integration or policy activation.
 
+Local HTTP follow-up: [20 — authenticated onboarding draft HTTP
+handoff](20-ONBOARDING-DRAFT-HTTP-HANDOFF.md). The JSON resume/save boundary is
+default off and independent of registration; onboarding UI/completion remain deferred.
+
 ## Status vocabulary
 
 | Status | Meaning |
