@@ -59,6 +59,11 @@ try {
   await tab.locator('#country_code').selectOption('EG'); await tab.locator('#specialization').fill('Unsaved private specialization'); await save(tab,409);
   check(await version(tab)===stale && await tab.locator('#country_code').inputValue()==='EG' && await tab.locator('#specialization').inputValue()==='Unsaved private specialization','Conflict lost choices/input/original version');
   check(await tab.getByRole('link',{name:/Reload saved profile/}).count()===1,'Explicit conflict recovery missing');
+  await tab.setViewportSize({width:390,height:844});
+  check(tab.viewportSize().width===390 && tab.viewportSize().height===844,'Conflict screenshot is not at the mobile viewport');
+  check(await version(tab)===stale && await tab.locator('#country_code').inputValue()==='EG' && await tab.locator('#preferred_language').inputValue()==='ar' && await tab.locator('#professional_status').inputValue()==='student' && await tab.locator('#specialization').inputValue()==='Unsaved private specialization','Mobile conflict lost choices/input/original version');
+  const recovery=tab.getByRole('link',{name:/Reload saved profile/});
+  check(await recovery.count()===1 && await recovery.isVisible(),'Mobile conflict recovery missing or hidden');
   await tab.screenshot({path:path.join(shots,'profile-conflict-mobile.png'),fullPage:true}); await tab.close();
   await p.reload(); await p.locator('#specialization').fill(exact); await save(p);
   console.log('PASS final-profile browser two-tab conflict retains new choices and original version without replay');

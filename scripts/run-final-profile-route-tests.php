@@ -131,7 +131,7 @@ try {
     profileTestAssert(str_contains($body,'Stale private specialization') && str_contains($body,'value="EG" selected') && str_contains($body,'value="graduate" selected') && str_contains($body,'value="'.$old['expected_profile_version'].'"'),'Conflict lost final fields/original token.');
     // Test-only historical values: the form can retain them, not forge them on another row.
     $db->exec("UPDATE personal_info SET country_code='ZZ',preferred_language='zz',professional_status='retired_status',profile_version=profile_version+1 WHERE id=$id");
-    $body=profileHttp($browserA,'GET',200); profileTestAssert(str_contains($body,'Saved/entered value outside catalog'),'Retired choices silently coerced.');
+    $body=profileHttp($browserA,'GET',200); profileTestAssert(str_contains($body,'Saved or entered choice'),'Retired choices silently coerced.');
     profilePost($browserA,profileForm($browserA)+['country_code'=>'ZZ','preferred_language'=>'zz','professional_status'=>'retired_status','location'=>'Unrelated edit'],303);
     $row=$db->query("SELECT * FROM personal_info WHERE id=$id")->fetch(PDO::FETCH_ASSOC);
     profileTestAssert($row['country_code']==='ZZ' && $row['preferred_language']==='zz' && $row['professional_status']==='retired_status','Unchanged retired values lost.');

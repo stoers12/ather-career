@@ -170,3 +170,71 @@ translation or new production user journey is claimed. Existing injected
 uncertain-commit tests are not a physical network partition. Catalog snapshots
 do not claim automatic currency after their pinned releases. Remaining product
 and completion decisions stay separate.
+
+## Bounded review follow-up 2026-10-19
+
+Exact implementation base: `17801c6d1e99d22af8e43cfe0c720b79d67a9dbc`, clean in
+the existing isolated `feat/final-profile-fields-20261018` worktree. The merged
+`bd0ec90f395d99dc6f963c3ba00505e4aa993c46` baseline and both completion-contract
+documentation commits remain ancestors. Canonical checkout changes are preserved.
+
+Only the new bilingual labels/help/error text changes: country/territory of work
+or study, preferred profile language, the closest current professional description,
+and specialization distinct from professional title. Optional labels, the
+150-character hint and explicit private visibility remain. Product text no longer
+describes storage encoding or catalog mechanics; invalid choices ask for an option
+from the list, and invalid specialization asks for visible text within the limit,
+without line breaks, or an explicit empty field. These are action prompts, not a
+replacement technical specification. Valid UTF-8, at most 150 Unicode code points
+and 600 UTF-8 bytes, a non-whitespace character when nonempty, no Unicode Cc
+controls, and no silent trimming/normalization/truncation remain exactly as before
+in the validator and this handoff's field contract. Null/omission/retired values,
+catalog contents, privacy/public projections, authorization and CAS are unchanged.
+
+The previous `profile-conflict-mobile.png` filename did not establish a mobile
+capture: the tab still had its default 1440px width. The browser test now retains
+its original desktop assertions, then explicitly sets and checks **390×844** before
+checking all four retained values (`EG`, `ar`, `student`, unsaved specialization),
+the original version and the visible reload/review link. Only then does it capture
+the replacement screenshot. Existing 1440/1024/768/390/320px keyboard, bounding-box,
+overflow, desktop validation and responsive screenshots/assertions remain intact.
+
+Actual focused commands/results (PHP 8.3.33, MySQL 8.4.11, existing Playwright
+1.58.0/Chromium tooling; synthetic fixtures only):
+
+- `validate.ps1 -Suite followup-focused.sh`: `validation-08a76adfdd38.log`, all
+  **seven HTTP PASS groups** including strict/malformed values, omission/clears,
+  retired values, original tokens/conflicts, public exclusion, account/CSRF/
+  authorization, text/photo/contact behavior and fixture preservation/cleanup.
+- `browser.ps1 -Suite followup-focused.sh`: `browser-d9368630055f.log`, all **five
+  Profile browser PASS groups**; `validation-d9368630055f.log` confirms fixture
+  snapshot/private log/session/file/process cleanup. Twelve synthetic screenshots
+  regenerated; mobile conflict PNG is 390px wide. Visually reviewed that capture
+  plus the 320px and 1440px control viewport captures.
+- Changed PHP files pass `php -l`; browser script passes `node --check`; external
+  shell runner passes Bash syntax. Scope comparison confirms only error literals
+  changed in the validator and every existing browser assertion is preserved.
+  Documentation links/anchors, `git diff --check`, ancestry and the unrelated
+  canonical-file hash pass. The review bundle retains commands, logs and hashes.
+
+Both runs initialize a new generated database namespace from the immutable SQL,
+migrate through 003, bind a synthetic preserved owner using the existing backfill,
+then migrate through 018. This is fixture setup only; no unrelated rehearsal suite
+is rerun. Database-scoped generated credentials run the application/tests. Task
+containers, anonymous volumes, networks and credential files are removed, and the
+private browser cookie carrier is deleted by fixture cleanup.
+
+Retained failed attempt: `validation-f8d2fb4599a2.log` passed fixture setup and PHP
+syntax but did **not** start the HTTP suite: a trailing Windows CR in the external
+runner made PHP look for a filename ending in CR. The external script's line
+endings were corrected; no production/test acceptance rule changed. Its original
+script and failure log remain in the bundle. Sandbox-denied Docker inventory and
+Git Bash probes were environment restrictions; Bash passed after approved retry
+and Docker cleanup was checked outside that restriction.
+
+No failed/skipped test step remains in the two final affected-suite runs. The
+earlier broad core/draft/browser/build/security/restored-startup results above are
+historical evidence for the base, **not reruns on this follow-up**. Remote CI,
+unrelated suites, production build and real-device/accessibility certification are
+not claimed here. No push, PR, deployment, live migration, authentication, gate
+activation or external/canonical-resource change is included.

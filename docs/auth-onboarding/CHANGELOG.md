@@ -2,6 +2,17 @@
 
 Entries record repository history and verification scope. “This commit” means the commit containing this file; it avoids a self-referential hash. No entry implies deployment of proposed features.
 
+## 2026-10-19 — Bounded final-profile review follow-up
+
+Follow-up to `17801c6d1e99d22af8e43cfe0c720b79d67a9dbc`: simplify only the new
+AR/EN Profile labels/help/errors and set the conflict screenshot to a verified
+390×844 viewport. Existing desktop checks remain; mobile checks retain all four
+choices/text, the original version and visible recovery link. Seven HTTP groups,
+five Profile browser groups, regenerated screenshots and syntax/scope checks pass.
+[Handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md#bounded-review-follow-up-2026-10-19)
+records the corrected external-runner failure and explicit verification limits.
+Validation rules, catalogs, schema, privacy, authorization and CAS are unchanged.
+
 ## 2026-10-19 — Optional private final-profile facts
 
 Local isolated follow-up to merged `bd0ec90f395d99dc6f963c3ba00505e4aa993c46`:
