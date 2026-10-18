@@ -193,7 +193,7 @@ try {
     phase2AssertSame(null, resolvePublicReadContext($database, 'stage2c-missing'), 'Unknown public portfolio resolved.');
     phase2AssertSame(null, resolvePublicReadContext($database, 'stage2c-a'), 'Unpublished public portfolio resolved.');
     phase2AssertSame(null, findAuthorizedPersonalInfo($database, $contextA, $profileB), 'Owner A read Owner B profile.');
-    phase2AssertSame(false, updateAuthorizedPersonalInfo($database, $contextA, $profileB, ['location' => 'Foreign']), 'Owner A updated Owner B profile.');
+    phase2AssertSame(false, updateAuthorizedPersonalInfo($database, $contextA, $profileB, ['location' => 'Foreign'], (int) loadAuthorizedPersonalInfo($database, $contextA)['profile_version']), 'Owner A updated Owner B profile.');
     $passed[] = 'T2C-PROFILE-OWNER-SCOPE';
 
     $fields = array_values(array_diff(AUTHORIZED_PERSONAL_INFO_FIELDS, ['profile_image_path', 'public_contact_visible']));

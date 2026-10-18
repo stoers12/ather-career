@@ -10,7 +10,7 @@ final class PrivateMediaStaticTest
         $access = self::read('includes/media_access.php');
         $ownerRoute = self::read('owner_media.php');
         $publicRoute = self::read('public_media.php');
-        $ownerActions = self::read('includes/owner_actions.php');
+        $ownerActions = self::read('includes/owner_actions.php') . self::read('includes/profile_form_actions.php');
         $profileActions = self::read('includes/profile_actions.php');
         $projectActions = self::read('includes/project_actions.php');
         $profilePresentation = self::read('includes/profile_presentation.php');

@@ -275,7 +275,7 @@ try {
     $bBeforeA = tenantPortfolioSnapshot($database, $portfolioB);
     $uploadsBeforeA = tenantUploadSnapshot($uploadsRoot);
     phase2AssertSame(null, findAuthorizedPersonalInfo($database, $contextA, $profileB), 'A read B private profile.');
-    phase2AssertSame(false, updateAuthorizedPersonalInfo($database, $contextA, $profileB, ['full_name' => 'A overwrote B']), 'A updated B profile.');
+    phase2AssertSame(false, updateAuthorizedPersonalInfo($database, $contextA, $profileB, ['full_name' => 'A overwrote B'], (int) loadAuthorizedPersonalInfo($database, $contextA)['profile_version']), 'A updated B profile.');
     phase2AssertSame(null, findAuthorizedSkill($database, $contextA, $skillB), 'A read B skill.');
     phase2AssertSame(false, updateAuthorizedSkill($database, $contextA, $skillB, 'A overwrote B Skill'), 'A updated B skill.');
     phase2AssertSame(false, deleteAuthorizedSkill($database, $contextA, $skillB), 'A deleted B skill.');
@@ -301,7 +301,7 @@ try {
     $aBeforeB = tenantPortfolioSnapshot($database, $portfolioA);
     $uploadsBeforeB = tenantUploadSnapshot($uploadsRoot);
     phase2AssertSame(null, findAuthorizedPersonalInfo($database, $contextB, $profileA), 'B read A private profile.');
-    phase2AssertSame(false, updateAuthorizedPersonalInfo($database, $contextB, $profileA, ['full_name' => 'B overwrote A']), 'B updated A profile.');
+    phase2AssertSame(false, updateAuthorizedPersonalInfo($database, $contextB, $profileA, ['full_name' => 'B overwrote A'], (int) loadAuthorizedPersonalInfo($database, $contextB)['profile_version']), 'B updated A profile.');
     phase2AssertSame(null, findAuthorizedSkill($database, $contextB, $skillA), 'B read A skill.');
     phase2AssertSame(false, updateAuthorizedSkill($database, $contextB, $skillA, 'B overwrote A Skill'), 'B updated A skill.');
     phase2AssertSame(false, deleteAuthorizedSkill($database, $contextB, $skillA), 'B deleted A skill.');
@@ -342,7 +342,7 @@ try {
         'Client portfolio_id was accepted for profile creation.'
     );
     tenantAssertInvalidInput(
-        static fn (): bool => updateAuthorizedPersonalInfo($database, $contextA, $profileA, ['portfolio_id' => $portfolioB]),
+        static fn (): bool => updateAuthorizedPersonalInfo($database, $contextA, $profileA, ['portfolio_id' => $portfolioB], (int) loadAuthorizedPersonalInfo($database, $contextA)['profile_version']),
         'Client portfolio_id was accepted for profile update.'
     );
     phase2AssertSame($bBeforeMass, tenantPortfolioSnapshot($database, $portfolioB), 'Client mass-assignment attempt changed B database rows.');

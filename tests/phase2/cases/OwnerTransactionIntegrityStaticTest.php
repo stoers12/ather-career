@@ -7,7 +7,7 @@ final class OwnerTransactionIntegrityStaticTest
     public static function run(TestEnvironment $environment): void
     {
         $transaction = self::read('includes/transaction.php');
-        $ownerActions = self::read('includes/owner_actions.php');
+        $ownerActions = self::read('includes/owner_actions.php') . self::read('includes/profile_writes.php') . self::read('includes/profile_form_actions.php');
         $lifecycle = self::read('includes/public_lifecycle.php');
         $scopedData = self::read('includes/portfolio_scoped_data.php');
         $profileActions = self::read('includes/profile_actions.php');

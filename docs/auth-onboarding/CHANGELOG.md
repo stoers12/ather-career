@@ -2,6 +2,16 @@
 
 Entries record repository history and verification scope. “This commit” means the commit containing this file; it avoids a self-referential hash. No entry implies deployment of proposed features.
 
+## 2026-10-18 — Bounded profile preservation/concurrency
+
+Local R11/R12 implementation based on `0b818ea3babece756bc866259d10b590b478c573`,
+preserving both prior documentation commits. Adds only migration 017's profile
+version, loaded form tokens, scoped CAS/absence guards, omission and explicit
+visibility handling, and confirmed/uncertain media outcome handling. Focused
+guarded MySQL/HTTP checks join CI; [handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md)
+records evidence and gaps. No completion fields, catalogs, policy/publication/routing
+changes, activation, deployment, real login or live migration are included.
+
 | Date | Phase | Branch / commit | Changes | Migrations | Tests | Security/privacy impact | Runtime/data impact | Deployment / recovery | Limitations | Next safe action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 2026-10-15 | Public identity visual alignment | feat/onboarding-steps3-5-20261015 / this commit; parent 257dc5e654a0530234a4549d4bc77261d1470e10 | Align the step-2 native country select and adjacent preferred-language cards with scoped CSS | None | 12 affected rendered states, long labels, native arrow, keyboard focus, selection preservation, 482 focused checks and diff validation | No data persistence or functional change | Isolated local preview only | No push, merge or deployment | Owner reports prior behavior works; acceptance of this visual correction remains pending | Owner visual review |

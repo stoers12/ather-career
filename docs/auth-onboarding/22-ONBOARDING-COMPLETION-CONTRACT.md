@@ -1,5 +1,9 @@
 # Bounded onboarding completion contract
 
+Implementation follow-up: [handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md)
+records the bounded user-authorized R11/R12 implementation. Other recommendations
+below remain proposals; this implementation does not enable completion.
+
 Review baseline: `d2514104a405c26587350be84c28720ac87f3ff7` (PR #25 merged and Main CI passed, as supplied by the owner). Documentation only, 2026-10-18. **Every choice marked R below is a new recommendation awaiting owner acceptance, not an approved requirement or implemented behavior.** No completion endpoint, migration, policy, catalog or gate is activated by this document.
 
 Lifecycle revision, 2026-10-18: parent contract commit `7ef0db943e4fefc5e2a01f1ba6a3fc7ed9ffe71c` is preserved. At revision review the original checkout was actually at `82353dc2d2a709858d0b56852182acce20f06009`, with an unrelated required-gates edit; this isolated revision starts from the contract commit, whose parent is the reviewed main baseline above. No fetch or assertion of newer remote main/CI state is made. R10–R12 extend the proposal through profile editing and publication; their operation-specific rules below qualify the earlier completion-only rules. All remain recommendations awaiting acceptance.

@@ -30,6 +30,10 @@ $errors = [];
 $fieldErrors = [];
 $message = '';
 $profileCompletion = 0;
+$profileVersion = '';
+$profileFormPost = $_SERVER['REQUEST_METHOD'] === 'POST'
+    && in_array($_POST['action'] ?? null, ['save_profile', 'upload_profile_image', 'remove_profile_image'], true);
+if ($profileFormPost) { $profileVersion = is_string($_POST['expected_profile_version'] ?? null) ? $_POST['expected_profile_version'] : ''; }
 $submittedSkillValue = '';
 $submittedSkillId = null;
 
@@ -45,6 +49,10 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
+        if ($profileFormPost) {
+            $profile = array_merge($profile, $current ?? []);
+            $profile['_submitted_profile_version'] = $profileVersion;
+        }
         $mayMutate = true;
         if (($_POST['action'] ?? null) === 'upload_profile_image') {
             try {
@@ -84,11 +92,14 @@ try {
         if (isset($_GET['skill_deleted'])) $message = 'Skill removed.';
     }
 
-    $savedProfile = loadAuthorizedPersonalInfo($database, $context);
-    if (is_array($savedProfile) && ($_SERVER['REQUEST_METHOD'] !== 'POST' || (($_POST['action'] ?? '') !== 'save_profile'))) {
+    $savedProfile = ($_SERVER['REQUEST_METHOD'] === 'POST') ? loadAuthorizedPersonalInfo($database, $context) : $current;
+    if (is_array($savedProfile) && !isset($profile['_submitted_profile_version'])) {
         $profile = array_merge($profile, $savedProfile);
     }
-    $profileId = is_array($savedProfile) ? (int) $savedProfile['id'] : null;
+    $profileVersion = $profile['_submitted_profile_version'] ?? (string) ($savedProfile['profile_version'] ?? 0);
+    $profileId = isset($profile['_submitted_profile_version'])
+        ? (array_key_exists('profile_id', $_POST) ? ownerActionId($_POST['profile_id']) : null)
+        : (is_array($savedProfile) ? (int) $savedProfile['id'] : null);
     $skills = listAuthorizedSkills($database, $context);
     if ($submittedSkillId !== null && ownerFieldErrorMessage($fieldErrors, 'skill_name') !== null) {
         foreach ($skills as &$skill) {
@@ -114,21 +125,21 @@ ownerLayoutStart('Personal Info', 'profile');
     <div class="admin-page-header-copy"><p class="admin-eyebrow">Profile</p><h1 class="admin-page-title">Personal Info</h1><p class="admin-page-description">Manage your private Portfolio information.</p></div>
     <div class="admin-page-header-actions"><a class="button-primary" href="owner_preview.php">Private Preview</a></div>
 </div>
-<?php ownerRenderFormFeedback($message, $errors, $fieldErrors); ?>
+<?php ownerRenderFormFeedback($message, $errors, $fieldErrors); if (isset($profile['_submitted_profile_version']) && $errors !== []) { echo '<p><a href="owner_profile.php">Reload saved profile and review before applying your changes again</a>. A selected photo may need reselection.</p>'; } ?>
 <div class="profile-summary"><div><strong><?php echo ownerEscapeHtml($profile['full_name'] ?: 'Your name'); ?></strong><span><?php echo ownerEscapeHtml($profile['professional_title'] ?: 'Add a professional title'); ?></span></div><div class="completion"><div class="completion-header"><span>Profile completion</span><strong><?php echo $profileCompletion; ?>%</strong></div><progress value="<?php echo $profileCompletion; ?>" max="100"><?php echo $profileCompletion; ?>%</progress></div></div>
 
 <?php if ($profileId !== null): ?>
 <div class="profile-photo-card">
     <div class="profile-photo-preview"><?php if (!empty($profile['profile_image_path'])): ?><img src="owner_media.php?type=profile" alt="<?php echo ownerEscapeHtml($profile['full_name']); ?>"><?php else: ?><span><?php echo ownerEscapeHtml(profileInitials($profile['full_name'] ?: 'P')); ?></span><?php endif; ?></div>
     <div class="profile-photo-controls"><h2>Profile Photo</h2><p class="photo-intro">Update the photo shown in your private preview.</p>
-        <form method="POST" action="owner_profile.php" enctype="multipart/form-data" data-owner-form><input type="hidden" name="action" value="upload_profile_image"><input type="hidden" name="profile_id" value="<?php echo $profileId; ?>"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><label class="form-field" for="profile_image"><span>JPG or PNG, at least 400 × 400 px, maximum <?php echo profileImageMaximumMegabytes(); ?> MB. High-resolution images are optimized automatically.</span><input id="profile_image" type="file" name="profile_image" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required data-profile-image-input data-profile-image-max-bytes="<?php echo PROFILE_IMAGE_MAX_BYTES; ?>"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'profile_image', 'profile-image-status'); ?>><small id="profile-image-status" class="file-selection-status" role="status" aria-live="polite"></small></label><?php ownerRenderFieldError($fieldErrors, 'profile_image'); ?><button class="button-primary" type="submit" data-pending-label="Saving photo…">Save Photo</button></form>
-        <?php if (!empty($profile['profile_image_path'])): ?><form method="POST" action="owner_profile.php" data-owner-form data-confirm="Remove this profile photo? This action cannot be undone." data-confirm-title="Remove profile photo?" data-confirm-action="Remove photo"><input type="hidden" name="action" value="remove_profile_image"><input type="hidden" name="profile_id" value="<?php echo $profileId; ?>"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><button class="button-danger" type="submit" data-pending-label="Removing photo…">Remove Photo</button></form><?php endif; ?>
+        <form method="POST" action="owner_profile.php" enctype="multipart/form-data" data-owner-form><input type="hidden" name="action" value="upload_profile_image"><input type="hidden" name="expected_profile_version" value="<?php echo ownerEscapeHtml($profileVersion); ?>"><input type="hidden" name="profile_id" value="<?php echo $profileId; ?>"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><label class="form-field" for="profile_image"><span>JPG or PNG, at least 400 × 400 px, maximum <?php echo profileImageMaximumMegabytes(); ?> MB. High-resolution images are optimized automatically.</span><input id="profile_image" type="file" name="profile_image" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required data-profile-image-input data-profile-image-max-bytes="<?php echo PROFILE_IMAGE_MAX_BYTES; ?>"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'profile_image', 'profile-image-status'); ?>><small id="profile-image-status" class="file-selection-status" role="status" aria-live="polite"></small></label><?php ownerRenderFieldError($fieldErrors, 'profile_image'); ?><button class="button-primary" type="submit" data-pending-label="Saving photo…">Save Photo</button></form>
+        <?php if (!empty($profile['profile_image_path'])): ?><form method="POST" action="owner_profile.php" data-owner-form data-confirm="Remove this profile photo? This action cannot be undone." data-confirm-title="Remove profile photo?" data-confirm-action="Remove photo"><input type="hidden" name="action" value="remove_profile_image"><input type="hidden" name="expected_profile_version" value="<?php echo ownerEscapeHtml($profileVersion); ?>"><input type="hidden" name="profile_id" value="<?php echo $profileId; ?>"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><button class="button-danger" type="submit" data-pending-label="Removing photo…">Remove Photo</button></form><?php endif; ?>
     </div>
 </div>
 <?php endif; ?>
 
 <form class="profile-form" id="profile-form" method="POST" action="owner_profile.php" data-owner-form>
-    <input type="hidden" name="action" value="save_profile"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><?php if ($profileId !== null): ?><input type="hidden" name="profile_id" value="<?php echo $profileId; ?>"><?php endif; ?>
+    <input type="hidden" name="action" value="save_profile"><input type="hidden" name="expected_profile_version" value="<?php echo ownerEscapeHtml($profileVersion); ?>"><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>"><?php if ($profileId !== null): ?><input type="hidden" name="profile_id" value="<?php echo $profileId; ?>"><?php endif; ?>
     <div class="form-grid">
         <h2 class="form-section-title">Basic Information</h2>
         <?php foreach (['full_name' => 'Full Name', 'professional_title' => 'Professional Title'] as $field => $label): ?>
@@ -139,7 +150,7 @@ ownerLayoutStart('Personal Info', 'profile');
             <label class="form-field" for="<?php echo $field; ?>"><span><?php echo $label; ?></span><input type="<?php echo $field === 'email' ? 'email' : 'text'; ?>" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo ownerEscapeHtml((string) $profile[$field]); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS[$field]; ?>"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, $field); ?>></label><?php ownerRenderFieldError($fieldErrors, $field); ?>
         <?php endforeach; ?>
         <div class="form-field-full">
-            <label class="checkbox-field" for="public_contact_visible"><input type="checkbox" id="public_contact_visible" name="public_contact_visible" value="1"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'public_contact_visible', 'public-contact-help'); ?><?php echo !empty($profile['public_contact_visible']) ? ' checked' : ''; ?>>Show my phone and email on my public Portfolio.</label>
+            <input type="hidden" name="public_contact_present" value="1"><label class="checkbox-field" for="public_contact_visible"><input type="checkbox" id="public_contact_visible" name="public_contact_visible" value="1"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'public_contact_visible', 'public-contact-help'); ?><?php echo !empty($profile['public_contact_visible']) ? ' checked' : ''; ?>>Show my phone and email on my public Portfolio.</label>
             <p class="form-hint" id="public-contact-help">When enabled, visitors can see your primary phone and profile email. Private Preview always shows your saved contact details.</p>
             <?php ownerRenderFieldError($fieldErrors, 'public_contact_visible'); ?>
         </div>

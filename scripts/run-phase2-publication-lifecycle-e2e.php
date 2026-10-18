@@ -541,10 +541,10 @@ try {
 
     $profileA = loadAuthorizedPersonalInfo($database, $contextA);
     phase2Assert(is_array($profileA), 'A owner profile was unavailable for a live edit.');
-    phase2AssertSame(true, updateAuthorizedPersonalInfo($database, $contextA, (int) $profileA['id'], ['hero_headline' => 'E2E A Live Update']), 'A owner live edit did not save.');
+    phase2AssertSame(true, updateAuthorizedPersonalInfo($database, $contextA, (int) $profileA['id'], ['hero_headline' => 'E2E A Live Update'], (int) loadAuthorizedPersonalInfo($database, $contextA)['profile_version']), 'A owner live edit did not save.');
     $livePage = publicationLifecycleE2eHttpRequest($server['port'], '/public_portfolio.php?slug=e2e-tenant-a');
     phase2Assert(str_contains($livePage['body'], 'E2E A Live Update') && !str_contains($livePage['body'], 'E2E B Private'), 'Published live edit was not public immediately or leaked B.');
-    phase2AssertSame(false, updateAuthorizedPersonalInfo($database, $contextA, $bResources['profile_id'], ['hero_headline' => 'Forged A Edit']), 'A edited B profile.');
+    phase2AssertSame(false, updateAuthorizedPersonalInfo($database, $contextA, $bResources['profile_id'], ['hero_headline' => 'Forged A Edit'], (int) loadAuthorizedPersonalInfo($database, $contextA)['profile_version']), 'A edited B profile.');
     phase2AssertSame(null, findAuthorizedProject($database, $contextA, $bResources['project_ids'][0]), 'A read B owner project.');
     phase2AssertSame(null, findAuthorizedMessage($database, $contextB, $aMessageId), 'B read A owner message.');
     phase2AssertSame('e2e-tenant-b', ownedPublicLifecycleState($database, $contextB)['public_slug'], 'A action changed B publication state.');

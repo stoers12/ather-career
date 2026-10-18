@@ -1,0 +1,3 @@
+-- Executed and verified by the guarded additive profile-version migration path.
+-- One atomic ALTER adds the version and enforced bound; existing content,
+-- timestamps, visibility and ownership are unchanged. No completion fields.

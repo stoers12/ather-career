@@ -1,5 +1,12 @@
 # 07 — Test and acceptance matrix
 
+**2026-10-18 bounded profile slice:** two focused guarded MySQL/HTTP suites cover
+loaded-version CAS, omission/explicit visibility, real parallel saves/creation,
+photo and direct migration races, rollback/uncertain media outcomes and migration
+preservation. CI invokes them with its generated database-scoped application user.
+Exact commands/results and limits are in [handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md);
+these checks do not establish completion/publication readiness or launch approval.
+
 **2026-10-15 step-2 visual follow-up:** A scoped Public identity CSS change aligns the country select and preferred-language cards. Twelve affected desktop/320px/390px × Arabic/English × light/dark states, native select arrow and keyboard focus, long country labels, mobile stacking, and transient selection preservation were checked. The owner reports prior behavior working; acceptance of this visual correction remains pending. Functional gates remain open.
 
 **2026-10-15 focused correction:** A runnable Chromium regression reproduces the reported step-5 → top-step-1 → Continue sequence and the rapid duplicate activation that skips step 4 at the prior head. It verifies ordinary 1→2→3→4→5 navigation, all Review Edit returns, clearing the Edit return on top-step/Back navigation, Arabic/English value and theme preservation, and step-3 alignment at desktop/320px/390px in both languages and themes. Before/after screenshots and machine results are in the existing D: batch handoff. Functional gates below remain open.

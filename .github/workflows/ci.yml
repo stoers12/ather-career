@@ -101,7 +101,7 @@ jobs:
           tables=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(TABLE_NAME ORDER BY TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$REHEARSAL_DB_NAME';")
           test "$tables" = 'messages,personal_info,projects,skills' || { echo 'Rehearsal database is not a fresh V1 baseline.' >&2; exit 1; }
 
-      - name: Run thirteen isolated CLI rehearsals
+      - name: Run fifteen isolated CLI rehearsals
         run: |
           set -euo pipefail
           [[ "$REHEARSAL_DB_NAME" =~ ^ather_career_test_[a-f0-9]{24}$ ]] || { echo 'Invalid rehearsal database name.' >&2; exit 1; }
@@ -136,7 +136,7 @@ jobs:
           [[ "$expected" =~ ^[0-9]{3}(,[0-9]{3})*$ ]] || { echo 'Checked-in migration list is invalid.' >&2; exit 1; }
           ledger=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(version ORDER BY version SEPARATOR ',') FROM \`$REHEARSAL_DB_NAME\`.schema_migrations;")
           test "$ledger" = "$expected" || { echo 'Public lifecycle rehearsal did not reach the complete checked-in migration ledger.' >&2; exit 1; }
-          for required in 006 010 012 015 016; do
+          for required in 006 010 012 015 016 017; do
             [[ ",$ledger," == *",$required,"* ]] || { echo "Required migration $required is missing." >&2; exit 1; }
           done
           columns=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY COLUMN_NAME SEPARATOR ',') FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '$REHEARSAL_DB_NAME' AND TABLE_NAME = 'projects' AND COLUMN_NAME IN ('technologies', 'problem_statement', 'personal_role', 'measurable_outcome');")
@@ -159,6 +159,8 @@ jobs:
           trap cleanup_registration_user EXIT
           docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf \
             -e "CREATE USER '$REGISTRATION_DB_USER'@'%' IDENTIFIED BY '$REGISTRATION_DB_PASSWORD'; GRANT ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* TO '$REGISTRATION_DB_USER'@'%';"
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-profile-version-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-profile-version-route-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-registration-core-rehearsal.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-attestation-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-draft-tests.php
@@ -240,7 +242,7 @@ jobs:
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php database/migrate.php | grep -x 'No pending migrations.'
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php scripts/check-production-security.php
 
-      - name: Verify startup on restored migrations 001-016
+      - name: Verify startup on restored migrations 001-017
         run: bash scripts/check-restored-startup-idempotence.sh
 
       - name: Seed isolated public HTTP fixture
