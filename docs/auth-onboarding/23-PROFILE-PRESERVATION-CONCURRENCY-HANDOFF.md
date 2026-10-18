@@ -168,7 +168,8 @@ body dumps are included. The test harness mounts this worktree read-only, execut
 a container-local copy, uses cached dependency-complete PHP/MySQL images and
 removes only task-created containers/network/volumes and generated secrets.
 
-Test gaps: no remote CI, real login/provider journey, live migration, deployment
+Original local validation gaps (before initial PR CI): no remote CI,
+real login/provider journey, live migration, deployment
 or canonical gate/service/data operation. No new publication rule or completion
 workflow is implemented/tested; existing publication regressions passed. No new
 production-image build, actual Apache smoke or restored-startup execution is
@@ -178,3 +179,63 @@ database concurrency is proven separately with real parallel PHP/MySQL workers.
 Lost COMMIT acknowledgement is injected around real commits via test-only PDO
 subclasses, not a physical network partition. No new browser automation or
 screen-reader/device accessibility audit is claimed.
+
+## Draft PR 26 — bounded CI ordering correction
+
+Follow-up base: reviewed head `82bdaa8d210eae0c8aaa239e9089d1cfe390b1a6`.
+Remote main was fetched and remains `d2514104a405c26587350be84c28720ac87f3ff7`;
+the existing isolated branch is clean before this correction and preserves both
+documentation ancestors. [Draft PR 26](https://github.com/stoers12/ather-career/pull/26)
+remains a draft. No production source, schema, assertion or gate is changed.
+
+The initial [push CI](https://github.com/stoers12/ather-career/actions/runs/39158083099)
+and [PR CI](https://github.com/stoers12/ather-career/actions/runs/39158095832)
+both failed at the core suite's first migration precondition:
+`Migration upgrade fixture must precede profile editing.` The former checked out
+the reviewed head; the latter checked out temporary merge
+`d03b764789a9ad2965fadf9304fc16b379000f56`, whose parents were expected main and
+reviewed head and whose tree exactly matched the reviewed source. Production
+build, foundation/renderer/preview/readiness and preceding rehearsals passed.
+Zero of the five core or six HTTP PASS groups were reached. The remaining CLI
+commands (HTTP, registration, attestation, drafts, editor, repeated presentation
+and routing), browser, web startup/health, migration/security, restored-startup,
+public fixture, discovery mock and HTTP smoke did not execute. The dedicated
+rehearsal deletion step was skipped; final always-run cleanup instead succeeded,
+including database deletion and container/volume/network removal. Full original
+logs and the complete failed/skipped-step report are retained outside Git in the
+review folder and in the PR description.
+
+Cause: the shared-database owner-flow rehearsal successfully saves a profile and
+increments its version before the 017 upgrade fixture requires version-1 rows.
+The successful original local harness had run that fixture before owner-flow.
+This correction moves only the existing owner-flow invocation immediately after
+both profile-version suites and adds a brief ordering comment. Its original
+application credentials remain unchanged; both profile suites still use the
+generated database-scoped user. Every prerequisite, assertion, trap and cleanup
+remains intact. No versions are reset and no tests are omitted or weakened.
+
+Actual pre-push validation: PyYAML parses the workflow; an exact transformation
+check confirms only that move/comment; all 22 extracted CI Bash blocks and the
+disposable harness pass Bash syntax. `validation-ee43b3c4859b.log` records PHP
+8.3.33/MySQL 8.4.11 running all 15 rehearsal invocations in the corrected workflow
+order, extracted directly from YAML. All five profile-core and six real HTTP PASS
+groups, owner-flow and every remaining rehearsal pass. Migration checkpoints
+001–004 and the complete ledger through 017/required project columns pass.
+The original application user is retained for owner-flow; the profile/registration
+suites use a separate generated database-scoped user, removed by the exit trap.
+Fixture preservation and cleanup checks pass; task containers, anonymous volumes,
+network and generated credential file are removed. Source is mounted read-only
+and executed from a container-local copy; no canonical service/data is touched.
+
+Retained local preparation failures: the first transformation check used a
+Windows-default text encoding and was corrected to explicit UTF-8 in the external
+harness; the sandbox denied Git Bash's signal pipe, then the identical syntax
+checks passed outside the sandbox. Neither required a repository change.
+
+At this commit, corrected remote push/PR CI has not yet run. Its exact checkout
+SHAs, temporary merge tree, all PASS groups, browser/build/security/startup/HTTP
+results and every failure/skip must be checked in the resulting runs and recorded
+in the PR verification report. Local success does not substitute for those gates.
+Real provider login, live migration/deployment, device/accessibility audit and
+physical network-partition testing remain outside this correction. All other
+completion-contract recommendations remain unapproved and unimplemented.

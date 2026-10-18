@@ -143,7 +143,6 @@ jobs:
           test "$columns" = 'measurable_outcome,personal_role,problem_statement,technologies' || { echo 'Required project technology or evidence columns are missing.' >&2; exit 1; }
           echo 'PASS complete migration ledger and required project columns'
           rehearse scripts/run-phase2-tenant-authorization-rehearsal.php
-          rehearse scripts/run-phase2-owner-flow-rehearsal.php
           rehearse scripts/run-phase2-experience-rehearsal.php
           rehearse scripts/run-phase2-auth0-rehearsal.php
           # Give this registration rehearsal a generated, database-scoped user.
@@ -161,6 +160,8 @@ jobs:
             -e "CREATE USER '$REGISTRATION_DB_USER'@'%' IDENTIFIED BY '$REGISTRATION_DB_PASSWORD'; GRANT ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* TO '$REGISTRATION_DB_USER'@'%';"
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-profile-version-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-profile-version-route-tests.php
+          # The 017 upgrade fixture needs version-1 rows before owner-flow edits them.
+          rehearse scripts/run-phase2-owner-flow-rehearsal.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-registration-core-rehearsal.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-attestation-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-draft-tests.php

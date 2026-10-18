@@ -2,6 +2,16 @@
 
 Entries record repository history and verification scope. “This commit” means the commit containing this file; it avoids a self-referential hash. No entry implies deployment of proposed features.
 
+## 2026-10-18 — Draft PR 26 CI rehearsal ordering
+
+Follow-up to reviewed `82bdaa8d210eae0c8aaa239e9089d1cfe390b1a6`: move only
+owner-flow after both profile-version suites so its save cannot invalidate the
+017 upgrade fixture's version-1 precondition. Credentials, assertions and cleanup
+are unchanged. [Handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md#draft-pr-26--bounded-ci-ordering-correction)
+records both failed CI runs, cause and all 15 corrected local rehearsal passes,
+including five core/six HTTP groups. Remote reruns remain a post-push check;
+no production source/schema, gates, completion or publication behavior changes.
+
 ## 2026-10-18 — Bounded profile preservation/concurrency
 
 Local R11/R12 implementation based on `0b818ea3babece756bc866259d10b590b478c573`,
