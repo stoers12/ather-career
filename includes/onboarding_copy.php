@@ -123,3 +123,64 @@ function onboardingCopy(string $key, string $locale): string
 
     return htmlspecialchars($copy[$key][$locale], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
+function onboardingEditorMessages(string $locale): array
+{
+    $copy = [
+        'loading' => ['ar' => 'جارٍ تحميل مسودتك الخاصة…', 'en' => 'Loading your private draft…'],
+        'empty' => ['ar' => 'لا توجد مسودة محفوظة بعد. تُحفظ تعديلاتك عند متابعة أو حفظ وخروج.', 'en' => 'No saved draft yet. Edits are saved with Continue or Save and exit.'],
+        'unsaved' => ['ar' => 'تغييرات غير محفوظة. استخدم متابعة أو حفظ وخروج.', 'en' => 'Unsaved changes. Use Continue or Save and exit.'],
+        'saving' => ['ar' => 'جارٍ الحفظ… ابقَ في الصفحة حتى التأكيد.', 'en' => 'Saving… Stay on this page until acknowledged.'],
+        'saved' => ['ar' => 'المسودة محفوظة بشكل خاص. لا إنشاء ولا نشر.', 'en' => 'Draft saved privately. Nothing is created or published.'],
+        'conflict' => ['ar' => 'تغيّرت المسودة في نافذة أخرى. أبقينا تعديلاتك هنا؛ اختر تحميل مسودة الخادم لاستبدالها صراحةً.', 'en' => 'The draft changed in another tab. Your edits remain here; explicitly load the server draft to replace them.'],
+        'unavailable' => ['ar' => 'الحفظ غير متاح الآن. لم نغادر الصفحة ولم نستبدل تعديلاتك.', 'en' => 'Saving is unavailable. This page and your edits are retained.'],
+        'uncertain' => ['ar' => 'لم يصل تأكيد الحفظ. أعد محاولة العملية نفسها أو اختر تحميل مسودة الخادم. لا تغيّر العملية المعلّقة.', 'en' => 'Save acknowledgement was not received. Retry the exact pending operation or explicitly load the server draft.'],
+        'invalid' => ['ar' => 'لم تُحفظ هذه العملية. راجع حدود الحقول والصيغ ثم حاول مجددًا؛ لا نغيّر النص تلقائيًا.', 'en' => 'This operation was rejected. Check field lengths and formats, then try again; text is never changed automatically.'],
+        'auth' => ['ar' => 'توقّف الحفظ: انتهى السياق أو تغيّر الحساب. افتح صفحة موثّقة جديدة قبل إدخال القيم مجددًا.', 'en' => 'Saving stopped: the session expired or account context changed. Open a fresh authenticated page before entering values again.'],
+        'retry' => ['ar' => 'إعادة المحاولة نفسها', 'en' => 'Retry exact operation'],
+        'recover' => ['ar' => 'تحميل مسودة الخادم', 'en' => 'Load server draft'],
+        'fresh' => ['ar' => 'فتح سياق جديد', 'en' => 'Open fresh page context'],
+        'replace_confirm' => ['ar' => 'هل تريد استبدال جميع التعديلات غير المحفوظة هنا بمسودة الخادم؟ قد تكون العملية غير المؤكدة قد حُفظت.', 'en' => 'Replace all local unsaved edits with the server draft? An uncertain operation may already have been saved.'],
+        'fresh_confirm' => ['ar' => 'ستفقد التعديلات المحلية عند فتح سياق جديد. متابعة؟', 'en' => 'Opening a fresh page discards local edits. Continue?'],
+        'clear_language' => ['ar' => 'مسح تفضيل اللغة', 'en' => 'Clear language preference'],
+        'no_js' => ['ar' => 'يتطلب تحرير المسودة JavaScript. لا تُحفظ القيم دون تأكيد.', 'en' => 'Draft editing requires JavaScript. Values are saved only after acknowledgement.'],
+    ];
+    return array_map(static fn (array $pair): string => $pair[$locale], $copy);
+}
+
+function onboardingEditorCopy(string $key, string $locale): string
+{
+    $messages = onboardingEditorMessages($locale);
+    if (isset($messages[$key])) { return htmlspecialchars($messages[$key], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
+    $copy = [
+        'title' => ['ar' => 'مسودة الإعداد الخاصة | أثر', 'en' => 'Private onboarding draft | Ather'],
+        'country_limit' => ['ar' => 'اختيارات توضيحية فقط؛ تبقى القيم المحفوظة خارجها ظاهرة. لم تُعتمد قائمة نهائية.', 'en' => 'Sample choices only; other saved values stay visible. No final catalog is approved.'],
+        'status_limit' => ['ar' => 'أمثلة فقط؛ تُحفظ أي حالة سابقة كما هي دون تحويلها إلى تصنيف نهائي.', 'en' => 'Examples only; an existing status is preserved exactly, without a final classification.'],
+        'preferred_language_hint' => ['ar' => 'تفضيل مرشح للملف فقط. لغة الواجهة لا تغيّر هذا التفضيل.', 'en' => 'Candidate profile preference only. Interface language does not change this preference.'],
+        'private_badge' => ['ar' => 'معاينة مسودة خاصة', 'en' => 'Private draft preview'],
+        'preview_project' => ['ar' => 'لا تُحمّل المشاريع أو تُغيّر من محرر المسودة.', 'en' => 'Projects are not loaded or changed by the draft editor.'],
+
+        'preview_state' => ['ar' => 'جارٍ تحميل المسودة…', 'en' => 'Loading draft…'],
+        'save_unavailable' => ['ar' => 'الحفظ متاح بعد تحميل المسودة.', 'en' => 'Saving becomes available after loading the draft.'],
+        'step_1_lead' => ['ar' => 'هذا محرر مسودة فقط. لا يثبت جاهزية الحساب أو الأهلية ولا يسجل موافقة.', 'en' => 'This is a draft editor only. It establishes no account readiness or eligibility and records no consent.'],
+        'email_example' => ['ar' => 'جلسة موثّقة فقط', 'en' => 'Authenticated session only'],
+        'example_email' => ['ar' => 'لا يُعرض بريد الحساب هنا', 'en' => 'Account email is not displayed here'],
+        'example_badge' => ['ar' => 'لم يُقيّم', 'en' => 'Not evaluated'],
+        'email_notice' => ['ar' => 'تسجيل الدخول ليس دليلًا على اجتياز أي بوابة. لا نعرض بريدًا توضيحيًا على أنه بريدك.', 'en' => 'Sign-in is not proof that any gate passed. No example email is presented as yours.'],
+        'age_hint' => ['ar' => 'غير متاح هنا؛ لا يُسجّل إقرار بالعمر من المسودة.', 'en' => 'Unavailable here; this draft records no age affirmation.'],
+        'terms_hint' => ['ar' => 'الشروط الفعلية غير متاحة؛ لا يمكن قبولها في المحرر.', 'en' => 'Real Terms are unavailable; they cannot be accepted in this editor.'],
+        'privacy_hint' => ['ar' => 'إشعار الخصوصية الفعلي غير متاح؛ لا يُسجّل قبول هنا.', 'en' => 'The real Privacy Notice is unavailable; no acceptance is recorded here.'],
+        'consent_notice' => ['ar' => 'عناصر الموافقة معطّلة. يمكنك حفظ قيم مرشحة فقط دون اجتياز هذه البوابة.', 'en' => 'Consent controls are disabled. Only candidate values can be saved; this gate is not passed.'],
+        'identity_note' => ['ar' => 'قيم مسودة خاصة فقط؛ لا نشر للهوية أو الملف.', 'en' => 'Private draft candidates only; no identity or profile publication.'],
+        'phone_note' => ['ar' => 'لا يجمع هذا المحرر رقم الهاتف. تُحفظ أي قيمة سابقة دون تغيير.', 'en' => 'This editor does not collect a phone number. Any previously saved value remains unchanged.'],
+        'required_note' => ['ar' => 'يمكن حفظ مسودة غير مكتملة. لا تنشئ هذه الحقول ملفًا ولا تُكمل الإعداد.', 'en' => 'Incomplete drafts can be saved. These fields do not create a profile or complete setup.'],
+        'required_mark' => ['ar' => 'مرشح فقط', 'en' => 'Candidate only'],
+        'slug_hint' => ['ar' => 'مرشح فقط: 1–63 حرفًا إنجليزيًا صغيرًا أو رقمًا أو شرطة. لا فحص للتوفر ولا حجز للرابط.', 'en' => 'Candidate only: 1–63 lowercase ASCII letters, digits or hyphens. Availability is not checked and no link is reserved.'],
+        'privacy_note' => ['ar' => 'عناصر الظهور والخصوصية معطّلة؛ لا تُحفظ ولا تصبح أي بيانات عامة.', 'en' => 'Visibility/privacy controls are disabled and are not saved. Nothing becomes public.'],
+        'email_visibility_hint' => ['ar' => 'غير متاح في محرر المسودة.', 'en' => 'Unavailable in the draft editor.'],
+        'phone_visibility_hint' => ['ar' => 'غير متاح في محرر المسودة.', 'en' => 'Unavailable in the draft editor.'],
+        'create_unavailable' => ['ar' => 'الإنشاء معطّل. حفظ المسودة لا يسجل موافقة أو جاهزية أو اكتمالًا أو ملكية رابط أو نشرًا.', 'en' => 'Create is disabled. Saving establishes no consent, readiness, completion, slug ownership or publication.'],
+        'review_private' => ['ar' => 'الظهور غير متاح؛ مسودة خاصة فقط', 'en' => 'Visibility unavailable; private draft only'],
+        'preview_footer' => ['ar' => 'تحفظ متابعة وحفظ وخروج تعديلات الحقول فقط بعد تأكيد الخادم. لا إنشاء ولا نشر.', 'en' => 'Continue and Save and exit save edited fields only after server acknowledgement. No creation or publication.'],
+    ];
+    return isset($copy[$key]) ? htmlspecialchars($copy[$key][$locale], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : onboardingCopy($key, $locale);
+}

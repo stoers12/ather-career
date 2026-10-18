@@ -180,3 +180,13 @@ html[data-landing-theme="dark"] #ather-onboarding-preview .ao-primary { color: #
     #ather-onboarding-preview .ao-status-row { align-items: flex-start; flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) { #ather-onboarding-preview *, #ather-onboarding-preview *::before, #ather-onboarding-preview *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+
+/* Private editor additions preserve the approved preview's composition. */
+#ather-onboarding-preview[data-draft-editor] .ao-draft-feedback { margin: 0 0 18px; padding: 12px; border: 1px solid var(--ao-border); border-radius: 12px; background: var(--ao-soft); overflow-wrap: anywhere; }
+#ather-onboarding-preview[data-draft-editor] .ao-draft-feedback p { margin: 0 0 8px; }
+#ather-onboarding-preview[data-draft-editor] .ao-draft-recovery { display: flex; flex-wrap: wrap; gap: 8px; }
+#ather-onboarding-preview[data-draft-editor] .ao-save-state { max-width: 34%; overflow-wrap: anywhere; }
+#ather-onboarding-preview[data-draft-editor] input:disabled, #ather-onboarding-preview[data-draft-editor] select:disabled { cursor: not-allowed; }
+#ather-onboarding-preview[data-draft-editor] .ao-check:has(input:disabled), #ather-onboarding-preview[data-draft-editor] .ao-toggle-row { opacity: .75; }
+#ather-onboarding-preview[data-draft-editor] .ao-preview-meta span, #ather-onboarding-preview[data-draft-editor] .ao-preview-headline, #ather-onboarding-preview[data-draft-editor] .ao-review-item strong { overflow-wrap: anywhere; min-width: 0; }
+@media(max-width:560px) { #ather-onboarding-preview[data-draft-editor] .ao-save-state { max-width: 52%; } }

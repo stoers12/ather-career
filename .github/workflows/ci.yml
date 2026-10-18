@@ -36,7 +36,7 @@ jobs:
           docker run --rm -v "$PWD:/app:ro" -w /app php:8.3-cli sh -lc 'find . -name "*.php" -not -path "./.git/*" -print0 | xargs -0 -n1 php -l'
 
       - name: JavaScript syntax
-        run: node --check admin.js && node --check portfolio.js && node --check onboarding.js
+        run: node --check admin.js && node --check portfolio.js && node --check onboarding.js && node --check onboarding_editor.js
 
       - name: Validate production Compose configuration
         run: docker compose -p ather-career-ci -f docker-compose.production.yml config --quiet
@@ -101,7 +101,7 @@ jobs:
           tables=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(TABLE_NAME ORDER BY TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$REHEARSAL_DB_NAME';")
           test "$tables" = 'messages,personal_info,projects,skills' || { echo 'Rehearsal database is not a fresh V1 baseline.' >&2; exit 1; }
 
-      - name: Run eleven isolated CLI rehearsals
+      - name: Run thirteen isolated CLI rehearsals
         run: |
           set -euo pipefail
           [[ "$REHEARSAL_DB_NAME" =~ ^ather_career_test_[a-f0-9]{24}$ ]] || { echo 'Invalid rehearsal database name.' >&2; exit 1; }
@@ -163,7 +163,46 @@ jobs:
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-attestation-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-draft-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-draft-route-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-editor-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-presentation-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-registration-routing-tests.php
+
+      - name: Authenticated draft editor browser checks
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/ather-editor-tools" --no-audit --no-fund playwright@1.58.0
+          "$RUNNER_TEMP/ather-editor-tools/node_modules/.bin/playwright" install --with-deps chromium
+          EDITOR_DB_USER="editor_$(openssl rand -hex 8)"
+          EDITOR_DB_PASSWORD="$(openssl rand -hex 32)"
+          echo "::add-mask::$EDITOR_DB_PASSWORD"
+          EDITOR_EVIDENCE="$RUNNER_TEMP/ather-editor-evidence"
+          mkdir -m 0700 "$EDITOR_EVIDENCE"
+          cleanup_editor() {
+            touch "$EDITOR_EVIDENCE/stop"
+            if docker inspect ather-career-ci-editor >/dev/null 2>&1; then
+              docker logs ather-career-ci-editor || true
+              docker rm -f -v ather-career-ci-editor
+            fi
+            docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -e "DROP USER IF EXISTS '$EDITOR_DB_USER'@'%';"
+            rm -f "$EDITOR_EVIDENCE/private-context.json" "$EDITOR_EVIDENCE/stop"
+          }
+          trap cleanup_editor EXIT
+          docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -e "CREATE USER '$EDITOR_DB_USER'@'%' IDENTIFIED BY '$EDITOR_DB_PASSWORD'; GRANT ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* TO '$EDITOR_DB_USER'@'%';"
+          docker compose -p ather-career-ci -f docker-compose.production.yml run -d --no-deps --name ather-career-ci-editor --entrypoint php \
+            -p 127.0.0.1:8099:8080 -p 127.0.0.1:8100:8081 -v "$EDITOR_EVIDENCE:/evidence" \
+            -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e "DB_NAME=$REHEARSAL_DB_NAME" -e "ATHERCAR_TEST_DB_NAME=$REHEARSAL_DB_NAME" \
+            -e "DB_USER=$EDITOR_DB_USER" -e "DB_PASSWORD=$EDITOR_DB_PASSWORD" -e ATHERCAR_EDITOR_EVIDENCE_DIR=/evidence \
+            web scripts/run-onboarding-editor-browser-fixture.php
+          for _ in $(seq 1 120); do test -f "$EDITOR_EVIDENCE/private-context.json" && break; sleep 1; done
+          test -f "$EDITOR_EVIDENCE/private-context.json"
+          APP_ENV=test ATHERCAR_TEST_MODE=1 \
+            ATHERCAR_PLAYWRIGHT_MODULE="$RUNNER_TEMP/ather-editor-tools/node_modules/playwright" \
+            ATHERCAR_EDITOR_BASE_URL=http://127.0.0.1:8099 ATHERCAR_EDITOR_OFF_URL=http://127.0.0.1:8100 \
+            ATHERCAR_EDITOR_CONTAINER=ather-career-ci-editor ATHERCAR_EDITOR_APP_ROOT=/var/www/app \
+            ATHERCAR_EDITOR_EVIDENCE_DIR="$EDITOR_EVIDENCE" node scripts/run-onboarding-editor-browser-tests.mjs
+          touch "$EDITOR_EVIDENCE/stop"
+          test "$(docker wait ather-career-ci-editor)" = 0
+          docker logs ather-career-ci-editor
 
       - name: Remove isolated rehearsal database
         run: |
@@ -271,12 +310,15 @@ jobs:
           curl --fail http://127.0.0.1:8098/signin.php | grep 'lang="ar" dir="rtl"'
           curl --fail 'http://127.0.0.1:8098/signin.php?lang=en' | grep 'lang="en" dir="ltr"'
           curl --fail http://127.0.0.1:8098/signin.css >/dev/null
+          curl --fail http://127.0.0.1:8098/onboarding.css >/dev/null
+          curl --fail http://127.0.0.1:8098/onboarding_editor.js >/dev/null
           curl --fail http://127.0.0.1:8098/signup.php | grep 'lang="ar" dir="rtl"'
           curl --fail 'http://127.0.0.1:8098/signup.php?lang=en' | grep 'lang="en" dir="ltr"'
           curl --fail http://127.0.0.1:8098/signup.css >/dev/null
           test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/signup.php)" = 405
           test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/owner_register.php)" = 404
           for method in GET POST; do test "$(curl -sS -o /dev/null -w '%{http_code}' -X "$method" http://127.0.0.1:8098/owner_onboarding_draft.php)" = 404; done
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8098/owner_onboarding_editor.php)" = 404
           for route in /verification-pending.php /verification-success.php /verification-resent.php /verification-expired.php /verification-error.php /account-disabled.php /tests/phase2/support/email-verification-preview.php /forgot-password.php /reset-password.php /tests/phase2/support/recovery-preview.php /onboarding-preview.php /tests/phase2/support/onboarding-preview.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done
           test "$(curl -g -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8098/owner_login.php?method[]=google')" = 400
           for route in /admin.php /login.php /logout.php /personal_info.php /projects.php /messages.php /api/projects.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done
@@ -330,6 +372,9 @@ jobs:
         run: |
           set +e
           cleanup_failed=0
+          if docker inspect ather-career-ci-editor >/dev/null 2>&1; then
+            docker rm -f -v ather-career-ci-editor || { echo 'Editor browser container cleanup failed.' >&2; cleanup_failed=1; }
+          fi
           if docker inspect ather-career-ci-web-1 >/dev/null 2>&1; then
             docker exec ather-career-ci-web-1 sh -ec '
               if test -f /tmp/ather-career-ci-oidc/mock.pid; then

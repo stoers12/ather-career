@@ -44,6 +44,10 @@ Local HTTP follow-up: [20 — authenticated onboarding draft HTTP
 handoff](20-ONBOARDING-DRAFT-HTTP-HANDOFF.md). The JSON resume/save boundary is
 default off and independent of registration; onboarding UI/completion remain deferred.
 
+Local editor follow-up: [21 — private onboarding draft editor](21-ONBOARDING-DRAFT-EDITOR-HANDOFF.md).
+The approved design now supports authenticated explicit save/resume behind the same
+default-off gate; completion, consent, publication and final catalogs remain deferred.
+
 ## Status vocabulary
 
 | Status | Meaning |
