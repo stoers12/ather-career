@@ -2,6 +2,26 @@
 
 Entries record repository history and verification scope. “This commit” means the commit containing this file; it avoids a self-referential hash. No entry implies deployment of proposed features.
 
+## 2026-10-18 — Draft PR 26 CI rehearsal ordering
+
+Follow-up to reviewed `82bdaa8d210eae0c8aaa239e9089d1cfe390b1a6`: move only
+owner-flow after both profile-version suites so its save cannot invalidate the
+017 upgrade fixture's version-1 precondition. Credentials, assertions and cleanup
+are unchanged. [Handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md#draft-pr-26--bounded-ci-ordering-correction)
+records both failed CI runs, cause and all 15 corrected local rehearsal passes,
+including five core/six HTTP groups. Remote reruns remain a post-push check;
+no production source/schema, gates, completion or publication behavior changes.
+
+## 2026-10-18 — Bounded profile preservation/concurrency
+
+Local R11/R12 implementation based on `0b818ea3babece756bc866259d10b590b478c573`,
+preserving both prior documentation commits. Adds only migration 017's profile
+version, loaded form tokens, scoped CAS/absence guards, omission and explicit
+visibility handling, and confirmed/uncertain media outcome handling. Focused
+guarded MySQL/HTTP checks join CI; [handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md)
+records evidence and gaps. No completion fields, catalogs, policy/publication/routing
+changes, activation, deployment, real login or live migration are included.
+
 | Date | Phase | Branch / commit | Changes | Migrations | Tests | Security/privacy impact | Runtime/data impact | Deployment / recovery | Limitations | Next safe action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 2026-10-15 | Public identity visual alignment | feat/onboarding-steps3-5-20261015 / this commit; parent 257dc5e654a0530234a4549d4bc77261d1470e10 | Align the step-2 native country select and adjacent preferred-language cards with scoped CSS | None | 12 affected rendered states, long labels, native arrow, keyboard focus, selection preservation, 482 focused checks and diff validation | No data persistence or functional change | Isolated local preview only | No push, merge or deployment | Owner reports prior behavior works; acceptance of this visual correction remains pending | Owner visual review |

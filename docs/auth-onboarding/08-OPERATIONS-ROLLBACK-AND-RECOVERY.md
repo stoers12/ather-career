@@ -1,5 +1,13 @@
 # 08 — Operations, rollback and recovery
 
+**2026-10-18 local profile-version slice:** 017 is additive and unapplied live.
+Do not deploy the new profile writers against pre-017 schema; normal migration
+verification/readiness must pass first. Old forms without a version require
+explicit reload. Do not roll back by resetting counters or replaying stale input.
+After uncertain media commit/rollback acknowledgement, retain potentially referenced
+files and inspect authorized current state under the existing recovery process;
+there is no automatic cleanup/deletion job. See [handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
+
 **2026-10-05 status update:** Migration 014 is already deployed with ledger 001–014. The local Phase 2A callback candidate is not intentionally deployed. A canonical bind mount briefly exposed it during local branch work; maintenance restored the mounted checkout to approved main. Its quiesced recovery boundary and the danger of blindly restoring the old auto-creating callback are in [10](10-PHASE2A-CALLBACK-RESOLUTION.md). The original Phase 1 runbook below is historical.
 
 **Historical Phase 1 runbook; not an instruction to rerun 014.** Its initial rehearsal used disposable fresh and upgraded databases. A later protected maintenance task deployed 014; the canonical ledger is now 001–014. This documentation correction performs no live migration or tenant mutation. The bind-mount service maintenance is recorded below. Any live operation requires an owner-approved phase plan and maintenance window. Store recovery artifacts outside Git in access-controlled storage. Use placeholders named RECOVERY_STORE, DATABASE_COPY and DEPLOYMENT_REF; never paste credentials, tokens, personal rows or live absolute backup paths here. See [migrations](04-DATA-MODEL-AND-MIGRATIONS.md) and [tests](07-TEST-AND-ACCEPTANCE-MATRIX.md).

@@ -44,7 +44,7 @@ phase2Assert(str_contains(contactRehearsalChild([__DIR__ . '/../database/migrate
 // Run the real public page and contact-error entrypoints in child processes.
 foreach ([0, 1, 0] as $visible) {
     $owner = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 1);
-    updateAuthorizedPersonalInfo($db, $owner, 1, ['public_contact_visible' => $visible]);
+    updateAuthorizedPersonalInfo($db, $owner, 1, ['public_contact_visible' => $visible], (int) loadAuthorizedPersonalInfo($db, $owner)['profile_version']);
     foreach (['public_portfolio.php', 'public_contact.php'] as $route) {
         $code = '$_SERVER["REQUEST_METHOD"]=' . var_export($route === 'public_contact.php' ? 'POST' : 'GET', true) . '; $_GET["slug"]="contact-owner"; $_POST=[]; require ' . var_export(dirname(__DIR__) . '/' . $route, true) . ';';
         $html = contactRehearsalChild(['-r', $code]);

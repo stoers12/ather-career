@@ -12,6 +12,7 @@ require_once __DIR__ . '/ownership_backfill.php';
 require_once __DIR__ . '/identity_foundation.php';
 require_once __DIR__ . '/onboarding_attestations.php';
 require_once __DIR__ . '/onboarding_drafts.php';
+require_once __DIR__ . '/profile_version.php';
 
 class MigrationPreconditionException extends RuntimeException
 {
@@ -711,6 +712,10 @@ function executeOptionalProjectGithubUrlMigration(PDO $database): void
 
 function executeSqlMigration(PDO $database, array $migration): void
 {
+    if ($migration['version'] === '017' && $migration['name'] === 'profile_version') {
+        executeProfileVersionMigration($database);
+        return;
+    }
     if ($migration['version'] === '016' && $migration['name'] === 'onboarding_drafts') {
         executeOnboardingDraftMigration($database);
         return;
@@ -809,6 +814,7 @@ function runMigrations(): void
             if (isset($applied[$migration['version']])) {
                 if ($migration['version'] === '015') { verifyOnboardingAttestationSchema($database); }
                 if ($migration['version'] === '016') { verifyOnboardingDraftSchema($database); }
+                if ($migration['version'] === '017') { verifyProfileVersionSchema($database); }
                 continue;
             }
 

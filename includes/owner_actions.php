@@ -8,6 +8,7 @@ require_once __DIR__ . '/profile_actions.php';
 require_once __DIR__ . '/project_actions.php';
 require_once __DIR__ . '/experience_actions.php';
 require_once __DIR__ . '/transaction.php';
+require_once __DIR__ . '/profile_form_actions.php';
 
 function ownerActionId(mixed $value): ?int
 {
@@ -45,10 +46,12 @@ function handleAuthorizedProfileAction(
     array $profile,
 ): array {
     $action = isset($post['action']) && is_string($post['action']) ? $post['action'] : '';
+    if (in_array($action, ['save_profile', 'upload_profile_image', 'remove_profile_image'], true)) {
+        return handleVersionedProfileAction($database, $context, $post, $files, $current, $fields, $profile);
+    }
     $errors = [];
     $fieldErrors = [];
     $target = null;
-    $newImagePath = null;
 
     try {
         $target = ownerProfileActionTarget($database, $context, $post, $current);
@@ -56,98 +59,6 @@ function handleAuthorizedProfileAction(
             $status = ownerActionId($post['profile_id']) === null ? 422 : 404;
             $fieldErrors['profile_id'] = $status === 422 ? 'Please provide a valid profile ID.' : 'Profile not found.';
             return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, $status);
-        }
-
-        if ($action === 'upload_profile_image') {
-            if ($target === null) {
-                $fieldErrors['profile_image'] = 'Save your personal information before uploading a photo.';
-                return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 422);
-            }
-
-            $newImagePath = storeValidatedProfileImage($files['profile_image'] ?? [], $errors, $context->portfolioId);
-            if ($errors !== []) {
-                $fieldErrors['profile_image'] = $errors[0];
-                return ownerProfileActionResult($errors, $profile, null, $fieldErrors, 422);
-            }
-
-            $updated = runDatabaseTransaction($database, static fn (): bool => updateAuthorizedPersonalInfo(
-                $database,
-                $context,
-                (int) $target['id'],
-                ['profile_image_path' => $newImagePath],
-            ));
-            if (!$updated) {
-                cleanProfileImage($newImagePath, 'owner_profile_update_compensation', $context->portfolioId);
-                $fieldErrors['profile_image'] = 'The profile photo could not be updated.';
-                return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 503);
-            }
-
-            cleanProfileImage($target['profile_image_path'] ?? null, 'owner_profile_update_old_image', $context->portfolioId);
-            return ownerProfileActionResult([], $profile, 'owner_profile.php?photo_updated=1');
-        }
-
-        if ($action === 'save_profile') {
-            $visibility = $post['public_contact_visible'] ?? null;
-            $profile['public_contact_visible'] = $visibility === '1';
-            if (array_key_exists('public_contact_visible', $post) && $visibility !== '1') {
-                $fieldErrors['public_contact_visible'] = 'Please select a valid contact visibility option.';
-            }
-            foreach ($fields as $field) {
-                $label = match ($field) {
-                    'hero_headline' => 'Hero headline',
-                    'work_description' => 'Professional summary',
-                    default => ucwords(str_replace('_', ' ', $field)),
-                };
-                $result = submittedStringField($post, $field, PERSONAL_INFO_FIELD_MAX_LENGTHS[$field], $label, $field === 'full_name');
-                $profile[$field] = $result['value'];
-                if ($result['error'] !== null) {
-                    $fieldErrors[$field] = $result['error'];
-                }
-            }
-            if (!isset($fieldErrors['email']) && $profile['email'] !== '' && filter_var($profile['email'], FILTER_VALIDATE_EMAIL) === false) {
-                $fieldErrors['email'] = 'Please enter a valid email address.';
-            }
-            foreach (['linkedin_url', 'github_url', 'instagram_url', 'facebook_url', 'website_url'] as $urlField) {
-                if (!isset($fieldErrors[$urlField]) && $profile[$urlField] !== '' && !isSafeHttpUrl($profile[$urlField])) {
-                    $fieldErrors[$urlField] = 'Please enter a valid HTTP or HTTPS URL.';
-                }
-            }
-            $errors = validationErrorList($fieldErrors);
-            if ($errors !== []) {
-                return ownerProfileActionResult($errors, $profile, null, $fieldErrors, 422);
-            }
-
-            $values = [];
-            foreach ($fields as $field) {
-                $values[$field] = $profile[$field];
-            }
-            $values['profile_image_path'] = $target['profile_image_path'] ?? null;
-            $values['public_contact_visible'] = $profile['public_contact_visible'];
-
-            if ($target === null) {
-                runDatabaseTransaction($database, static fn (): int => createAuthorizedPersonalInfo($database, $context, $values));
-            } elseif (!runDatabaseTransaction($database, static fn (): bool => updateAuthorizedPersonalInfo($database, $context, (int) $target['id'], $values))) {
-                $fieldErrors['profile'] = 'Your personal information could not be saved. Please reload and try again.';
-                return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 503);
-            }
-
-            return ownerProfileActionResult([], $profile, 'owner_profile.php?saved=1');
-        }
-
-        if ($action === 'remove_profile_image') {
-            if ($target === null || empty($target['profile_image_path'])) {
-                $fieldErrors['profile_image'] = 'Profile photo not found.';
-                return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 404);
-            }
-
-            $imagePath = (string) $target['profile_image_path'];
-            if (!runDatabaseTransaction($database, static fn (): bool => updateAuthorizedPersonalInfo($database, $context, (int) $target['id'], ['profile_image_path' => null]))) {
-                $fieldErrors['profile_image'] = 'Profile photo not found.';
-                return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 404);
-            }
-
-            cleanProfileImage($imagePath, 'owner_profile_remove_old_image', $context->portfolioId);
-            return ownerProfileActionResult([], $profile, 'owner_profile.php?photo_removed=1');
         }
 
         if ($action === 'add_skill') {
@@ -201,15 +112,7 @@ function handleAuthorizedProfileAction(
             $fieldErrors['skill_name'] = 'That skill already exists.';
             return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 422);
         }
-        if ($action === 'save_profile' && $target === null && $exception instanceof PDOException && isMySqlDuplicateKeyViolation($exception)) {
-            $fieldErrors['profile'] = 'Profile was initialized by another request. Please reload and try again.';
-            return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 409);
-        }
-
         reportApplicationError($exception, 'owner_profile.php', 'owner_profile_' . ($action === '' ? 'unknown' : $action));
-        if ($newImagePath !== null) {
-            cleanProfileImage($newImagePath, 'owner_profile_database_compensation', $context->portfolioId);
-        }
         $fieldErrors['profile'] = 'The requested change could not be saved.';
         return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, 503);
     }

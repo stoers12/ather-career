@@ -37,6 +37,22 @@ include exception messages, SQL, paths, credentials, tokens, cookies, CSRF
 values, or request bodies. Expected domain validation messages remain
 client-safe and are rendered only by their owning workflow.
 
+## Versioned profile forms
+
+`owner_profile.php` loads each profile and its version together. Text/contact,
+upload and removal POSTs require the original `expected_profile_version`: canonical
+decimal 0–2,147,483,647; 0 denotes an absent profile. Missing/invalid/stale versions
+return safe HTML 409 with explicit reload/review, retaining submitted text, valid
+visibility choices and the original token. Even pre-handler upload denials must
+not replace that token with a fresh version. Same-value saves advance once.
+Malformed patches return 422; successful mutations retain the existing 303 PRG.
+Omitted fields preserve storage; supplied empty optional text clears to NULL.
+Visibility is explicit 0/1, or exact `public_contact_present=1` plus an unchecked
+checkbox for false; omission of both preserves it. Photo selections may need
+reselection. Uncertain COMMIT outcomes return honest 503/reload guidance and retain
+potentially referenced media. Authorization/CSRF and existing-owner readiness policy
+are unchanged. See [the scoped handoff](auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
+
 ## Public Sign In presentation
 
 `/signin.php` accepts `GET` and `HEAD`; `lang=en` selects English/LTR,

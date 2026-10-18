@@ -220,13 +220,13 @@ try {
     $filesystemBefore = ownerFlowUploadSnapshot($uploadsRoot);
 
     $foreignProfile = handleAuthorizedProfileAction($database, $contextA, [
-        'action' => 'save_profile', 'profile_id' => (string) $profileB, 'portfolio_id' => (string) $portfolioB,
+        'action' => 'save_profile', 'profile_id' => (string) $profileB, 'expected_profile_version' => (string) $currentA['profile_version'],
         ...ownerFlowProfileValues('Attempted B Profile'),
     ], [], $currentA, array_keys(ownerFlowProfileValues('')), ownerFlowProfileValues('Private A'));
     phase2Assert($foreignProfile['errors'] !== [], 'A foreign profile ID was accepted by an owner route action.');
 
     $ownProfile = handleAuthorizedProfileAction($database, $contextA, [
-        'action' => 'save_profile', 'profile_id' => (string) $profileA, 'portfolio_id' => (string) $portfolioB,
+        'action' => 'save_profile', 'profile_id' => (string) $profileA, 'expected_profile_version' => (string) $currentA['profile_version'],
         ...ownerFlowProfileValues('A Updated Only'),
     ], [], $currentA, array_keys(ownerFlowProfileValues('')), ownerFlowProfileValues('Private A'));
     phase2AssertSame('owner_profile.php?saved=1', $ownProfile['redirect'], 'Profile save did not PRG.');

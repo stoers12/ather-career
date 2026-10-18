@@ -26,10 +26,12 @@ page summary. Submitted scalar values are rendered from the handler result after
 a validation response; file controls deliberately cannot retain a selected file
 under browser security rules.
 
-Saving an unchanged, valid profile is still a successful Owner-scoped update.
-The persistence helper distinguishes that normal zero-row database result from a
-missing or cross-Owner record, so the UI never presents a false availability
-error for an unchanged profile.
+Saving an unchanged, valid profile with its current loaded version is a successful
+Owner-scoped update that increments the version once. Atomic version comparison
+replaces the former existence-based zero-row fallback: stale forms return 409,
+preserve their text/visibility/original version and require explicit reload/review.
+Omitted fields preserve their saved values; text saves do not replay image paths.
+See [the bounded profile handoff](auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
 
 Owner forms continue to work without JavaScript. With JavaScript, an eligible
 submit control is temporarily disabled, retains a stable width, and announces a

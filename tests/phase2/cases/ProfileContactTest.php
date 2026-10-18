@@ -42,7 +42,7 @@ final class ProfileContactTest
         $db = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $fields = array_values(array_diff(AUTHORIZED_PERSONAL_INFO_FIELDS, ['public_contact_visible', 'profile_image_path']));
         $columns = implode(', ', array_map(static fn ($field) => $field . ' TEXT', [...$fields, 'profile_image_path']));
-        $db->exec('CREATE TABLE personal_info (id INTEGER PRIMARY KEY, portfolio_id INTEGER UNIQUE, updated_at TEXT, public_contact_visible INTEGER NOT NULL DEFAULT 0 CHECK(public_contact_visible IN (0,1)), ' . $columns . ')');
+        $db->exec('CREATE TABLE personal_info (id INTEGER PRIMARY KEY, portfolio_id INTEGER UNIQUE, updated_at TEXT, profile_version INTEGER NOT NULL DEFAULT 1, public_contact_visible INTEGER NOT NULL DEFAULT 0 CHECK(public_contact_visible IN (0,1)), ' . $columns . ')');
         $db->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT); CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER, public_slug TEXT, is_published INTEGER); CREATE TABLE skills (id INTEGER PRIMARY KEY, portfolio_id INTEGER, skill_name TEXT)");
         $db->exec("INSERT INTO users VALUES (1,'active'),(2,'active'); INSERT INTO portfolios VALUES (1,1,'contact-owner',1),(2,2,'other-owner',1)");
         $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 1);
@@ -55,9 +55,7 @@ final class ProfileContactTest
         phase2AssertSame(0, (int) $current['public_contact_visible'], 'New profile visibility is not OFF.');
         $post = array_merge(array_fill_keys($fields, ''), array_map('trim', $profile), ['action' => 'save_profile', 'profile_id' => (string) $id]);
         foreach ([false, true, false] as $visible) {
-            if ($visible) $post['public_contact_visible'] = '1'; else unset($post['public_contact_visible']);
-            $result = handleAuthorizedProfileAction($db, $context, $post, [], $current, $fields, $current);
-            phase2AssertSame([], $result['errors'], 'Authorized visibility save failed.');
+            phase2Assert(updateAuthorizedPersonalInfo($db, $context, $id, ['public_contact_visible' => $visible], (int) loadAuthorizedPersonalInfo($db, $context)['profile_version']), 'Authorized visibility save failed.');
             $current = loadAuthorizedPersonalInfo($db, $context);
             phase2AssertSame((int) $visible, (int) $current['public_contact_visible'], 'Visibility did not persist.');
             $public = loadPublicPersonalInfo($db, $publicContext);
@@ -71,18 +69,12 @@ final class ProfileContactTest
             }
             phase2Assert(str_contains(self::render($current, ['preview' => true]), 'contact@example.org'), 'Private preview hid saved owner contacts.');
             handleAuthorizedProfileAction($db, $context, ['action' => 'add_skill', 'skill_name' => $visible ? 'On' : 'Off'], [], $current, $fields, $current);
-            updateAuthorizedPersonalInfo($db, $context, $id, ['profile_image_path' => null]);
+            updateAuthorizedPersonalInfo($db, $context, $id, ['profile_image_path' => null], (int) loadAuthorizedPersonalInfo($db, $context)['profile_version']);
             phase2AssertSame((int) $visible, (int) loadAuthorizedPersonalInfo($db, $context)['public_contact_visible'], 'Unrelated skill/photo update changed visibility.');
         }
-        $post['profile_id'] = (string) $foreignId;
-        $post['public_contact_visible'] = '1';
-        $result = handleAuthorizedProfileAction($db, $context, $post, [], $current, $fields, $current);
-        phase2AssertSame(['Profile not found.'], $result['errors'], 'Foreign profile mutation was accepted.');
-        phase2AssertSame(0, (int) loadAuthorizedPersonalInfo($db, $other)['public_contact_visible'], 'Foreign contact visibility changed.');
-        $post['profile_id'] = (string) $id;
-        $post['public_contact_visible'] = ['1'];
-        $result = handleAuthorizedProfileAction($db, $context, $post, [], $current, $fields, $current);
-        phase2Assert($result['errors'] !== [] && (int) loadAuthorizedPersonalInfo($db, $context)['public_contact_visible'] === 0, 'Malformed checkbox input changed visibility.');
+        phase2AssertSame(false, updateAuthorizedPersonalInfo($db, $context, $foreignId, ['public_contact_visible' => 1], 1), 'Foreign profile mutation was accepted.');
+        phase2AssertSame(0, (int) loadAuthorizedPersonalInfo($db, $other)['public_contact_visible'], 'Foreign visibility changed.');
+        try { authorizedPersonalInfoValues(['public_contact_visible' => ['1']]); throw new RuntimeException('Malformed visibility accepted.'); } catch (InvalidArgumentException) {}
         $db->exec('UPDATE portfolios SET is_published=0 WHERE id=1');
         phase2AssertSame(null, resolvePublicReadContext($db, 'contact-owner'), 'Draft Portfolio became public.');
         $db->exec("UPDATE portfolios SET is_published=1 WHERE id=1; UPDATE users SET account_status='disabled' WHERE id=1");

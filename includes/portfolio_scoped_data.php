@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/authorization.php';
+require_once __DIR__ . '/profile_version.php';
 require_once __DIR__ . '/project_technologies.php';
 require_once __DIR__ . '/experience.php';
 require_once __DIR__ . '/evidence_text_evaluator.php';
@@ -65,7 +66,7 @@ function findAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext $c
     $statement = $database->prepare(
         'SELECT id, full_name, professional_title, hero_headline, email, phone_primary, phone_secondary,
                 location, about_me, work_description, linkedin_url, github_url,
-                instagram_url, facebook_url, website_url, profile_image_path, public_contact_visible, updated_at
+                instagram_url, facebook_url, website_url, profile_image_path, public_contact_visible, updated_at, profile_version
          FROM personal_info
          WHERE id = :resource_id
            AND portfolio_id = :authorized_portfolio_id
@@ -86,7 +87,7 @@ function loadAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext $c
     $statement = $database->prepare(
         'SELECT id, full_name, professional_title, hero_headline, email, phone_primary, phone_secondary,
                 location, about_me, work_description, linkedin_url, github_url,
-                instagram_url, facebook_url, website_url, profile_image_path, public_contact_visible, updated_at
+                instagram_url, facebook_url, website_url, profile_image_path, public_contact_visible, updated_at, profile_version
          FROM personal_info
          WHERE portfolio_id = :authorized_portfolio_id
          LIMIT 1'
@@ -118,50 +119,32 @@ function createAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext 
     return (int) $database->lastInsertId();
 }
 
-function updateAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext $context, int $profileId, array $values): bool
+function updateAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext $context, int $profileId, array $values, int $expectedVersion): bool
 {
     if ($profileId < 1) {
         return false;
     }
 
     $values = authorizedPersonalInfoValues($values);
-    if ($values === []) {
-        throw new InvalidArgumentException('Personal information update is empty.');
-    }
+    if ($expectedVersion < 1 || $expectedVersion >= PROFILE_MAX_VERSION) { return false; }
 
     $assignments = array_map(static fn (string $field): string => "{$field} = :{$field}", array_keys($values));
+    $assignments[] = 'profile_version = profile_version + 1';
     $statement = $database->prepare(
         'UPDATE personal_info
          SET ' . implode(', ', $assignments) . '
          WHERE id = :resource_id
-           AND portfolio_id = :authorized_portfolio_id'
+           AND portfolio_id = :authorized_portfolio_id
+           AND profile_version = :expected_profile_version
+           AND profile_version < 2147483647'
     );
     $statement->execute([
         ...$values,
         'resource_id' => $profileId,
         'authorized_portfolio_id' => $context->portfolioId,
+        'expected_profile_version' => $expectedVersion,
     ]);
-
-    if ($statement->rowCount() === 1) {
-        return true;
-    }
-
-    // MySQL reports zero affected rows when an Owner resubmits unchanged
-    // values. Confirm the same scoped record still exists so that case is a
-    // successful no-op, while a missing or cross-Owner record remains false.
-    $exists = $database->prepare(
-        'SELECT 1
-         FROM personal_info
-         WHERE id = :resource_id
-           AND portfolio_id = :authorized_portfolio_id
-         LIMIT 1'
-    );
-    $exists->execute([
-        'resource_id' => $profileId,
-        'authorized_portfolio_id' => $context->portfolioId,
-    ]);
-
-    return (int) $exists->fetchColumn() === 1;
+    return $statement->rowCount() === 1;
 }
 
 /** @return list<array<string, mixed>> */

@@ -48,6 +48,15 @@ Local editor follow-up: [21 — private onboarding draft editor](21-ONBOARDING-D
 The approved design now supports authenticated explicit save/resume behind the same
 default-off gate; completion, consent, publication and final catalogs remain deferred.
 
+Completion review: [22 — bounded onboarding completion contract](22-ONBOARDING-COMPLETION-CONTRACT.md).
+Documentation-only recommendations await owner acceptance; the lifecycle revision covers all
+14 draft fields through current profile editing and publication. The proposed first slice is
+profile save preservation/concurrency; no completion behavior is enabled.
+
+Bounded R11/R12 implementation: [23 — profile preservation and concurrency](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
+Only profile versioning, scoped saves, omission/visibility preservation and media outcome handling
+are integrated locally; completion, publication/routing changes and activation remain deferred.
+
 ## Status vocabulary
 
 | Status | Meaning |

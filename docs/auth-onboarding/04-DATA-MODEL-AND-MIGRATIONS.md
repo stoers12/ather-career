@@ -100,6 +100,13 @@ Add one owner-scoped versioned draft per user, bounded idempotency and timestamp
 
 ### 017 — Independent project and Evidence publication
 
+**2026-10-18 bounded implementation correction:** actual next-unused 017 is now
+`017_profile_version`: one additive bounded integer on `personal_info`, initialized
+to 1, plus its enforced range check. It changes no facts, ownership, visibility or
+publication behavior. See [handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
+The broader publication paragraph below remains a historical proposal requiring a
+later unused migration number and separate acceptance, not implemented 017 scope.
+
 Add per-project visibility with private default, independent public Evidence choice with private default, contact-type controls and slug history/redirect retirement if not already created. Coordinate public HTML, JSON and media filters with schema rollout. Inventory already-published projects and obtain owner-approved backfill semantics; do not silently hide currently public work or publish private Evidence.
 
 ## Migration rehearsal and recovery requirements

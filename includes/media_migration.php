@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/profile_presentation.php';
 require_once __DIR__ . '/project_presentation.php';
 require_once __DIR__ . '/storage.php';
+require_once __DIR__ . '/profile_version.php';
 
 function legacyMediaSource(string $sourceRoot, mixed $relativePath, string $prefix): ?string
 {
@@ -21,10 +22,11 @@ function legacyMediaSource(string $sourceRoot, mixed $relativePath, string $pref
 /** @return array{profiles: int, projects: int} */
 function migrateLegacyMedia(PDO $database, string $sourceRoot): array
 {
+    if ($database->inTransaction()) { throw new LogicException('Media migration requires owned profile transactions.'); }
     requirePrivateStorageRoot(true);
     $migrated = ['profiles' => 0, 'projects' => 0];
 
-    $profiles = $database->query("SELECT id, portfolio_id, profile_image_path FROM personal_info WHERE profile_image_path LIKE 'uploads/profile/%' AND profile_image_path NOT LIKE 'uploads/profile/derived/%'")->fetchAll(PDO::FETCH_ASSOC);
+    $profiles = $database->query("SELECT id, portfolio_id, profile_image_path, profile_version FROM personal_info WHERE profile_image_path LIKE 'uploads/profile/%' AND profile_image_path NOT LIKE 'uploads/profile/derived/%'")->fetchAll(PDO::FETCH_ASSOC);
     foreach ($profiles as $profile) {
         $portfolioId = (int) $profile['portfolio_id'];
         $oldKey = (string) $profile['profile_image_path'];
@@ -39,12 +41,16 @@ function migrateLegacyMedia(PDO $database, string $sourceRoot): array
             throw new RuntimeException('Legacy profile media could not be staged.');
         }
         try {
-            $update = $database->prepare('UPDATE personal_info SET profile_image_path = :new_key WHERE id = :id AND portfolio_id = :portfolio_id AND profile_image_path = :old_key');
-            $update->execute(['new_key' => $newKey, 'id' => $profile['id'], 'portfolio_id' => $portfolioId, 'old_key' => $oldKey]);
-            if ($update->rowCount() !== 1) throw new RuntimeException('Legacy profile database reference changed during migration.');
+            runProfileWriteTransaction($database, static function () use ($database, $profile, $newKey, $oldKey, $portfolioId): void {
+                $update = $database->prepare('UPDATE personal_info SET profile_image_path = :new_key, profile_version = profile_version + 1 WHERE id = :id AND portfolio_id = :portfolio_id AND profile_image_path = :old_key AND profile_version = :expected_version AND profile_version < 2147483647');
+                $update->execute(['new_key' => $newKey, 'id' => $profile['id'], 'portfolio_id' => $portfolioId, 'old_key' => $oldKey, 'expected_version' => $profile['profile_version']]);
+                if ($update->rowCount() !== 1) { throw new ProfileVersionConflictException('Legacy profile changed during migration.'); }
+            });
         } catch (Throwable $exception) {
-            deleteProfilePresentationImage($newKey, $portfolioId);
-            deletePrivateMediaFile($newKey, $portfolioId, 'profile_original');
+            if (!$exception instanceof ProfileWriteUncertainException) {
+                deleteProfilePresentationImage($newKey, $portfolioId);
+                deletePrivateMediaFile($newKey, $portfolioId, 'profile_original');
+            }
             throw $exception;
         }
         $migrated['profiles']++;
