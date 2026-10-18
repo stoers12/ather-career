@@ -48,6 +48,9 @@ Local editor follow-up: [21 — private onboarding draft editor](21-ONBOARDING-D
 The approved design now supports authenticated explicit save/resume behind the same
 default-off gate; completion, consent, publication and final catalogs remain deferred.
 
+Completion review: [22 — bounded onboarding completion contract](22-ONBOARDING-COMPLETION-CONTRACT.md).
+Documentation-only recommendations await owner acceptance; no completion behavior is enabled.
+
 ## Status vocabulary
 
 | Status | Meaning |
