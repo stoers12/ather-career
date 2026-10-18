@@ -1,0 +1,2 @@
+-- Executed/verified by database/final_profile_fields.php: one additive ALTER.
+-- Nullable private profile facts only; no backfill, completion or public scope.

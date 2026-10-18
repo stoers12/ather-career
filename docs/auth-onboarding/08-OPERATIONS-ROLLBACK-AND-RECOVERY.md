@@ -1,5 +1,15 @@
 # 08 — Operations, rollback and recovery
 
+**2026-10-19 local final facts:** 018 is additive and unapplied live. The four Profile
+controls/read queries require its verified schema/full ledger; never deploy against an
+older schema. A completed compatible ALTER can be verified/recorded on retry; partial or
+incompatible shapes stop for review. Do not drop columns, backfill drafts/provider values,
+reset profile versions or force a catalog replacement to recover. Preserve all stored
+facts; prefer a reviewed forward repair. Older-code rollback requires checking its ledger/
+schema compatibility, not destructive schema downgrades. Catalog updates are deliberate
+offline reviewed revisions with notices/hashes and preserved unchanged retired values.
+No downloader/cleanup service/activation is added. [Handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md).
+
 **2026-10-18 local profile-version slice:** 017 is additive and unapplied live.
 Do not deploy the new profile writers against pre-017 schema; normal migration
 verification/readiness must pass first. Old forms without a version require

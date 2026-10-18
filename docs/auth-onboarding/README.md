@@ -57,6 +57,11 @@ Bounded R11/R12 implementation: [23 — profile preservation and concurrency](23
 Only profile versioning, scoped saves, omission/visibility preservation and media outcome handling
 are integrated locally; completion, publication/routing changes and activation remain deferred.
 
+Bounded optional final facts: [24 — private final-profile fields](24-FINAL-PROFILE-FIELDS-HANDOFF.md).
+Four nullable final columns, candidate catalogs/strict validators and existing Profile controls
+are developed together locally. They remain private and independent of onboarding drafts,
+completion/publication and gate activation; catalog labels/meanings remain owner-review items.
+
 ## Status vocabulary
 
 | Status | Meaning |

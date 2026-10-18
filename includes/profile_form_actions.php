@@ -40,6 +40,18 @@ function handleVersionedProfileAction(PDO $database, AuthorizedPortfolioContext 
         foreach ($fields as $field) {
             if (!array_key_exists($field, $post)) { continue; }
             if (is_string($post[$field])) { $profile[$field] = $post[$field]; }
+            if (in_array($field, FINAL_PROFILE_FIELDS, true)) {
+                $value = $post[$field] === '' ? null : $post[$field];
+                $error = is_string($post[$field]) ? finalProfileFieldError($field, $value, finalProfileCatalog())
+                    : 'Use text for this field. / أدخل نصًا في هذا الحقل.';
+                // An unchanged unsupported saved token is historical data, not a new selection.
+                // Omit it from the patch; the original expected version still guards the save.
+                if ($field !== 'specialization' && $error !== null && is_string($value)
+                    && $value === ($current[$field] ?? null)) { continue; }
+                if ($error !== null) { $fieldErrors[$field] = $error; }
+                else { $patch[$field] = $value; }
+                continue;
+            }
             $label = match ($field) {
                 'hero_headline' => 'Hero headline',
                 'work_description' => 'Professional summary',

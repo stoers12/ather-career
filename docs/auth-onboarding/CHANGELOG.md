@@ -2,6 +2,17 @@
 
 Entries record repository history and verification scope. “This commit” means the commit containing this file; it avoids a self-referential hash. No entry implies deployment of proposed features.
 
+## 2026-10-19 — Optional private final-profile facts
+
+Local isolated follow-up to merged `bd0ec90f395d99dc6f963c3ba00505e4aa993c46`:
+additive verified 018, four optional fields, pinned independent ISO/CLDR catalog
+candidates, exact pure validation and existing versioned Profile controls. Omission/
+NULL/retired-value behavior, private projections and existing photo/contact/authorization
+semantics are preserved. Focused core/HTTP/browser checks join existing CI tooling.
+[Handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md) and catalog provenance record decisions,
+results and retained failures. No completion, draft/preview integration, policy/publication/
+routing requirement, provider change, gate activation or live migration is included.
+
 ## 2026-10-18 — Draft PR 26 CI rehearsal ordering
 
 Follow-up to reviewed `82bdaa8d210eae0c8aaa239e9089d1cfe390b1a6`: move only

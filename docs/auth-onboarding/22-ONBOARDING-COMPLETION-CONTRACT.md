@@ -1,5 +1,11 @@
 # Bounded onboarding completion contract
 
+Explicitly authorized optional final-field follow-up: [handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md)
+records four nullable final columns, pure validators, reviewed-source catalog candidates
+and existing Profile controls. Candidate membership is scoped to optional private edits;
+catalog naming/meanings remain reviewable. This does not accept or implement the other
+completion, publication, draft-promotion or routing recommendations below.
+
 Implementation follow-up: [handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md)
 records the bounded user-authorized R11/R12 implementation. Other recommendations
 below remain proposals; this implementation does not enable completion.

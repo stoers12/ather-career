@@ -1,0 +1,75 @@
+{
+  "revision": "ather-profile-candidates-2026-10-18-r1",
+  "membership": "Only alpha_2 in pinned Debian iso-codes ISO 3166-1 file, not CLDR label membership. ISO is maintenance authority; iso-codes is the independently maintained machine-readable snapshot, not an ISO endorsement.",
+  "authority_url": "https://www.iso.org/iso-3166-country-codes.html",
+  "cldr_release_url": "https://cldr.unicode.org/downloads/cldr-48",
+  "country_count": 249,
+  "language_count": 2,
+  "status_count": 6,
+  "files": [
+    {
+      "path": "sources/iso-3166-1.json",
+      "url": "https://salsa.debian.org/iso-codes-team/iso-codes/-/raw/078b9578822fcd68386d92347089e7e45a8bf47d/data/iso_3166-1.json",
+      "release": "iso-codes v4.20.1; 078b9578822fcd68386d92347089e7e45a8bf47d",
+      "sha256": "f01b812b57fba9f31ff621bf33e7c7570a01964dbeb5be2167e94decf538c89f",
+      "bytes": 43284
+    },
+    {
+      "path": "sources/iso-README.md",
+      "url": "https://salsa.debian.org/iso-codes-team/iso-codes/-/raw/078b9578822fcd68386d92347089e7e45a8bf47d/README.md",
+      "release": "iso-codes v4.20.1; 078b9578822fcd68386d92347089e7e45a8bf47d",
+      "sha256": "aba3f5d3473a382c11f71b3ae567624cae6e45362ecc72192210e20e462b2e51",
+      "bytes": 8458
+    },
+    {
+      "path": "sources/LGPL-2.1-or-later.txt",
+      "url": "https://salsa.debian.org/iso-codes-team/iso-codes/-/raw/078b9578822fcd68386d92347089e7e45a8bf47d/LICENSES/LGPL-2.1-or-later.txt",
+      "release": "iso-codes v4.20.1; 078b9578822fcd68386d92347089e7e45a8bf47d",
+      "sha256": "5749785c8bdefafcb5d798270ed0a967036fe2ca63dcedade1627565dfef81d2",
+      "bytes": 26001
+    },
+    {
+      "path": "sources/cldr-ar.json",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/bb334e8d6250c9363e957e131bf7e6d08ec72f91/cldr-json/cldr-localenames-full/main/ar/territories.json",
+      "release": "CLDR JSON 48.2.0; bb334e8d6250c9363e957e131bf7e6d08ec72f91",
+      "sha256": "b78c4a11a9ad8358048998bcda2eb49e205d5ab281f85991ed097af7b972c3d7",
+      "bytes": 12310
+    },
+    {
+      "path": "sources/cldr-en.json",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/bb334e8d6250c9363e957e131bf7e6d08ec72f91/cldr-json/cldr-localenames-full/main/en/territories.json",
+      "release": "CLDR JSON 48.2.0; bb334e8d6250c9363e957e131bf7e6d08ec72f91",
+      "sha256": "158c1d575308f7e46912edbeda435c8fe2ef5dad280798231f3a432e406b1807",
+      "bytes": 9956
+    },
+    {
+      "path": "sources/Unicode-LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/bb334e8d6250c9363e957e131bf7e6d08ec72f91/LICENSE",
+      "release": "CLDR JSON 48.2.0; bb334e8d6250c9363e957e131bf7e6d08ec72f91",
+      "sha256": "220ba0e1c43b99530d2d5bdb892a99dca0989414f51ab695ecd90163eaa1ec3b",
+      "bytes": 2033
+    },
+    {
+      "path": "sources/iso-REUSE.toml",
+      "url": "https://salsa.debian.org/iso-codes-team/iso-codes/-/raw/078b9578822fcd68386d92347089e7e45a8bf47d/REUSE.toml",
+      "release": "iso-codes v4.20.1; 078b9578822fcd68386d92347089e7e45a8bf47d",
+      "sha256": "5af7478ed10b8cf280b004c273d0a0d0937682089eb2066b701e20098fa697a4",
+      "bytes": 847
+    },
+    {
+      "path": "sources/cldr-ar-languages.json",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/bb334e8d6250c9363e957e131bf7e6d08ec72f91/cldr-json/cldr-localenames-full/main/ar/languages.json",
+      "release": "CLDR JSON 48.2.0; bb334e8d6250c9363e957e131bf7e6d08ec72f91",
+      "sha256": "469d4b540f4a50c127a88c5b1e2bceac289d3a54b01dc2fbb9375c60470adf62",
+      "bytes": 23345
+    },
+    {
+      "path": "sources/cldr-en-languages.json",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/bb334e8d6250c9363e957e131bf7e6d08ec72f91/cldr-json/cldr-localenames-full/main/en/languages.json",
+      "release": "CLDR JSON 48.2.0; bb334e8d6250c9363e957e131bf7e6d08ec72f91",
+      "sha256": "a5960d2371bc7d982da7fcfd9a0e237429d3467a5cc76f680bc3af5bcef9fb4e",
+      "bytes": 20815
+    }
+  ],
+  "generated_sha256": "b4f9e13579d12d62389ca9ed23db42ea2399ef9c669c64f078062fe4be31a6c2"
+}
