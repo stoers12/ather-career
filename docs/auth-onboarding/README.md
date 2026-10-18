@@ -49,7 +49,9 @@ The approved design now supports authenticated explicit save/resume behind the s
 default-off gate; completion, consent, publication and final catalogs remain deferred.
 
 Completion review: [22 — bounded onboarding completion contract](22-ONBOARDING-COMPLETION-CONTRACT.md).
-Documentation-only recommendations await owner acceptance; no completion behavior is enabled.
+Documentation-only recommendations await owner acceptance; the lifecycle revision covers all
+14 draft fields through current profile editing and publication. The proposed first slice is
+profile save preservation/concurrency; no completion behavior is enabled.
 
 ## Status vocabulary
 
