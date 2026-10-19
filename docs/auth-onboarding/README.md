@@ -67,6 +67,10 @@ New edits reuse Profile rules; stored historical candidates and exact retry rece
 compatible. Existing native controls and guarded preview remain. Completion/policies/activation
 stay unavailable; the next safe action is owner review of this local slice.
 
+Bounded first completion: [27 — atomic core and durable receipt](27-FIRST-COMPLETION-CORE-HANDOFF.md).
+The owner accepted only the explicit overlay in contract 22. Production policies remain unavailable;
+no completion HTTP/UI, routing cutover or publication activation exists. Next step is local owner review.
+
 ## Status vocabulary
 
 Owner-approved country amendment: [26 — ordered launch catalog](26-LAUNCH-COUNTRY-CATALOG.md).

@@ -1,5 +1,7 @@
 # Optional private final-profile fields — bounded local handoff
 
+Bounded later core: [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) records atomic first creation/evidence and read-only completed drafts. Existing exact draft retries, current Profile authority and existing-owner access remain; HTTP/UI/routing/publication activation stays deferred. Earlier evidence below remains historical.
+
 Owner-approved catalog amendment (2026-10-19): [handoff 26](26-LAUNCH-COUNTRY-CATALOG.md) supersedes the earlier all-249 product offering with the ordered 13-country launch list. Full ISO/CLDR provenance and historical stored choices/receipts remain preserved; earlier evidence below retains its original scope.
 
 Subsequent private draft integration: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) reuses these catalogs and validators without changing final-profile data, editing, storage or public projections. Historical Profile implementation evidence below retains its original scope.

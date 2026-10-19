@@ -183,6 +183,11 @@ function saveOnboardingDraft(PDO $database, AuthenticatedUserContext $context, m
             }
             return onboardingDraftResult($row);
         }
+        // Same User lock as completion. Exact accepted draft retries above remain
+        // readable; no new mutation may change a proven completed draft.
+        $completed = $database->prepare('SELECT user_id FROM onboarding_completions WHERE user_id=?');
+        $completed->execute([$userId]);
+        if ($completed->fetchColumn() !== false) { throw new OnboardingDraftConflictException('Draft is completed and read-only.'); }
         $version = $row === null ? 0 : (int) $row['version'];
         if ($version !== $expectedVersion || $version >= ONBOARDING_DRAFT_MAX_VERSION) {
             throw new OnboardingDraftConflictException('Draft version conflict.');

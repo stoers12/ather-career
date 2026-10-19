@@ -104,7 +104,7 @@ jobs:
           tables=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(TABLE_NAME ORDER BY TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$REHEARSAL_DB_NAME';")
           test "$tables" = 'messages,personal_info,projects,skills' || { echo 'Rehearsal database is not a fresh V1 baseline.' >&2; exit 1; }
 
-      - name: Run seventeen isolated CLI rehearsals
+      - name: Run eighteen isolated CLI rehearsals
         run: |
           set -euo pipefail
           [[ "$REHEARSAL_DB_NAME" =~ ^ather_career_test_[a-f0-9]{24}$ ]] || { echo 'Invalid rehearsal database name.' >&2; exit 1; }
@@ -139,7 +139,7 @@ jobs:
           [[ "$expected" =~ ^[0-9]{3}(,[0-9]{3})*$ ]] || { echo 'Checked-in migration list is invalid.' >&2; exit 1; }
           ledger=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(version ORDER BY version SEPARATOR ',') FROM \`$REHEARSAL_DB_NAME\`.schema_migrations;")
           test "$ledger" = "$expected" || { echo 'Public lifecycle rehearsal did not reach the complete checked-in migration ledger.' >&2; exit 1; }
-          for required in 006 010 012 015 016 017 018; do
+          for required in 006 010 012 015 016 017 018 019; do
             [[ ",$ledger," == *",$required,"* ]] || { echo "Required migration $required is missing." >&2; exit 1; }
           done
           columns=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY COLUMN_NAME SEPARATOR ',') FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '$REHEARSAL_DB_NAME' AND TABLE_NAME = 'projects' AND COLUMN_NAME IN ('technologies', 'problem_statement', 'personal_role', 'measurable_outcome');")
@@ -175,6 +175,9 @@ jobs:
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-editor-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-presentation-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-registration-routing-tests.php
+
+          # Completion owns its transaction; production policies stay unavailable.
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-completion-tests.php
 
       - name: Authenticated draft editor browser checks
         run: |
@@ -352,7 +355,7 @@ jobs:
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php database/migrate.php | grep -x 'No pending migrations.'
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php scripts/check-production-security.php
 
-      - name: Verify startup on restored migrations 001-018
+      - name: Verify startup on restored migrations 001-019
         run: bash scripts/check-restored-startup-idempotence.sh
 
       - name: Seed isolated public HTTP fixture

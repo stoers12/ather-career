@@ -1,0 +1,2 @@
+-- Additive first-completion evidence only, no backfill or routing activation.
+-- The guarded migration runner executes/verifies database/onboarding_completions.php.

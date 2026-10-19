@@ -95,10 +95,20 @@ function readOnboardingAttestations(PDO $database, AuthenticatedUserContext $con
     return onboardingAttestationOperation($database, $context, $bundle, false);
 }
 
-/** @internal Owns its transaction; locks the current User before revalidation so
- * account disabling/revocation cannot interleave between authorization and write.
- * The same lock serializes submissions; the full binary PK is the final boundary.
+/** @internal Transaction-aware lookup only. Caller already holds the current
+ * authorized User lock; exact binary descriptors, never "latest" or client data.
+ * Public attestation operations retain their own authorization/transaction below.
  */
+function findLockedOnboardingAttestation(PDO $database, AuthenticatedUserContext $context, OnboardingAttestationBundle $bundle): ?array
+{
+    if (!$database->inTransaction()) { throw new LogicException('Exact evidence lookup requires the authorized User lock transaction.'); }
+    $parameters=['user_id'=>$context->userId]+$bundle->parameters();
+    $where=implode(' AND ',array_map(static fn(string $key): string=>"$key = :$key",array_keys($parameters)));
+    $select=$database->prepare('SELECT * FROM onboarding_attestations WHERE '.$where.' FOR SHARE');
+    $select->execute($parameters);
+    return $select->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+
 function onboardingAttestationOperation(PDO $database, AuthenticatedUserContext $context, ?OnboardingAttestationBundle $bundle, bool $write): ?array
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -122,17 +132,13 @@ function onboardingAttestationOperation(PDO $database, AuthenticatedUserContext 
         $record = null;
         if ($bundle !== null) {
             $parameters = ['user_id' => $current->userId] + $bundle->parameters();
-            $where = implode(' AND ', array_map(static fn (string $key): string => "$key = :$key", array_keys($parameters)));
-            $select = $database->prepare('SELECT * FROM onboarding_attestations WHERE ' . $where);
-            $select->execute($parameters);
-            $record = $select->fetch(PDO::FETCH_ASSOC) ?: null;
+            $record = findLockedOnboardingAttestation($database, $current, $bundle);
             if ($write && $record === null) {
                 $columns = implode(', ', array_keys($parameters));
                 $values = implode(', ', array_map(static fn (string $key): string => ':' . $key, array_keys($parameters)));
                 $insert = $database->prepare("INSERT INTO onboarding_attestations ($columns, recorded_at) VALUES ($values, UTC_TIMESTAMP(6))");
                 $insert->execute($parameters);
-                $select->execute($parameters);
-                $record = $select->fetch(PDO::FETCH_ASSOC);
+                $record = findLockedOnboardingAttestation($database, $current, $bundle);
                 if (!is_array($record)) {
                     throw new RuntimeException('Attestation evidence could not be read.');
                 }

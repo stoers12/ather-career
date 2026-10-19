@@ -27,7 +27,7 @@ function attestationMigrate(bool $success, ?string $failure = null): void
 {
     $env = getenv(); unset($env['ATHERCAR_TEST_MIGRATION_FAIL_AFTER']);
     if ($failure !== null) { $env['ATHERCAR_TEST_MIGRATION_FAIL_AFTER'] = $failure; }
-    $process = proc_open([PHP_BINARY, __DIR__ . '/../database/migrate.php'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, $env);
+    $process = proc_open([PHP_BINARY, __DIR__ . '/../database/migrate.php', '--through=018'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, $env);
     if (!is_resource($process)) { throw new RuntimeException('Migration process unavailable.'); }
     fclose($pipes[0]); $out = stream_get_contents($pipes[1]); $err = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
     attestationAssert((proc_close($process) === 0) === $success, 'Unexpected migration result: ' . $out . $err);
@@ -54,6 +54,11 @@ $ledger = $db->query("SELECT * FROM schema_migrations WHERE version='015'")->fet
 attestationAssert(is_array($ledger), 'Requires fully migrated disposable schema.');
 $users = []; $workers = []; $sessionRoot = attestationTestStartSession();
 try {
+    // 019 references exact 015 evidence. Its empty disposable table is restored
+    // after the original 015 upgrade fixture, preserving the exact 019 ledger time.
+    $completionLedger=$db->query("SELECT applied_at FROM schema_migrations WHERE version='019'")->fetchColumn();
+    attestationAssert((int)$db->query('SELECT COUNT(*) FROM onboarding_completions')->fetchColumn()===0,'019 fixture must be empty before 015 upgrade');
+    $db->exec("DELETE FROM schema_migrations WHERE version='019'; DROP TABLE onboarding_completions");
     // Simulate upgrading 001–014, interrupted atomic CREATE, incomplete and drifted DDL.
     $db->exec("DELETE FROM schema_migrations WHERE version='015'");
     $db->exec('DROP TABLE onboarding_attestations');
@@ -70,6 +75,11 @@ try {
     $db->exec('ALTER TABLE onboarding_attestations MODIFY terms_digest VARBINARY(63) NOT NULL');
     attestationMigrate(false);
     $db->exec('ALTER TABLE onboarding_attestations MODIFY terms_digest VARBINARY(64) NOT NULL'); attestationMigrate(true);
+    $p=proc_open([PHP_BINARY,__DIR__.'/../database/migrate.php'],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);
+    attestationAssert(is_resource($p),'019 restore worker unavailable'); fclose($pipes[0]);
+    $out=stream_get_contents($pipes[1]); $err=stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
+    attestationAssert(proc_close($p)===0,'019 restore failed: '.$out.$err);
+    $db->prepare("UPDATE schema_migrations SET applied_at=? WHERE version='019'")->execute([$completionLedger]);
     attestationAssert($old === attestationSnapshot($db, true), 'Migration changed preexisting data.');
     echo "PASS 001–014 upgrade, interrupted CREATE recovery, repeat, partial/incompatible schema, preservation\n";
     for ($i = 0; $i < 2; $i++) {

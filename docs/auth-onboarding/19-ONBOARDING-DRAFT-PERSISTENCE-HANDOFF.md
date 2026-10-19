@@ -1,5 +1,7 @@
 # Private onboarding draft persistence/resume core — 2026-10-18
 
+Bounded later core: [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) records atomic first creation/evidence and read-only completed drafts. Existing exact draft retries, current Profile authority and existing-owner access remain; HTTP/UI/routing/publication activation stays deferred. Earlier evidence below remains historical.
+
 Subsequent bounded integration: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) applies current Profile catalog rules only to new writes. The structural/storage bounds and exact receipt format recorded below remain compatible with historical data.
 
 Baseline: `969e7f3a0467e97105817b4427c4f74a0c4e774b` (merged PR #22; Main CI passed).

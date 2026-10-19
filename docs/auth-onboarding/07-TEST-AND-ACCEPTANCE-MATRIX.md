@@ -1,5 +1,7 @@
 # 07 — Test and acceptance matrix
 
+**2026-10-19 bounded first-completion core:** Guarded completion CLI/MySQL tests cover migration preservation/recovery, strict fields/review/session/claim/exact-policy authority, atomic private creation, durable retries/recovery, competing User/slug/draft saves, rollback at every write, uncertain COMMIT and later Profile preservation. Production resolver stays null; synthetic policies are confined to a guarded temporary test-source copy, never a production injection or environment-selected bundle. See [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md). No HTTP/UI/routing/publication or live change.
+
 **2026-10-19 optional final fields:** guarded `run-final-profile-tests.php` and
 `run-final-profile-route-tests.php` cover 018 preservation/recovery, independent pinned
 ISO membership/CLDR labels, exact Unicode/tokens, private transport, retired choices,
