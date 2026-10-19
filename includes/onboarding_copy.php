@@ -134,7 +134,9 @@ function onboardingEditorMessages(string $locale): array
         'conflict' => ['ar' => 'تغيّرت المسودة في نافذة أخرى. أبقينا تعديلاتك هنا؛ اختر تحميل مسودة الخادم لاستبدالها صراحةً.', 'en' => 'The draft changed in another tab. Your edits remain here; explicitly load the server draft to replace them.'],
         'unavailable' => ['ar' => 'الحفظ غير متاح الآن. لم نغادر الصفحة ولم نستبدل تعديلاتك.', 'en' => 'Saving is unavailable. This page and your edits are retained.'],
         'uncertain' => ['ar' => 'لم يصل تأكيد الحفظ. أعد محاولة العملية نفسها أو اختر تحميل مسودة الخادم. لا تغيّر العملية المعلّقة.', 'en' => 'Save acknowledgement was not received. Retry the exact pending operation or explicitly load the server draft.'],
-        'invalid' => ['ar' => 'لم تُحفظ هذه العملية. راجع حدود الحقول والصيغ ثم حاول مجددًا؛ لا نغيّر النص تلقائيًا.', 'en' => 'This operation was rejected. Check field lengths and formats, then try again; text is never changed automatically.'],
+        'invalid' => ['ar' => 'لم تُحفظ هذه العملية. اختر من القوائم وراجع طول النص وصيغته، ثم حاول مجددًا. لا نغيّر النص تلقائيًا.', 'en' => 'This operation was rejected. Choose listed options and check text lengths and formats, then try again. Text is never changed automatically.'],
+        'older_choice' => ['ar' => 'اختيار محفوظ سابقًا: ', 'en' => 'Older saved choice: '],
+        'unlisted_choice' => ['ar' => 'اختيار خارج القائمة: ', 'en' => 'Unlisted choice: '],
         'auth' => ['ar' => 'توقّف الحفظ: انتهى السياق أو تغيّر الحساب. افتح صفحة موثّقة جديدة قبل إدخال القيم مجددًا.', 'en' => 'Saving stopped: the session expired or account context changed. Open a fresh authenticated page before entering values again.'],
         'retry' => ['ar' => 'إعادة المحاولة نفسها', 'en' => 'Retry exact operation'],
         'recover' => ['ar' => 'تحميل مسودة الخادم', 'en' => 'Load server draft'],
@@ -153,9 +155,13 @@ function onboardingEditorCopy(string $key, string $locale): string
     if (isset($messages[$key])) { return htmlspecialchars($messages[$key], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
     $copy = [
         'title' => ['ar' => 'مسودة الإعداد الخاصة | أثر', 'en' => 'Private onboarding draft | Ather'],
-        'country_limit' => ['ar' => 'اختيارات توضيحية فقط؛ تبقى القيم المحفوظة خارجها ظاهرة. لم تُعتمد قائمة نهائية.', 'en' => 'Sample choices only; other saved values stay visible. No final catalog is approved.'],
-        'status_limit' => ['ar' => 'أمثلة فقط؛ تُحفظ أي حالة سابقة كما هي دون تحويلها إلى تصنيف نهائي.', 'en' => 'Examples only; an existing status is preserved exactly, without a final classification.'],
-        'preferred_language_hint' => ['ar' => 'تفضيل مرشح للملف فقط. لغة الواجهة لا تغيّر هذا التفضيل.', 'en' => 'Candidate profile preference only. Interface language does not change this preference.'],
+        'country' => ['ar' => 'البلد أو الإقليم', 'en' => 'Country/territory'],
+        'country_limit' => ['ar' => 'بلد أو إقليم عملك أو دراستك. يبقى اختيارك السابق حتى تغيّره.', 'en' => 'Where you work or study. Your older saved choice stays until you change it.'],
+        'status_placeholder' => ['ar' => 'اختر وصفًا', 'en' => 'Select a description'],
+        'status_limit' => ['ar' => 'اختر الوصف الأقرب لوضعك المهني الحالي.', 'en' => 'Choose the closest description of your current situation.'],
+        'preferred_language' => ['ar' => 'اللغة المفضلة للملف', 'en' => 'Preferred profile language'],
+        'preferred_language_hint' => ['ar' => 'تفضيل للملف فقط. تبديل لغة الواجهة لا يغيّر اختيارك.', 'en' => 'A profile preference only. Switching interface language does not change your choice.'],
+        'specialization_hint' => ['ar' => 'مجال عملك أو دراستك، ويختلف عن مسماك المهني. حتى 150 حرفًا؛ محفوظ في المسودة الخاصة فقط.', 'en' => 'Your field of work or study, distinct from your professional title. Up to 150 characters; saved only in your private draft.'],
         'private_badge' => ['ar' => 'معاينة مسودة خاصة', 'en' => 'Private draft preview'],
         'preview_project' => ['ar' => 'لا تُحمّل المشاريع أو تُغيّر من محرر المسودة.', 'en' => 'Projects are not loaded or changed by the draft editor.'],
 

@@ -115,11 +115,11 @@ try {
     $database = getDatabaseConnection();
     draftRouteAssert($database->query("SELECT name FROM schema_migrations WHERE version='016'")->fetchColumn() === 'onboarding_drafts', 'Migration 016 required.');
     $initial = draftRouteSnapshot($database);
-    for ($index = 0; $index < 3; $index++) {
+    for ($index = 0; $index < 4; $index++) {
         $database->prepare('INSERT INTO users (oidc_issuer, oidc_subject, account_status, authz_version) VALUES (?, ?, ?, 1)')->execute(['https://draft-http.invalid/', bin2hex(random_bytes(16)), 'active']);
         $users[] = (int) $database->lastInsertId();
     }
-    [$userA, $userB, $disabled] = $users;
+    [$userA, $userB, $disabled, $catalogUser] = $users;
     $database->exec("UPDATE users SET account_status='disabled' WHERE id=$disabled");
     foreach ([null, '', '0', 'true', 'TRUE', '01', ' 1', '1 ', 'false'] as $gate) {
         draftRouteStart($gate, ['DB_PORT' => 'invalid']);
@@ -268,6 +268,49 @@ try {
     try { draftRouteRequest($a, 'GET', 503); }
     finally { $database->prepare('UPDATE onboarding_drafts SET payload=? WHERE user_id=?')->execute([$payload, $userA]); }
     draftRouteAssert(draftRouteRequest($a, 'GET', 200)['draft'] === $saved, 'Temporary failure changed stored result.');
+
+    $phase='catalog historical receipt';
+    $historicalFields=['country_code'=>'ZZ','preferred_language'=>'fr-CA','professional_status'=>'Research <b>candidate</b>',
+        'specialization'=>'  تخصص é  ','headline'=>str_repeat('h',200),'phone'=>'Untouched historical phone'];
+    $receipt=draftTestSeedHistorical($database,$catalogUser,3,'public_identity',
+        array_intersect_key($historicalFields,array_flip(['country_code','preferred_language'])),$historicalFields);
+    $legacyBrowser=draftRouteBrowser($catalogUser); $resume=draftRouteRequest($legacyBrowser,'GET',200);
+    $legacy=$resume['draft']; $legacyCsrf=$resume['csrf_token'];
+    draftRouteAssert($legacy['fields']===onboardingDraftDecode(onboardingDraftEncode($historicalFields)), 'Historical resume coerced values.');
+    $receipt['fields']=(object)array_reverse($receipt['fields'],true);
+    draftRouteAssert(draftRouteSave($legacyBrowser,$legacyCsrf,200,$receipt)['draft']===$legacy, 'Historical exact retry changed result/time/version.');
+    $changed=$receipt; $changed['fields']=(object)['country_code'=>'YY']; draftRouteSave($legacyBrowser,$legacyCsrf,409,$changed);
+    $changed['fields']=(object)['country_code'=>['bad']]; draftRouteSave($legacyBrowser,$legacyCsrf,400,$changed);
+    draftRouteAssert(draftRouteSave($legacyBrowser,$csrf,403,$receipt)['code']==='invalid_csrf', 'Receipt bypassed session CSRF.');
+    $database->exec("UPDATE users SET authz_version=2 WHERE id=$catalogUser");
+    draftRouteAssert(draftRouteSave($legacyBrowser,$legacyCsrf,403,$receipt)['code']==='access_denied', 'Receipt bypassed current authorization.');
+    $database->exec("UPDATE users SET authz_version=1 WHERE id=$catalogUser");
+    $legacyBrowser=draftRouteBrowser($catalogUser); $legacyCsrf=draftRouteRequest($legacyBrowser,'GET',200)['csrf_token'];
+    foreach (['country_code'=>['ZZ','XK','UK','jo','JO '], 'preferred_language'=>['fr-CA','AR','en-US'],
+        'professional_status'=>['early','experienced','independent','Research sabbatical'],
+        'specialization'=>['',' ',"bad\0text","bad\ntext",str_repeat('😀',151)]] as $field=>$badValues) {
+        $section=in_array($field,['country_code','preferred_language'],true)?'public_identity':'professional_snapshot';
+        foreach (array_merge($badValues,[false,1,[],new stdClass()]) as $bad) {
+            draftRouteSave($legacyBrowser,$legacyCsrf,400,draftRouteInput(3,[$field=>$bad],$section));
+        }
+    }
+    echo "PASS draft HTTP current Profile catalog and specialization rejection, exact historical receipts, misuse and authorization boundaries\n";
+    $current=draftRouteSave($legacyBrowser,$legacyCsrf,200,draftRouteInput(3,['display_name'=>'Only this edit']))['draft'];
+    foreach ($historicalFields as $field=>$value) { draftRouteAssert($current['fields'][$field]===$value, 'Unrelated HTTP save changed historical fields.'); }
+    draftRouteSave($legacyBrowser,$legacyCsrf,409,$receipt);
+    $current=draftRouteSave($legacyBrowser,$legacyCsrf,200,draftRouteInput(4,['country_code'=>'JP','preferred_language'=>'ar']))['draft'];
+    draftRouteAssert($current['fields']['country_code']==='JP' && $current['fields']['preferred_language']==='ar', 'Catalog replacement failed.');
+    $current=draftRouteSave($legacyBrowser,$legacyCsrf,200,draftRouteInput(5,['country_code'=>null,'preferred_language'=>null]))['draft'];
+    draftRouteAssert(!isset($current['fields']['country_code']) && !isset($current['fields']['preferred_language']), 'Explicit catalog null clear failed.');
+    $current=draftRouteSave($legacyBrowser,$legacyCsrf,200,draftRouteInput(6,['professional_status'=>'employed','specialization'=>str_repeat('😀',150)],'professional_snapshot'))['draft'];
+    draftRouteAssert($current['fields']['specialization']===str_repeat('😀',150), 'HTTP 150-code-point/600-byte boundary rejected.');
+    $current=draftRouteSave($legacyBrowser,$legacyCsrf,200,draftRouteInput(7,['professional_status'=>null,'specialization'=>null],'professional_snapshot'))['draft'];
+    draftRouteAssert(!isset($current['fields']['professional_status']) && !isset($current['fields']['specialization'])
+        && $current['fields']['phone']===$historicalFields['phone'] && $current['fields']['headline']===$historicalFields['headline'], 'HTTP clearing/optional/headline preservation failed.');
+    draftRouteAssert(draftRouteRequest($legacyBrowser,'GET',200)['draft']===$current, 'Historical replacement reload failed.');
+    $privateTokens[]=$receipt['operationId'];
+    echo "PASS draft HTTP historical omission, replacement, null clearing, Unicode boundary, incomplete reload and no profile writes\n";
+
     draftRouteStop();
     $log = file_get_contents($root . '/private-http.log');
     foreach (array_merge($privateTokens, [$sentinel, 'Only B', 'Candidate', 'مُؤمِن', $first['operationId'], $faultInput['operationId'], getenv('DB_PASSWORD')]) as $secret) {

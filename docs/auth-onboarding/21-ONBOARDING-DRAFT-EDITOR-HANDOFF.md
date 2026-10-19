@@ -1,5 +1,7 @@
 # Private onboarding draft editor — 2026-10-18
 
+Catalog-only successor: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) supersedes the editor sample-choice description below with the existing Profile catalogs and safe older-choice labels. The guarded design preview retains its samples; completion and activation remain unavailable.
+
 Approved baseline: `7ddb34b1b34c342e502ec77aa2f188a55b5944b9` (PR #24 merged;
 Main CI passed). Branch/worktree: `feat/onboarding-draft-editor-20261018`,
 `.worktrees/onboarding-draft-editor`. No AGENTS.md was found in the repository,

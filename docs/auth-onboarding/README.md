@@ -62,6 +62,11 @@ Four nullable final columns, candidate catalogs/strict validators and existing P
 are developed together locally. They remain private and independent of onboarding drafts,
 completion/publication and gate activation; catalog labels/meanings remain owner-review items.
 
+Bounded draft catalog integration: [25 — Profile catalogs in the authenticated editor](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md).
+New edits reuse Profile rules; stored historical candidates and exact retry receipts remain
+compatible. Existing native controls and guarded preview remain. Completion/policies/activation
+stay unavailable; the next safe action is owner review of this local slice.
+
 ## Status vocabulary
 
 | Status | Meaning |

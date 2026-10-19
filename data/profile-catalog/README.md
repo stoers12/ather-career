@@ -5,6 +5,11 @@ checked-in candidates for **optional private Profile editing**. Country coverage
 display labels and the six status meanings below are reviewable owner decisions;
 they do not approve completion requirements, publication or eligibility rules.
 
+The separately authorized [draft-editor integration](../../docs/auth-onboarding/25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md)
+now reuses these same candidates for newly supplied private draft values. Historical draft
+values and exact accepted retries remain compatible. No catalog data/revision/source changes,
+final-profile writes, completion approval or activation are implied.
+
 ## Reproducible membership and labels
 
 - ISO is the maintenance authority: [ISO 3166 overview](https://www.iso.org/iso-3166-country-codes.html).

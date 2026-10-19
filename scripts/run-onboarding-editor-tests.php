@@ -13,6 +13,20 @@ foreach (['ar','en'] as $locale) {
         phase2Assert($xpath->query('//button[@data-create and @disabled]')->length===1,'Create must stay disabled');
         phase2Assert(!str_contains($html,'m••••d@example.com') && str_contains($html,'onboarding_editor.js?v='),'Editor email/script boundary');
         phase2Assert(str_contains($html,'aria-live="polite"') && str_contains($html,'data-editor-context='),'Accessible editor feedback/context');
+
+        $catalog=finalProfileCatalog();
+        foreach (['countries'=>'country_code','statuses'=>'professional_status'] as $group=>$field) {
+            $options=$xpath->query('//select[@data-draft-field="'.$field.'"]/option');
+            phase2Assert($options->length===count($catalog[$group])+1,'Editor catalog count mismatch');
+            $actual=[];
+            foreach ($options as $option) { if ($option->getAttribute('value')!=='') { $actual[$option->getAttribute('value')]=$option->textContent; } }
+            phase2Assert($actual===array_map(static fn(array $labels): string=>$labels[$locale],$catalog[$group]),'Editor catalog membership/labels differ from Profile');
+        }
+        foreach ($catalog['languages'] as $token=>$labels) {
+            phase2Assert($xpath->query('//input[@data-draft-field="preferred_language" and @value="'.$token.'"]/parent::label')->item(0)->textContent===$labels[$locale], 'Profile language label differs');
+        }
+        phase2Assert(!str_contains($html,'maxlength=') && str_contains($html,'150'),'Specialization Unicode limit is server-owned and explained');
+
         $checks+=5;
     }
 }
@@ -24,3 +38,5 @@ $docker=file_get_contents(__DIR__.'/../Dockerfile.production');
 foreach (['onboarding.css','onboarding_editor.js'] as $asset) { phase2Assert(str_contains($docker,'/var/www/app/'.$asset),'Production packaging asset missing'); }
 echo 'PASS editor shared rendering, disabled boundaries and accessible AR/EN: '.$checks." checks\n";
 echo "PASS editor private script and production packaging contracts\n";
+
+echo "PASS editor exact shared country/status/language catalogs and localized labels with native controls\n";

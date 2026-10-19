@@ -36,7 +36,7 @@ jobs:
           docker run --rm -v "$PWD:/app:ro" -w /app php:8.3-cli sh -lc 'find . -name "*.php" -not -path "./.git/*" -print0 | xargs -0 -n1 php -l'
 
       - name: JavaScript syntax
-        run: node --check admin.js && node --check portfolio.js && node --check onboarding.js && node --check onboarding_editor.js && node --check scripts/run-final-profile-browser-tests.mjs
+        run: node --check admin.js && node --check portfolio.js && node --check onboarding.js && node --check onboarding_editor.js && node --check scripts/run-onboarding-editor-browser-tests.mjs && node --check scripts/run-final-profile-browser-tests.mjs
 
       - name: Validate production Compose configuration
         run: docker compose -p ather-career-ci -f docker-compose.production.yml config --quiet
@@ -169,6 +169,7 @@ jobs:
           rehearse scripts/run-phase2-owner-flow-rehearsal.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-registration-core-rehearsal.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-attestation-tests.php
+          # Draft suites cover current Profile catalogs and historical exact-retry compatibility.
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-draft-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-draft-route-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-editor-tests.php

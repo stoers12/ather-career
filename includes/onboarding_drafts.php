@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/authorization.php';
+require_once __DIR__ . '/final_profile_fields.php';
 
 final class OnboardingDraftConflictException extends RuntimeException
 {
@@ -11,7 +12,7 @@ final class OnboardingDraftConflictException extends RuntimeException
 const ONBOARDING_DRAFT_MAX_VERSION = 2147483647;
 const ONBOARDING_DRAFT_MAX_BYTES = 16384;
 
-/** Draft candidates only. These are not final product catalogs or completion rules. */
+/** Stored candidate compatibility bounds, not completion requirements. */
 function onboardingDraftFields(): array
 {
     return [
@@ -28,7 +29,9 @@ function onboardingDraftFields(): array
     ];
 }
 
-/** NULL explicitly clears. Missing keys are never synthesized. */
+/** Structural/stored-data compatibility, also used before receipt lookup.
+ * Keep historical candidates readable. NULL clears; missing keys are not synthesized.
+ */
 function onboardingDraftValidatePatch(mixed $section, array $fields): array
 {
     $sections = onboardingDraftFields();
@@ -59,6 +62,18 @@ function onboardingDraftValidatePatch(mixed $section, array $fields): array
     }
     ksort($fields, SORT_STRING);
     return $fields;
+}
+
+/** Current rules apply only to supplied values of a new operation, never to
+ * omitted historical values or an already accepted exact retry.
+ */
+function onboardingDraftValidateCurrentValues(array $patch): void
+{
+    foreach (array_intersect_key($patch, array_flip(FINAL_PROFILE_FIELDS)) as $field => $value) {
+        if (finalProfileFieldError($field, $value, finalProfileCatalog()) !== null) {
+            throw new InvalidArgumentException('Unsupported or invalid current draft choice.');
+        }
+    }
 }
 
 /** Stable exact JSON; no trimming, normalization or private-data logging. */
@@ -172,6 +187,9 @@ function saveOnboardingDraft(PDO $database, AuthenticatedUserContext $context, m
         if ($version !== $expectedVersion || $version >= ONBOARDING_DRAFT_MAX_VERSION) {
             throw new OnboardingDraftConflictException('Draft version conflict.');
         }
+        // Authorization and structural validation precede the exact receipt;
+        // current catalogs must not invalidate that receipt retroactively.
+        onboardingDraftValidateCurrentValues($patch);
         $fields = $row === null ? [] : onboardingDraftDecode($row['payload']);
         foreach ($patch as $field => $value) {
             if ($value === null) { unset($fields[$field]); } else { $fields[$field] = $value; }

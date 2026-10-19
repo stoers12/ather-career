@@ -1,5 +1,7 @@
 # Private onboarding draft persistence/resume core — 2026-10-18
 
+Subsequent bounded integration: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) applies current Profile catalog rules only to new writes. The structural/storage bounds and exact receipt format recorded below remain compatible with historical data.
+
 Baseline: `969e7f3a0467e97105817b4427c4f74a0c4e774b` (merged PR #22; Main CI passed).
 Branch/worktree: `feat/onboarding-draft-core-20261018`, `.worktrees/onboarding-draft`.
 No AGENTS.md was found in the checkout/worktree/ancestor chain. Handoffs 14–18,
