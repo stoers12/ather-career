@@ -1,5 +1,7 @@
 # Optional private final-profile fields — bounded local handoff
 
+Subsequent private draft integration: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) reuses these catalogs and validators without changing final-profile data, editing, storage or public projections. Historical Profile implementation evidence below retains its original scope.
+
 Exact implementation base: merged `bd0ec90f395d99dc6f963c3ba00505e4aa993c46`
 (PR 26). Its parents are `d2514104a405c26587350be84c28720ac87f3ff7` and approved
 `043a0c469b853821e39b578894f8e5389054cbcc`; both original contract commits remain

@@ -1,5 +1,7 @@
 # Bounded onboarding completion contract
 
+Explicit draft-only follow-up: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) reuses Profile catalogs/validators for new draft edits while preserving historical reads and receipts. It does not approve or implement the remaining completion/publication/routing recommendations.
+
 Explicitly authorized optional final-field follow-up: [handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md)
 records four nullable final columns, pure validators, reviewed-source catalog candidates
 and existing Profile controls. Candidate membership is scoped to optional private edits;

@@ -58,6 +58,9 @@
         } finally { clearTimeout(timer); }
     }
     function controls(key) { return Array.from(root.querySelectorAll('[data-draft-field="' + key + '"]')); }
+    function choiceText(key, value) {
+        return (baseline[key] === value ? messages().older_choice : messages().unlisted_choice) + value;
+    }
     function hydrateControls() {
         root.querySelectorAll('[data-extra-choice]').forEach(function (option) { option.remove(); });
         keys.forEach(function (key) {
@@ -68,7 +71,7 @@
                     var label = document.createElement('label'); label.className = 'ao-radio-card'; label.dataset.extraChoice = '';
                     var radio = document.createElement('input'); radio.type = 'radio'; radio.name = 'preview_preferred_language';
                     radio.value = value; radio.dataset.draftField = key;
-                    label.append(radio, document.createTextNode(value));
+                    label.append(radio, document.createTextNode(choiceText(key, value)));
                     root.querySelector('.ao-language-options').append(label); list.push(radio);
                     radio.addEventListener('change', edit);
                 }
@@ -76,7 +79,7 @@
             } else {
                 var control = list[0];
                 if (control.tagName === 'SELECT' && value && !Array.from(control.options).some(function (option) { return option.value === value; })) {
-                    var option = document.createElement('option'); option.value = value; option.textContent = value; option.dataset.extraChoice = '';
+                    var option = document.createElement('option'); option.value = value; option.textContent = choiceText(key, value); option.dataset.extraChoice = '';
                     control.append(option);
                 }
                 control.value = value;

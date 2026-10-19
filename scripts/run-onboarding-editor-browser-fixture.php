@@ -33,9 +33,11 @@ try {
         session_id(''); startOwnerSession(); establishVerifiedInternalUserSession($users[$name==='b'?'b':'a'],1); getCsrfToken();
         if ($name==='a') {
             $context=requireAuthenticatedUser($db);
-            saveOnboardingDraft($db,$context,0,draftTestOperation(0),'public_identity',['display_name'=>'Synthetic Demo','country_code'=>'ZZ','preferred_language'=>'fr-CA','name_ar'=>'Untouched Arabic','city'=>'Untouched city']);
-            saveOnboardingDraft($db,$context,1,draftTestOperation(1),'professional_snapshot',['professional_status'=>'Research <b>candidate</b>','headline'=>'Synthetic headline','university'=>'Untouched university']);
-            saveOnboardingDraft($db,$context,2,draftTestOperation(2),'profile_identity',['slug_candidate'=>'candidate-only','phone'=>'Untouched private phone']);
+            draftTestSeedHistorical($db,$context->userId,3,'profile_identity',['slug_candidate'=>'candidate-only','phone'=>'Untouched private phone'],[
+                'display_name'=>'Synthetic Demo','country_code'=>'ZZ','preferred_language'=>'fr-CA','name_ar'=>'Untouched Arabic','city'=>'Untouched city',
+                'professional_status'=>'Research <b>candidate</b>','headline'=>'Synthetic headline','university'=>'Untouched university',
+                'slug_candidate'=>'candidate-only','phone'=>'Untouched private phone',
+            ]);
         }
         if ($name==='expired') { $_SESSION[INTERNAL_USER_SESSION_KEY]['authenticated_at']-=50000; }
         $cookies[$name]=session_id(); session_write_close();

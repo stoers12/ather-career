@@ -2,6 +2,18 @@
 
 Entries record repository history and verification scope. “This commit” means the commit containing this file; it avoids a self-referential hash. No entry implies deployment of proposed features.
 
+## 2026-10-19 — Bounded onboarding draft/Profile catalog integration
+
+Local descendant of merged `8e886688bfab531e3a1021b3c4b6de918145223c`: the
+authenticated editor and new draft writes reuse the existing Profile catalogs and
+specialization validator. Structural decoding and operation fingerprints remain
+compatible; authorized exact retries precede current-write validation. Unchanged
+historical choices stay visible and omitted from unrelated edits. Incomplete
+drafts/null clears, native controls, preview and default-off boundaries remain.
+[Handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) records the focused core,
+real HTTP/browser and production/regression evidence, failures and review limits.
+No migration, profile/publication/routing/completion or activation change.
+
 ## 2026-10-19 — Draft PR 27 Profile fixture handoff correction
 
 Bounded descendant of `23974d11796f9911cd3716bf6a6e39cb09f1a0ae`: CI transfers
