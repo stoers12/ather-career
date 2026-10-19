@@ -238,3 +238,65 @@ historical evidence for the base, **not reruns on this follow-up**. Remote CI,
 unrelated suites, production build and real-device/accessibility certification are
 not claimed here. No push, PR, deployment, live migration, authentication, gate
 activation or external/canonical-resource change is included.
+
+## Draft PR 27 — bounded CI fixture handoff correction
+
+Reviewed parent: `23974d11796f9911cd3716bf6a6e39cb09f1a0ae`, clean isolated
+`feat/final-profile-fields-20261018`. Fetched remote main remains expected
+`bd0ec90f395d99dc6f963c3ba00505e4aa993c46`; original contract ancestry and the
+unrelated canonical-file hash remain preserved. [PR 27](https://github.com/stoers12/ather-career/pull/27)
+stays Draft. This correction changes only CI, this handoff and the changelog.
+
+The original [push run](https://github.com/stoers12/ather-career/actions/runs/39173908408)
+and [PR run](https://github.com/stoers12/ather-career/actions/runs/39173911887)
+failed before any Profile browser group: host Node could not open the container's
+root-owned `0600` private context (`EACCES`). Both passed deterministic catalogs,
+5 final-profile core/7 HTTP, existing 5 profile-core/6 HTTP, the remaining CLI
+regressions, production build and all 9 draft-editor browser groups. Both skipped
+rehearsal DB removal, production-like startup/health, migration/security gate,
+restored startup through 018, public HTTP fixture, HTTPS discovery mock and HTTP
+smoke. Always-run resource cleanup succeeded; Profile fixture preservation evidence
+appeared only in the PR run because the old trap removed the container without
+waiting. Those failures are retained, not reclassified as passes.
+
+After a nonempty carrier with mode `0600` is ready, CI uses container root only
+to assign that file to the actual host `id -u`/`id -g`. The ordinary host Node
+process verifies its own non-root UID/GID, the regular file's ownership/mode,
+the runner-owned directory's `0700` mode and an `O_NOFOLLOW` read-only open/close.
+It does not read or print carrier contents/tokens and does not run as root.
+Neither file nor directory permissions are broadened. Existing credentials,
+database scope, browser assertions and fixture implementation remain unchanged.
+
+One EXIT handler now preserves the original browser/error status, signals stop,
+waits at most 45 seconds, inspects the fixture's stopped/exit-zero state and
+collects only its fixed safe PASS lines. Success requires the existing complete
+process/session/file/database preservation/cleanup assertion in its logs. Only
+then does normal container removal run, followed by generated-user and private
+carrier/stop-file deletion. Fixture, log, removal or cleanup failure makes a
+successful browser run fail; it cannot mask an already failing browser status.
+Timeout is an explicit failure with unconfirmed preservation and forced removal
+as fallback. The global fallback reports any leftover Profile container as failure
+and no longer force-removes a running fixture outside that timeout path.
+
+Local validation: YAML parses; all 24 extracted Bash blocks and the Profile step
+pass Linux `bash -n`; the exact Node preflight passes syntax checking. Eleven
+cleanup-control-flow simulations cover success, browser failure, combined browser/
+fixture failure, fixture nonzero exit, missing evidence, log/wait errors, timeout,
+database-user removal, container removal and private-file deletion failures.
+They verify original failure preservation, no false success, timeout-only force
+and suppression of a synthetic private diagnostic. These are simulations, not
+claims of actual application fixture preservation.
+
+A disposable Linux tmpfs probe reproduces denial of a root-owned `0600` file to
+UID/GID 1001, then verifies non-root open/close after privileged ownership transfer
+with file `0600` and directory `0700`. Its PHP reader never reads/prints contents.
+The first probe failed because its extra parent directory was still root-owned;
+only external probe setup was corrected, and its failed log remains retained.
+The first external Node-code extraction also included a closing shell quote;
+corrected extraction passes without changing CI code. The Windows local host
+does not exercise the ordinary Linux Node reader/full GitHub fixture workflow:
+that gap must be closed by exact-checkout push and PR CI after normal push.
+Local commands/results are retained in the external `ci-handoff-correction`
+review evidence; remote reruns and explicit fixture evidence must be reviewed
+before claiming a complete pass. No application/catalog/schema/assertion change,
+merge, deployment, live migration, activation or real provider login is included.

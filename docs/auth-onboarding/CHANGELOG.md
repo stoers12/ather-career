@@ -2,6 +2,17 @@
 
 Entries record repository history and verification scope. “This commit” means the commit containing this file; it avoids a self-referential hash. No entry implies deployment of proposed features.
 
+## 2026-10-19 — Draft PR 27 Profile fixture handoff correction
+
+Bounded descendant of `23974d11796f9911cd3716bf6a6e39cb09f1a0ae`: CI transfers
+the private Profile fixture carrier to the actual host runner UID/GID, verifies
+0600/0700 ownership/permissions and non-root Node readability, then runs the
+unchanged browser suite. Cleanup signals stop, waits up to 45 seconds, checks
+fixture exit/preservation evidence and removes resources without masking browser
+or cleanup failure. Only CI, [handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md#draft-pr-27--bounded-ci-fixture-handoff-correction)
+and this history change. YAML/24 Bash blocks, Node syntax, 11 cleanup simulations
+and a real Linux non-root permission probe pass; full remote reruns follow push.
+
 ## 2026-10-19 — Bounded final-profile review follow-up
 
 Follow-up to `17801c6d1e99d22af8e43cfe0c720b79d67a9dbc`: simplify only the new

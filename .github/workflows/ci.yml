@@ -215,36 +215,105 @@ jobs:
       - name: Private final-profile controls browser checks
         run: |
           set -euo pipefail
+          HOST_RUNNER_UID=$(id -u)
+          HOST_RUNNER_GID=$(id -g)
+          test "$HOST_RUNNER_UID" -ne 0
           EDITOR_DB_USER="editor_$(openssl rand -hex 8)"
           EDITOR_DB_PASSWORD="$(openssl rand -hex 32)"
           echo "::add-mask::$EDITOR_DB_PASSWORD"
           EDITOR_EVIDENCE="$RUNNER_TEMP/ather-final-profile-evidence"
           mkdir -m 0700 "$EDITOR_EVIDENCE"
-          cleanup_editor() {
-            touch "$EDITOR_EVIDENCE/stop-profile"
+          PROFILE_FIXTURE_STARTED=0
+          cleanup_profile() {
+            local browser_status=$? cleanup_status=0 wait_status=0 timed_out=0
+            local fixture_exit='' fixture_state='' fixture_logs=''
+            trap - EXIT
+            set +e
+            touch "$EDITOR_EVIDENCE/stop-profile" || cleanup_status=1
             if docker inspect ather-career-ci-profile-fields >/dev/null 2>&1; then
-              docker logs ather-career-ci-profile-fields || true
-              docker rm -f -v ather-career-ci-profile-fields
+              fixture_exit=$(timeout 45s docker wait ather-career-ci-profile-fields)
+              wait_status=$?
+              if [[ "$wait_status" = 124 ]]; then
+                echo 'Profile fixture stop timed out; forced removal required; preservation unconfirmed.' >&2
+                timed_out=1
+                cleanup_status=1
+              elif [[ "$wait_status" != 0 ]]; then
+                echo 'Profile fixture wait failed; preservation unconfirmed.' >&2
+                cleanup_status=1
+              else
+                fixture_state=$(docker inspect --format '{{.State.Running}} {{.State.ExitCode}}' ather-career-ci-profile-fields)
+                if [[ "$fixture_exit" != 0 || "$fixture_state" != 'false 0' ]]; then
+                  echo 'Profile fixture did not exit cleanly.' >&2
+                  cleanup_status=1
+                fi
+              fi
+              if fixture_logs=$(docker logs ather-career-ci-profile-fields 2>&1); then
+                # Print only the fixture's fixed safe evidence lines, never private diagnostics.
+                printf '%s\n' "$fixture_logs" | grep -E '^PASS final-profile (browser fixture private logs/data/process/session cleanup pending final snapshot|HTTP private logs and complete process/session/file/database fixture cleanup)$' || true
+                if ! printf '%s\n' "$fixture_logs" | grep -Fx 'PASS final-profile HTTP private logs and complete process/session/file/database fixture cleanup' >/dev/null; then
+                  echo 'Profile fixture preservation/cleanup evidence missing.' >&2
+                  cleanup_status=1
+                fi
+              else
+                echo 'Profile fixture logs unavailable; preservation unconfirmed.' >&2
+                cleanup_status=1
+              fi
+              if [[ "$cleanup_status" = 0 ]]; then
+                echo 'PASS Profile fixture clean exit and preservation/cleanup evidence verified'
+              fi
+              if [[ "$timed_out" = 1 ]]; then
+                docker rm -f -v ather-career-ci-profile-fields || cleanup_status=1
+              else
+                docker rm -v ather-career-ci-profile-fields || cleanup_status=1
+              fi
+            elif [[ "$PROFILE_FIXTURE_STARTED" = 1 ]]; then
+              echo 'Profile fixture container missing before exit/evidence verification.' >&2
+              cleanup_status=1
             fi
-            docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -e "DROP USER IF EXISTS '$EDITOR_DB_USER'@'%';"
-            rm -f "$EDITOR_EVIDENCE/private-profile-context.json" "$EDITOR_EVIDENCE/stop-profile"
+            if [[ "$EDITOR_DB_USER" =~ ^editor_[a-f0-9]{16}$ ]]; then
+              docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -e "DROP USER IF EXISTS '$EDITOR_DB_USER'@'%';" || cleanup_status=1
+            else
+              echo 'Invalid Profile fixture cleanup user.' >&2
+              cleanup_status=1
+            fi
+            rm -f -- "$EDITOR_EVIDENCE/private-profile-context.json" "$EDITOR_EVIDENCE/stop-profile" || cleanup_status=1
+            if [[ -e "$EDITOR_EVIDENCE/private-profile-context.json" || -e "$EDITOR_EVIDENCE/stop-profile" ]]; then cleanup_status=1; fi
+            if [[ "$cleanup_status" = 0 ]]; then echo 'PASS Profile browser container/user/private-carrier cleanup'; fi
+            if [[ "$browser_status" != 0 ]]; then exit "$browser_status"; fi
+            exit "$cleanup_status"
           }
-          trap cleanup_editor EXIT
+          trap cleanup_profile EXIT
           docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -e "CREATE USER '$EDITOR_DB_USER'@'%' IDENTIFIED BY '$EDITOR_DB_PASSWORD'; GRANT ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* TO '$EDITOR_DB_USER'@'%';"
           docker compose -p ather-career-ci -f docker-compose.production.yml run -d --no-deps --name ather-career-ci-profile-fields --entrypoint php \
             -p 127.0.0.1:8101:8082 -v "$EDITOR_EVIDENCE:/evidence" \
             -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e "DB_NAME=$REHEARSAL_DB_NAME" -e "ATHERCAR_TEST_DB_NAME=$REHEARSAL_DB_NAME" \
             -e "DB_USER=$EDITOR_DB_USER" -e "DB_PASSWORD=$EDITOR_DB_PASSWORD" -e ATHERCAR_FINAL_PROFILE_BROWSER_EVIDENCE=/evidence \
             web scripts/run-final-profile-route-tests.php
-          for _ in $(seq 1 120); do test -f "$EDITOR_EVIDENCE/private-profile-context.json" && break; sleep 1; done
-          test -f "$EDITOR_EVIDENCE/private-profile-context.json"
+          PROFILE_FIXTURE_STARTED=1
+          for _ in $(seq 1 120); do
+            test -s "$EDITOR_EVIDENCE/private-profile-context.json" && test "$(stat -c '%a' "$EDITOR_EVIDENCE/private-profile-context.json")" = 600 && break
+            sleep 1
+          done
+          test -s "$EDITOR_EVIDENCE/private-profile-context.json"
+          # A root-written 0600 carrier must belong to the ordinary host Node runner.
+          docker exec --user 0:0 ather-career-ci-profile-fields chown "$HOST_RUNNER_UID:$HOST_RUNNER_GID" /evidence/private-profile-context.json
+          PROFILE_CONTEXT_FILE="$EDITOR_EVIDENCE/private-profile-context.json" PROFILE_RUNNER_UID="$HOST_RUNNER_UID" PROFILE_RUNNER_GID="$HOST_RUNNER_GID" node --input-type=module -e '
+            import fs from "node:fs";
+            import path from "node:path";
+            const uid=process.getuid(), gid=process.getgid(), file=process.env.PROFILE_CONTEXT_FILE;
+            const context=fs.lstatSync(file), directory=fs.lstatSync(path.dirname(file));
+            if (uid===0 || uid!==Number(process.env.PROFILE_RUNNER_UID) || gid!==Number(process.env.PROFILE_RUNNER_GID)
+              || !context.isFile() || context.uid!==uid || context.gid!==gid || (context.mode & 0o7777)!==0o600
+              || !directory.isDirectory() || directory.uid!==uid || (directory.mode & 0o7777)!==0o700) {
+              throw new Error("Profile context ownership/private permissions invalid");
+            }
+            const descriptor=fs.openSync(file,fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW); fs.closeSync(descriptor);
+            console.log("PASS Profile private context runner ownership, 0600/0700 permissions and non-root readability");
+          '
           APP_ENV=test ATHERCAR_TEST_MODE=1 \
             ATHERCAR_PLAYWRIGHT_MODULE="$RUNNER_TEMP/ather-editor-tools/node_modules/playwright" \
             ATHERCAR_FINAL_PROFILE_BASE_URL=http://127.0.0.1:8101 \
             ATHERCAR_FINAL_PROFILE_BROWSER_EVIDENCE="$EDITOR_EVIDENCE" node scripts/run-final-profile-browser-tests.mjs
-          touch "$EDITOR_EVIDENCE/stop-profile"
-          test "$(docker wait ather-career-ci-profile-fields)" = 0
-          docker logs ather-career-ci-profile-fields
 
       - name: Remove isolated rehearsal database
         run: |
@@ -415,7 +484,9 @@ jobs:
           set +e
           cleanup_failed=0
           if docker inspect ather-career-ci-profile-fields >/dev/null 2>&1; then
-            docker rm -f -v ather-career-ci-profile-fields || { echo 'Profile browser container cleanup failed.' >&2; cleanup_failed=1; }
+            echo 'Profile browser container remained after orderly cleanup.' >&2
+            cleanup_failed=1
+            docker rm -v ather-career-ci-profile-fields || echo 'Profile browser fallback cannot remove a running fixture.' >&2
           fi
           if docker inspect ather-career-ci-editor >/dev/null 2>&1; then
             docker rm -f -v ather-career-ci-editor || { echo 'Editor browser container cleanup failed.' >&2; cleanup_failed=1; }
