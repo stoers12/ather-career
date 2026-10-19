@@ -322,6 +322,110 @@ jobs:
             ATHERCAR_FINAL_PROFILE_BASE_URL=http://127.0.0.1:8101 \
             ATHERCAR_FINAL_PROFILE_BROWSER_EVIDENCE="$EDITOR_EVIDENCE" node scripts/run-final-profile-browser-tests.mjs
 
+      - name: Authenticated attestation editor browser checks
+        run: |
+          set -euo pipefail
+          HOST_RUNNER_UID=$(id -u)
+          HOST_RUNNER_GID=$(id -g)
+          test "$HOST_RUNNER_UID" -ne 0
+          EDITOR_DB_USER="editor_$(openssl rand -hex 8)"
+          EDITOR_DB_PASSWORD="$(openssl rand -hex 32)"
+          echo "::add-mask::$EDITOR_DB_PASSWORD"
+          EDITOR_EVIDENCE="$RUNNER_TEMP/ather-attestation-evidence"
+          mkdir -m 0700 "$EDITOR_EVIDENCE"
+          ATTESTATION_FIXTURE_STARTED=0
+          cleanup_attestation() {
+            local browser_status=$? cleanup_status=0 wait_status=0 timed_out=0
+            local fixture_exit='' fixture_state='' fixture_logs=''
+            trap - EXIT
+            set +e
+            touch "$EDITOR_EVIDENCE/stop" || cleanup_status=1
+            if docker inspect ather-career-ci-attestation-editor >/dev/null 2>&1; then
+              fixture_exit=$(timeout 45s docker wait ather-career-ci-attestation-editor)
+              wait_status=$?
+              if [[ "$wait_status" = 124 ]]; then
+                echo 'Attestation fixture stop timed out; forced removal required; preservation unconfirmed.' >&2
+                timed_out=1
+                cleanup_status=1
+              elif [[ "$wait_status" != 0 ]]; then
+                echo 'Attestation fixture wait failed; preservation unconfirmed.' >&2
+                cleanup_status=1
+              else
+                fixture_state=$(docker inspect --format '{{.State.Running}} {{.State.ExitCode}}' ather-career-ci-attestation-editor)
+                if [[ "$fixture_exit" != 0 || "$fixture_state" != 'false 0' ]]; then
+                  echo 'Attestation fixture did not exit cleanly.' >&2
+                  cleanup_status=1
+                fi
+              fi
+              if fixture_logs=$(docker logs ather-career-ci-attestation-editor 2>&1); then
+                # Print only the fixture's fixed safe evidence lines, never private diagnostics.
+                printf '%s\n' "$fixture_logs" | grep -E '^PASS (editor fixture (unrepresented fields and private log boundaries|existing data and process/session cleanup)|attestation browser fixture protected data and private source/session/file/process/database cleanup)$' || true
+                if ! printf '%s\n' "$fixture_logs" | grep -Fx 'PASS attestation browser fixture protected data and private source/session/file/process/database cleanup' >/dev/null; then
+                  echo 'Attestation fixture preservation/cleanup evidence missing.' >&2
+                  cleanup_status=1
+                fi
+              else
+                echo 'Attestation fixture logs unavailable; preservation unconfirmed.' >&2
+                cleanup_status=1
+              fi
+              if [[ "$cleanup_status" = 0 ]]; then
+                echo 'PASS Attestation fixture clean exit and preservation/cleanup evidence verified'
+              fi
+              if [[ "$timed_out" = 1 ]]; then
+                docker rm -f -v ather-career-ci-attestation-editor || cleanup_status=1
+              else
+                docker rm -v ather-career-ci-attestation-editor || cleanup_status=1
+              fi
+            elif [[ "$ATTESTATION_FIXTURE_STARTED" = 1 ]]; then
+              echo 'Attestation fixture container missing before exit/evidence verification.' >&2
+              cleanup_status=1
+            fi
+            if [[ "$EDITOR_DB_USER" =~ ^editor_[a-f0-9]{16}$ ]]; then
+              docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -e "DROP USER IF EXISTS '$EDITOR_DB_USER'@'%';" || cleanup_status=1
+            else
+              echo 'Invalid Attestation fixture cleanup user.' >&2
+              cleanup_status=1
+            fi
+            rm -f -- "$EDITOR_EVIDENCE/private-context.json" "$EDITOR_EVIDENCE/stop" || cleanup_status=1
+            if [[ -e "$EDITOR_EVIDENCE/private-context.json" || -e "$EDITOR_EVIDENCE/stop" ]]; then cleanup_status=1; fi
+            if [[ "$cleanup_status" = 0 ]]; then echo 'PASS Attestation browser container/user/private-carrier cleanup'; fi
+            if [[ "$browser_status" != 0 ]]; then exit "$browser_status"; fi
+            exit "$cleanup_status"
+          }
+          trap cleanup_attestation EXIT
+          docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -e "CREATE USER '$EDITOR_DB_USER'@'%' IDENTIFIED BY '$EDITOR_DB_PASSWORD'; GRANT ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* TO '$EDITOR_DB_USER'@'%';"
+          docker compose -p ather-career-ci -f docker-compose.production.yml run -d --no-deps --name ather-career-ci-attestation-editor --entrypoint php \
+            -p 127.0.0.1:8102:8080 -p 127.0.0.1:8103:8081 -p 127.0.0.1:8104:8082 -v "$EDITOR_EVIDENCE:/evidence" \
+            -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e "DB_NAME=$REHEARSAL_DB_NAME" -e "ATHERCAR_TEST_DB_NAME=$REHEARSAL_DB_NAME" \
+            -e "DB_USER=$EDITOR_DB_USER" -e "DB_PASSWORD=$EDITOR_DB_PASSWORD" -e ATHERCAR_EDITOR_EVIDENCE_DIR=/evidence \
+            web scripts/run-onboarding-editor-browser-fixture.php --attestations
+          ATTESTATION_FIXTURE_STARTED=1
+          for _ in $(seq 1 120); do
+            test -s "$EDITOR_EVIDENCE/private-context.json" && test "$(stat -c '%a' "$EDITOR_EVIDENCE/private-context.json")" = 600 && break
+            sleep 1
+          done
+          test -s "$EDITOR_EVIDENCE/private-context.json"
+          # A root-written 0600 carrier must belong to the ordinary host Node runner.
+          docker exec --user 0:0 ather-career-ci-attestation-editor chown "$HOST_RUNNER_UID:$HOST_RUNNER_GID" /evidence/private-context.json
+          ATTESTATION_CONTEXT_FILE="$EDITOR_EVIDENCE/private-context.json" ATTESTATION_RUNNER_UID="$HOST_RUNNER_UID" ATTESTATION_RUNNER_GID="$HOST_RUNNER_GID" node --input-type=module -e '
+            import fs from "node:fs";
+            import path from "node:path";
+            const uid=process.getuid(), gid=process.getgid(), file=process.env.ATTESTATION_CONTEXT_FILE;
+            const context=fs.lstatSync(file), directory=fs.lstatSync(path.dirname(file));
+            if (uid===0 || uid!==Number(process.env.ATTESTATION_RUNNER_UID) || gid!==Number(process.env.ATTESTATION_RUNNER_GID)
+              || !context.isFile() || context.uid!==uid || context.gid!==gid || (context.mode & 0o7777)!==0o600
+              || !directory.isDirectory() || directory.uid!==uid || (directory.mode & 0o7777)!==0o700) {
+              throw new Error("Attestation context ownership/private permissions invalid");
+            }
+            const descriptor=fs.openSync(file,fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW); fs.closeSync(descriptor);
+            console.log("PASS Attestation private context runner ownership, 0600/0700 permissions and non-root readability");
+          '
+          APP_ENV=test ATHERCAR_TEST_MODE=1 \
+            ATHERCAR_PLAYWRIGHT_MODULE="$RUNNER_TEMP/ather-editor-tools/node_modules/playwright" \
+            ATHERCAR_ATTESTATION_BROWSER_BASE_URL=http://127.0.0.1:8102 ATHERCAR_ATTESTATION_BROWSER_NULL_URL=http://127.0.0.1:8103 ATHERCAR_ATTESTATION_BROWSER_OFF_URL=http://127.0.0.1:8104 \
+            ATHERCAR_EDITOR_CONTAINER=ather-career-ci-attestation-editor ATHERCAR_EDITOR_APP_ROOT=/var/www/app \
+            ATHERCAR_EDITOR_EVIDENCE_DIR="$EDITOR_EVIDENCE" node scripts/run-onboarding-attestation-browser-tests.mjs
+
       - name: Remove isolated rehearsal database
         run: |
           set -euo pipefail
@@ -491,6 +595,11 @@ jobs:
         run: |
           set +e
           cleanup_failed=0
+          if docker inspect ather-career-ci-attestation-editor >/dev/null 2>&1; then
+            echo 'Attestation fixture remained after orderly cleanup.' >&2
+            cleanup_failed=1
+            docker rm -v ather-career-ci-attestation-editor || echo 'Attestation fallback cannot remove a running fixture.' >&2
+          fi
           if docker inspect ather-career-ci-profile-fields >/dev/null 2>&1; then
             echo 'Profile browser container remained after orderly cleanup.' >&2
             cleanup_failed=1

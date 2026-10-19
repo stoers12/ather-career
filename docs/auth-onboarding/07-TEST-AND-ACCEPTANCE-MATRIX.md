@@ -1,5 +1,7 @@
 # 07 — Test and acceptance matrix
 
+Focused acceptance additions: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) records real-browser persisted-session/disposable-MySQL coverage for original null policies/off endpoint, exact hostile plain text, server AR/EN document language versus UI language, fresh actions/no automatic writes, original evidence timestamps, stale/uncertain/lost outcomes, obsolete responses/account/expiry/bfcache boundaries, unsaved/pending draft preservation, responsive themes/keyboard/live regions and redacted synthetic screenshots. Existing HTTP/renderer/preview/editor assertions remain. Guarded private source copies alone supply successful synthetic documents. Commands, final results, retained failures and explicit manual-device/screen-reader/hosted-CI gaps belong to the handoff.
+
 **Card 04 HTTP tests (2026-10-19):** The focused guarded CLI suite uses real HTTP,
 persisted sessions and disposable migrated MySQL, first exercising unmodified
 production null resolvers and then private test-source copies with synthetic bytes.

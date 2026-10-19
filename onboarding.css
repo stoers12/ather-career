@@ -190,3 +190,9 @@ html[data-landing-theme="dark"] #ather-onboarding-preview .ao-primary { color: #
 #ather-onboarding-preview[data-draft-editor] .ao-check:has(input:disabled), #ather-onboarding-preview[data-draft-editor] .ao-toggle-row { opacity: .75; }
 #ather-onboarding-preview[data-draft-editor] .ao-preview-meta span, #ather-onboarding-preview[data-draft-editor] .ao-preview-headline, #ather-onboarding-preview[data-draft-editor] .ao-review-item strong { overflow-wrap: anywhere; min-width: 0; }
 @media(max-width:560px) { #ather-onboarding-preview[data-draft-editor] .ao-save-state { max-width: 52%; } }
+/* Private document bodies are exact server text, independent of interface direction. */
+[data-draft-editor] .ao-attestation-documents { display: grid; gap: 16px; min-width: 0; }
+[data-draft-editor] .ao-attestation-document { border: 1px solid var(--ao-border); border-radius: 12px; padding: 16px; min-width: 0; }
+[data-draft-editor] .ao-attestation-document h2 { font-size: 1rem; margin: 0 0 8px; }
+[data-draft-editor] .ao-attestation-document p { margin: 0 0 8px; }
+[data-draft-editor] .ao-document-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; unicode-bidi: plaintext; }

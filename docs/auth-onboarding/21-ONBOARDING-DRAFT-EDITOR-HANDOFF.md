@@ -1,5 +1,7 @@
 # Private onboarding draft editor — 2026-10-18
 
+Bounded successor: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) supersedes only the authenticated editor’s disabled attestation-area description below. The guarded preview remains inert; Create/visibility remain disabled. Separate explicit recording does not alter draft persistence, exact retries, catalogs, completion or access. Earlier evidence remains historical.
+
 Bounded later core: [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) records atomic first creation/evidence and read-only completed drafts. Existing exact draft retries, current Profile authority and existing-owner access remain; HTTP/UI/routing/publication activation stays deferred. Earlier evidence below remains historical.
 
 Catalog-only successor: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) supersedes the editor sample-choice description below with the existing Profile catalogs and safe older-choice labels. The guarded design preview retains its samples; completion and activation remain unavailable.

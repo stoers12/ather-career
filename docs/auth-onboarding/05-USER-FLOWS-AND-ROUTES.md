@@ -1,5 +1,7 @@
 # 05 — Proposed user flows and route contracts
 
+Private editor integration: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) loads GET `/owner_onboarding_attestation.php` after matching the draft/editor context, shows all three complete documents and exact-current original recorded time, and offers an explicit POST with the token/three true actions and existing CSRF header. No language/bundle selector is sent. Navigation/checkboxes/language changes never POST. New localized markup reloads documents with unchecked actions. Unavailable policies/off endpoint leave draft saves independent. Stale presentation requires fresh review; uncertain recording offers explicit GET evidence re-read. No completion route/UI, final navigation/access gate, callback/legacy cutover or publication change.
+
 **Card 04 implemented local route (2026-10-19):** `/owner_onboarding_attestation.php`
 (application handler plus required public shim) accepts exact GET/POST only behind
 `ATHERCAR_ONBOARDING_ATTESTATION_HTTP_ENABLED === '1'` (default off). GET independently

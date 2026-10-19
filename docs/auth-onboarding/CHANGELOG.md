@@ -1,5 +1,22 @@
 # Authentication and onboarding history
 
+## 2026-10-20 — bounded private attestation editor integration (local review)
+
+Connect the existing step-1 area to default-off authenticated GET/POST, preserving
+the visual composition/native controls and AR/EN themes/responsiveness. Render all
+three exact document texts/languages safely, require three fresh unchecked actions
+and an explicit record click, and show original exact-current evidence timestamps.
+Separate loading/unavailable/stale/uncertain/authentication states preserve draft
+edits, catalogs and immutable pending operations. Retire obsolete requests on
+language/markup/authentication changes and bfcache restoration. Add guarded private
+fixture browser coverage, an additive CI step with restrictive carrier ownership
+and orderly cleanup, and renderer assertions without removing prior checks.
+Both production policy resolvers remain literal null, gates/Google-only registration
+remain default off, and Create/visibility remain disabled. No schema, completion UI/
+HTTP, routing/publication, activation or full-Card-04 completion is claimed.
+See [handoff 29](29-ATTESTATION-EDITOR-UI-HANDOFF.md) for commands, results, retained
+failures, redacted screenshots and verification gaps.
+
 ## 2026-10-19 — Card 04 default-off exact attestation HTTP boundary
 
 Base `8bef4ac1ebaa4e2b667291e4ad667ad0b6c44c6a`. One authenticated GET/POST route

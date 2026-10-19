@@ -11,6 +11,9 @@ $GLOBALS['attestation_http_fixture'] = json_decode(file_get_contents(__CONTROL__
 function attestationHttpFixtureContent(string $kind): string
 {
     $c=$GLOBALS['attestation_http_fixture'];
+    if ($c['browser']??false) {
+        return "SYNTHETIC TEST ONLY — ليست سياسة\r\n\n  ".$kind.':'.($c['version']??'v1').':'.($c['language']??'en')."\n<img src=x onerror=\"window.policyXss=1\"><script>window.policyXss=2</script> & <a href=\"https://invalid.test/\">literal text</a>\nنص عربي محفوظ كما هو.  ";
+    }
     return $c['maximum']??false ? str_repeat('x',65536) : 'SYNTHETIC TEST ONLY — ليست سياسة: '.$kind.':'.($c['version']??'v1').':'.($c['language']??'en');
 }
 function attestationHttpFixtureBundle(): ?OnboardingAttestationBundle

@@ -1,5 +1,7 @@
 # 03 — Security and privacy threat model
 
+Bounded editor boundary: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) uses text nodes for complete immutable document content, preserving whitespace and the server document language. The presentation CSRF context must match the original editor anchor. Request generations, connected-root checks, cancellation and authentication epochs retire obsolete responses on markup/language/session invalidation; late draft acknowledgements cannot unlock an invalidated context. Tokens, bodies and actions remain RAM-only, outside draft payloads, browser storage, URLs and telemetry. Possible-commit outcomes require explicit evidence re-read, never blind POST replay.
+
 **Card 04 HTTP mitigation (2026-10-19):** [28](28-ATTESTATION-HTTP-HANDOFF.md) binds one
 unpredictable presentation token to the current User, authz version, authentication
 time, session-ID digest and exact server bundle. All three bounded UTF-8 plain-text
