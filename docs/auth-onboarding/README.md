@@ -12,6 +12,12 @@ Ather is a broader professional platform, initially focused on students and grad
 
 ## Start here
 
+Card 04 first bounded slice: [28 — exact attestation HTTP presentation/recording](28-ATTESTATION-HTTP-HANDOFF.md).
+Authenticated GET/POST and its public shim are implemented locally behind an exact-`1`,
+default-off gate. Production bundle/content resolvers remain null: no approved legal
+documents, usable production presentation, activation, final UI or completion route.
+Next step is review of this local slice; real policies and journey integration remain separate.
+
 Read current behavior before changing code; use the ADRs for approved choices, the threat model for failure modes, the data model and routes for proposed contracts, the implementation plan for sequencing, and the test and operations documents for gates. This directory supersedes the two Phase 0 files formerly under docs/architecture. Other documentation in that directory remains independent.
 
 | File | Responsibility | Status | Last reviewed commit | Review date |

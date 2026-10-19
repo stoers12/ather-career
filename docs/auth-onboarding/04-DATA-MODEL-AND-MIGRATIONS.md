@@ -1,5 +1,11 @@
 # 04 — Data model and migration plan
 
+**Card 04 HTTP slice (2026-10-19):** No migration or evidence-schema change. The new
+boundary reuses exact 015 evidence and original `recorded_at`; 019 and all protected
+rows remain unchanged. Only one bounded PHP-session presentation record is added:
+token plus User/authz/authentication/session digest and twelve trusted descriptors,
+without document bodies or a raw session secret. See [28](28-ATTESTATION-HTTP-HANDOFF.md).
+
 **2026-10-19 bounded first-completion core:** Actual additive 019 creates only onboarding_completions: immutable first-completion evidence with User/Portfolio/Profile uniqueness and exact attestation-key references. No existing data/schema backfill. The guarded runner verifies/repeats compatible empty CREATE and rejects partial/drifted/populated unrecorded evidence. Full runtime schema readiness/restored manifest advances through 019. See [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md). No HTTP/UI/routing/publication or live change.
 
 **2026-10-19 optional final facts:** Actual additive 018 adds nullable

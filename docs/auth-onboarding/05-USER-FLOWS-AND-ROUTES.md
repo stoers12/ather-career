@@ -1,5 +1,15 @@
 # 05 — Proposed user flows and route contracts
 
+**Card 04 implemented local route (2026-10-19):** `/owner_onboarding_attestation.php`
+(application handler plus required public shim) accepts exact GET/POST only behind
+`ATHERCAR_ONBOARDING_ATTESTATION_HTTP_ENABLED === '1'` (default off). GET independently
+authorizes, verifies current fixed document bytes/languages/digests and returns all
+three documents, exact-current evidence status/time, CSRF and a session-bound token.
+POST accepts only token and three strict true actions, with `X-CSRF-Token`; it
+reauthorizes/re-resolves and rejects stale review before the explicit existing write.
+Unavailable production policies return 503 without a usable token. No final UI,
+completion route or routing/callback/legacy/publication change. See [28](28-ATTESTATION-HTTP-HANDOFF.md).
+
 **2026-10-05 status update:** The local Phase 2A candidate changes only the existing Owner callback's identity lookup; see [10](10-PHASE2A-CALLBACK-RESOLUTION.md). Proposed registration, linking, email verification and onboarding routes below remain disabled.
 
 **All routes here are proposals, not implemented filenames.** Existing Owner URLs remain guarded during transition. Each private response is no-store; redirects use fixed allowlists. A route never accepts an owner ID as authorization. Method/URI spelling is subject to route review, while the security contract is binding. State model: anonymous → OIDC pending → unverified holding or verified onboarding → completed private Dashboard → explicit publication. Disabled/restricted states deny protected resources. See [ADRs](02-ARCHITECTURE-DECISIONS.md) and [test IDs](07-TEST-AND-ACCEPTANCE-MATRIX.md).

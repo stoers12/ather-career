@@ -1,5 +1,10 @@
 # Bounded onboarding completion contract
 
+Later owner-authorized Card 04 transport: [28](28-ATTESTATION-HTTP-HANDOFF.md) implements
+only default-off authenticated exact-document presentation/attestation recording.
+It does not change the accepted completion overlay, approve policies, complete the
+journey or authorize unrelated recommendations. Production policies remain null.
+
 ## Accepted bounded first-completion core — 2026-10-19
 
 This explicit owner acceptance supersedes only the corresponding earlier proposals

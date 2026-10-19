@@ -1,5 +1,15 @@
 # 07 — Test and acceptance matrix
 
+**Card 04 HTTP tests (2026-10-19):** The focused guarded CLI suite uses real HTTP,
+persisted sessions and disposable migrated MySQL, first exercising unmodified
+production null resolvers and then private test-source copies with synthetic bytes.
+It checks exact digests/languages, missing/changed documents, bounded session binding,
+auth/CSRF/JSON/media/size/override denials, old/cross-session tokens, concurrency under
+the real User lock, original evidence time, rollback/possible-commit recovery, safe
+logs and full cleanup. CI adds a nineteenth rehearsal and off-gate production HTTP
+smoke assertions while retaining all existing assertions/cleanup. Actual local
+commands, failures/corrections and gaps are recorded in [28](28-ATTESTATION-HTTP-HANDOFF.md).
+
 **2026-10-19 bounded first-completion core:** Guarded completion CLI/MySQL tests cover migration preservation/recovery, strict fields/review/session/claim/exact-policy authority, atomic private creation, durable retries/recovery, competing User/slug/draft saves, rollback at every write, uncertain COMMIT and later Profile preservation. Production resolver stays null; synthetic policies are confined to a guarded temporary test-source copy, never a production injection or environment-selected bundle. See [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md). No HTTP/UI/routing/publication or live change.
 
 **2026-10-19 optional final fields:** guarded `run-final-profile-tests.php` and
