@@ -24,7 +24,8 @@ function renderFinalProfileFields(array $profile, array $errors): void
         echo '<select id="' . $field . '" name="' . $field . '"' . ownerFieldAccessibilityAttributes($errors, $field, $field . '-help') . '>';
         echo '<option value="">Not specified / غير محدد</option>';
         if ($value !== '' && !array_key_exists($value, $catalog[$group])) {
-            echo '<option value="' . finalProfileEscape($value) . '" selected>Saved or entered choice / خيار محفوظ أو مدخل: ' . finalProfileEscape($value) . '</option>';
+            $choiceHint = isset($errors[$field]) ? 'Unlisted choice / خيار خارج القائمة: ' : 'Older saved choice / اختيار محفوظ سابقًا: ';
+            echo '<option value="' . finalProfileEscape($value) . '" selected>' . $choiceHint . finalProfileEscape($value) . '</option>';
         }
         foreach ($catalog[$group] as $token => $names) {
             echo '<option value="' . finalProfileEscape($token) . '"' . ($value === $token ? ' selected' : '') . '>'

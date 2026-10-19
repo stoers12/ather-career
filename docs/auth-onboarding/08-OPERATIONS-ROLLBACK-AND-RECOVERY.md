@@ -1,5 +1,7 @@
 # 08 — Operations, rollback and recovery
 
+**2026-10-19 bounded first-completion core:** 019 is additive and not applied live. Code requires the full verified schema; no activation/deployment is authorized. Interrupted whole CREATE is recoverable only if empty/exact; partial or populated unrecorded tables require review. Unknown COMMIT may have committed: use authorized durable receipt recovery on a working connection; never delete potentially committed rows. Retention/deletion remains a launch decision. See [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md). No HTTP/UI/routing/publication or live change.
+
 **2026-10-19 local final facts:** 018 is additive and unapplied live. The four Profile
 controls/read queries require its verified schema/full ledger; never deploy against an
 older schema. A completed compatible ALTER can be verified/recorded on retry; partial or

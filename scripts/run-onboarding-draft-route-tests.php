@@ -270,7 +270,7 @@ try {
     draftRouteAssert(draftRouteRequest($a, 'GET', 200)['draft'] === $saved, 'Temporary failure changed stored result.');
 
     $phase='catalog historical receipt';
-    $historicalFields=['country_code'=>'ZZ','preferred_language'=>'fr-CA','professional_status'=>'Research <b>candidate</b>',
+    $historicalFields=['country_code'=>'US','preferred_language'=>'fr-CA','professional_status'=>'Research <b>candidate</b>',
         'specialization'=>'  تخصص é  ','headline'=>str_repeat('h',200),'phone'=>'Untouched historical phone'];
     $receipt=draftTestSeedHistorical($database,$catalogUser,3,'public_identity',
         array_intersect_key($historicalFields,array_flip(['country_code','preferred_language'])),$historicalFields);
@@ -286,7 +286,7 @@ try {
     draftRouteAssert(draftRouteSave($legacyBrowser,$legacyCsrf,403,$receipt)['code']==='access_denied', 'Receipt bypassed current authorization.');
     $database->exec("UPDATE users SET authz_version=1 WHERE id=$catalogUser");
     $legacyBrowser=draftRouteBrowser($catalogUser); $legacyCsrf=draftRouteRequest($legacyBrowser,'GET',200)['csrf_token'];
-    foreach (['country_code'=>['ZZ','XK','UK','jo','JO '], 'preferred_language'=>['fr-CA','AR','en-US'],
+    foreach (['country_code'=>['US','CA','ZZ','XK','UK','jo','JO '], 'preferred_language'=>['fr-CA','AR','en-US'],
         'professional_status'=>['early','experienced','independent','Research sabbatical'],
         'specialization'=>['',' ',"bad\0text","bad\ntext",str_repeat('😀',151)]] as $field=>$badValues) {
         $section=in_array($field,['country_code','preferred_language'],true)?'public_identity':'professional_snapshot';
@@ -298,8 +298,8 @@ try {
     $current=draftRouteSave($legacyBrowser,$legacyCsrf,200,draftRouteInput(3,['display_name'=>'Only this edit']))['draft'];
     foreach ($historicalFields as $field=>$value) { draftRouteAssert($current['fields'][$field]===$value, 'Unrelated HTTP save changed historical fields.'); }
     draftRouteSave($legacyBrowser,$legacyCsrf,409,$receipt);
-    $current=draftRouteSave($legacyBrowser,$legacyCsrf,200,draftRouteInput(4,['country_code'=>'JP','preferred_language'=>'ar']))['draft'];
-    draftRouteAssert($current['fields']['country_code']==='JP' && $current['fields']['preferred_language']==='ar', 'Catalog replacement failed.');
+    $current=draftRouteSave($legacyBrowser,$legacyCsrf,200,draftRouteInput(4,['country_code'=>'QA','preferred_language'=>'ar']))['draft'];
+    draftRouteAssert($current['fields']['country_code']==='QA' && $current['fields']['preferred_language']==='ar', 'Catalog replacement failed.');
     $current=draftRouteSave($legacyBrowser,$legacyCsrf,200,draftRouteInput(5,['country_code'=>null,'preferred_language'=>null]))['draft'];
     draftRouteAssert(!isset($current['fields']['country_code']) && !isset($current['fields']['preferred_language']), 'Explicit catalog null clear failed.');
     $current=draftRouteSave($legacyBrowser,$legacyCsrf,200,draftRouteInput(6,['professional_status'=>'employed','specialization'=>str_repeat('😀',150)],'professional_snapshot'))['draft'];

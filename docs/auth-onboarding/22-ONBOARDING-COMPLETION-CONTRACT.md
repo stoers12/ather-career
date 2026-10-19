@@ -1,5 +1,61 @@
 # Bounded onboarding completion contract
 
+## Accepted bounded first-completion core — 2026-10-19
+
+This explicit owner acceptance supersedes only the corresponding earlier proposals
+below. Historical evidence and the original R1–R12 text remain, with their original
+review dates; **unrelated recommendations, HTTP/UI, routing/cutover, publication
+gates, policies and activation remain unapproved/unimplemented** by this acceptance.
+Implementation base is merged `fd116782128e9cadf1e9ce017dca90d1495c4b39`.
+
+| Accepted decision | First completion / later lifecycle |
+| --- | --- |
+| Display name | Professional display name, not legal identity/components. Map to `personal_info.full_name`, 1–150 Unicode code points / 600 UTF-8 bytes. Required initially and on later Profile saves. |
+| Headline | Map to `hero_headline`, 1–180 code points / 720 bytes at first completion. Draft 181–200 remains readable/saved; explicit correction is required, never truncation. Later headline may clear. |
+| Initial slug | Exact canonical lowercase ASCII, 3–63 bytes, existing single-hyphen syntax, reserved names and atomic uniqueness. No trim/case conversion. Existing lifecycle/routes and 64-character slugs remain unchanged. Slug is edited through its separate lifecycle. |
+| Catalog | Exactly ordered `JO PS SA AE QA KW BH OM IQ LB SY YE EG`, ar/en and the existing six status tokens. Reuse pinned labels; full ISO source still has 249 entries. Country means professional location; neither country nor status grants access/eligibility authority. No default Jordan or IP inference. |
+| Requiredness | All seven connected fields are required at first completion only. Later name remains required; country/language/status/specialization/headline may clear. Existing Profile edit controls/normalization are unchanged by the core slice; no blanket adoption of R1/R10 for all legacy writers. |
+| Exact new-completion text | Strings, valid UTF-8, inclusive code-point/byte bounds, non-whitespace text, no Unicode Cc controls. Preserve exact text; no silent normalization, trimming or truncation. Reuse the exact specialization validator. Missing/null/unsupported saved choices cannot complete. |
+| Privacy | New Portfolio is unpublished and contacts private. Four final facts stay excluded from public projections. Completion is distinct from publication readiness. Existing-owner access/policy is preserved. |
+| Seven optional draft-only fields | Never automatically promote `name_ar`, `name_en`, `city`, `university`, `graduation_year`, `biography`, `phone`. Preserve privately and disclose all values/disposition in server review. Explicit confirmation acknowledges their private historical disposition. Freeze new mutations after proven completion; later Profile is authoritative. Retention/deletion is a launch decision, not indefinite approval. |
+
+The accepted implementation is one owned first-creation transaction with a current
+authorized User/session lock and existing strict authorized readiness observation,
+authoritative current bundle/exact prior attestation, saved draft version and
+server-bound explicit review/creation/disposition confirmation. Readiness is an
+application claim observation, not provider freshness; no new TTL is introduced.
+There are no personal-field/owner/Portfolio/policy/catalog overrides in the intent.
+
+The server-only core has no completion HTTP route or final UI. Production policy
+resolution remains `null`; it prevents any NEW completion even with valid data.
+Attestation recording stays separate. A transaction-aware exact-bundle lookup runs
+under the already-authorized User lock without nesting public attestation APIs.
+
+One additive 019 table stores immutable receipt identifiers, saved draft version/
+digest, exact request and review digests, contract/catalog revisions, exact twelve
+document descriptors with an attestation-key FK, original attestation UTC time,
+readiness observation/authz version, deferred key names and completion UTC time.
+Existing tables/rows are not backfilled or upserted. Creation uses existing unique
+owner/Profile/slug constraints and Profile version 1/private contact defaults.
+
+Authorized structurally exact retries recognize the original durable intent before
+current new-completion rules and return original IDs/time, never profile bodies.
+Changed intent conflicts. Receipt recovery is authorized by current User and needs
+no previous session secret; later authorized sessions can recover even with currently
+unavailable policies. Neither path rewrites Profile, draft, timestamps or evidence.
+Draft saves share the User lock: save-first invalidates old completion review;
+completion-first blocks new saves, while an exact prior draft retry remains read-only.
+Existing owners without receipts cannot be converted/overwritten by this operation.
+Unknown COMMIT outcome requires receipt recovery; never delete potentially committed
+Portfolio/Profile/evidence as compensation. Routing/publication bypass prevention
+below remains a separately approved later integration dependency.
+
+See [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) for the implemented API,
+receipt schema/recovery, current validation and explicit gaps. The historical
+recommendations below are not evidence of broader approval or activation.
+
+Owner-approved catalog amendment (2026-10-19): [handoff 26](26-LAUNCH-COUNTRY-CATALOG.md) supersedes the earlier all-249 product offering with the ordered 13-country launch list. Full ISO/CLDR provenance and historical stored choices/receipts remain preserved; earlier evidence below retains its original scope.
+
 Explicit draft-only follow-up: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) reuses Profile catalogs/validators for new draft edits while preserving historical reads and receipts. It does not approve or implement the remaining completion/publication/routing recommendations.
 
 Explicitly authorized optional final-field follow-up: [handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md)

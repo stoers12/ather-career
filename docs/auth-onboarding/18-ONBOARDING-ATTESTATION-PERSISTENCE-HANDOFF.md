@@ -1,5 +1,7 @@
 # Versioned onboarding-attestation persistence core — 2026-10-17
 
+Bounded later core: [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) records atomic first creation/evidence and read-only completed drafts. Existing exact draft retries, current Profile authority and existing-owner access remain; HTTP/UI/routing/publication activation stays deferred. Earlier evidence below remains historical.
+
 Baseline: `6aa1b3e34807591088eb782d0a74aeb45e19daae` (approved merged PR #21;
 Main CI passed). Isolated worktree: `.worktrees/onboarding-attestation`.
 No AGENTS.md was found in the checkout, worktree or ancestor chain. Handoffs

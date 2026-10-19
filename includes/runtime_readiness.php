@@ -96,6 +96,7 @@ function runtimeSchemaIsCompatible(PDO $database): bool
         ['messages', 'recipient_portfolio_id'],
         ['onboarding_attestations', 'recorded_at'],
         ['onboarding_drafts', 'version'],
+        ['onboarding_completions', 'completed_at'],
     ];
 
     $conditions = [];

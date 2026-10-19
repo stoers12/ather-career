@@ -1,5 +1,7 @@
 # Bounded profile preservation and concurrency — 2026-10-18
 
+Bounded later core: [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) records atomic first creation/evidence and read-only completed drafts. Existing exact draft retries, current Profile authority and existing-owner access remain; HTTP/UI/routing/publication activation stays deferred. Earlier evidence below remains historical.
+
 Exact implementation base: `0b818ea3babece756bc866259d10b590b478c573`.
 Its parent is contract commit `7ef0db943e4fefc5e2a01f1ba6a3fc7ed9ffe71c`,
 whose parent is reviewed main `d2514104a405c26587350be84c28720ac87f3ff7`.

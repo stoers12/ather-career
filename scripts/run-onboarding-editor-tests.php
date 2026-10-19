@@ -27,7 +27,10 @@ foreach (['ar','en'] as $locale) {
         }
         phase2Assert(!str_contains($html,'maxlength=') && str_contains($html,'150'),'Specialization Unicode limit is server-owned and explained');
 
-        $checks+=5;
+        $countryOptions=$xpath->query('//select[@data-draft-field="country_code"]/option');
+        phase2Assert($countryOptions->length===14 && $countryOptions->item(0)->getAttribute('value')==='' && $xpath->query('//select[@data-country]/option[@selected]')->length===0,'No inferred/default country');
+        phase2Assert(array_keys($catalog['countries'])===['JO','PS','SA','AE','QA','KW','BH','OM','IQ','LB','SY','YE','EG'],'Exact launch order');
+        $checks+=7;
     }
 }
 $source=file_get_contents(__DIR__.'/../owner_onboarding_editor.php');

@@ -1,5 +1,7 @@
 # Authenticated onboarding draft HTTP boundary — 2026-10-18
 
+Bounded later core: [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) records atomic first creation/evidence and read-only completed drafts. Existing exact draft retries, current Profile authority and existing-owner access remain; HTTP/UI/routing/publication activation stays deferred. Earlier evidence below remains historical.
+
 Current field-rule follow-up: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) adds current Profile catalog validation after authorized structural/receipt handling. This HTTP envelope, denial boundary and bounded exact-retry semantics remain unchanged.
 
 Approved baseline: `674ccb0976a48306545d40dd4025628ad203db54` (PR #23 merged;

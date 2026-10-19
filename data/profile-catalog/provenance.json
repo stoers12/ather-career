@@ -1,9 +1,9 @@
 {
-  "revision": "ather-profile-candidates-2026-10-18-r1",
-  "membership": "Only alpha_2 in pinned Debian iso-codes ISO 3166-1 file, not CLDR label membership. ISO is maintenance authority; iso-codes is the independently maintained machine-readable snapshot, not an ISO endorsement.",
+  "revision": "ather-profile-launch-2026-10-19-r2",
+  "membership": "Owner-approved ordered 13-country launch product subset of the pinned 249-entry ISO snapshot. CLDR supplies exact labels, not membership. No geographic access restriction.",
   "authority_url": "https://www.iso.org/iso-3166-country-codes.html",
   "cldr_release_url": "https://cldr.unicode.org/downloads/cldr-48",
-  "country_count": 249,
+  "country_count": 13,
   "language_count": 2,
   "status_count": 6,
   "files": [
@@ -71,5 +71,21 @@
       "bytes": 20815
     }
   ],
-  "generated_sha256": "b4f9e13579d12d62389ca9ed23db42ea2399ef9c669c64f078062fe4be31a6c2"
+  "generated_sha256": "9ea1bd7f2e9ec1223a905a95509ebc43f4b9cc5f3bce471d35bb1d8fe9116f07",
+  "iso_source_country_count": 249,
+  "supported_country_codes": [
+    "JO",
+    "PS",
+    "SA",
+    "AE",
+    "QA",
+    "KW",
+    "BH",
+    "OM",
+    "IQ",
+    "LB",
+    "SY",
+    "YE",
+    "EG"
+  ]
 }
