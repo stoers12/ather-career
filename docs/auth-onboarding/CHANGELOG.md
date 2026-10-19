@@ -1,5 +1,14 @@
 # Authentication and onboarding history
 
+## 2026-10-19 — Card 04 default-off exact attestation HTTP boundary
+
+Base `8bef4ac1ebaa4e2b667291e4ad667ad0b6c44c6a`. One authenticated GET/POST route
+and public shim present verified immutable document bytes and bind explicit actions
+to one current session/bundle before existing exact evidence recording. Fixed content
+and production bundle resolvers remain null; gate defaults off. No legal text,
+migration, access/completion authority, final UI, routing or activation. Handoff 28
+records guarded real HTTP/MySQL validation, retained failures/corrections and gaps.
+
 Entries record repository history and verification scope. “This commit” means the commit containing this file; it avoids a self-referential hash. No entry implies deployment of proposed features.
 
 ## 2026-10-19 — Bounded first-completion core and durable receipt

@@ -1,5 +1,9 @@
 # Atomic first completion and durable receipt — local core only
 
+Later transport-only slice: [28](28-ATTESTATION-HTTP-HANDOFF.md) provides default-off
+attestation HTTP presentation/recording. This completion core and receipt contract
+are unchanged; completion HTTP/UI and production policy availability remain deferred.
+
 Implementation baseline: merged `fd116782128e9cadf1e9ce017dca90d1495c4b39`.
 Remote main was fetched and matched before isolation. Worktree
 `.worktrees/onboarding-completion-core`, branch `feat/onboarding-completion-core-20261019`.

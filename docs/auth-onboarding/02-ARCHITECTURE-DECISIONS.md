@@ -1,5 +1,15 @@
 # 02 — Architecture decision records
 
+**Card 04 implementation boundary (2026-10-19):** The owner authorized only the
+default-off HTTP presentation/recording slice in [28](28-ATTESTATION-HTTP-HANDOFF.md).
+It implements existing exact-bundle self-attestation/Terms/Privacy evidence without
+approving legal content or unrelated contract proposals. Trusted fixed server bytes
+must match all three descriptor SHA-256/languages; POST supplies no descriptors.
+One session presentation binds current authorization and bundle, with CSRF and fresh
+review after change. Privacy acknowledgement is not blanket consent; self-attested
+age is not verified age. Records grant no access/completion. Production resolution
+remains null, synthetic documents test-only, and existing-owner policy is unchanged.
+
 These records convert the owner-approved Phase 0 decisions into stable IDs. Approval date for every ADR: **2026-10-04**. “Approved” means architecture approval, not implemented behavior or legal approval. Official source IDs resolve in [the reference register](09-OFFICIAL-REFERENCES.md). Where a source informs a product choice, that choice is an **engineering inference**, not an external mandate. Supersede an ADR explicitly and update the threat model, tests and changelog in the same commit.
 
 ## AUTH-ADR-001 — Auth0 Universal Login and initial methods

@@ -1,5 +1,12 @@
 # 06 — Phased implementation plan
 
+**Card 04 first bounded slice (2026-10-19):** [28](28-ATTESTATION-HTTP-HANDOFF.md) covers
+authenticated JSON presentation and exact recording only, locally implemented with
+default-off configuration and guarded real-HTTP tests. Production policies/content
+remain unavailable. Approved immutable documents/translations, final review UI,
+journey/completion transport, routing/cutover, retention and activation remain later
+separately reviewed work; this slice accepts none of those implicitly.
+
 **2026-10-05 status update:** Phase 1 has merged and canonical ledger is 001–014. The local, unpushed Phase 2A callback-resolution slice is documented in [10](10-PHASE2A-CALLBACK-RESOLUTION.md); the earlier Phase 1 status below is historical.
 
 **Historical Phase 1 review status (2026-10-04; superseded by the status update above):** Phase 1 identity foundation was committed locally at `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e` and reviewed against the approved architecture. The six-file implementation is unpushed and undeployed. 014 passed isolated rehearsal; the canonical ledger remains 001–013. Phases 2–7 remain proposed and blocked by their own gates. Keep open registration disabled until security, privacy, accessibility, recovery, tenant and legal gates pass. [Data plan](04-DATA-MODEL-AND-MIGRATIONS.md) distinguishes implemented 014 from proposed 015–017; [test matrix](07-TEST-AND-ACCEPTANCE-MATRIX.md) records scoped evidence.

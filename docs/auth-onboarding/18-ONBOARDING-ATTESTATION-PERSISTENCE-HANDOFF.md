@@ -1,5 +1,10 @@
 # Versioned onboarding-attestation persistence core — 2026-10-17
 
+Later bounded transport: [28](28-ATTESTATION-HTTP-HANDOFF.md) adds default-off authenticated
+presentation/recording with matching fixed server bytes and session binding. Existing
+015 APIs/schema, null production bundle and original evidence timestamps are unchanged.
+The earlier no-route observations below retain their historical scope.
+
 Bounded later core: [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) records atomic first creation/evidence and read-only completed drafts. Existing exact draft retries, current Profile authority and existing-owner access remain; HTTP/UI/routing/publication activation stays deferred. Earlier evidence below remains historical.
 
 Baseline: `6aa1b3e34807591088eb782d0a74aeb45e19daae` (approved merged PR #21;

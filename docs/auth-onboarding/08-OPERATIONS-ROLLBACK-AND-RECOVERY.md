@@ -1,5 +1,14 @@
 # 08 — Operations, rollback and recovery
 
+**Card 04 HTTP boundary (2026-10-19):** [28](28-ATTESTATION-HTTP-HANDOFF.md) adds only a
+default-off capability; actual environments remain off and no migration is added.
+Even a syntactically enabled production route cannot present/record without approved
+current descriptors AND matching fixed bytes; both resolvers stay null. Roll back
+future availability by disabling the route, never by deleting evidence. On dependency
+failure, evidence may already be committed: use a fresh authorized GET on a working
+connection/current bundle, inspect exact status/time, then explicitly choose next
+action. No automatic retry, compensation, policy activation or existing-owner gate.
+
 **2026-10-19 bounded first-completion core:** 019 is additive and not applied live. Code requires the full verified schema; no activation/deployment is authorized. Interrupted whole CREATE is recoverable only if empty/exact; partial or populated unrecorded tables require review. Unknown COMMIT may have committed: use authorized durable receipt recovery on a working connection; never delete potentially committed rows. Retention/deletion remains a launch decision. See [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md). No HTTP/UI/routing/publication or live change.
 
 **2026-10-19 local final facts:** 018 is additive and unapplied live. The four Profile

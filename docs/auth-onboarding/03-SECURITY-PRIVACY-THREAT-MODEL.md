@@ -1,5 +1,15 @@
 # 03 — Security and privacy threat model
 
+**Card 04 HTTP mitigation (2026-10-19):** [28](28-ATTESTATION-HTTP-HANDOFF.md) binds one
+unpredictable presentation token to the current User, authz version, authentication
+time, session-ID digest and exact server bundle. All three bounded UTF-8 plain-text
+documents require matching digests/languages. Header CSRF, exact GET/POST, bounded
+strict JSON, duplicate-key/override/upload rejection, private/no-store and safe static
+errors address TM-10/15/17/19/20/24. Core independently locks/revalidates User and
+preserves original exact evidence time. Failures may follow COMMIT: re-read evidence,
+no automatic replay/absence promise. Deployment remains blocked on approved policies;
+future UI must render document content as text, never executable HTML. No owner gate.
+
 **Scope:** Proposed authentication, registration, account management, onboarding, profile publication and related public routes. This is a design threat model, not proof of controls. [ADRs](02-ARCHITECTURE-DECISIONS.md) define approved choices; [tests](07-TEST-AND-ACCEPTANCE-MATRIX.md) define gates. Revisit on every route/schema/tenant change.
 
 **Historical Phase 1 control status (before protected deployment):** Migration 014 provides an exact binary issuer/subject unique constraint and a read-only compatibility lookup that cross-checks the legacy binding. It does not integrate with the callback, link accounts, change sessions or authorize portfolios. Its isolated failure and recovery tests are recorded in [07](07-TEST-AND-ACCEPTANCE-MATRIX.md). No Auth0 tenant capability or live recovery control was proven by this slice.

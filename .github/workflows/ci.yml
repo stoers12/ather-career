@@ -104,7 +104,7 @@ jobs:
           tables=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(TABLE_NAME ORDER BY TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$REHEARSAL_DB_NAME';")
           test "$tables" = 'messages,personal_info,projects,skills' || { echo 'Rehearsal database is not a fresh V1 baseline.' >&2; exit 1; }
 
-      - name: Run eighteen isolated CLI rehearsals
+      - name: Run nineteen isolated CLI rehearsals
         run: |
           set -euo pipefail
           [[ "$REHEARSAL_DB_NAME" =~ ^ather_career_test_[a-f0-9]{24}$ ]] || { echo 'Invalid rehearsal database name.' >&2; exit 1; }
@@ -178,6 +178,9 @@ jobs:
 
           # Completion owns its transaction; production policies stay unavailable.
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-completion-tests.php
+
+          # Private HTTP fixture copies supply synthetic documents; production stays null/off.
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-attestation-route-tests.php
 
       - name: Authenticated draft editor browser checks
         run: |
@@ -433,6 +436,7 @@ jobs:
           test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/signup.php)" = 405
           test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/owner_register.php)" = 404
           for method in GET POST; do test "$(curl -sS -o /dev/null -w '%{http_code}' -X "$method" http://127.0.0.1:8098/owner_onboarding_draft.php)" = 404; done
+          for method in GET POST; do test "$(curl -sS -o /dev/null -w '%{http_code}' -X "$method" http://127.0.0.1:8098/owner_onboarding_attestation.php)" = 404; done
           test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8098/owner_onboarding_editor.php)" = 404
           for route in /verification-pending.php /verification-success.php /verification-resent.php /verification-expired.php /verification-error.php /account-disabled.php /tests/phase2/support/email-verification-preview.php /forgot-password.php /reset-password.php /tests/phase2/support/recovery-preview.php /onboarding-preview.php /tests/phase2/support/onboarding-preview.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done
           test "$(curl -g -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8098/owner_login.php?method[]=google')" = 400
