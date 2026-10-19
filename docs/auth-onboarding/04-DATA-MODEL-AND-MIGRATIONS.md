@@ -1,5 +1,7 @@
 # 04 — Data model and migration plan
 
+No schema change in [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md). Existing 015 exact evidence and bounded server-session presentation records remain the only attestation persistence. Editor document bodies, presentation token and unchecked/checked actions are transient RAM/DOM state, independent of draft fields/version/operation receipts. Neither current Profile nor completion evidence is changed by document presentation.
+
 **Card 04 HTTP slice (2026-10-19):** No migration or evidence-schema change. The new
 boundary reuses exact 015 evidence and original `recorded_at`; 019 and all protected
 rows remain unchanged. Only one bounded PHP-session presentation record is added:

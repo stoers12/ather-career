@@ -1,5 +1,7 @@
 # Card 04 — exact attestation HTTP presentation and recording
 
+Bounded successor: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) connects this already-merged HTTP boundary to the private editor. HTTP/core semantics and both literal-null production resolvers stay unchanged. The UI requires fresh unchecked actions and explicit recording/evidence recovery; Card 04 and final onboarding integration remain unfinished. Earlier local evidence below remains historical.
+
 Base: `8bef4ac1ebaa4e2b667291e4ad667ad0b6c44c6a` (merged PR 29). Remote main was
 fetched and matched before isolation. Branch `feat/onboarding-attestation-http-20261019`,
 worktree `.worktrees/onboarding-attestation-http`. Applicable repository/ancestor

@@ -1,5 +1,7 @@
 # 08 — Operations, rollback and recovery
 
+UI recovery boundary: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md). Keep all actual gates off and both production document resolvers null. Off/unavailable attestation presentation leaves draft editing/saving operational. After an uncertain POST, explicitly re-read current evidence and its original timestamp before deciding a next action; no automatic replay or assertion that nothing committed. Stale presentations clear actions/documents and require fresh loading/review. Authentication changes stop both protected boundaries and require an explicit fresh page; RAM-only edits do not survive a forced reload. No deployment/live migration/activation is part of this slice.
+
 **Card 04 HTTP boundary (2026-10-19):** [28](28-ATTESTATION-HTTP-HANDOFF.md) adds only a
 default-off capability; actual environments remain off and no migration is added.
 Even a syntactically enabled production route cannot present/record without approved

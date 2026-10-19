@@ -1,5 +1,7 @@
 # 02 — Architecture decision records
 
+Implementation note, not new product/policy approval: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) presents exact server-owned plain-text documents and requires three fresh explicit actions plus a recording click. Interface locale does not select authoritative documents. Age remains self-attestation; Privacy Notice acknowledgement is not blanket consent. No access/readiness/completion authority or owner gating is added.
+
 **Card 04 implementation boundary (2026-10-19):** The owner authorized only the
 default-off HTTP presentation/recording slice in [28](28-ATTESTATION-HTTP-HANDOFF.md).
 It implements existing exact-bundle self-attestation/Terms/Privacy evidence without

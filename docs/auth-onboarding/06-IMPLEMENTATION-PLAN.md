@@ -1,5 +1,7 @@
 # 06 — Phased implementation plan
 
+Card 04 remains partial: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) implements only the existing private editor presentation/actions/recovery around the reviewed HTTP slice. Default-off and null-policy boundaries remain. Real approved immutable legal documents, operator/launch work and separately reviewed final-review/completion/routing integration remain future work; this UI is not authorization to implement them.
+
 **Card 04 first bounded slice (2026-10-19):** [28](28-ATTESTATION-HTTP-HANDOFF.md) covers
 authenticated JSON presentation and exact recording only, locally implemented with
 default-off configuration and guarded real-HTTP tests. Production policies/content

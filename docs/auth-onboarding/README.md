@@ -12,6 +12,11 @@ Ather is a broader professional platform, initially focused on students and grad
 
 ## Start here
 
+Card 04 bounded editor integration: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md).
+Complete exact server documents, explicit actions and safe evidence recovery are implemented
+locally for review. Production policies remain null; all capabilities remain default off.
+Create/completion UI and HTTP, routing cutover and activation remain separate. Card 04 is not finished.
+
 Card 04 first bounded slice: [28 — exact attestation HTTP presentation/recording](28-ATTESTATION-HTTP-HANDOFF.md).
 Authenticated GET/POST and its public shim are implemented locally behind an exact-`1`,
 default-off gate. Production bundle/content resolvers remain null: no approved legal

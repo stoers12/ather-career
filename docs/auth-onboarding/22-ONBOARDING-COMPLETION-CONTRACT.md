@@ -1,5 +1,7 @@
 # Bounded onboarding completion contract
 
+Implementation cross-reference only: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) supplies a private attestation UI, independent of draft completion. It does not accept other recommendations, supply production policies, implement final review/completion HTTP, change required fields/publication or add routing/access gates. The accepted bounded first-completion overlay below remains unchanged.
+
 Later owner-authorized Card 04 transport: [28](28-ATTESTATION-HTTP-HANDOFF.md) implements
 only default-off authenticated exact-document presentation/attestation recording.
 It does not change the accepted completion overlay, approve policies, complete the

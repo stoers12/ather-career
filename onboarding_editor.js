@@ -24,6 +24,12 @@
     var state = 'loading';
     var leaving = false;
     var timeoutMs = 12000;
+    var contextEpoch = 0;
+    var switchingLanguage = false;
+    var attestationListeners = null;
+    var attestationEndpoint = '/owner_onboarding_attestation.php';
+    var attestation = {sequence: 0, controller: null, token: null, state: 'loading', recordedAt: null};
+    function current(epoch, node) { return !locked && epoch === contextEpoch && node === root && node.isConnected; }
     function messages() { return JSON.parse(root.dataset.editorCopy); }
     function dirty(key) { return model[key] !== (baseline[key] === undefined ? '' : baseline[key]); }
     function hasEdits() { return keys.some(dirty); }
@@ -38,24 +44,117 @@
         root.querySelector('[data-retry]').hidden = locked || busy || (pending === null && loaded);
         root.querySelector('[data-recover]').hidden = locked || busy || !loaded || (state !== 'conflict' && pending === null);
         root.querySelector('[data-fresh-context]').hidden = !locked;
-        root.querySelector('[data-language-switch]').setAttribute('aria-disabled', String(busy || locked));
+        root.querySelector('[data-language-switch]').setAttribute('aria-disabled', String(busy || locked || attestation.state === 'recording'));
         root.querySelector('.ao-form-card').setAttribute('aria-busy', String(busy));
         root.querySelectorAll('[data-step-jump], [data-back], [data-edit-step]').forEach(function (link) { link.setAttribute('aria-disabled', String(busy)); });
         root.querySelectorAll('[data-draft-field], [data-clear-language]').forEach(function (control) { control.disabled = !loaded || locked || (busy && state === 'loading'); });
     }
     function stopAuthentication() {
+        contextEpoch++;
+        if (attestationListeners) attestationListeners.abort();
         locked = true; busy = false;
+        retireAttestation('auth');
         say('auth');
         root.querySelector('[data-save-status]').focus();
     }
-    async function request(url, options) {
-        var controller = new AbortController();
+    async function request(url, options, controller) {
+        controller = controller || new AbortController();
         var timer = setTimeout(function () { controller.abort(); }, timeoutMs);
         try {
             var response = await fetch(url, Object.assign({credentials: 'same-origin', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer', signal: controller.signal}, options));
             var body = await response.text();
             return {status: response.status, ok: response.ok, json: async function () { return JSON.parse(body); }, text: async function () { return body; }};
         } finally { clearTimeout(timer); }
+    }
+    function attestationControls() {
+        var ready = attestation.state === 'ready' && attestation.token !== null && loaded && !locked && !switchingLanguage;
+        root.dataset.attestationState = attestation.state;
+        root.querySelectorAll('[data-attestation-action]').forEach(function (input) { input.disabled = !ready; });
+        root.querySelector('[data-attestation-record]').disabled = !ready || !Array.from(root.querySelectorAll('[data-attestation-action]')).every(function (input) { return input.checked; });
+        var load = root.querySelector('[data-attestation-load]');
+        load.disabled = !loaded || locked || switchingLanguage || attestation.state === 'loading' || attestation.state === 'recording';
+        load.textContent = messages()[attestation.state === 'uncertain' ? 'att_reread' : 'att_load'];
+        root.querySelector('[data-attestation-status]').textContent = messages()['att_' + attestation.state] + (attestation.state === 'recorded' ? attestation.recordedAt || '' : '');
+        root.querySelector('[data-language-switch]').setAttribute('aria-disabled', String(busy || locked || attestation.state === 'recording'));
+        root.querySelector('[data-attestation-documents]').setAttribute('aria-busy', String(attestation.state === 'loading' || attestation.state === 'recording'));
+    }
+    function retireAttestation(nextState) {
+        attestation.sequence++;
+        if (attestation.controller) attestation.controller.abort();
+        attestation.controller = null; attestation.token = null; attestation.recordedAt = null; attestation.state = nextState;
+        root.querySelectorAll('[data-attestation-action]').forEach(function (input) { input.checked = false; });
+        root.querySelector('[data-attestation-documents]').replaceChildren();
+        attestationControls();
+    }
+    function exactEvidence(evidence) {
+        if (!evidence || typeof evidence.recorded !== 'boolean' || (evidence.recorded
+            ? typeof evidence.recorded_at !== 'string' || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}$/.test(evidence.recorded_at)
+            : evidence.recorded_at !== null)) throw new Error('unavailable');
+        return evidence;
+    }
+    function presentDocuments(documents) {
+        var fragment = document.createDocumentFragment();
+        ['age', 'terms', 'privacy'].forEach(function (kind) {
+            var doc = documents && documents[kind];
+            if (!doc || typeof doc.content !== 'string' || doc.content === '' || typeof doc.language !== 'string'
+                || !/^[A-Za-z0-9-]{2,35}$/.test(doc.language)) throw new Error('unavailable');
+            var article = document.createElement('article'); article.className = 'ao-attestation-document';
+            var title = document.createElement('h2'); title.textContent = messages()['att_' + kind + '_document'];
+            var language = document.createElement('p'); language.textContent = messages().att_language + doc.language;
+            var text = document.createElement('div'); text.className = 'ao-document-text';
+            text.lang = doc.language; text.dir = 'auto'; text.textContent = doc.content;
+            article.append(title, language, text); fragment.append(article);
+        });
+        root.querySelector('[data-attestation-documents]').replaceChildren(fragment);
+    }
+    async function loadAttestations() {
+        if (!loaded || locked || switchingLanguage || attestation.state === 'recording') return;
+        retireAttestation('loading');
+        var sequence = attestation.sequence, node = root, epoch = contextEpoch;
+        attestation.controller = new AbortController();
+        function active() { return current(epoch, node) && sequence === attestation.sequence; }
+        try {
+            var response = await request(attestationEndpoint, {method: 'GET'}, attestation.controller);
+            if (!active()) return;
+            if (response.status === 401 || response.status === 403) { stopAuthentication(); return; }
+            var data = await response.json();
+            if (!active()) return;
+            if (response.status === 404 || data.code === 'policies_unavailable') { retireAttestation('unavailable'); return; }
+            if (!response.ok || data.success !== true) throw new Error('unavailable');
+            if (data.csrf_token !== context) { stopAuthentication(); return; }
+            if (typeof data.presentation_token !== 'string' || !/^[a-f0-9]{64}$/.test(data.presentation_token)) throw new Error('unavailable');
+            var evidence = exactEvidence(data.evidence);
+            presentDocuments(data.documents);
+            attestation.token = data.presentation_token;
+            attestation.recordedAt = evidence.recorded_at;
+            attestation.state = evidence.recorded ? 'recorded' : 'ready';
+            attestationControls();
+        } catch (_error) { if (active()) retireAttestation('temporary'); }
+    }
+    async function recordAttestations() {
+        if (locked || !loaded || switchingLanguage || attestation.state !== 'ready' || !attestation.token
+            || !Array.from(root.querySelectorAll('[data-attestation-action]')).every(function (input) { return input.checked; })) return;
+        var payload = JSON.stringify({presentation_token: attestation.token, age_18_or_older: true, terms_accepted: true, privacy_notice_acknowledged: true});
+        var sequence = attestation.sequence, node = root, epoch = contextEpoch;
+        attestation.state = 'recording'; attestationControls();
+        attestation.controller = new AbortController();
+        function active() { return current(epoch, node) && sequence === attestation.sequence; }
+        try {
+            var response = await request(attestationEndpoint, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': context}, body: payload}, attestation.controller);
+            if (!active()) return;
+            if (response.status === 401 || response.status === 403) { stopAuthentication(); return; }
+            if (response.status === 409) { retireAttestation('stale'); return; }
+            var data = await response.json();
+            if (!active()) return;
+            if (data.code === 'policies_unavailable' || response.status === 404) { retireAttestation('unavailable'); return; }
+            if (!response.ok || data.success !== true || !exactEvidence(data.evidence).recorded) throw new Error('unconfirmed');
+            var time = data.evidence.recorded_at;
+            // Keep the exact reviewed documents visible alongside their evidence.
+            attestation.sequence++; attestation.controller = null; attestation.token = null;
+            attestation.recordedAt = time; attestation.state = 'recorded';
+            root.querySelectorAll('[data-attestation-action]').forEach(function (input) { input.checked = false; });
+            attestationControls(); root.querySelector('[data-attestation-status]').focus();
+        } catch (_error) { if (active()) retireAttestation('uncertain'); }
     }
     function controls(key) { return Array.from(root.querySelectorAll('[data-draft-field="' + key + '"]')); }
     function choiceText(key, value) {
@@ -142,12 +241,15 @@
     async function resume(replace) {
         if (busy || locked) return;
         if (replace && !window.confirm(messages().replace_confirm)) return;
+        var epoch = contextEpoch, node = root;
         busy = true; say('loading');
         try {
             var response = await request(endpoint, {method: 'GET'});
+            if (!current(epoch, node)) return;
             if (response.status === 401 || response.status === 403) { stopAuthentication(); return; }
             if (!response.ok) throw new Error('unavailable');
             var data = await response.json();
+            if (!current(epoch, node)) return;
             if (data.csrf_token !== context) { stopAuthentication(); return; }
             if (!data.success || !data.draft || !Number.isInteger(data.draft.version)) throw new Error('unavailable');
             baseline = data.draft.fields;
@@ -160,7 +262,8 @@
             }
             showStep(step, false);
             busy = false; say('saved');
-        } catch (_error) { busy = false; say(pending ? 'uncertain' : 'unavailable'); }
+            if (attestation.state === 'loading') loadAttestations();
+        } catch (_error) { if (current(epoch, node)) { busy = false; say(pending ? 'uncertain' : 'unavailable'); } }
     }
     function operation(section) {
         var fields = {};
@@ -171,6 +274,7 @@
     }
     async function save(destination, retry) {
         if (busy || locked || !loaded || state === 'conflict' || (pending && !retry)) return;
+        var epoch = contextEpoch, node = root;
         busy = true; say('saving');
         try {
             while (true) {
@@ -183,11 +287,13 @@
                 // Never substitute edited input into an existing operation ID.
                 var payload = pending;
                 var response = await request(endpoint, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': context}, body: payload});
+                if (!current(epoch, node)) return;
                 if (response.status === 401 || response.status === 403) { stopAuthentication(); return; }
                 if (response.status === 409) { pending = null; busy = false; say('conflict'); root.querySelector('[data-save-status]').focus(); return; }
                 if (response.status === 400 || response.status === 413 || response.status === 415) { pending = null; busy = false; say('invalid'); return; }
                 if (!response.ok) throw new Error('unavailable');
                 var data = await response.json();
+                if (!current(epoch, node)) return;
                 if (!data.success || !data.draft || data.draft.version !== JSON.parse(payload).expectedVersion + 1) throw new Error('unavailable');
                 baseline = data.draft.fields; version = data.draft.version; pending = null;
                 // Do not hydrate here: edits made after dispatch stay in model
@@ -196,31 +302,44 @@
             busy = false; say('saved');
             if (destination === 'exit') { leaving = true; location.assign('/owner.php'); }
             else if (typeof destination === 'number') showStep(destination, true);
-        } catch (_error) { busy = false; say(pending ? 'uncertain' : 'unavailable'); }
+        } catch (_error) { if (current(epoch, node)) { busy = false; say(pending ? 'uncertain' : 'unavailable'); } }
     }
     async function switchLanguage(event) {
         event.preventDefault();
-        if (busy || locked) return;
+        if (busy || locked || attestation.state === 'recording') return;
+        var epoch = contextEpoch, node = root;
+        switchingLanguage = true;
+        retireAttestation('temporary');
         busy = true; say(state);
         var nextLocale = locale === 'ar' ? 'en' : 'ar';
         try {
             var response = await request('/owner_onboarding_editor.php?lang=' + nextLocale + '&step=' + step, {method: 'GET'});
+            if (!current(epoch, node)) return;
             if (response.status === 401 || response.status === 403) { stopAuthentication(); return; }
             if (!response.ok) throw new Error('unavailable');
             var page = new DOMParser().parseFromString(await response.text(), 'text/html');
+            if (!current(epoch, node)) return;
             var nextRoot = page.querySelector('[data-draft-editor]');
             if (!nextRoot || nextRoot.dataset.editorContext !== context) { stopAuthentication(); return; }
             var imported = document.importNode(nextRoot, true);
             root.replaceWith(imported); root = imported;
             document.documentElement.lang = nextLocale; document.documentElement.dir = nextLocale === 'ar' ? 'rtl' : 'ltr';
             document.title = page.title; document.querySelector('.ao-skip').textContent = page.querySelector('.ao-skip').textContent;
-            locale = nextLocale; bind(); hydrateControls(); showStep(step, false);
+            locale = nextLocale; switchingLanguage = false; bind(); hydrateControls(); showStep(step, false);
             root.querySelector('.hf-theme').hidden = false;
             root.querySelector('.hf-theme').setAttribute('aria-pressed', String(document.documentElement.dataset.landingTheme === 'dark'));
             busy = false; say(state); root.querySelector('[data-language-switch]').focus();
-        } catch (_error) { busy = false; say(pending ? 'uncertain' : 'unavailable'); }
+            loadAttestations();
+        } catch (_error) { if (current(epoch, node)) { switchingLanguage = false; busy = false; say(pending ? 'uncertain' : 'unavailable'); attestationControls(); } }
     }
     function bind() {
+        retireAttestation('loading');
+        if (attestationListeners) attestationListeners.abort();
+        attestationListeners = new AbortController();
+        var listeners = {signal: attestationListeners.signal};
+        root.querySelectorAll('[data-attestation-action]').forEach(function (input) { input.addEventListener('change', attestationControls, listeners); });
+        root.querySelector('[data-attestation-load]').addEventListener('click', loadAttestations, listeners);
+        root.querySelector('[data-attestation-record]').addEventListener('click', recordAttestations, listeners);
         root.querySelectorAll('[data-draft-field]').forEach(function (control) { control.addEventListener(control.tagName === 'SELECT' || control.type === 'radio' ? 'change' : 'input', edit); });
         root.querySelector('[data-clear-language]').addEventListener('click', function () { model.preferred_language = ''; hydrateControls(); if (!busy && !locked && pending === null && state !== 'conflict') say(hasEdits() ? 'unsaved' : 'saved'); });
         root.querySelectorAll('[data-step-jump], [data-back], [data-edit-step]').forEach(function (link) {
@@ -248,7 +367,8 @@
             document.documentElement.dataset.landingTheme = dark ? 'dark' : 'light'; this.setAttribute('aria-pressed', String(dark));
         });
     }
-    window.addEventListener('beforeunload', function (event) { if (!leaving && (hasEdits() || pending || busy)) { event.preventDefault(); event.returnValue = ''; } });
+    window.addEventListener('beforeunload', function (event) { if (!leaving && (hasEdits() || pending || busy || attestation.state === 'recording')) { event.preventDefault(); event.returnValue = ''; } });
+    window.addEventListener('pagehide', stopAuthentication);
     window.addEventListener('pageshow', function (event) { if (event.persisted) stopAuthentication(); });
     keys.forEach(function (key) { model[key] = ''; });
     bind(); showStep(step, false); say('loading'); resume(false);

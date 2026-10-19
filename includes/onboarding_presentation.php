@@ -110,12 +110,19 @@ header('X-Robots-Tag: noindex, nofollow');
                                 <span class="ao-badge"><?php echo $copy('example_badge'); ?></span>
                             </div>
                             <p class="ao-field-note"><?php echo $copy('email_notice'); ?></p>
+                            <?php if ($editor): ?>
+                            <div data-attestation-documents class="ao-attestation-documents"></div>
+                            <p data-attestation-status role="status" aria-live="polite" aria-atomic="true" tabindex="-1"><?php echo $copy('att_loading'); ?></p>
+                            <?php endif; ?>
                             <div class="ao-check-list">
-                                <label class="ao-check"><input<?php echo $editor ? ' disabled' : ''; ?> type="checkbox" autocomplete="off"><span><strong><?php echo $copy('age'); ?></strong><small><?php echo $copy('age_hint'); ?></small></span></label>
-                                <label class="ao-check"><input<?php echo $editor ? ' disabled' : ''; ?> type="checkbox" autocomplete="off"><span><strong><?php echo $copy('terms'); ?></strong><small><?php echo $copy('terms_hint'); ?></small></span></label>
-                                <label class="ao-check"><input<?php echo $editor ? ' disabled' : ''; ?> type="checkbox" autocomplete="off"><span><strong><?php echo $copy('privacy'); ?></strong><small><?php echo $copy('privacy_hint'); ?></small></span></label>
+                                <label class="ao-check"><input<?php echo $editor ? ' data-attestation-action="age_18_or_older" disabled' : ''; ?> type="checkbox" autocomplete="off"><span><strong><?php echo $copy('age'); ?></strong><small><?php echo $copy('age_hint'); ?></small></span></label>
+                                <label class="ao-check"><input<?php echo $editor ? ' data-attestation-action="terms_accepted" disabled' : ''; ?> type="checkbox" autocomplete="off"><span><strong><?php echo $copy('terms'); ?></strong><small><?php echo $copy('terms_hint'); ?></small></span></label>
+                                <label class="ao-check"><input<?php echo $editor ? ' data-attestation-action="privacy_notice_acknowledged" disabled' : ''; ?> type="checkbox" autocomplete="off"><span><strong><?php echo $copy('privacy'); ?></strong><small><?php echo $copy('privacy_hint'); ?></small></span></label>
                             </div>
                             <div class="ao-note"><?php echo $copy('consent_notice'); ?></div>
+                            <?php if ($editor): ?>
+                            <div class="ao-draft-recovery"><button class="ao-secondary" type="button" data-attestation-load disabled><?php echo $copy('att_load'); ?></button><button class="ao-primary" type="button" data-attestation-record disabled><?php echo $copy('att_record'); ?></button></div>
+                            <?php endif; ?>
                         </div>
                     </section>
 

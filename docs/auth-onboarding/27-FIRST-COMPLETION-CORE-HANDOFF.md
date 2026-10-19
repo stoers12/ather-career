@@ -1,5 +1,7 @@
 # Atomic first completion and durable receipt — local core only
 
+Later UI-only slice: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) presents/records attestations separately in the private editor. This does not expose completion HTTP/UI, alter receipts/first-completion requirements, grant access or enable real policies. Earlier core evidence remains historical.
+
 Later transport-only slice: [28](28-ATTESTATION-HTTP-HANDOFF.md) provides default-off
 attestation HTTP presentation/recording. This completion core and receipt contract
 are unchanged; completion HTTP/UI and production policy availability remain deferred.
