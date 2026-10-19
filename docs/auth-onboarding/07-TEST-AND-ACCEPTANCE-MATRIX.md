@@ -1,5 +1,14 @@
 # 07 — Test and acceptance matrix
 
+**2026-10-19 optional final fields:** guarded `run-final-profile-tests.php` and
+`run-final-profile-route-tests.php` cover 018 preservation/recovery, independent pinned
+ISO membership/CLDR labels, exact Unicode/tokens, private transport, retired choices,
+conflicts/account/CSRF and public-output exclusion. Existing writer-race fixtures retain
+non-null final facts. New `run-final-profile-browser-tests.mjs` covers existing Profile
+controls and synthetic screenshots at 1440/1024/768/390/320px, reusing Playwright.
+CI checks deterministic generation, all 17 rehearsals and the new browser step without
+skipping previous gates. Evidence, failed attempts and limits: [handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md).
+
 **2026-10-18 bounded profile slice:** two focused guarded MySQL/HTTP suites cover
 loaded-version CAS, omission/explicit visibility, real parallel saves/creation,
 photo and direct migration races, rollback/uncertain media outcomes and migration

@@ -1,0 +1,38 @@
+{
+  "languages": {
+    "ar": {
+      "ar": "العربية",
+      "en": "Arabic"
+    },
+    "en": {
+      "ar": "الإنجليزية",
+      "en": "English"
+    }
+  },
+  "statuses": {
+    "student": {
+      "ar": "طالب / طالبة",
+      "en": "Student"
+    },
+    "graduate": {
+      "ar": "خريج / خريجة",
+      "en": "Graduate"
+    },
+    "employed": {
+      "ar": "موظف / موظفة",
+      "en": "Employed"
+    },
+    "self_employed": {
+      "ar": "يعمل لحسابه الخاص",
+      "en": "Self-employed"
+    },
+    "seeking_work": {
+      "ar": "باحث / باحثة عن عمل",
+      "en": "Seeking work"
+    },
+    "other": {
+      "ar": "وصف آخر",
+      "en": "Other"
+    }
+  }
+}

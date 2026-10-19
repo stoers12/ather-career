@@ -11,6 +11,7 @@ require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/owner_actions.php';
 require_once __DIR__ . '/includes/portfolio_scoped_data.php';
 require_once __DIR__ . '/includes/owner_layout.php';
+require_once __DIR__ . '/includes/final_profile_presentation.php';
 require_once __DIR__ . '/includes/operational_security.php';
 
 startOwnerSession();
@@ -20,7 +21,7 @@ httpRequireMethod(['GET', 'HEAD', 'POST']);
 $fields = [
     'full_name', 'professional_title', 'hero_headline', 'email', 'phone_primary', 'phone_secondary',
     'location', 'about_me', 'work_description', 'linkedin_url', 'github_url',
-    'instagram_url', 'facebook_url', 'website_url',
+    'instagram_url', 'facebook_url', 'website_url', ...FINAL_PROFILE_FIELDS,
 ];
 $profile = array_fill_keys($fields, '');
 $profile['profile_image_path'] = null;
@@ -157,6 +158,7 @@ ownerLayoutStart('Personal Info', 'profile');
         <h2 class="form-section-title">About Me</h2>
         <label class="form-field form-field-full" for="about_me"><span>About Me</span><textarea id="about_me" name="about_me" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS['about_me']; ?>"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'about_me'); ?>><?php echo ownerEscapeHtml((string) $profile['about_me']); ?></textarea></label><?php ownerRenderFieldError($fieldErrors, 'about_me'); ?>
         <label class="form-field form-field-full" for="work_description"><span>Professional summary <em>(optional)</em></span><textarea id="work_description" name="work_description" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS['work_description']; ?>"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'work_description', 'professional-summary-help'); ?>><?php echo ownerEscapeHtml((string) $profile['work_description']); ?></textarea><small id="professional-summary-help" class="form-hint">Add supporting context for your public Hero.</small></label><?php ownerRenderFieldError($fieldErrors, 'work_description'); ?>
+        <?php renderFinalProfileFields($profile, $fieldErrors); ?>
         <h2 class="form-section-title">Social Accounts</h2>
         <?php foreach (['linkedin_url' => 'LinkedIn URL', 'github_url' => 'GitHub URL', 'instagram_url' => 'Instagram URL', 'facebook_url' => 'Facebook URL', 'website_url' => 'Personal Website URL'] as $field => $label): ?>
             <label class="form-field" for="<?php echo $field; ?>"><span><?php echo $label; ?></span><input type="url" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo ownerEscapeHtml((string) $profile[$field]); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS[$field]; ?>"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, $field); ?>></label><?php ownerRenderFieldError($fieldErrors, $field); ?>

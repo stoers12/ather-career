@@ -53,7 +53,8 @@ try {
         $users[] = (int) $db->lastInsertId(); $db->prepare('INSERT INTO portfolios (owner_user_id) VALUES (?)')->execute([$users[$i]]); $portfolios[] = (int) $db->lastInsertId();
     }
     [$a, $b, $empty] = $users; $context = profileTestContext($db, $a);
-    $saved = saveOwnedProfilePatch($db, $context, null, 0, ['full_name' => 'Synthetic Name', 'location' => 'Keep location', 'public_contact_visible' => true]); $id = $saved['id'];
+    $saved = saveOwnedProfilePatch($db, $context, null, 0, ['full_name' => 'Synthetic Name', 'location' => 'Keep location', 'public_contact_visible' => true,
+        'country_code'=>'JO', 'preferred_language'=>'ar', 'professional_status'=>'student', 'specialization'=>'Exact retained discipline']); $id = $saved['id'];
     $v = 1; $saved = saveOwnedProfilePatch($db, $context, $id, $v, ['full_name' => 'Synthetic Name']);
     profileTestAssert($saved['profile_version'] === 2 && loadAuthorizedPersonalInfo($db, $context)['location'] === 'Keep location', 'Same-value increment or omission failed.');
     foreach ([null, '', '01', '-1', '1.0', 1, true, [], '2147483648', ' 1'] as $token) { profileTestAssert(submittedProfileVersion($token) === null, 'Malformed token accepted.'); }
@@ -160,6 +161,10 @@ try {
         if ($migrationWon) { profileTestAssert(profileTestImageExists($after['profile_image_path'], $context->portfolioId), 'Migration winner lost referenced image.'); }
         if ($candidate !== null) { profileTestAssert(profileTestImageExists($candidate, $context->portfolioId) === ($after['profile_image_path'] === $candidate), 'Migration/upload race cleanup unsafe.'); }
         profileTestAssert(is_file($legacy . '/uploads/profile/synthetic.png'), 'Race retired legacy source.');
+    }
+    $afterWriters=loadAuthorizedPersonalInfo($db,$context);
+    foreach (['country_code'=>'JO','preferred_language'=>'ar','professional_status'=>'student','specialization'=>'Exact retained discipline'] as $field=>$value) {
+        profileTestAssert($afterWriters[$field]===$value,'Text/photo/direct migration race or failed write changed omitted final fields.');
     }
     echo "PASS profile confirmed rollback cleanup, uncertain commit retention, text/image/remove and direct migration races\n";
 } catch (Throwable $error) {
