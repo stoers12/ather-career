@@ -119,13 +119,13 @@ try {
     draftAssert(readOnboardingDraft($db, $context) === $empty, 'Absent draft contract changed.');
     $firstId = draftTestOperation(0);
     $db->exec("SET time_zone='+09:00'"); $utc = $db->query('SELECT UTC_TIMESTAMP(6)')->fetchColumn();
-    $first = saveOnboardingDraft($db, $context, 0, $firstId, 'public_identity', ['display_name' => '  مومن Example  ', 'country_code' => 'NZ', 'preferred_language' => 'en']);
+    $first = saveOnboardingDraft($db, $context, 0, $firstId, 'public_identity', ['display_name' => '  مومن Example  ', 'country_code' => 'KW', 'preferred_language' => 'en']);
     draftAssert($first['created_at'] === $first['updated_at'] && $first['created_at'] >= $utc && $first['created_at'] <= $db->query('SELECT UTC_TIMESTAMP(6)')->fetchColumn(), 'Server UTC creation time failed.');
     $db->exec("SET time_zone='+00:00'");
     $second = saveOnboardingDraft($db, $context, 1, draftTestOperation(1), 'professional_snapshot', ['professional_status' => 'other', 'headline' => 'Draft headline', 'biography' => "Private\nbiography", 'graduation_year' => '2031']);
-    draftAssert($second['fields']['display_name'] === '  مومن Example  ' && $second['fields']['country_code'] === 'NZ' && $second['fields']['professional_status'] === 'other', 'Sections/catalog candidates or exact text changed.');
+    draftAssert($second['fields']['display_name'] === '  مومن Example  ' && $second['fields']['country_code'] === 'KW' && $second['fields']['professional_status'] === 'other', 'Sections/catalog candidates or exact text changed.');
     $third = saveOnboardingDraft($db, $context, 2, draftTestOperation(2), 'public_identity', ['display_name' => null, 'city' => 'New city']);
-    draftAssert(!isset($third['fields']['display_name']) && $third['fields']['country_code'] === 'NZ' && $third['fields']['biography'] === "Private\nbiography", 'Clear/omission/section preservation failed.');
+    draftAssert(!isset($third['fields']['display_name']) && $third['fields']['country_code'] === 'KW' && $third['fields']['biography'] === "Private\nbiography", 'Clear/omission/section preservation failed.');
     $fourth = saveOnboardingDraft($db, $context, 3, draftTestOperation(3), 'profile_identity', ['slug_candidate' => 'unfinished-', 'phone' => '+962 candidate']);
     draftAssert($fourth === readOnboardingDraft($db, $context) && $fourth['created_at'] === $first['created_at'] && $fourth['last_edited_section'] === 'profile_identity', 'Exact resume failed.');
     $fifth = saveOnboardingDraft($db, $context, 4, draftTestOperation(4), 'profile_identity', []);
@@ -256,7 +256,7 @@ try {
 
     // Current writes share Profile membership/rules; compatibility decoding does not.
     $catalog = finalProfileCatalog();
-    draftAssert(count($catalog['countries']) === 249 && array_keys($catalog['languages']) === ['ar', 'en']
+    draftAssert(array_keys($catalog['countries']) === ['JO','PS','SA','AE','QA','KW','BH','OM','IQ','LB','SY','YE','EG'] && array_keys($catalog['languages']) === ['ar', 'en']
         && count($catalog['statuses']) === 6, 'Shared catalog coverage changed.');
     foreach (['countries' => 'country_code', 'languages' => 'preferred_language', 'statuses' => 'professional_status'] as $group => $field) {
         foreach ($catalog[$group] as $token => $labels) {
@@ -264,7 +264,7 @@ try {
             draftAssert(is_string($labels['ar']) && $labels['ar'] !== '' && is_string($labels['en']) && $labels['en'] !== '', 'Missing catalog label.');
         }
     }
-    foreach (['country_code' => ['ZZ', 'XK', 'UK', 'jo', 'JO '], 'preferred_language' => ['fr-CA', 'AR', 'en-US'],
+    foreach (['country_code' => ['US','CA','ZZ','XK','UK','jo','JO '], 'preferred_language' => ['fr-CA', 'AR', 'en-US'],
         'professional_status' => ['early', 'independent', 'Research sabbatical', 'Employed'],
         'specialization' => ['', ' ', "bad\0text", "bad\ntext", "\xC3\x28", str_repeat('😀', 151)]] as $field => $badValues) {
         foreach ($badValues as $bad) {
@@ -277,17 +277,17 @@ try {
         === ['country_code' => 'ZZ', 'preferred_language' => 'fr-CA', 'professional_status' => str_repeat('😀',80)], 'Stored compatibility was tightened.');
     echo "PASS draft shared Profile catalogs, exact AR-EN coverage and specialization rules with unchanged stored bounds\n";
 
-    $legacyFields = ['country_code' => 'ZZ', 'preferred_language' => 'fr-CA', 'professional_status' => str_repeat('😀',80),
+    $legacyFields = ['country_code' => 'US', 'preferred_language' => 'fr-CA', 'professional_status' => str_repeat('😀',80),
         'specialization' => '  تخصص é  ', 'headline' => str_repeat('界',200), 'slug_candidate' => 'unfinished-', 'phone' => str_repeat('1',40)];
-    $legacyPatch = array_intersect_key($legacyFields, array_flip(['professional_status','specialization','headline']));
-    $receipt = draftTestSeedHistorical($db,$legacyId,3,'professional_snapshot',$legacyPatch,$legacyFields);
+    $legacyPatch = array_intersect_key($legacyFields, array_flip(['country_code','preferred_language']));
+    $receipt = draftTestSeedHistorical($db,$legacyId,3,'public_identity',$legacyPatch,$legacyFields);
     $legacyContext = attestationTestSession($legacyId);
     $legacy = readOnboardingDraft($db,$legacyContext); $beforeRetry = draftSnapshot($db);
-    $retry = static fn (array $patch): array => saveOnboardingDraft($db,$legacyContext,2,$receipt['operationId'],'professional_snapshot',$patch);
+    $retry = static fn (array $patch): array => saveOnboardingDraft($db,$legacyContext,2,$receipt['operationId'],'public_identity',$patch);
     draftAssert($legacy['fields'] === onboardingDraftDecode(onboardingDraftEncode($legacyFields)) && $legacy === $retry(array_reverse($legacyPatch,true))
         && $beforeRetry === draftSnapshot($db), 'Historical exact receipt or read changed fields/time/version.');
-    draftDenied($db, fn () => $retry(['professional_status'=>'different retired value']), OnboardingDraftConflictException::class);
-    draftDenied($db, fn () => $retry(['professional_status'=>['invalid']]), InvalidArgumentException::class);
+    draftDenied($db, fn () => $retry(['country_code'=>'CA']), OnboardingDraftConflictException::class);
+    draftDenied($db, fn () => $retry(['country_code'=>['invalid']]), InvalidArgumentException::class);
     $db->exec("UPDATE users SET authz_version=2 WHERE id=$legacyId");
     draftDenied($db, fn () => $retry($legacyPatch), AuthorizationDeniedException::class);
     $db->exec("UPDATE users SET authz_version=1 WHERE id=$legacyId"); attestationTestSession($legacyId);
@@ -296,7 +296,7 @@ try {
         draftDenied($db, fn () => saveOnboardingDraft($db,$legacyContext,3,draftTestOperation(3),$section,[$field=>$value]), InvalidArgumentException::class);
     }
     $beforeRetry=draftSnapshot($db);
-    $same=[2,$receipt['operationId'],'professional_snapshot',$legacyPatch];
+    $same=[2,$receipt['operationId'],'public_identity',$legacyPatch];
     $results=draftRace($legacyId,[$same,$same]);
     draftAssert($results[0] === $results[1] && $results[0]['status']==='saved' && $results[0]['result']===$legacy
         && $beforeRetry === draftSnapshot($db), 'Concurrent historical retries changed receipt/result.');
@@ -318,7 +318,7 @@ try {
     draftAssert($current['fields']['specialization']===str_repeat('😀',150) && $current['fields']['professional_status']==='self_employed', 'Supported replacement/Unicode boundary failed.');
     $current=saveOnboardingDraft($db,$legacyContext,6,draftTestOperation(6),'professional_snapshot',['professional_status'=>null,'specialization'=>null]);
     draftAssert(!isset($current['fields']['professional_status']) && !isset($current['fields']['specialization']) && $current['fields']['phone']===$legacyFields['phone'], 'Explicit historical clears or omitted optional data failed.');
-    $results=draftRace($legacyId,[[7,draftTestOperation(7),'public_identity',['country_code'=>'AQ']],
+    $results=draftRace($legacyId,[[7,draftTestOperation(7),'public_identity',['country_code'=>'OM']],
         [7,draftTestOperation(7),'professional_snapshot',['professional_status'=>'graduate']]]);
     $statuses=array_column($results,'status');sort($statuses);
     draftAssert($statuses===['conflict','saved'],'Concurrent current catalog saves did not choose one winner.');

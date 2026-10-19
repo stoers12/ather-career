@@ -69,6 +69,11 @@ stay unavailable; the next safe action is owner review of this local slice.
 
 ## Status vocabulary
 
+Owner-approved country amendment: [26 — ordered launch catalog](26-LAUNCH-COUNTRY-CATALOG.md).
+Profile and private draft new edits support exactly `JO PS SA AE QA KW BH OM IQ LB SY YE EG`.
+Full 249-entry ISO provenance and historical countries/receipts remain preserved.
+Completion and activation remain separate from this catalog-only commit.
+
 | Status | Meaning |
 | --- | --- |
 | Proposed | Contract or plan awaiting implementation or a specific approval. |

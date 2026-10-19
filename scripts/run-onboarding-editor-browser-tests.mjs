@@ -45,7 +45,7 @@ try {
     const emptyContext=await context('b');const emptyPage=await open(emptyContext);check((await emptyPage.locator('[data-save-status]').textContent()).includes('No saved draft yet')&&(await draft(emptyContext)).version===0,'Honest absent draft without row creation');await emptyPage.close();
     const p=await open(c);
     let errors=0; p.on('pageerror',()=>errors++);
-    check(await field(p,'country_code').inputValue()==='ZZ','Unknown country');
+    check(await field(p,'country_code').inputValue()==='US','Unknown country');
     check(await p.locator('[data-draft-field="preferred_language"]:checked').inputValue()==='fr-CA','Unknown language');
     check(await field(p,'professional_status').inputValue()==='Research <b>candidate</b>','Unknown status');
     check(await p.locator('input[type=checkbox]:disabled').count()===5,'Disabled consent and visibility');
@@ -74,7 +74,7 @@ try {
     check(await field(p,'slug_candidate').inputValue()==='draft-candidate','EN unsaved preservation');
     await p.locator('[data-next]').click(); await state(p,'saved'); await p.reload(); await state(p,'saved');
     check(await field(p,'slug_candidate').inputValue()==='draft-candidate','Reload resume');
-    stage='resumed unrepresented fields'; const values=await draft(c); for(const [key,value]of Object.entries({country_code:'ZZ',preferred_language:'fr-CA',professional_status:'Research <b>candidate</b>',name_ar:'Untouched Arabic',city:'Untouched city',university:'Untouched university',phone:'Untouched private phone'}))check(values.fields[key]===value,'Preserve unrepresented/unknown values');
+    stage='resumed unrepresented fields'; const values=await draft(c); for(const [key,value]of Object.entries({country_code:'US',preferred_language:'fr-CA',professional_status:'Research <b>candidate</b>',name_ar:'Untouched Arabic',city:'Untouched city',university:'Untouched university',phone:'Untouched private phone'}))check(values.fields[key]===value,'Preserve unrepresented/unknown values');
     console.log('PASS editor browser exact partial saves, deliberate clear, reload, localized unsaved values and safe text');
 
     stage='save and exit acknowledgement';
@@ -205,13 +205,13 @@ try {
     await v.locator('[data-back]').click();await v.locator('[data-draft-field="preferred_language"][value="ar"]').check();
     await v.locator('[data-language-switch]').click();await v.waitForFunction(()=>document.documentElement.lang==='en');
     check(await v.locator('[data-draft-field="preferred_language"]:checked').inputValue()==='ar'&&(await draft(visual)).fields.preferred_language==='fr-CA','Language switch altered unsaved/saved preference');
-    await field(v,'country_code').selectOption('JP');await v.locator('[data-next]').click();await state(v,'saved');await field(v,'professional_status').selectOption('seeking_work');await field(v,'specialization').fill('😀'.repeat(150));
+    await field(v,'country_code').selectOption('QA');await v.locator('[data-next]').click();await state(v,'saved');await field(v,'professional_status').selectOption('seeking_work');await field(v,'specialization').fill('😀'.repeat(150));
     await v.locator('[data-next]').click();await state(v,'saved');
     const supported=await draft(visual);
-    check(supported.fields.country_code==='JP'&&supported.fields.preferred_language==='ar'&&supported.fields.professional_status==='seeking_work'&&supported.fields.specialization==='😀'.repeat(150),'Supported catalog/Unicode replacements failed');
+    check(supported.fields.country_code==='QA'&&supported.fields.preferred_language==='ar'&&supported.fields.professional_status==='seeking_work'&&supported.fields.specialization==='😀'.repeat(150),'Supported catalog/Unicode replacements failed');
     await v.reload();await state(v,'saved');
     check((await draft(visual)).fields.preferred_language==='ar','Saved preference reload');
-    console.log('PASS editor browser exact 249-country/six-status AR-EN catalogs, older choices, omitted historical fields and independent language switching');
+    console.log('PASS editor browser exact ordered 13-country/six-status AR-EN catalogs, older choices, omitted historical fields and independent language switching');
 
     stage='server Unicode rejection, retained values and explicit catalog clears';
     await v.locator('[data-back]').click();await field(v,'specialization').fill('😀'.repeat(151));

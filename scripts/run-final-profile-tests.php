@@ -29,27 +29,27 @@ try {
     foreach ($provenance['files'] as $file) { profileTestAssert(hash_file('sha256',$root.'/'.$file['path'])===$file['sha256'],'Pinned source checksum mismatch.'); }
     $iso=json_decode(file_get_contents($root.'/sources/iso-3166-1.json'),true,32,JSON_THROW_ON_ERROR)['3166-1'];
     $codes=array_column($iso,'alpha_2'); sort($codes); $catalog=finalProfileCatalog();
-    profileTestAssert(count($codes)===249 && count(array_unique($codes))===249 && $codes===array_keys($catalog['countries']),'Country membership differs from independent ISO snapshot.');
+    profileTestAssert(count($codes)===249 && count(array_unique($codes))===249 && array_keys($catalog['countries'])===['JO','PS','SA','AE','QA','KW','BH','OM','IQ','LB','SY','YE','EG'] && array_diff(array_keys($catalog['countries']),$codes)===[],'Country membership differs from independent ISO snapshot.');
     foreach (['ar','en'] as $language) {
         $cldr=json_decode(file_get_contents($root.'/sources/cldr-'.$language.'.json'),true,32,JSON_THROW_ON_ERROR)['main'][$language]['localeDisplayNames']['territories'];
-        foreach ($codes as $code) { profileTestAssert($catalog['countries'][$code][$language]===($cldr[$code]??null) && $cldr[$code]!=='','CLDR label mismatch.'); }
+        foreach (array_keys($catalog['countries']) as $code) { profileTestAssert($catalog['countries'][$code][$language]===($cldr[$code]??null) && $cldr[$code]!=='','CLDR label mismatch.'); }
         $names=json_decode(file_get_contents($root.'/sources/cldr-'.$language.'-languages.json'),true,32,JSON_THROW_ON_ERROR)['main'][$language]['localeDisplayNames']['languages'];
         foreach (['ar','en'] as $code) { profileTestAssert($catalog['languages'][$code][$language]===$names[$code],'CLDR language label mismatch.'); }
     }
     foreach (['XK','ZZ','EU','UN','UK','AC','CP','DG','EA','IC','TA','SU','AN','BU','TP','YU','001','419'] as $code) { profileTestAssert(!isset($catalog['countries'][$code]),'Non-ISO code included.'); }
     profileTestAssert(array_keys($catalog['languages'])===['ar','en'] && array_keys($catalog['statuses'])===['student','graduate','employed','self_employed','seeking_work','other'],'Choice token drift.');
     foreach (['languages','statuses'] as $group) { foreach ($catalog[$group] as $labels) { profileTestAssert(($labels['ar']??'')!=='' && ($labels['en']??'')!=='','Missing choice label.'); } }
-    echo "PASS final-profile exact 249-code membership, pinned checksums/AR-EN labels, exclusions and candidate choices\n";
+    echo "PASS final-profile exact ordered 13-country subset of 249 ISO entries, pinned checksums/AR-EN labels, exclusions and candidate choices\n";
 
     $phase='validation';
     foreach (FINAL_PROFILE_FIELDS as $field) {
         profileTestAssert(finalProfileFieldError($field,null, $catalog)===null,'NULL should be optional.');
         foreach ([[],1,true,1.0] as $value) { profileTestAssert(finalProfileFieldError($field,$value, $catalog)!==null,'Non-text accepted.'); }
     }
-    foreach (['jo',' JO','JO ','ZZ','XK','UK',"J\0",''] as $value) { profileTestAssert(finalProfileFieldError('country_code',$value, $catalog)!==null,'Unsupported country accepted.'); }
+    foreach (['US','AX','TW','AQ','BQ','jo',' JO','JO ','ZZ','XK','UK',"J\0",''] as $value) { profileTestAssert(finalProfileFieldError('country_code',$value, $catalog)!==null,'Unsupported country accepted.'); }
     foreach (['AR','en ','fr',''] as $value) { profileTestAssert(finalProfileFieldError('preferred_language',$value, $catalog)!==null,'Unsupported language accepted.'); }
     foreach (['Student','early','independent','graduate ',"other\n",''] as $value) { profileTestAssert(finalProfileFieldError('professional_status',$value, $catalog)!==null,'Unsupported status accepted.'); }
-    foreach (['JO','AX','TW','PS','AQ','BQ'] as $value) { profileTestAssert(finalProfileFieldError('country_code',$value, $catalog)===null,'Official country missing.'); }
+    foreach (array_keys($catalog['countries']) as $value) { profileTestAssert(finalProfileFieldError('country_code',$value, $catalog)===null,'Official country missing.'); }
     foreach (['a',str_repeat('a',150),str_repeat('😀',150),'  تخصص دقيق  ',"e\u{0301}","é"] as $value) { profileTestAssert(finalProfileFieldError('specialization',$value, $catalog)===null,'Valid exact specialization rejected.'); }
     foreach (['', '   ',"\u{00A0}\u{2028}",str_repeat('a',151),str_repeat('😀',151),"bad\xFF","a\n","a\t","a\0","a\u{0085}","a\u{007F}"] as $value) { profileTestAssert(finalProfileFieldError('specialization',$value, $catalog)!==null,'Invalid specialization accepted.'); }
     echo "PASS final-profile strict token/type and exact Unicode 150-code-point/600-byte boundaries without normalization\n";

@@ -23,15 +23,17 @@ try {
   await context.addCookies([{name:fixture.cookie.Name,value:fixture.cookie.Value,url:base,httpOnly:true,sameSite:'Lax'}]);
   const p=await context.newPage(); await p.goto(base+'/owner_profile.php');
   stage='retired choices';
-  check(await p.locator('#country_code').inputValue()==='ZZ','Retired country was coerced');
-  check(await p.locator('#country_code option').count()===251,'Country catalog count');
+  check(await p.locator('#country_code').inputValue()==='US','Retired country was coerced');
+  check(await p.locator('#country_code option').count()===15,'Country catalog count');
+  check(JSON.stringify(await p.locator('#country_code option').evaluateAll(os=>os.filter(o=>o.value && o.value!=='US').map(o=>o.value)))===JSON.stringify(['JO','PS','SA','AE','QA','KW','BH','OM','IQ','LB','SY','YE','EG']),'Approved country order');
+  check((await p.locator('#country_code option:checked').textContent()).includes('Older saved choice'),'Historical country is not labeled');
   for (const id of ['country_code','preferred_language','professional_status','specialization']) {
     check(await p.locator('label[for="'+id+'"]').count()===1,'Missing label');
     check(await p.locator('#'+id).getAttribute('aria-describedby')===id+'-help','Missing accessible explanation');
   }
   await p.locator('#professional_title').fill('Reviewed unchanged retirement'); await save(p);
-  check(await p.locator('#country_code').inputValue()==='ZZ' && await p.locator('#professional_status').inputValue()==='retired_status','Unrelated edit lost retired values');
-  console.log('PASS final-profile browser complete country catalog, AR/EN labels/help and unchanged retired choices');
+  check(await p.locator('#country_code').inputValue()==='US' && await p.locator('#professional_status').inputValue()==='retired_status','Unrelated edit lost retired values');
+  console.log('PASS final-profile browser ordered 13-country launch catalog, AR/EN labels/help and unchanged retired choices');
 
   stage='exact values';
   const exact='  تخصص e\u0301 😀  ';

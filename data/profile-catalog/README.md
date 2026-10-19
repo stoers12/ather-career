@@ -1,14 +1,23 @@
 # Private Profile catalog candidates
 
-Revision: `ather-profile-candidates-2026-10-18-r1`. This slice authorizes these
-checked-in candidates for **optional private Profile editing**. Country coverage,
+Current revision: `ather-profile-launch-2026-10-19-r2`. The owner approved the
+ordered **13-country product selection** for Profile, private draft edits and first
+completion validation: `JO PS SA AE QA KW BH OM IQ LB SY YE EG`. Jordan is first,
+never automatically selected or inferred. The full pinned source still has 249
+assigned ISO entries; ISO membership is not reduced to 13. No IP/geolocation or
+account-access restriction is added. Historical revision r1 offered all 249.
+
+Country coverage for this launch subset is accepted;
 display labels and the six status meanings below are reviewable owner decisions;
 they do not approve completion requirements, publication or eligibility rules.
 
 The separately authorized [draft-editor integration](../../docs/auth-onboarding/25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md)
 now reuses these same candidates for newly supplied private draft values. Historical draft
-values and exact accepted retries remain compatible. No catalog data/revision/source changes,
-final-profile writes, completion approval or activation are implied.
+values and exact accepted retries remain compatible. This amendment changes product membership/revision only, not the pinned sources.
+Unchanged old Profile countries are omitted from patches; old draft values and exact
+receipts remain readable. Unsupported new selections and first completion reject
+values outside the launch subset. No stored country is deleted, remapped or replaced.
+See [handoff 26](../../docs/auth-onboarding/26-LAUNCH-COUNTRY-CATALOG.md).
 
 ## Reproducible membership and labels
 
@@ -22,22 +31,24 @@ final-profile writes, completion approval or activation are implied.
   release `48.2.0`, commit `bb334e8d6250c9363e957e131bf7e6d08ec72f91` in
   `unicode-org/cldr-json`. Exact source paths/URLs, bytes and SHA-256 checksums
   for every input and notice are in [provenance.json](provenance.json).
-- Extract only the independent ISO snapshot's `alpha_2` values, sorted by ASCII
-  code. For each, take the exact primary `main.{ar|en}.localeDisplayNames.territories[code]`
+- Verify all 249 unique independent ISO `alpha_2` source entries, then select only
+  the exact owner-approved ordered 13 codes above. For each selected code, take the exact primary `main.{ar|en}.localeDisplayNames.territories[code]`
   label. No fallback, alt/short label, case conversion, translation or inference.
   Both languages must have a nonempty label for every selected code.
 - CLDR has 306 Arabic / 316 English territory label keys; those are **not** ISO
   membership lists. Exclude all keys absent from the ISO snapshot, including
   numeric macroregions, alternative labels and `AC CP CQ DG EA EU EZ IC QO TA UN
   XA XB XK ZZ`. Also exclude reserved/user-assigned and retired examples such as
-  `UK SU AN BU TP YU`. `AX AQ BQ PS TW` remain included as assigned entries.
-- Exactly 249 countries/territories, 2 language tokens (`ar`, `en`) and 6 status
+  `UK SU AN BU TP YU`. `AX AQ BQ TW` remain assigned in the source but are outside the product list;
+  `PS` is included. All other assigned source entries outside the list are excluded
+  from new product selections, while historical stored values remain preservable.
+- Exactly 13 supported product countries/territories (from 249 ISO source entries), 2 language tokens (`ar`, `en`) and 6 status
   tokens. Language labels in [choices.json](choices.json) must exactly match the
   same pinned CLDR release's primary `languages` labels; status labels are project-authored.
   No preview country/status examples are imported. Country labels are displayed
   together in EN/AR; code is the stored identity, not a translated label.
 - Generated [catalog.json](catalog.json) SHA-256:
-  `b4f9e13579d12d62389ca9ed23db42ea2399ef9c669c64f078062fe4be31a6c2`.
+  `9ea1bd7f2e9ec1223a905a95509ebc43f4b9cc5f3bce471d35bb1d8fe9116f07`.
   `.gitattributes` preserves raw source bytes and generated JSON LF endings.
 
 Offline reproduction/check (Python standard library only):

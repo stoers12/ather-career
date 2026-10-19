@@ -34,7 +34,7 @@ try {
         if ($name==='a') {
             $context=requireAuthenticatedUser($db);
             draftTestSeedHistorical($db,$context->userId,3,'profile_identity',['slug_candidate'=>'candidate-only','phone'=>'Untouched private phone'],[
-                'display_name'=>'Synthetic Demo','country_code'=>'ZZ','preferred_language'=>'fr-CA','name_ar'=>'Untouched Arabic','city'=>'Untouched city',
+                'display_name'=>'Synthetic Demo','country_code'=>'US','preferred_language'=>'fr-CA','name_ar'=>'Untouched Arabic','city'=>'Untouched city',
                 'professional_status'=>'Research <b>candidate</b>','headline'=>'Synthetic headline','university'=>'Untouched university',
                 'slug_candidate'=>'candidate-only','phone'=>'Untouched private phone',
             ]);

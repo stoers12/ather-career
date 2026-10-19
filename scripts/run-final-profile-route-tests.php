@@ -82,7 +82,7 @@ try {
     }
     if ($browserEvidence!==null) {
         profileTestAssert(is_dir($browserEvidence) && !is_link($browserEvidence), 'Browser evidence directory unavailable.');
-        $db->prepare("INSERT INTO personal_info (portfolio_id,full_name,professional_title,location,country_code,preferred_language,professional_status) VALUES (?,'Synthetic Profile Review','Original title','Original location','ZZ','zz','retired_status')")->execute([$portfolios[0]]);
+        $db->prepare("INSERT INTO personal_info (portfolio_id,full_name,professional_title,location,country_code,preferred_language,professional_status) VALUES (?,'Synthetic Profile Review','Original title','Original location','US','zz','retired_status')")->execute([$portfolios[0]]);
         $client=profileBrowser($users[0]); $cookie=$client->getConfig('cookies')->toArray()[0];
         file_put_contents($browserEvidence.'/private-profile-context.json',json_encode(['cookie'=>$cookie],JSON_THROW_ON_ERROR)); chmod($browserEvidence.'/private-profile-context.json',0600);
         $deadline=time()+600;
@@ -121,7 +121,7 @@ try {
     profilePost($browserA,profileForm($browserA)+['hero_headline'=>'Legacy headline unchanged semantics'],303);
     $row=$db->query("SELECT * FROM personal_info WHERE id=$id")->fetch(PDO::FETCH_ASSOC);
     foreach ($values as $field=>$value) { profileTestAssert($row[$field]===$value,'Omitted final field erased.'); }
-    foreach ([['country_code'=>'jo'],['country_code'=>'ZZ'],['preferred_language'=>'AR'],['professional_status'=>'independent'],['specialization'=>'   '],['specialization'=>"bad\n"],['specialization'=>"bad\xFF"],['specialization'=>str_repeat('😀',151)],['country_code'=>['JO']],['specialization'=>['text']]] as $bad) {
+    foreach ([['country_code'=>'jo'],['country_code'=>'US'],['preferred_language'=>'AR'],['professional_status'=>'independent'],['specialization'=>'   '],['specialization'=>"bad\n"],['specialization'=>"bad\xFF"],['specialization'=>str_repeat('😀',151)],['country_code'=>['JO']],['specialization'=>['text']]] as $bad) {
         $form=profileForm($browserA); $body=profilePost($browserA,$form+$bad,422);
         profileTestAssert(str_contains($body,'name="expected_profile_version" value="'.$form['expected_profile_version'].'"'),'Error lost original token.');
         if (is_string(reset($bad))) { profileTestAssert(str_contains($body,htmlspecialchars(reset($bad),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')),'Error lost submitted text.'); }
@@ -130,11 +130,11 @@ try {
     $body=profilePost($tab2,$old+['country_code'=>'EG','preferred_language'=>'en','professional_status'=>'graduate','specialization'=>'Stale private specialization'],409);
     profileTestAssert(str_contains($body,'Stale private specialization') && str_contains($body,'value="EG" selected') && str_contains($body,'value="graduate" selected') && str_contains($body,'value="'.$old['expected_profile_version'].'"'),'Conflict lost final fields/original token.');
     // Test-only historical values: the form can retain them, not forge them on another row.
-    $db->exec("UPDATE personal_info SET country_code='ZZ',preferred_language='zz',professional_status='retired_status',profile_version=profile_version+1 WHERE id=$id");
-    $body=profileHttp($browserA,'GET',200); profileTestAssert(str_contains($body,'Saved or entered choice'),'Retired choices silently coerced.');
-    profilePost($browserA,profileForm($browserA)+['country_code'=>'ZZ','preferred_language'=>'zz','professional_status'=>'retired_status','location'=>'Unrelated edit'],303);
+    $db->exec("UPDATE personal_info SET country_code='US',preferred_language='zz',professional_status='retired_status',profile_version=profile_version+1 WHERE id=$id");
+    $body=profileHttp($browserA,'GET',200); profileTestAssert(str_contains($body,'Older saved choice'),'Retired choices silently coerced.');
+    profilePost($browserA,profileForm($browserA)+['country_code'=>'US','preferred_language'=>'zz','professional_status'=>'retired_status','location'=>'Unrelated edit'],303);
     $row=$db->query("SELECT * FROM personal_info WHERE id=$id")->fetch(PDO::FETCH_ASSOC);
-    profileTestAssert($row['country_code']==='ZZ' && $row['preferred_language']==='zz' && $row['professional_status']==='retired_status','Unchanged retired values lost.');
+    profileTestAssert($row['country_code']==='US' && $row['preferred_language']==='zz' && $row['professional_status']==='retired_status','Unchanged retired values lost.');
     profilePost($browserA,profileForm($browserA)+['country_code'=>'JO','preferred_language'=>'en','professional_status'=>'employed','specialization'=>'Private projection sentinel'],303);
     $db->prepare('UPDATE portfolios SET public_slug=?,is_published=1 WHERE id=?')->execute(['final-profile-'.$portfolios[0],$portfolios[0]]);
     foreach (['p.php','p_projects.php'] as $route) {

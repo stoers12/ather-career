@@ -6,6 +6,7 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1] / 'data/profile-catalog'
+LAUNCH_COUNTRIES = ['JO','PS','SA','AE','QA','KW','BH','OM','IQ','LB','SY','YE','EG']
 def encoded(value):
     return (json.dumps(value, ensure_ascii=False, indent=2) + '\n').encode('utf-8')
 
@@ -18,7 +19,11 @@ def build():
     assert len(codes) == len(set(codes)) == 249
     assert all(re.fullmatch('[A-Z]{2}', code) for code in codes)
     labels = {language: json.loads((ROOT/f'sources/cldr-{language}.json').read_text(encoding='utf-8'))['main'][language]['localeDisplayNames']['territories'] for language in ['ar','en']}
-    countries = {code:{language:labels[language][code] for language in ['ar','en']} for code in codes}
+    assert provenance['iso_source_country_count'] == len(codes)
+    assert provenance['country_count'] == len(LAUNCH_COUNTRIES) == 13
+    assert provenance['supported_country_codes'] == LAUNCH_COUNTRIES
+    assert len(set(LAUNCH_COUNTRIES)) == 13 and set(LAUNCH_COUNTRIES) <= set(codes)
+    countries = {code:{language:labels[language][code] for language in ['ar','en']} for code in LAUNCH_COUNTRIES}
     assert all(name and name.strip() for entry in countries.values() for name in entry.values())
     assert not set(codes).intersection(['ZZ','XK','EU','UN','UK','AC','CP','CQ','DG','EA','EZ','IC','QO','TA','XA','XB','SU','AN','BU','TP','YU'])
     choices = json.loads((ROOT/'choices.json').read_text(encoding='utf-8'))
@@ -37,4 +42,4 @@ if __name__ == '__main__':
         assert destination.read_bytes() == result, 'Catalog differs from pinned sources/choices'
     else:
         destination.write_bytes(result)
-    print('PASS deterministic catalog: 249 ISO entries, complete AR/EN labels, 2 languages, 6 proposed statuses; SHA256 '+hashlib.sha256(result).hexdigest())
+    print('PASS deterministic product catalog: 13 launch countries in approved order from 249 ISO source entries, complete AR/EN labels, 2 languages, 6 statuses; SHA256 '+hashlib.sha256(result).hexdigest())

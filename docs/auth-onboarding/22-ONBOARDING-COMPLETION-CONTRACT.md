@@ -1,5 +1,7 @@
 # Bounded onboarding completion contract
 
+Owner-approved catalog amendment (2026-10-19): [handoff 26](26-LAUNCH-COUNTRY-CATALOG.md) supersedes the earlier all-249 product offering with the ordered 13-country launch list. Full ISO/CLDR provenance and historical stored choices/receipts remain preserved; earlier evidence below retains its original scope.
+
 Explicit draft-only follow-up: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) reuses Profile catalogs/validators for new draft edits while preserving historical reads and receipts. It does not approve or implement the remaining completion/publication/routing recommendations.
 
 Explicitly authorized optional final-field follow-up: [handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md)

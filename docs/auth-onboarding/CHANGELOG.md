@@ -2,6 +2,13 @@
 
 Entries record repository history and verification scope. “This commit” means the commit containing this file; it avoids a self-referential hash. No entry implies deployment of proposed features.
 
+## 2026-10-19 — Separate owner-approved launch-country correction
+
+Handoff 26 records the ordered 13-country product subset, revised offline generator,
+revision/provenance/checksum and historical-country/receipt preservation. Full ISO
+and CLDR sources remain intact; ISO still has 249 assigned entries. No migration,
+completion core, auth/public projection, runtime gate or activation change is included.
+
 ## 2026-10-19 — Bounded onboarding draft/Profile catalog integration
 
 Local descendant of merged `8e886688bfab531e3a1021b3c4b6de918145223c`: the
