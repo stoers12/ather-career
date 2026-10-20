@@ -1,5 +1,8 @@
 # Card 05 — bounded server-side registration/journey routing
 
+Bounded UI/navigation successor: [33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md) reuses this unchanged authority/capture decision for a presentation-only pause view and explicit resume/Dashboard. Earlier Save-and-exit routing behavior is superseded only by that bounded successor; migration 020/frozen binding/core remain unchanged.
+
+
 Base fetched and verified: `435ee57e31baa2e233f30a8162090ade07741066`.
 Isolated branch `feat/registration-journey-routing-20261020`, worktree
 `.worktrees/registration-journey-routing`. Applicable ancestor/repository instructions

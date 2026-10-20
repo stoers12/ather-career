@@ -70,14 +70,29 @@ function createOwnedPortfolio(PDO $database, AuthenticatedUserContext $user): ?i
     throw new OwnerReadinessDeniedException('Legacy Portfolio creation is retired; use explicit onboarding completion.');
 }
 
-function renderOwnerJourneyHolding(int $status = 503): never
+/** Server-selected fixed actions; presentation mode never supplies authority. */
+function renderOwnerJourneyHolding(int $status = 503, ?string $destination = null, bool $paused = false, string $locale = 'en'): never
 {
     require_once __DIR__.'/csrf.php';
     httpSetHtmlResponse($status);
     header('Cache-Control: private, no-store');
+    header('X-Robots-Tag: noindex, nofollow');
+    $ar=$locale==='ar';
+    header('Content-Language: '.($ar ? 'ar' : 'en'));
     $token=htmlspecialchars(getCsrfToken(),ENT_QUOTES,'UTF-8');
     if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'HEAD') {
-        echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Onboarding unavailable | الإعداد غير متاح</title><link rel="stylesheet" href="/style.css"><script src="/admin.js" defer></script></head><body class="owner-auth-recovery"><main class="owner-auth-recovery-card"><h1>Onboarding is unavailable</h1><p>Your account is signed in, but setup cannot continue right now. You can use another account or log out.</p><p lang="ar" dir="rtl">أنت مسجل الدخول، لكن إعداد الحساب غير متاح الآن. يمكنك استخدام حساب آخر أو تسجيل الخروج.</p><form method="post" action="/owner_switch_account.php" data-owner-form><input type="hidden" name="csrf_token" value="'.$token.'"><button type="submit" data-pending-label="Switching account…">Use another account / استخدام حساب آخر</button></form><form method="post" action="/owner_logout.php" data-owner-form><input type="hidden" name="csrf_token" value="'.$token.'"><button type="submit" data-pending-label="Logging out…">Logout / تسجيل الخروج</button></form></main></body></html>';
+        $title=$paused ? ($ar ? 'تم إيقاف الإعداد مؤقتًا' : 'Onboarding paused') : ($ar ? 'الإعداد غير متاح' : 'Onboarding is unavailable');
+        $summary=$ar ? 'تبقى فقط التعديلات التي تأكد حفظها. التوقف لا يكمل الإعداد ولا ينشر ملفك.' : 'Only acknowledged saves are kept. Pausing does not complete setup or publish your Profile.';
+        $unavailable=$ar ? 'المتابعة غير متاحة الآن. يمكنك العودة لاحقًا أو استخدام حساب آخر أو تسجيل الخروج.' : 'Continuation is unavailable right now. You can return later, use another account or log out.';
+        // Keep the original holding page understandable in both languages.
+        $alternate=$paused ? '' : '<p lang="'.($ar ? 'en' : 'ar').'" dir="'.($ar ? 'ltr' : 'rtl').'">'.($ar ? 'Continuation is unavailable right now. You can use another account or log out.' : 'المتابعة غير متاحة الآن. يمكنك استخدام حساب آخر أو تسجيل الخروج.').'</p>';
+        $action='';
+        if ($paused && $destination==='/owner_onboarding_editor.php') {
+            $action='<p><a data-journey-resume href="/owner_onboarding.php?lang='.($ar ? 'ar' : 'en').'">'.($ar ? 'استئناف الإعداد' : 'Resume setup').'</a></p>';
+        } elseif ($paused && $destination==='/owner.php') {
+            $action='<p>'.($ar ? 'لوحة التحكم متاحة لحسابك الحالي.' : 'Dashboard is available for your current account.').'</p><p><a data-journey-dashboard href="/owner.php">'.($ar ? 'الانتقال إلى لوحة التحكم' : 'Go to Dashboard').'</a></p>';
+        }
+        echo '<!DOCTYPE html><html lang="'.($ar ? 'ar' : 'en').'" dir="'.($ar ? 'rtl' : 'ltr').'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>'.$title.'</title><link rel="stylesheet" href="/style.css"><script src="/admin.js" defer></script></head><body class="owner-auth-recovery"><main class="owner-auth-recovery-card"><h1>'.$title.'</h1><p>'.$summary.'</p>'.($action!=='' ? $action : '<p role="status">'.$unavailable.'</p>').$alternate.'<form method="post" action="/owner_switch_account.php" data-owner-form><input type="hidden" name="csrf_token" value="'.$token.'"><button type="submit" data-pending-label="'.($ar ? 'جارٍ تبديل الحساب…' : 'Switching account…').'">'.($paused ? ($ar ? 'استخدام حساب آخر' : 'Use another account') : 'Use another account / استخدام حساب آخر').'</button></form><form method="post" action="/owner_logout.php" data-owner-form><input type="hidden" name="csrf_token" value="'.$token.'"><button type="submit" data-pending-label="'.($ar ? 'جارٍ تسجيل الخروج…' : 'Logging out…').'">'.($paused ? ($ar ? 'تسجيل الخروج' : 'Logout') : 'Logout / تسجيل الخروج').'</button></form></main></body></html>';
     }
     exit;
 }

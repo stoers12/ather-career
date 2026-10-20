@@ -1,5 +1,8 @@
 # Ather authentication and onboarding project record
 
+Card 05 bounded navigation successor: [33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md). Acknowledged Save and exit now reaches a private pause view; explicit Resume uses current server routing. Confirmed receipt recovery offers Dashboard without automatic navigation or suppressing unsaved-work protection. This finishes only these editor navigation gaps; public/account navigation review, real policies, controlled cutover preparation and activation remain separate. Production resolvers remain null, actual gates off. Next safe action: local review of this slice and its evidence.
+
+
 Card 05 first bounded server slice: [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md). Frozen maintenance-only legacy bindings and correctly bound completion now control fixed Owner/editor/holding destinations; alternate bare first creation is retired. Local review/testing only. Production resolvers stay null, actual gates off; no capture/deployment/launch or completed Card 05 claim. Next: review evidence, then separately bounded navigation/UI and controlled cutover preparation.
 
 Card 04 bounded editor completion: [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md). Final review now uses acknowledged saved server data, two explicit confirmations and the existing completion HTTP gate. Original receipt recovery is independent of current policies/readiness. Both production resolvers stay null, actual gates off; the guarded preview remains nonpersistent/Create-disabled. Next safe step: owner review of this local commit/evidence. No launch, routing/publication cutover or finished Card 04 is claimed.

@@ -89,7 +89,7 @@ header('X-Robots-Tag: noindex, nofollow');
                     <?php if ($editor): ?>
                     <div class="ao-draft-feedback">
                         <p data-save-status role="status" aria-live="polite" aria-atomic="true" tabindex="-1"><?php echo $copy('loading'); ?></p>
-                        <div class="ao-draft-recovery"><button class="ao-secondary" type="button" data-retry hidden><?php echo $copy('retry'); ?></button><button class="ao-secondary" type="button" data-recover hidden><?php echo $copy('recover'); ?></button><a class="ao-secondary" data-fresh-context hidden href="/owner_onboarding_editor.php"><?php echo $copy('fresh'); ?></a></div>
+                        <div class="ao-draft-recovery"><a class="ao-secondary" data-completion-dashboard hidden href="/owner.php"><?php echo $copy('completion_dashboard'); ?></a><button class="ao-secondary" type="button" data-retry hidden><?php echo $copy('retry'); ?></button><button class="ao-secondary" type="button" data-recover hidden><?php echo $copy('recover'); ?></button><a class="ao-secondary" data-fresh-context hidden href="/owner_onboarding_editor.php"><?php echo $copy('fresh'); ?></a></div>
                     </div>
                     <noscript><p><?php echo $copy('no_js'); ?></p></noscript>
                     <?php endif; ?>

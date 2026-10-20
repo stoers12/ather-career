@@ -533,6 +533,7 @@ jobs:
             ATHERCAR_COMPLETION_BROWSER_BASE_URL=http://127.0.0.1:8105 ATHERCAR_COMPLETION_BROWSER_NULL_URL=http://127.0.0.1:8106 ATHERCAR_COMPLETION_BROWSER_OFF_URL=http://127.0.0.1:8107 \
             ATHERCAR_EDITOR_CONTAINER=ather-career-ci-completion-editor ATHERCAR_EDITOR_APP_ROOT=/var/www/app \
             ATHERCAR_EDITOR_EVIDENCE_DIR="$EDITOR_EVIDENCE" node scripts/run-onboarding-completion-browser-tests.mjs
+          # Includes pause/resume and explicit Dashboard navigation; same isolated fixture and cleanup.
 
       - name: Remove isolated rehearsal database
         run: |

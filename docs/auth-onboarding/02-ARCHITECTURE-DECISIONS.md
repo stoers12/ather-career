@@ -1,5 +1,10 @@
 # 02 — Architecture decision records
 
+## Card 05 bounded navigation clarification
+
+[33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md) implements fixed pause presentation and explicit receipt-based Dashboard navigation only. `view=paused` and `lang` select presentation, never an eligibility/ownership/completion binding. All actions reauthorize through unchanged server routing. No return URLs, automatic post-completion routing, new gates, tables, capture, readiness/consent requirement for accepted owners or policy activation. A historical receipt is not current Profile data and cannot acknowledge other-tab local edits. Existing unsaved-work protection remains on explicit Dashboard leave.
+
+
 ## AUTH-ADR-025 — Frozen legacy access and committed completion
 
 Owner-authorized bounded Card 05 implementation: ordinary Owner authority requires current session/account/authz/ownership plus either an original User→Portfolio binding captured once under explicit exclusive maintenance, or committed completion evidence joined to the same owned Portfolio and Profile. No ID/date threshold, browser/session cohort flag, recurring adoption, readiness or current-policy gate for existing-owner access. Migration 020 prepares empty schema only; its separate CLI seals the legacy set atomically and retries verify it without expansion. Missing/partial capture fails closed, never inferred from Portfolio existence. This is access/routing integration, not a new publication policy. [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md) records maintenance, fixtures and remaining work.

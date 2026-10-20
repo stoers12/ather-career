@@ -1,5 +1,16 @@
 # 05 — Proposed user flows and route contracts
 
+## Card 05 bounded pause/resume and explicit Dashboard navigation
+
+[33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md) adds no route or public shim. GET/HEAD `/owner_onboarding.php?view=paused&lang=ar|en` renders a private/no-store pause view after independent current authorization and the unchanged journey decision. Only exact `view=paused` and optional exact `lang=ar|en` are accepted (either order); duplicate, encoded-alias, array and unexpected parameters reject 400. Query-free normal legacy GET/HEAD retains its routing; an optional validated `lang` carries UI language to the fixed editor destination. POST remains 405 before DB work.
+
+Pause is a presentation, never a grant or completion marker. Current editor destination offers explicit Resume via `/owner_onboarding.php?lang=ar|en`, which rechecks current server capabilities and authority. Current authorized Dashboard destination offers `/owner.php`. No continuation gives private 503 with no Resume/Dashboard and retained CSRF-protected switch/logout; no redirect loop. Reachable pause is 200; HEAD is bodyless. Text says only acknowledged saves are kept, never that all input is saved or setup completed. No draft/Profile body or receipt is projected into pause.
+
+Editor Save and exit drains the existing immutable operations, including newer input while saving, before navigating to this fixed pause view with validated interface language. Conflict/rejection/uncertainty/authentication change stays in editor. Explicit retry stays in editor and does not revive a prior exit. Resume reads saved server data. Editor GET is not redirected, preserving localized markup replacement and local work.
+
+An exact validated completion response or context-matched authorized receipt read reveals a localized Dashboard link. No automatic redirect on receipt/reload/late/uncertain/null results. The link reauthorizes at the existing Owner boundary. Retained local edits/pending saves are not acknowledged by a historical receipt; their warning and native unsaved-work protection survive. Core/transport/authority/cutover/country/publication semantics are unchanged.
+
+
 ## Card 05 bounded server routing
 
 After validated callback/session establishment, `ownerJourneyDestination` reauthorizes and chooses only fixed local destinations: accepted legacy/completed owner → `/owner.php`; incomplete/no Portfolio with all three exact-1 draft/attestation/completion capabilities and complete trusted documents → `/owner_onboarding_editor.php`; otherwise `/owner_onboarding.php` renders private no-store 503 with CSRF-protected switch/logout. An unproven existing Portfolio is incomplete and follows the same editor/holding decision; the unchanged completion core refuses to overwrite/adopt it, so any repair requires a separate reviewed maintenance action. Legacy GET/HEAD uses the same decision and does not redirect to itself; POST is 405 before DB work. The common Owner boundary and shared owned context enforce eligibility before mutation handlers. No return URLs, automatic post-completion redirect, new navigation redesign or publication rules. Receipt recovery remains independent. [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).

@@ -1,5 +1,10 @@
 # 03 — Security and privacy threat model
 
+## Card 05 navigation boundary
+
+[33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md): pause mode is strictly validated presentation only; it cannot elevate a bare Portfolio, bypass the frozen legacy binding or select a return destination. Resume and Dashboard use fixed routes with fresh current authorization. Private/no-store responses include CSRF-protected switch/logout and no draft/Profile/document/session bodies. Gate-off/null-policy states do not loop. Receipt-based navigation appears only after a validated context-bound result; auth/root/request epochs still retire late work. Local edits and pending immutable operations survive completion elsewhere, and native unsaved-work confirmation is not disabled by the Dashboard link. No browser storage or new token transport.
+
+
 ## Card 05 bounded routing/access boundary
 
 Portfolio existence is no longer Owner authority. Post-cutover bare rows remain unproven and cannot reach Profile/project/publication/media/evidence handlers. Shared `requireOwnedPortfolioContext` also rejects them; legacy POST is 405 and `createOwnedPortfolio` independently denies. Frozen original User binding prevents ownership reassignment from inheriting legacy access; completion requires the current owner/Portfolio/original Profile join. Capture is privileged server maintenance, never request input or startup; seal/partial-state recovery cannot silently add later rows. Receipt GET remains current-User authorized and independent of current policies. Protected routes retain existing CSRF/session/tenant checks. No changes to public read authorization. [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).
