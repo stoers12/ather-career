@@ -10,6 +10,8 @@ require_once __DIR__ . '/includes/signin_icons.php';
 httpRegisterExceptionBoundary('signin.php');
 httpRequireMethod(['GET', 'HEAD']);
 $locale = ($_GET['lang'] ?? null) === 'en' ? 'en' : 'ar';
+require_once __DIR__ . '/includes/authenticated_entry.php';
+presentAuthenticatedEntryIfPresent($locale);
 header('Content-Type: text/html; charset=utf-8');
 header('Content-Language: ' . $locale);
 ?>

@@ -183,7 +183,7 @@ jobs:
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-attestation-route-tests.php
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-onboarding-completion-route-tests.php
 
-          # Routing tests use guarded synthetic cohorts and preserve the frozen set.
+          # Routing and D1 entry tests use guarded synthetic cohorts and preserve the frozen set.
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-owner-journey-route-tests.php
 
       - name: Authenticated draft editor browser checks
@@ -533,7 +533,7 @@ jobs:
             ATHERCAR_COMPLETION_BROWSER_BASE_URL=http://127.0.0.1:8105 ATHERCAR_COMPLETION_BROWSER_NULL_URL=http://127.0.0.1:8106 ATHERCAR_COMPLETION_BROWSER_OFF_URL=http://127.0.0.1:8107 \
             ATHERCAR_EDITOR_CONTAINER=ather-career-ci-completion-editor ATHERCAR_EDITOR_APP_ROOT=/var/www/app \
             ATHERCAR_EDITOR_EVIDENCE_DIR="$EDITOR_EVIDENCE" node scripts/run-onboarding-completion-browser-tests.mjs
-          # Includes pause/resume and explicit Dashboard navigation; same isolated fixture and cleanup.
+          # Includes pause/resume, explicit Dashboard and D1 entries; same private fixture and cleanup.
 
       - name: Remove isolated rehearsal database
         run: |

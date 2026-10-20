@@ -357,6 +357,60 @@ PHP;
     routingAssert($response->getStatusCode() === 302 && (routingSession($browser)[AUTH0_AUTH_TRANSACTION_KEY]['purpose'] ?? null) === AUTH0_PURPOSE_SIGN_IN, 'Recovery retry escalated purpose.');
     echo "PASS routing switch-off pending callback stops before token exchange; existing-owner access, account switching and retry retain sign-in purpose\n";
 
+    // A signed-in entry is presentation only, including when OIDC is unavailable.
+    $entryBrowser=routingBrowser(); $entryStart=routingStart($entryBrowser,false);
+    routingAssert(routingCallback($entryBrowser,$entryStart,$prefix.'owner',['email_verified'=>false])->getStatusCode()===303,'Entry fixture login failed');
+    routingSession($entryBrowser,static function (): void { $_SESSION[AUTH0_AUTH_TRANSACTION_KEY]=['state'=>'retained-test-transaction','purpose'=>AUTH0_PURPOSE_SIGN_IN]; });
+    $transaction=routingSession($entryBrowser)[AUTH0_AUTH_TRANSACTION_KEY];
+    clearRateLimit('oidc_start','127.0.0.1');
+    routingStop($mockProcess);
+    foreach (['/signin.php','/signup.php','/owner_login.php?method=google'] as $path) {
+        for ($i=0;$i<OIDC_START_RATE_LIMIT_ATTEMPTS+1;$i++) {
+            $r=$entryBrowser->get($path);
+            routingAssert($r->getStatusCode()===200 && str_contains((string)$r->getBody(),'data-entry-dashboard'),'Authenticated entry depended on discovery or consumed rate limit');
+            routingAssert(routingSession($entryBrowser)[AUTH0_AUTH_TRANSACTION_KEY]===$transaction,'Entry replaced OIDC transaction');
+        }
+    }
+    $r=$entryBrowser->get('/owner_oidc_callback.php?state=forged&code=forged');
+    routingAssert($r->getStatusCode()===403 && (routingSession($entryBrowser)[INTERNAL_USER_SESSION_KEY]['internal_user_id']??null)===$owner,'Callback implicitly replaced entry identity');
+    $csrf=routingSession($entryBrowser)['csrf_token'];
+    foreach (['/owner_register.php','/owner_auth_retry.php'] as $path) {
+        $r=$entryBrowser->post($path,['form_params'=>['csrf_token'=>$csrf]]);
+        routingAssert(in_array($r->getStatusCode(),[403,404],true),'Authenticated registration/retry refusal changed');
+    }
+    $mockProcess=routingProcess([PHP_BINARY,__DIR__.'/../tests/phase2/support/registration-oidc-mock.php',$root,(string)$issuerPort],$serverEnvironment,$root.'/issuer-private.log');
+    $ready=false; for ($i=0;$i<40;$i++) { try { $r=(new Client(['verify'=>$root.'/cert.pem','timeout'=>1]))->get($issuer.'.well-known/openid-configuration');$ready=$r->getStatusCode()===200; } catch(Throwable){} if($ready)break;usleep(50000); }
+    routingAssert($ready,'Private issuer restart failed');
+    // Exactly the original number of anonymous starts still succeeds.
+    $ordinary=routingBrowser();
+    for ($i=0;$i<OIDC_START_RATE_LIMIT_ATTEMPTS;$i++) { routingStart($ordinary,false,false); }
+    routingAssert($ordinary->get('/owner_login.php')->getStatusCode()===429,'Shared anonymous start limiter changed');
+    echo "PASS routing D1 authenticated entries avoid unavailable discovery transaction replacement and OIDC-start consumption; callback registration retry refusals remain\n";
+
+
+    routingStartApp('1');
+    foreach (['/signin.php','/signup.php','/owner_login.php?method=google'] as $entryPath) {
+        $b=routingBrowser(); $start=routingStart($b,false);
+        routingAssert(routingCallback($b,$start,$prefix.'owner',['email_verified'=>false])->getStatusCode()===303,'Entry account-action fixture login');
+        $r=$b->get($entryPath); $html=(string)$r->getBody();
+        routingAssert($r->getStatusCode()===200 && preg_match('/name="csrf_token" value="([a-f0-9]{64})"/',$html,$matches)===1,'Entry protected account form missing');
+        $csrf=$matches[1];
+        foreach (['/owner_switch_account.php','/owner_logout.php'] as $action) {
+            routingAssert($b->get($action)->getStatusCode()===405 && $b->post($action,['form_params'=>['csrf_token'=>'wrong']])->getStatusCode()===403,'Entry action method/CSRF changed');
+        }
+        foreach (['/owner_register.php','/owner_auth_retry.php'] as $action) { routingAssert($b->post($action,['form_params'=>['csrf_token'=>$csrf]])->getStatusCode()===403,'Authenticated registration/retry refusal changed'); }
+        $old=routingCookie($b); $r=$b->post('/owner_switch_account.php',['form_params'=>['csrf_token'=>$csrf]]);
+        parse_str((string)parse_url($r->getHeaderLine('Location'),PHP_URL_QUERY),$switch);
+        routingAssert($r->getStatusCode()===302 && ($switch['prompt']??null)==='login' && routingCookie($b)!==$old && !is_file($root.'/sessions/sess_'.$old) && !isset(routingSession($b)[INTERNAL_USER_SESSION_KEY]),'Entry switch did not retire prior identity');
+        $r=routingCallback($b,$switch,$prefix.'new');
+        routingAssert($r->getStatusCode()===303 && $r->getHeaderLine('Location')==='/owner_onboarding.php' && (routingSession($b)[INTERNAL_USER_SESSION_KEY]['internal_user_id']??null)===$newId,'Entry known-account return destination/identity');
+        $r=$b->get($entryPath);routingAssert($r->getStatusCode()===503 && !str_contains((string)$r->getBody(),'data-entry-dashboard'),'Switched account inherited Dashboard');
+        routingAssert(preg_match('/name="csrf_token" value="([a-f0-9]{64})"/',(string)$r->getBody(),$matches)===1,'Unavailable signed-in entry lost CSRF');
+        $old=routingCookie($b);$r=$b->post('/owner_logout.php',['form_params'=>['csrf_token'=>$matches[1]]]);
+        routingAssert($r->getStatusCode()===303 && $r->getHeaderLine('Location')==='owner_login.php' && !is_file($root.'/sessions/sess_'.$old) && !isset(routingSession($b)[INTERNAL_USER_SESSION_KEY]),'Entry local logout failed');
+    }
+    echo "PASS routing D1 real entry account forms retain methods CSRF registration retry refusals session retirement known-account return and local logout without linking\n";
+
     routingStartApp('1');
     foreach (['regenerate', 'write', 'post-commit-query'] as $mode) {
         $browser = routingBrowser(); $start = routingStart($browser); $subject = $prefix . 'failure-' . $mode;
