@@ -8,12 +8,14 @@ foreach (['ar','en'] as $locale) {
     foreach ([1,2,3,4,5] as $step) {
         ob_start(); renderOnboardingPresentation($locale,$step,true,str_repeat('a',64)); $html=ob_get_clean();
         $dom=new DOMDocument(); @$dom->loadHTML('<?xml encoding="UTF-8">'.$html); $xpath=new DOMXPath($dom);
-        phase2Assert($xpath->query('//input[@type="checkbox" and @disabled]')->length===5,'Unsupported editor controls must be disabled');
+        phase2Assert($xpath->query('//input[@type="checkbox" and @disabled]')->length===7,'Unsupported editor controls must be disabled');
         phase2Assert($xpath->query('//input[@data-attestation-action and @disabled and not(@checked)]')->length===3,'Three distinct initially unchecked attestation actions');
         phase2Assert($xpath->query('//*[@data-attestation-documents]')->length===1 && $xpath->query('//*[@data-attestation-status and @role="status" and @aria-live="polite"]')->length===1,'Exact document container and independent accessible status');
         phase2Assert($xpath->query('//button[@data-attestation-record and @disabled]')->length===1 && $xpath->query('//button[@data-attestation-load and @disabled]')->length===1,'Explicit initial disabled recording and read controls');
+        phase2Assert($xpath->query('//input[@data-completion-confirm and @disabled and not(@checked)]')->length===2,'Two separate initially unchecked completion confirmations');
+        phase2Assert($xpath->query('//*[@data-completion-status and @role="status" and @aria-live="polite"]')->length===1 && $xpath->query('//*[@data-completion-review-body and @hidden]')->length===1,'Private completion live status and no fabricated review');
         phase2Assert($xpath->query('//*[@data-draft-field]')->length===8,'Editor must expose exactly the approved seven fields/eight controls');
-        phase2Assert($xpath->query('//button[@data-create and @disabled]')->length===1,'Create must stay disabled');
+        phase2Assert($xpath->query('//button[@data-create and @disabled]')->length===1,'Create must start disabled');
         phase2Assert(!str_contains($html,'m••••d@example.com') && str_contains($html,'onboarding_editor.js?v='),'Editor email/script boundary');
         phase2Assert(str_contains($html,'aria-live="polite"') && str_contains($html,'data-editor-context='),'Accessible editor feedback/context');
 

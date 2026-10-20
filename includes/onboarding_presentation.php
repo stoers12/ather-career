@@ -174,13 +174,27 @@ header('X-Robots-Tag: noindex, nofollow');
                         <p class="ao-eyebrow"><?php echo $copy('step_5_eyebrow'); ?></p>
                         <h1 class="ao-heading" id="step-5-heading" tabindex="-1"><?php echo $copy('step_5_heading'); ?></h1>
                         <p class="ao-lead"><?php echo $copy('step_5_lead'); ?></p>
-                        <div class="ao-review-list">
+                        <div class="ao-review-list"<?php echo $editor ? ' hidden aria-hidden="true"' : ''; ?>>
                             <div class="ao-review-item"><div><small><?php echo $copy('review_identity'); ?></small><strong data-review-identity><?php echo $copy('not_entered'); ?></strong></div><button class="ao-edit-link" type="button" data-edit-step="2"><?php echo $copy('edit'); ?></button></div>
                             <div class="ao-review-item"><div><small><?php echo $copy('review_profession'); ?></small><strong data-review-profession><?php echo $copy('not_entered'); ?></strong></div><button class="ao-edit-link" type="button" data-edit-step="3"><?php echo $copy('edit'); ?></button></div>
                             <div class="ao-review-item"><div><small><?php echo $copy('review_link'); ?></small><strong data-review-slug dir="ltr"><?php echo $copy('not_entered'); ?></strong></div><button class="ao-edit-link" type="button" data-edit-step="4"><?php echo $copy('edit'); ?></button></div>
                             <div class="ao-review-item"><div><small><?php echo $copy('review_privacy'); ?></small><strong data-review-privacy><?php echo $copy('review_private'); ?></strong></div><button class="ao-edit-link" type="button" data-edit-step="4"><?php echo $copy('edit'); ?></button></div>
                         </div>
-                        <div class="ao-note ao-create-note"><?php echo $copy('create_unavailable'); ?></div>
+                        <?php if ($editor): ?>
+                        <div class="ao-completion" aria-label="<?php echo $copy('completion_initial'); ?>">
+                            <p data-completion-status role="status" aria-live="polite" tabindex="-1"><?php echo $copy('completion_loading'); ?></p>
+                            <p data-completion-retained hidden><?php echo $copy('completion_retained'); ?></p>
+                            <div class="ao-completion-actions"><button type="button" class="ao-secondary" data-completion-review disabled><?php echo $copy('completion_review'); ?></button><button type="button" class="ao-secondary" data-completion-read disabled><?php echo $copy('completion_read'); ?></button></div>
+                            <div class="ao-completion-edits">
+                                <?php foreach ([2=>'review_identity',3=>'review_profession',4=>'review_link'] as $editStep=>$editKey): ?><button type="button" class="ao-edit-link" data-edit-step="<?php echo $editStep; ?>"><?php echo $copy('edit').' — '.$copy($editKey); ?></button><?php endforeach; ?>
+                            </div>
+                            <div data-completion-review-body hidden></div>
+                            <fieldset class="ao-completion-confirmations"><legend><?php echo $copy('completion_separate'); ?></legend><div class="ao-check-list">
+                                <label class="ao-check"><input type="checkbox" data-completion-confirm="confirm_private_creation" autocomplete="off" disabled><span><?php echo $copy('completion_private'); ?></span></label>
+                                <label class="ao-check"><input type="checkbox" data-completion-confirm="acknowledge_private_draft" autocomplete="off" disabled><span><?php echo $copy('completion_acknowledge'); ?></span></label></div>
+                            </fieldset>
+                        </div>
+                        <?php else: ?><div class="ao-note ao-create-note"><?php echo $copy('create_unavailable'); ?></div><?php endif; ?>
                     </section>
 
                     <div class="ao-actions">

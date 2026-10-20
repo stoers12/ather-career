@@ -1,5 +1,7 @@
 # Card 04 — bounded private editor attestation UI
 
+Bounded successor: [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md) adds final saved review/confirmation/recovery independently of the attestation area. Document context changes retire prepared completion review; failed completion availability does not disable independent draft/attestation behavior. Earlier Create-disabled evidence remains historical; checked-in Create still starts disabled and actual production gates/policies remain unavailable.
+
 Independent successor: [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) adds an off completion transport with no editor integration. Existing Create remains disabled; attestation UI and all draft operations stay unchanged. This does not finish Card 04 or activate the journey.
 
 Base: `a459d785a54da1e06dfeb009d926a434ac57651e` (merged PR 30, verified Main CI).
