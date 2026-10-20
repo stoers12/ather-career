@@ -1,5 +1,7 @@
 # Card 04 — bounded authenticated completion HTTP transport
 
+Later bounded UI successor: [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md) consumes these unchanged transport/core operations in the editor. No API contract, policy resolver, gate or schema change. Earlier transport-only/no-UI evidence below retains its original scope; no launch or full journey completion is implied.
+
 Baseline / fetched remote main: `dd63500e11e34019856bf438cab354502886bd31`.
 New isolated worktree `.worktrees/onboarding-completion-http`, branch
 `feat/onboarding-completion-http-20261020`. No applicable ancestor/repository AGENTS.md

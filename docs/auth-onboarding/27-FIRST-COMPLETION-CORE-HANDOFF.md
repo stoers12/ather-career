@@ -1,5 +1,7 @@
 # Atomic first completion and durable receipt — local core only
 
+Later bounded UI: [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md) consumes the unchanged core through handoff 30 HTTP. It does not alter mappings/transaction/receipt ordering or manufacture existing-owner completion. Earlier core-only evidence remains historical; real policies/activation/routing/publication remain deferred.
+
 Later bounded transport: [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) exposes the three existing core operations behind an independent off gate, preserving their transaction/authorization and historical receipt ordering. It does not modify this core, add UI, provide production policies or activate the journey. Earlier core-only evidence below remains historical.
 
 Later UI-only slice: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) presents/records attestations separately in the private editor. This does not expose completion HTTP/UI, alter receipts/first-completion requirements, grant access or enable real policies. Earlier core evidence remains historical.

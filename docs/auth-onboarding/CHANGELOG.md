@@ -1,5 +1,7 @@
 # Authentication and onboarding history
 
+2026-10-20 — Card 04 bounded final editor review/completion/recovery ([31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md)): acknowledged saved-data review, fourteen exact positions/private optional disposition, two separate unchecked actions and one explicit immutable completion dispatch. Truthful original receipt/uncertain/null-read recovery and later Profile preservation; extended root/auth/request/listener boundaries. No core/API/schema/catalog/gate/policy/route-publication change or actual activation. Focused browser CI adds proven private carrier/clean-exit checks while retaining twenty CLI/existing browser assertions. Local commands/results, original failures/corrections and gaps in handoff 31.
+
 2026-10-20 — Card 04 bounded completion HTTP transport ([30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md)): authenticated original-receipt GET, saved review POST and explicit confirmation POST reuse the unchanged core. Independent exact-`1` default-off capability; strict private transport/errors; scoped real HTTP tests and twentieth CI rehearsal/default-off smoke. No migration, UI/Create/routing/publication changes, policy text, gate activation or broader recommendation approval. Retained failures/corrections and precise evidence/gaps are in handoff 30.
 
 ## 2026-10-20 — bounded private attestation editor integration (local review)

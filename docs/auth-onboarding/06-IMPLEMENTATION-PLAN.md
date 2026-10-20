@@ -1,5 +1,7 @@
 # 06 — Phased implementation plan
 
+Bounded Card 04 progress: [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md) implements only private editor final saved review/confirmation/receipt recovery atop existing core/HTTP. Local review and separately approved real policy/rollout decisions remain next; this does not authorize launch or finish the journey. No new capability gate, migration or framework.
+
 Bounded transport progress: [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) implements only completion receipt recovery/review/confirmation JSON, independent of attestation recording and editor UI. Owner review of source/evidence is next; real policies, final review UI, Create integration, routing/cutover and activation remain separate. No wider contract recommendation is accepted.
 
 Card 04 remains partial: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) implements only the existing private editor presentation/actions/recovery around the reviewed HTTP slice. Default-off and null-policy boundaries remain. Real approved immutable legal documents, operator/launch work and separately reviewed final-review/completion/routing integration remain future work; this UI is not authorization to implement them.

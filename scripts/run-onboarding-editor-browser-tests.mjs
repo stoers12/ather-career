@@ -48,7 +48,7 @@ try {
     check(await field(p,'country_code').inputValue()==='US','Unknown country');
     check(await p.locator('[data-draft-field="preferred_language"]:checked').inputValue()==='fr-CA','Unknown language');
     check(await field(p,'professional_status').inputValue()==='Research <b>candidate</b>','Unknown status');
-    check(await p.locator('input[type=checkbox]:disabled').count()===5,'Disabled consent and visibility');
+    check(await p.locator('input[type=checkbox]:disabled').count()===7,'Disabled attestation visibility and completion confirmations');
     check(await p.locator('[data-create]').isDisabled(),'Disabled create');
     check(!(await p.locator('body').textContent()).includes('m••••d@example.com'),'Example email omitted');
     console.log('PASS editor browser default-off packaging, authenticated context and unsupported controls');

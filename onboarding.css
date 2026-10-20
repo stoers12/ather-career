@@ -196,3 +196,13 @@ html[data-landing-theme="dark"] #ather-onboarding-preview .ao-primary { color: #
 [data-draft-editor] .ao-attestation-document h2 { font-size: 1rem; margin: 0 0 8px; }
 [data-draft-editor] .ao-attestation-document p { margin: 0 0 8px; }
 [data-draft-editor] .ao-document-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; unicode-bidi: plaintext; }
+
+/* Private saved review only; guarded design preview is unchanged. */
+[data-draft-editor] .ao-completion-actions,[data-draft-editor] .ao-completion-edits{display:flex;flex-wrap:wrap;gap:12px;margin-block:16px}
+[data-draft-editor] .ao-completion-review-values{margin:0;display:grid;gap:12px}
+[data-draft-editor] .ao-completion-value{white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0 0;max-width:100%}
+[data-draft-editor] .ao-completion-confirmations{min-width:0;border:0;padding:0;margin:20px 0}
+[data-draft-editor] .ao-completion-confirmations legend{font-size:.9rem;margin-block-end:12px}
+[data-draft-editor] .ao-completion [hidden]{display:none!important}
+[data-draft-editor] .ao-review-list[hidden]{display:none!important}
+[data-draft-editor] .ao-completion button{white-space:normal;max-width:100%}
