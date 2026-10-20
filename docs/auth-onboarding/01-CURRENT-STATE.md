@@ -1,5 +1,7 @@
 # 01 — Verified current state
 
+Local successor (2026-10-20): [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) adds default-off authenticated completion receipt/review/confirmation HTTP only at baseline `dd63500e11e34019856bf438cab354502886bd31`. Earlier deployed/merged status records below are historical; no new deployment or activation is claimed.
+
 Card 04 bounded UI follow-up (2026-10-20): [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) connects the existing private editor to the merged attestation HTTP boundary. Baseline main is `a459d785a54da1e06dfeb009d926a434ac57651e`; the implementation is local and default off. Production bundle/content resolvers remain null. This is not a finished Card 04 or completed/activated onboarding journey.
 
 **Card 04 bounded local HTTP slice (2026-10-19):** Base `8bef4ac1ebaa4e2b667291e4ad667ad0b6c44c6a`.

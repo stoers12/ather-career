@@ -1,5 +1,7 @@
 # Card 04 — bounded private editor attestation UI
 
+Independent successor: [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) adds an off completion transport with no editor integration. Existing Create remains disabled; attestation UI and all draft operations stay unchanged. This does not finish Card 04 or activate the journey.
+
 Base: `a459d785a54da1e06dfeb009d926a434ac57651e` (merged PR 30, verified Main CI).
 Fetched remote main matched before isolation. Worktree:
 `.worktrees/onboarding-attestation-editor`; branch:

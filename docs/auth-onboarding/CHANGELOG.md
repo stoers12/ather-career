@@ -1,5 +1,7 @@
 # Authentication and onboarding history
 
+2026-10-20 — Card 04 bounded completion HTTP transport ([30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md)): authenticated original-receipt GET, saved review POST and explicit confirmation POST reuse the unchanged core. Independent exact-`1` default-off capability; strict private transport/errors; scoped real HTTP tests and twentieth CI rehearsal/default-off smoke. No migration, UI/Create/routing/publication changes, policy text, gate activation or broader recommendation approval. Retained failures/corrections and precise evidence/gaps are in handoff 30.
+
 ## 2026-10-20 — bounded private attestation editor integration (local review)
 
 Connect the existing step-1 area to default-off authenticated GET/POST, preserving

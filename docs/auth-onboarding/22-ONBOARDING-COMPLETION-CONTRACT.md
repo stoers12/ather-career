@@ -1,5 +1,7 @@
 # Bounded onboarding completion contract
 
+Owner-authorized bounded HTTP successor (2026-10-20): [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) now transports the existing receipt read, server review preparation and explicit five-key first-completion intent. This supersedes earlier statements that completion HTTP is wholly unimplemented, only for this independent default-off route. The accepted overlay, mappings, requiredness, optional disposition, exact-retry ordering and transaction core are unchanged. Policies/content remain null; completion UI, routing/publication and activation remain deferred. Historical evidence and unrelated proposals below retain their original scope.
+
 Implementation cross-reference only: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) supplies a private attestation UI, independent of draft completion. It does not accept other recommendations, supply production policies, implement final review/completion HTTP, change required fields/publication or add routing/access gates. The accepted bounded first-completion overlay below remains unchanged.
 
 Later owner-authorized Card 04 transport: [28](28-ATTESTATION-HTTP-HANDOFF.md) implements

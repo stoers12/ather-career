@@ -1,5 +1,7 @@
 # Card 04 — exact attestation HTTP presentation and recording
 
+Independent successor: [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) adds completion HTTP only. Attestation presentation/recording remains separate and unchanged; review preparation records no acceptance. Both production resolvers stay null and all actual gates off.
+
 Bounded successor: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) connects this already-merged HTTP boundary to the private editor. HTTP/core semantics and both literal-null production resolvers stay unchanged. The UI requires fresh unchecked actions and explicit recording/evidence recovery; Card 04 and final onboarding integration remain unfinished. Earlier local evidence below remains historical.
 
 Base: `8bef4ac1ebaa4e2b667291e4ad667ad0b6c44c6a` (merged PR 29). Remote main was
