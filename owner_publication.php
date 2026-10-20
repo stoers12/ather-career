@@ -74,13 +74,26 @@ try {
         if (isset($_GET['unpublished'])) $message = 'Portfolio unpublished.';
     }
     $state = ownedPublicLifecycleState($database, $context);
+} catch (AuthorizationDeniedException) {
+    ownerAuthorizationDenied();
+} catch (PublicLifecycleWriteUncertainException $exception) {
+    reportApplicationError($exception, 'owner_publication.php', 'owner_publication_uncertain');
+    http_response_code(503);
+    $state = null;
+    $errors[] = 'Your change may already be saved. Reload Publication to check the current settings before making another change.';
 } catch (PublicLifecycleValidationException | PublicLifecycleConflictException $exception) {
     $errors[] = $exception->getMessage();
     if ($submittedAction === 'set_slug') {
         $fieldErrors['public_slug'] = $exception->getMessage();
     }
     if (isset($database, $context)) {
-        $state = ownedPublicLifecycleState($database, $context);
+        try {
+            $current = requireOwnedPortfolioContext($database);
+            if ($current->userId !== $context->userId || $current->portfolioId !== $context->portfolioId) {
+                ownerAuthorizationDenied();
+            }
+            $state = ownedPublicLifecycleState($database, $current);
+        } catch (AuthorizationDeniedException) { ownerAuthorizationDenied(); }
     }
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'owner_publication.php', 'owner_publication_request');

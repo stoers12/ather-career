@@ -32,7 +32,7 @@ final class OwnerTransactionIntegrityStaticTest
         ] as $mutation) {
             phase2Assert(str_contains($ownerActions, "runDatabaseTransaction(\$database") && str_contains($ownerActions, $mutation), "Stage-2C owner mutation {$mutation} is not covered by the use-case transaction boundary.");
         }
-        phase2Assert(str_contains($lifecycle, 'runDatabaseTransaction($database') && str_contains($lifecycle, 'AND owner_user_id = :authorized_user_id'), 'Stage-2C publication state writes must be transactional and owner-scoped.');
+        phase2Assert(str_contains($lifecycle, 'runPublicLifecycleWriteTransaction($database') && str_contains($lifecycle, 'AND owner_user_id = :authorized_user_id'), 'Publication state writes must use the owned mutation transaction and remain owner-scoped.');
         phase2Assert(str_contains($scopedData, 'function authorizedProjectImageIsUnreferenced') && str_contains($scopedData, 'WHERE portfolio_id = :authorized_portfolio_id'), 'Stage-2C project media retirement lacks an owner-scoped reference check.');
         phase2Assert(str_contains($profileActions, 'deleteProfilePresentationImage($key, $portfolioId)') && str_contains($projectActions, 'deleteProjectPresentationImage($key, $portfolioId)'), 'Stage-2C failed media normalization does not compensate both original and derived files.');
         phase2Assert(!str_contains($ownerActions, '$_POST[\'portfolio_id\']') && !str_contains($ownerActions, '$_POST[\'owner_user_id\']'), 'Stage-2C owner mutations must not trust submitted tenant selectors.');

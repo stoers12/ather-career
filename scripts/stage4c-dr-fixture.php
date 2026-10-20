@@ -158,8 +158,11 @@ function stage4cFixtureSeed(PDO $database, string $slug): array
         'message' => 'Synthetic contact retained for disaster-recovery verification.',
         'portfolio_id' => $portfolioId,
     ]);
-    setOwnedPublicSlug($database, $context, $slug);
-    publishOwnedPortfolio($database, $context);
+    // Guarded recovery fixture seeds synthetic public state without an Owner
+    // session; the authenticated mutation boundary has a separate test suite.
+    $database->prepare('UPDATE portfolios SET public_slug=?,is_published=1,published_at=CURRENT_TIMESTAMP WHERE id=?')
+        ->execute([$slug, $portfolioId]);
+    $database->prepare('UPDATE projects SET updated_at=CURRENT_TIMESTAMP(6) WHERE portfolio_id=?')->execute([$portfolioId]);
     return ['user_id' => $userId, 'portfolio_id' => $portfolioId, 'project_ids' => $projectIds];
 }
 

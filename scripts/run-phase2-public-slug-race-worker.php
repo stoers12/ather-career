@@ -11,6 +11,7 @@ require_once __DIR__ . '/../tests/phase2/bootstrap.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/authorization.php';
 require_once __DIR__ . '/../includes/public_lifecycle.php';
+require_once __DIR__ . '/../tests/phase2/support/publication-mutation-fixtures.php';
 
 try {
     TestEnvironment::assertSafeEnvironment(getenv());
@@ -22,7 +23,7 @@ try {
     $context = AuthorizedPortfolioContext::fromValidatedOwnership($user, (int) $argv[2]);
     $database = getDatabaseConnection();
     usleep(250000);
-    setOwnedPublicSlug($database, $context, $argv[3]);
+    publicationFixtureMutation($database, $context, 'set_slug', $argv[3]);
     exit(0);
 } catch (Throwable) {
     fwrite(STDERR, "Public slug race worker rejected the competing write.\n");

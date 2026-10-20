@@ -241,10 +241,11 @@ try {
     $passed[] = 'T-EXPERIENCE-OWNER-CRUD-AUTHORIZATION';
 
     $slugSuffix = bin2hex(random_bytes(5));
-    setOwnedPublicSlug($database, $contextA, 'experience-a-' . $slugSuffix);
-    publishOwnedPortfolio($database, $contextA);
-    setOwnedPublicSlug($database, $contextB, 'experience-b-' . $slugSuffix);
-    publishOwnedPortfolio($database, $contextB);
+    // Experience projection fixtures stay inside this rollback-only transaction.
+    // Publication's independently owned mutation boundary is tested separately.
+    $publication = $database->prepare('UPDATE portfolios SET public_slug=?,is_published=1,published_at=CURRENT_TIMESTAMP WHERE id=?');
+    $publication->execute(['experience-a-' . $slugSuffix, $portfolioA]);
+    $publication->execute(['experience-b-' . $slugSuffix, $portfolioB]);
     $publicA = resolvePublicReadContext($database, 'experience-a-' . $slugSuffix);
     $publicB = resolvePublicReadContext($database, 'experience-b-' . $slugSuffix);
     phase2Assert($publicA instanceof PublicReadContext && $publicB instanceof PublicReadContext, 'Published Experience fixture Portfolios did not resolve publicly.');
