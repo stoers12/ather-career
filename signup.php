@@ -14,10 +14,12 @@ require_once __DIR__ . '/includes/csrf.php';
 
 httpRegisterExceptionBoundary('signup.php');
 httpRequireMethod(['GET', 'HEAD']);
+$locale = ($_GET['lang'] ?? null) === 'en' ? 'en' : 'ar';
+require_once __DIR__ . '/includes/authenticated_entry.php';
+presentAuthenticatedEntryIfPresent($locale);
 $registrationEnabled = auth0RegistrationIsEnabled();
 if ($registrationEnabled) { startOwnerSession(); }
 $canRegister = $registrationEnabled && !array_key_exists(INTERNAL_USER_SESSION_KEY, $_SESSION ?? []);
-$locale = ($_GET['lang'] ?? null) === 'en' ? 'en' : 'ar';
 header('Content-Type: text/html; charset=utf-8');
 header('Content-Language: ' . $locale);
 ?>

@@ -19,6 +19,9 @@ try {
     httpAbortHtml(400, 'Sign-in method is unavailable.');
 }
 
+require_once __DIR__ . '/includes/authenticated_entry.php';
+presentAuthenticatedEntryIfPresent(($_GET['lang'] ?? null) === 'en' ? 'en' : 'ar');
+
 try {
     $limit = consumeRateLimit('oidc_start', rateLimitClientIp(), OIDC_START_RATE_LIMIT_ATTEMPTS, OIDC_START_RATE_LIMIT_WINDOW_SECONDS);
     if (!$limit['allowed']) {

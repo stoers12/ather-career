@@ -1,5 +1,9 @@
 # 02 — Architecture decision records
 
+## AUTH-ADR-026 — Authenticated entry presentation (D1 only)
+
+Owner-approved: [34 — authenticated entry D1](34-AUTHENTICATED-ENTRY-D1-HANDOFF.md). Inspecting a session cookie is not authority. Validate the current internal User, account status, lifetime and authz version, then reuse ownerJourneyDestination for a fixed explicit Dashboard/Resume or unavailable presentation. No redirect/OIDC discovery/transaction replacement/start-limit consumption on an authorized entry GET. Targets reauthorize; malformed/invalid authority is retired/denied, dependency failure grants no unproven action. No new readiness/consent/ownership rule. D2 (public registration discovery and launch copy) remains deferred; no additional provider, account linking or provider logout is approved.
+
 ## Card 05 bounded navigation clarification
 
 [33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md) implements fixed pause presentation and explicit receipt-based Dashboard navigation only. `view=paused` and `lang` select presentation, never an eligibility/ownership/completion binding. All actions reauthorize through unchanged server routing. No return URLs, automatic post-completion routing, new gates, tables, capture, readiness/consent requirement for accepted owners or policy activation. A historical receipt is not current Profile data and cannot acknowledge other-tab local edits. Existing unsaved-work protection remains on explicit Dashboard leave.

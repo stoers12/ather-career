@@ -1,5 +1,9 @@
 # Authentication and onboarding history
 
+## 2026-10-20 — Card 05 D1 authenticated entry (local implementation only)
+
+[34 — authenticated entry D1](34-AUTHENTICATED-ENTRY-D1-HANDOFF.md): current-authorized signin/signup/owner_login now offer localized fixed Dashboard/Resume or honest unavailable state with protected account actions. No automatic OIDC/navigation, discovery or start-attempt consumption for authorized visits; stale/malformed authority fails closed. Anonymous/default-off entry and Google-only explicit registration, callback/register/retry refusals and security boundaries remain. Existing CI suites gain focused route/mock/browser checks; local Apache/build and cleanup evidence retained. No schema/gate/policy/capture change. D2 discovery/launch copy deferred; no provider/hosting/manual accessibility certification or launch-ready journey claim.
+
 ## 2026-10-20 — Card 05 bounded private navigation (local review)
 
 [33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md): Save and exit reaches a strictly validated private pause presentation only after acknowledged saves, with explicit current-authority Resume/Dashboard and CSRF switch/logout. Confirmed receipt shows a fixed Dashboard link without automatic navigation or loss of unsaved-work protection. Extend existing HTTP/browser/renderer CI coverage, preserve original failures and report local evidence/gaps. No migration/core/API/catalog/capture/authentication/publication/gate or actual policy change. Card 05/launch are not complete.

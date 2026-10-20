@@ -1,5 +1,7 @@
 # Card 05 — bounded authenticated pause/resume and Dashboard navigation
 
+Bounded D1 successor: [34 — authenticated entry D1](34-AUTHENTICATED-ENTRY-D1-HANDOFF.md) adds signed-in entry presentations only. Pause/Resume, explicit receipt-based Dashboard, unsaved editor protection, shared authority, capture and actual gates remain unchanged. D2 public registration discovery is still deferred.
+
 Baseline / fetched remote main verified before editing: `d30cd5ba7c58cb19bdabab95d1d32349c1b18e50`.
 Isolated branch `feat/registration-journey-navigation-20261020`, worktree
 `.worktrees/registration-journey-navigation`. No applicable ancestor/repository

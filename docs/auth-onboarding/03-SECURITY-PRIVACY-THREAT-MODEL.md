@@ -1,5 +1,7 @@
 # 03 — Security and privacy threat model
 
+Bounded D1 implementation: [34 — authenticated entry D1](34-AUTHENTICATED-ENTRY-D1-HANDOFF.md). All authenticated/denied/dependency entry responses are private/no-store; Vary: Cookie separates entry representations. A cookie only triggers inspection; invalid/null records are retired, valid-shaped sessions require current database authorization. No session/Portfolio flags or return URL select authority. Failed authorization exposes no authenticated controls; an already authorized User with unavailable journey dependencies gets account actions only. Existing switch/logout CSRF and callback refusal remain unchanged. No new legal/readiness gate or provider freshness claim.
+
 ## Card 05 navigation boundary
 
 [33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md): pause mode is strictly validated presentation only; it cannot elevate a bare Portfolio, bypass the frozen legacy binding or select a return destination. Resume and Dashboard use fixed routes with fresh current authorization. Private/no-store responses include CSRF-protected switch/logout and no draft/Profile/document/session bodies. Gate-off/null-policy states do not loop. Receipt-based navigation appears only after a validated context-bound result; auth/root/request epochs still retire late work. Local edits and pending immutable operations survive completion elsewhere, and native unsaved-work confirmation is not disabled by the Dashboard link. No browser storage or new token transport.

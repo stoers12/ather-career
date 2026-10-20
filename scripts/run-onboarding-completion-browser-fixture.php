@@ -28,7 +28,7 @@ try {
     mkdir($root,0700); mkdir($root.'/sessions',0700); mkdir($root.'/http',0700); mkdir($root.'/http/public',0700);
     symlink(realpath(__DIR__.'/..'),$root.'/http/app');
     foreach (glob(__DIR__.'/../public/*.php') as $shim) { copy($shim,$root.'/http/public/'.basename($shim)); }
-    foreach (['landing.js','onboarding_editor.js','onboarding.css','style.css','admin.css','admin.js','owner_theme.js'] as $asset) { copy(__DIR__.'/../'.$asset,$root.'/http/public/'.$asset); }
+    foreach (['landing.js','onboarding_editor.js','onboarding.css','style.css','admin.css','admin.js','owner_theme.js','signin.css'] as $asset) { copy(__DIR__.'/../'.$asset,$root.'/http/public/'.$asset); }
     mkdir($root.'/http/public/assets',0700); symlink(realpath(__DIR__.'/../assets/fonts'),$root.'/http/public/assets/fonts');
     session_save_path($root.'/sessions'); session_name(OWNER_SESSION_NAME); ini_set('session.cache_limiter','');
     foreach (range('a','p') as $name) {
@@ -60,13 +60,15 @@ try {
         mkdir($root.'/journey-app',0700); journeyFixtureCopy($root.'/journey-app');
         $documents=[]; foreach (['age','terms','privacy'] as $kind) { $documents[$kind]=['language'=>'en','content'=>'SYNTHETIC ONLY pause capability: '.$kind]; }
         file_put_contents($root.'/documents.json',json_encode($documents,JSON_THROW_ON_ERROR)); chmod($root.'/documents.json',0600);
+        // Reuse the existing guarded journey source for current entry destinations.
+        foreach (['signin.php','signup.php','owner_login.php'] as $entry) { file_put_contents($root.'/http/public/'.$entry,'<?php require '.var_export($root.'/journey-app/'.$entry,true).';'); chmod($root.'/http/public/'.$entry,0600); }
         file_put_contents($root.'/http/public/owner_onboarding.php','<?php require '.var_export($root.'/journey-app/owner_onboarding.php',true).';'); chmod($root.'/http/public/owner_onboarding.php',0600);
         copy($root.'/synthetic-public/owner_onboarding_completion.php',$root.'/http/public/owner_onboarding_completion.php');
         copy($root.'/synthetic-public/owner_onboarding_attestation.php',$root.'/http/public/owner_onboarding_attestation.php');
         mkdir($root.'/http-null',0700); mkdir($root.'/http-null/public',0700);
         symlink(realpath(__DIR__.'/..'),$root.'/http-null/app');
         foreach (glob(__DIR__.'/../public/*.php') as $shim) { copy($shim,$root.'/http-null/public/'.basename($shim)); }
-        foreach (['landing.js','onboarding_editor.js','onboarding.css','style.css'] as $asset) { copy(__DIR__.'/../'.$asset,$root.'/http-null/public/'.$asset); }
+        foreach (['landing.js','onboarding_editor.js','onboarding.css','style.css','signin.css'] as $asset) { copy(__DIR__.'/../'.$asset,$root.'/http-null/public/'.$asset); }
         mkdir($root.'/http-null/public/assets',0700); symlink(realpath(__DIR__.'/../assets/fonts'),$root.'/http-null/public/assets/fonts');
     }
     foreach ([8080=>'1',8081=>'1',8082=>'1'] as $port=>$gate) {

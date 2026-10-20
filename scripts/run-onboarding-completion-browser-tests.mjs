@@ -129,6 +129,38 @@ try{
  const denied=await ck.request.get(base+'/owner_onboarding.php?view=paused',{maxRedirects:0});check(denied.status()===303&&denied.headers().location==='/owner_login.php','Already-invalidated session must return to Sign In without continuation');
  console.log('PASS journey browser null-policy gate-off pause AR-EN RTL-LTR mobile account controls and revoked-session navigation boundary');
 
+
+ stage='D1 authorized entries';
+ for(const route of ['/signin.php','/signup.php','/owner_login.php?method=google']){
+  const page=await ca.newPage();let posts=0,external=0;page.on('request',r=>{if(r.method()==='POST')posts++;if(!r.url().startsWith(base))external++;});
+  for(const lang of ['ar','en']){
+   const response=await page.goto(base+route+(route.includes('?')?'&':'?')+'lang='+lang);
+   check(response.status()===200&&(response.headers()['cache-control']||'').includes('private')&&(response.headers()['cache-control']||'').includes('no-store')&&!response.headers().location,'Entry private presentation instead of redirect');
+   check(await page.locator('[data-authenticated-entry="authorized"]').count()===1&&await page.locator('[data-entry-dashboard]').getAttribute('href')==='/owner.php'&&await page.locator('[data-entry-resume]').count()===0,'Completed entry fixed Dashboard action');
+   check(await page.locator('form[action="/owner_switch_account.php"] input[name="csrf_token"]').count()===1&&await page.locator('form[action="/owner_logout.php"] input[name="csrf_token"]').count()===1&&await page.locator('form[action="/owner_register.php"]').count()===0,'Entry protected account controls');
+   for(const theme of ['light','dark']){await page.evaluate(t=>document.documentElement.dataset.landingTheme=t,theme);for(const width of [1440,390,320]){
+    await page.setViewportSize({width,height:1000});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Entry narrow layout overflow');
+    if(route==='/signin.php'&&(width===1440||width===320))await page.screenshot({path:path.join(shots,'entry-dashboard-'+lang+'-'+theme+'-'+width+'.png'),fullPage:true});
+   }}
+   check(await page.locator('html').getAttribute('dir')===(lang==='ar'?'rtl':'ltr'),'Entry direction');
+  }
+  check(posts===0&&external===0,'Entry started automatic authentication/write');await page.close();
+ }
+ console.log('PASS journey D1 browser three private signed-in entries fixed Dashboard AR-EN RTL-LTR themes desktop mobile without automatic authentication or writes');
+ stage='D1 incomplete unavailable entries';
+ for(const url of [base,original,off]){
+  const page=await cn.newPage();const response=await page.goto(url+'/signup.php?lang=ar');check(response.status()===(url===base?200:503),'Entry capability status');
+  check(await page.locator('[data-entry-dashboard]').count()===0&&await page.locator('[data-entry-resume]').count()===(url===base?1:0),'Incomplete entry authority');
+  check(await page.locator('form[action="/owner_switch_account.php"]').count()===1&&await page.locator('form[action="/owner_logout.php"]').count()===1,'Unavailable account actions');
+  await page.setViewportSize({width:320,height:1000});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Unavailable narrow overflow');await page.screenshot({path:path.join(shots,url===base?'entry-resume-ar-320.png':url===original?'entry-null-ar-320.png':'entry-off-ar-320.png'),fullPage:true});await page.close();
+ }
+ console.log('PASS journey D1 browser incomplete Resume and null-policy or gate-off unavailable account controls without mutation');
+ stage='D1 explicit keyboard navigation';
+ const dp=await ca.newPage();await dp.goto(base+'/owner_login.php?lang=en');await dp.locator('[data-entry-dashboard]').focus();await dp.keyboard.press('Enter');await dp.waitForURL('**/owner.php');check(await dp.locator('.admin-page-title bdi').textContent()==='Later','Entry target lost current Profile');await dp.close();
+ const savedEntryDraft=(await (await cn.request.get(base+'/owner_onboarding_draft.php')).json()).draft;
+ const rp=await cn.newPage();await rp.goto(base+'/signin.php?lang=en');await rp.locator('.af-language').focus();await rp.keyboard.press('Enter');check(await rp.locator('html').getAttribute('lang')==='ar','Entry language keyboard action');await rp.locator('[data-entry-resume]').focus();await rp.keyboard.press('Enter');await rp.waitForURL('**/owner_onboarding_editor.php?lang=ar');await rp.waitForSelector('[data-save-state="saved"]');check(await rp.locator('[data-draft-field="specialization"]').inputValue()===savedEntryDraft.fields.specialization,'Entry Resume lost acknowledged exact draft');await rp.close();
+ console.log('PASS journey D1 browser explicit keyboard Dashboard and server-routed Resume preserve current Profile and saved values');
+
  fs.writeFileSync(path.join(shots,'README.txt'),'Redacted synthetic data only. No session/token/body exports, HAR or raw HTML. Automated Chromium checks do not certify manual screen readers, Safari or physical devices.\n');
 }catch(error){console.error('FAIL completion browser '+stage+(error.safeMessage?': '+error.safeMessage:': '+(error.name==='TimeoutError'?'timeout waiting for browser condition':'safe infrastructure failure')));process.exitCode=1;}
 finally{for(const c of contexts)try{await c.close();}catch{}if(browser)await browser.close();fs.writeFileSync(path.join(evidence,'stop'),'stop');}

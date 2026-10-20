@@ -1,5 +1,7 @@
 # Ather authentication and onboarding project record
 
+Card 05 owner-approved D1: [34 — authenticated entry D1](34-AUTHENTICATED-ENTRY-D1-HANDOFF.md) implements current-authorized signed-in presentations on signin/signup/direct owner_login, fixed explicit Dashboard/Resume or unavailable account actions. No authenticated visit starts OIDC or consumes its start budget. Anonymous entry and explicit Google registration remain; D2 public registration discovery/launch messaging is deferred. Production policies stay null and actual gates off. Next: owner review of local D1 evidence; provider/hosting/manual accessibility and controlled cutover remain separate, not launch-ready.
+
 Card 05 bounded navigation successor: [33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md). Acknowledged Save and exit now reaches a private pause view; explicit Resume uses current server routing. Confirmed receipt recovery offers Dashboard without automatic navigation or suppressing unsaved-work protection. This finishes only these editor navigation gaps; public/account navigation review, real policies, controlled cutover preparation and activation remain separate. Production resolvers remain null, actual gates off. Next safe action: local review of this slice and its evidence.
 
 
