@@ -1,5 +1,7 @@
 # 03 — Security and privacy threat model
 
+Completion transport mitigation: [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) admits exact GET/POST before session/DB access behind its independent off gate. Strict capped UTF-8 flat JSON, duplicate/escaped-key rejection, header CSRF and no authority selectors protect the boundary. Normal authorization precedes core receipt recognition; current policy/readiness/review checks are never inserted ahead of exact historical retries. Uncertain results require an explicit authorized receipt read; no absence promise, automatic replay or compensating deletion. Safe errors expose no SQL, session/token or private saved text.
+
 Bounded editor boundary: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) uses text nodes for complete immutable document content, preserving whitespace and the server document language. The presentation CSRF context must match the original editor anchor. Request generations, connected-root checks, cancellation and authentication epochs retire obsolete responses on markup/language/session invalidation; late draft acknowledgements cannot unlock an invalidated context. Tokens, bodies and actions remain RAM-only, outside draft payloads, browser storage, URLs and telemetry. Possible-commit outcomes require explicit evidence re-read, never blind POST replay.
 
 **Card 04 HTTP mitigation (2026-10-19):** [28](28-ATTESTATION-HTTP-HANDOFF.md) binds one
