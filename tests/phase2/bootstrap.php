@@ -9,6 +9,7 @@ require_once __DIR__ . '/support/TestEnvironment.php';
 require_once __DIR__ . '/support/SyntheticFixtures.php';
 require_once __DIR__ . '/support/TestAuthenticationContext.php';
 require_once __DIR__ . '/support/StaticArchitectureGuards.php';
+require_once __DIR__ . '/support/owner-journey-fixtures.php';
 
 function phase2Assert(bool $condition, string $message): void
 {

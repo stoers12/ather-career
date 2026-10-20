@@ -51,9 +51,7 @@ try {
     }
     establishVerifiedInternalUserSession($user['user_id'], $user['authz_version']);
     recordOwnerEmailVerificationAfterLogin($user['user_id'], $user['authz_version'], auth0EmailVerifiedClassification($identity->emailVerifiedClaim, $identity->hasNonemptyEmail));
-    // Legacy first-Portfolio creation remains a separate readiness-guarded
-    // route. Consent and complete onboarding remain launch dependencies.
-    $destination = ownerHasPortfolio($database, AuthenticatedUserContext::fromValidatedUser($user['user_id'])) ? 'owner.php' : 'owner_onboarding.php';
+    $destination = ownerJourneyDestination($database, requireAuthenticatedUser($database));
     $sessionWriteFailed = false;
     set_error_handler(static function () use (&$sessionWriteFailed): bool { $sessionWriteFailed = true; return true; });
     try { $sessionStored = session_write_close(); } finally { restore_error_handler(); }

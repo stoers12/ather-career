@@ -13,7 +13,7 @@ final class OwnerFrontendExperienceStaticTest
         $experiences = self::read('owner_experiences.php');
         $publication = self::read('owner_publication.php');
         $publicationPresentation = self::read('includes/owner_publication_presentation.php');
-        $onboarding = self::read('owner_onboarding.php');
+        $onboarding = self::read('owner_onboarding.php') . self::read('includes/owner_flow.php');
         $messages = self::read('owner_messages.php');
         $dashboard = self::read('owner.php');
         $javascript = self::read('admin.js');

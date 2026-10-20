@@ -78,7 +78,7 @@ try {
     for ($i = 0; $i < 60; $i++) { $socket = @stream_socket_client('tcp://127.0.0.1:' . $port, $errno, $message, .1); if (is_resource($socket)) { fclose($socket); break; } usleep(50000); }
     for ($i = 0; $i < 2; $i++) {
         $db->prepare("INSERT INTO users (oidc_issuer, oidc_subject, account_status, authz_version) VALUES ('https://profile-http.invalid/', ?, 'active', 1)")->execute([bin2hex(random_bytes(16))]);
-        $users[] = (int) $db->lastInsertId(); $db->prepare('INSERT INTO portfolios (owner_user_id) VALUES (?)')->execute([$users[$i]]); $portfolios[] = (int) $db->lastInsertId();
+        $users[] = (int) $db->lastInsertId(); $db->prepare('INSERT INTO portfolios (owner_user_id) VALUES (?)')->execute([$users[$i]]); $portfolios[] = (int) $db->lastInsertId(); journeyFixtureLegacyOwner($db, $users[$i]);
     }
     if ($browserEvidence!==null) {
         profileTestAssert(is_dir($browserEvidence) && !is_link($browserEvidence), 'Browser evidence directory unavailable.');

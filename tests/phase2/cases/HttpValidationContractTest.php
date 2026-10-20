@@ -17,7 +17,7 @@ final class HttpValidationContractTest
         }
         phase2Assert(str_contains($http, "header('Allow: '") && str_contains($http, 'http_response_code(405)'), 'Method contract does not emit HTTP 405 and Allow.');
         phase2Assert(str_contains($ownerFlow, 'function ownerAuthenticationRequired') && str_contains($ownerFlow, "httpRedirect('/owner_login.php')") && !str_contains($ownerFlow, "httpRedirect('owner_login.php')"), 'Unauthenticated Owner HTML workflow must redirect to the canonical origin-relative Owner login route.');
-        phase2Assert(str_contains($ownerFlow, "httpRedirect('/owner_onboarding.php')") && !str_contains($ownerFlow, "httpRedirect('owner_onboarding.php')"), 'Owner onboarding redirect must remain canonical from nested protected routes.');
+        phase2Assert(str_contains((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/owner_journey.php'), "return '/owner_onboarding.php'") && str_contains($ownerFlow, 'httpRedirect($destination)') && !str_contains($ownerFlow, "httpRedirect('owner_onboarding.php')"), 'Owner onboarding redirect must remain canonical from nested protected routes.');
         phase2Assert(str_contains($ownerFlow, 'function ownerAuthorizationDenied') && str_contains($ownerFlow, 'httpAbortHtml(403'), 'Authenticated authorization denial no longer returns HTTP 403.');
         phase2Assert(str_contains($json, "httpMethodIsAllowed(['GET'])") && str_contains($json, 'httpJsonResponse(405') && str_contains($json, 'httpJsonResponse(404') && str_contains($json, 'listPublicProjectJsonPayload'), 'The active JSON read route does not keep its explicit method and missing-resource contracts.');
 

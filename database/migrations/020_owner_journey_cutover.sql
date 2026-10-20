@@ -1,0 +1,3 @@
+-- Additive schema only; NEVER capture owners during migration/startup.
+-- database/owner_journey_cutover.php verifies partial DDL and empty unrecorded state.
+-- Capture requires the separately invoked, exclusive-maintenance CLI command.

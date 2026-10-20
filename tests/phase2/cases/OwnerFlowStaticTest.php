@@ -13,10 +13,10 @@ final class OwnerFlowStaticTest
         phase2Assert(str_contains($ownerFlow, 'function requireOwnerPortfolioContext(PDO $database): AuthorizedPortfolioContext'), 'P2J-04 owner Portfolio route helper is missing.');
         phase2Assert(str_contains($ownerFlow, 'return requireOwnedPortfolioContext($database);'), 'P2J-04 owner routes do not reuse the P2J-03 context.');
         phase2Assert(str_contains($ownerFlow, 'function createOwnedPortfolio(PDO $database, AuthenticatedUserContext $user): ?int'), 'P2J-04 server-owned Portfolio creation helper is missing.');
-        phase2Assert(str_contains($ownerFlow, 'INSERT INTO portfolios (owner_user_id)'), 'P2J-04 Portfolio creation is missing its owner relationship.');
+        phase2Assert(!str_contains($ownerFlow, 'INSERT INTO portfolios') && str_contains($ownerFlow, 'throw new OwnerReadinessDeniedException'), 'Retired creation helper must deny without writing.');
         phase2Assert(!str_contains($ownerFlow, '$_POST[\'owner_user_id\']') && !str_contains($ownerFlow, '$_GET[\'owner_user_id\']'), 'P2J-04 must not accept client owner identity.');
-        phase2Assert(str_contains($onboarding, 'requireOwnerAuthenticatedUser($database)') && str_contains($onboarding, 'createOwnedPortfolio($database, $user)'), 'P2J-04 onboarding does not validate the current User before server-owned creation.');
-        phase2Assert(str_contains($onboarding, "httpRedirect('owner.php')"), 'P2J-04 onboarding must PRG after Portfolio creation.');
+        phase2Assert(str_contains($onboarding, 'requireOwnerAuthenticatedUser($database)') && str_contains($onboarding, 'ownerJourneyDestination($database,$user)'), 'P2J-04 onboarding does not validate the current User before server-owned creation.');
+        phase2Assert(str_contains($onboarding, "httpRequireMethod(['GET','HEAD'])") && !str_contains($onboarding, 'createOwnedPortfolio('), 'Legacy POST must be retired before DB work.');
 
         foreach (['owner.php', 'owner_profile.php', 'owner_projects.php', 'owner_experiences.php', 'owner_messages.php', 'owner_preview.php', 'owner_publication.php'] as $route) {
             $contents = self::read($route);

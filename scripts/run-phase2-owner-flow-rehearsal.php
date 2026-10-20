@@ -38,7 +38,9 @@ function ownerFlowCreatePortfolio(PDO $database, int $userId): int
     $statement = $database->prepare('INSERT INTO portfolios (owner_user_id) VALUES (:owner_user_id)');
     $statement->execute(['owner_user_id' => $userId]);
 
-    return (int) $database->lastInsertId();
+    $id = (int) $database->lastInsertId();
+    journeyFixtureLegacyOwner($database, $userId);
+    return $id;
 }
 
 /** @return array<string, list<array<string, mixed>>> */
@@ -167,16 +169,14 @@ try {
         throw new RuntimeException('No-Portfolio User received management context.');
     } catch (AuthorizationDeniedException) {
     }
-    $createdPortfolio = createOwnedPortfolio($database, requireAuthenticatedUser($database));
-    phase2Assert($createdPortfolio !== null && $createdPortfolio > 0, 'Onboarding did not create a server-owned Portfolio.');
-    phase2AssertSame($createdPortfolio, requireOwnedPortfolioContext($database)->portfolioId, 'Created Portfolio was not derived from the authenticated User.');
-    phase2AssertSame(null, createOwnedPortfolio($database, requireAuthenticatedUser($database)), 'Onboarding created a second Portfolio for one User.');
+    try { createOwnedPortfolio($database, requireAuthenticatedUser($database)); throw new RuntimeException('Retired helper created a Portfolio.'); } catch (OwnerReadinessDeniedException) {}
+    phase2AssertSame(false, ownerHasPortfolio($database, requireAuthenticatedUser($database)), 'Retired helper wrote a bare Portfolio.');
 
     $raceUser = ownerFlowCreateUser($database, 'portfolio-race', 5);
-    phase2AssertSame([0, 0], ownerFlowRunPortfolioRace($raceUser), 'Concurrent Portfolio creation did not resolve safely.');
+    phase2AssertSame([1, 1], ownerFlowRunPortfolioRace($raceUser), 'Concurrent Portfolio creation did not resolve safely.');
     $raceCount = $database->prepare('SELECT COUNT(*) FROM portfolios WHERE owner_user_id = :owner_user_id');
     $raceCount->execute(['owner_user_id' => $raceUser]);
-    phase2AssertSame(1, (int) $raceCount->fetchColumn(), 'Concurrent Portfolio creation produced more than one Portfolio.');
+    phase2AssertSame(0, (int) $raceCount->fetchColumn(), 'Concurrent retired creation created a Portfolio.');
     $passed[] = 'T-OWNER-ONBOARDING';
 
     ownerFlowEstablishSession($userA, 7);
