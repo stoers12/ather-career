@@ -48,6 +48,7 @@
         root.querySelector('[data-completion-status]').textContent = messages()['completion_' + completion.state]
             + (completion.state === 'completed' && completion.receipt ? completion.receipt.completed_at : '');
         root.querySelector('[data-completion-retained]').hidden = completion.state !== 'completed';
+        root.querySelector('[data-completion-dashboard]').hidden = locked || completion.state !== 'completed' || !completion.receipt;
         root.querySelector('[data-completion-review-body]').setAttribute('aria-busy', String(completion.state === 'reviewing'));
         root.querySelector('[data-language-switch]').setAttribute('aria-disabled', String(busy || locked || attestation.state === 'recording' || completion.state === 'completing'));
     }
@@ -184,7 +185,7 @@
     function say(nextState) {
         state = nextState === 'auth' ? 'auth' : completion.receipt ? 'completed' : nextState;
         root.dataset.saveState = state;
-        var message = state === 'completed' ? messages().completion_retained : state === 'saved' && version === 0 ? messages().empty : messages()[state];
+        var message = state === 'completed' ? messages()[hasEdits() || pending ? 'completion_unsaved' : 'completion_retained'] : state === 'saved' && version === 0 ? messages().empty : messages()[state];
         root.querySelector('[data-save-status]').textContent = message;
         root.querySelector('[data-save-summary]').textContent = message;
         var blocked = busy || !loaded || locked || state === 'conflict' || pending !== null || !!completion.intent || !!completion.receipt;
@@ -460,7 +461,7 @@
                 // and on screen, and are serialized in the next necessary save.
             }
             busy = false; say('saved');
-            if (destination === 'exit') { leaving = true; location.assign('/owner.php'); }
+            if (destination === 'exit') { leaving = true; location.assign('/owner_onboarding.php?view=paused&lang=' + locale); }
             else if (typeof destination === 'number') showStep(destination, true);
         } catch (_error) { if (current(epoch, node)) { busy = false; say(pending ? 'uncertain' : 'unavailable'); } }
     }
@@ -500,6 +501,10 @@
         attestationListeners = new AbortController();
         var listeners = {signal: attestationListeners.signal};
         root.querySelector('[data-completion-review]').addEventListener('click', prepareCompletionReview, listeners);
+        // Do not suppress beforeunload: completion elsewhere may leave local work.
+        root.querySelector('[data-completion-dashboard]').addEventListener('click', function (event) {
+            if (locked || completion.state !== 'completed' || !completion.receipt) event.preventDefault();
+        }, listeners);
         root.querySelector('[data-completion-read]').addEventListener('click', readCompletionReceipt, listeners);
         root.querySelector('[data-create]').addEventListener('click', createPrivateProfile, listeners);
         root.querySelectorAll('[data-completion-confirm]').forEach(function (control) { control.addEventListener('change', completionControls, listeners); });

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../includes/owner_session.php';
 require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__.'/../tests/phase2/support/completion-browser-fixtures.php';
 require_once __DIR__.'/../includes/onboarding_attestations.php';
+require_once __DIR__.'/../tests/phase2/support/journey-routing-fixtures.php';
 ob_start();
 $evidence = getenv('ATHERCAR_EDITOR_EVIDENCE_DIR');
 if (!is_file('/.dockerenv') || !is_string($evidence) || !is_dir($evidence) || is_link($evidence)) { exit(2); }
@@ -16,9 +17,13 @@ function editorFixtureSnapshot(PDO $db): array {
     }
     return $result;
 }
-$environment=null; $users=[]; $servers=[]; $code=0;
+$environment=null; $users=[]; $servers=[]; $code=0; $createdSeal=false;
 try {
     $db=getDatabaseConnection(); $initial=editorFixtureSnapshot($db);
+    // Explicit empty synthetic cohort only; never capture or adopt database owners.
+    if ((int)$db->query('SELECT COUNT(*) FROM owner_journey_cutover')->fetchColumn()===0) {
+        $db->exec("INSERT INTO owner_journey_cutover VALUES (1,'owner-journey-cutover-v1',0,UNHEX(SHA2('[]',256)),UTC_TIMESTAMP(6))"); $createdSeal=true;
+    }
     $environment=TestEnvironment::create(); $root=$environment->namespaceRoot.'/editor';
     mkdir($root,0700); mkdir($root.'/sessions',0700); mkdir($root.'/http',0700); mkdir($root.'/http/public',0700);
     symlink(realpath(__DIR__.'/..'),$root.'/http/app');
@@ -52,6 +57,10 @@ try {
         mkdir($root.'/arrivals',0700);
         file_put_contents($root.'/control.json',json_encode(['browser'=>true,'language'=>'en','version'=>'v1','users'=>$users,'sessions'=>$cookies,'session_path'=>$root.'/sessions'],JSON_THROW_ON_ERROR)); chmod($root.'/control.json',0600);
         completionBrowserFixtureCopies($root);
+        mkdir($root.'/journey-app',0700); journeyFixtureCopy($root.'/journey-app');
+        $documents=[]; foreach (['age','terms','privacy'] as $kind) { $documents[$kind]=['language'=>'en','content'=>'SYNTHETIC ONLY pause capability: '.$kind]; }
+        file_put_contents($root.'/documents.json',json_encode($documents,JSON_THROW_ON_ERROR)); chmod($root.'/documents.json',0600);
+        file_put_contents($root.'/http/public/owner_onboarding.php','<?php require '.var_export($root.'/journey-app/owner_onboarding.php',true).';'); chmod($root.'/http/public/owner_onboarding.php',0600);
         copy($root.'/synthetic-public/owner_onboarding_completion.php',$root.'/http/public/owner_onboarding_completion.php');
         copy($root.'/synthetic-public/owner_onboarding_attestation.php',$root.'/http/public/owner_onboarding_attestation.php');
         mkdir($root.'/http-null',0700); mkdir($root.'/http-null/public',0700);
@@ -99,6 +108,7 @@ finally {
             $db->exec('DELETE FROM personal_info WHERE portfolio_id IN (SELECT id FROM portfolios WHERE owner_user_id='.$id.')');
             $db->exec('DELETE FROM portfolios WHERE owner_user_id='.$id.'; DELETE FROM onboarding_attestations WHERE user_id='.$id.'; DELETE FROM onboarding_drafts WHERE user_id='.$id.'; DELETE FROM users WHERE id='.$id);
         }
+        if ($createdSeal) { $db->exec('DELETE FROM owner_journey_cutover'); }
         if (isset($initial) && $initial!==editorFixtureSnapshot($db)) { $code=1; fwrite(STDERR,"FAIL editor preexisting data preservation\n"); }
     }
     foreach (['private-context.json','stop'] as $file) { if (is_file($evidence.'/'.$file)) { unlink($evidence.'/'.$file); } }

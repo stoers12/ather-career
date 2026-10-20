@@ -1,5 +1,10 @@
 # 07 — Test and acceptance matrix
 
+## Card 05 bounded navigation acceptance
+
+[33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md): extend the existing 21st real-HTTP journey suite with exact pause query/method/private response checks, current legacy/completed/incomplete/bare-account actions, null/off safe holding and revoked/expired/switched authorization. Extend the existing completion/browser and editor suites with save→pause→explicit resume, newer input during acknowledgement, lost/rejected exit preservation, explicit Dashboard after receipt under null policies/later Profile edits, native unsaved-work protection after other-tab completion, null/uncertain/late results, RTL/LTR keyboard and narrow layouts. Preserve existing assertions and CI calls/credentials/ownership/0600/0700/cleanup. Renderer asserts exactly one initially hidden fixed Dashboard action; preview remains nonpersistent/Create-disabled. Local result details and unperformed manual device/screen-reader checks are in handoff 33.
+
+
 ## Card 05 focused integration
 
 Add `run-owner-journey-route-tests.php` to the preserved twenty CLI calls. Exercise real HTTP/persisted synthetic sessions on disposable migrated MySQL: frozen owner without true readiness/receipt; incomplete strict gate combinations and production null policies; completed owner after Profile CAS edits/later-session receipt recovery; bare Portfolio denial across all Owner handlers and retired POST/helper; User/Portfolio/Profile binding, session expiry/revocation/logout and CSRF. Test additive 020 interruption, partial capture rollback/refusal, frozen retry, repeated/restored startup and whole-database/private fixture cleanup. Explicit synthetic legacy fixture grants replace the now-invalid assumption that all bare fixture rows authorize Owner access. No existing test is skipped; intentionally retired creation expectations are replaced with noncreation assertions. Actual commands/results/failures/gaps: [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).

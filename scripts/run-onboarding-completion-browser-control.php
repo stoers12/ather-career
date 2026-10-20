@@ -11,6 +11,10 @@ switch($action){
     case 'v1':case 'v2':$c['version']=$action;unset($c['fault']);break;
     case 'uncertain':$c['fault']='after_commit';break;
     case 'recover':unset($c['fault']);break;
+    case 'revoke-k':
+        require_once __DIR__.'/../config/database.php';
+        getDatabaseConnection()->prepare('UPDATE users SET authz_version=authz_version+1 WHERE id=?')->execute([$c['users']['k']]);
+        break;
     case 'profile-edit':
     case 'assert-private':
     case 'assert-uncompleted':

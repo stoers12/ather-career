@@ -87,12 +87,12 @@ try {
         const section=JSON.parse(route.request().postData()).section; exitSections.push(section);
         const result=await route.fetch(); if(section==='profile_identity'){exitArrived();await exitHold;} await route.fulfill({response:result});
     });
-    const exitRequest=p.waitForRequest(r=>new URL(r.url()).pathname==='/owner.php');
+    const exitRequest=p.waitForRequest(r=>new URL(r.url()).pathname==='/owner_onboarding.php'&&new URL(r.url()).searchParams.get('view')==='paused');
     await p.locator('[data-save-exit]').last().click(); await exitArrival;
     check(new URL(p.url()).pathname==='/owner_onboarding_editor.php','Wait for all section acknowledgements before exit');
-    exitRelease(); await exitRequest; await p.unroute('**/owner_onboarding_draft.php');
+    await field(p,'slug_candidate').fill('newer-exit-candidate');exitRelease(); await exitRequest; await p.unroute('**/owner_onboarding_draft.php');
     const exitDraft=await draft(c);
-    check(exitSections.join(',')==='public_identity,professional_snapshot,profile_identity'&&exitDraft.fields.display_name==='Saved Exit'&&exitDraft.fields.headline==='Exit headline'&&exitDraft.fields.slug_candidate==='exit-candidate','All intended sections acknowledged');
+    check(exitSections.join(',')==='public_identity,professional_snapshot,profile_identity,profile_identity'&&exitDraft.fields.display_name==='Saved Exit'&&exitDraft.fields.headline==='Exit headline'&&exitDraft.fields.slug_candidate==='newer-exit-candidate','All intended sections acknowledged');
     await p.goto(base+'/owner_onboarding_editor.php?lang=en&step=2'); await state(p,'saved');
     console.log('PASS editor browser save-and-exit uses fixed local destination only after acknowledgement');
 

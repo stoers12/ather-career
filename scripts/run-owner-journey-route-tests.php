@@ -118,7 +118,7 @@ try {
     [$jar,$csrf]=journeySession($incomplete); $null=journeyBrowser($original,$jar); $on=journeyBrowser($enabled,$jar);
     journeyRequest($null,'GET','/owner.php',303,'/owner_onboarding.php');
     $body=journeyRequest($null,'GET','/owner_onboarding.php',503);
-    journeyAssert(str_contains($body,'Use another account') && str_contains($body,'Logout') && !str_contains($body,'Create Portfolio'),'Holding lost recovery or exposed legacy creation');
+    journeyAssert(str_contains($body,'Use another account') && str_contains($body,'Logout') && str_contains($body,'استخدام حساب آخر') && !str_contains($body,'Create Portfolio'),'Holding lost recovery or exposed legacy creation');
     journeyRequest($null,'HEAD','/owner_onboarding.php',503);
     journeyRequest($on,'GET','/owner_onboarding.php',303,'/owner_onboarding_editor.php'); journeyRequest($on,'GET','/owner_onboarding_editor.php',200);
     foreach ([['0','1','1'],['1','0','1'],['1','1','0'],['true','1','1'],['1','01','1'],['1','1',' 1']] as $flags) {
@@ -152,6 +152,27 @@ try {
     journeyRequest($c,'POST','/owner_profile.php',403,null,['form_params'=>['csrf_token'=>'invalid','action'=>'save_profile','full_name'=>'Bad']]);
     echo "PASS journey completed owner later Profile authority and policy-independent later-session receipt recovery with CSRF preserved\n";
 
+    $stage='pause views';
+    $body=journeyRequest($client,'GET','/owner_onboarding.php?view=paused&lang=en',200);
+    journeyAssert(str_contains($body,'data-journey-dashboard') && !str_contains($body,'data-journey-resume'),'Legacy pause inferred completion or lost Dashboard');
+    $body=journeyRequest($on,'GET','/owner_onboarding.php?view=paused&lang=ar',200);
+    journeyAssert(str_contains($body,'data-journey-resume') && str_contains($body,'dir="rtl"') && !str_contains($body,'data-journey-dashboard'),'Incomplete pause authority/actions invalid');
+    journeyRequest($on,'HEAD','/owner_onboarding.php?view=paused&lang=en',200);
+    journeyRequest($on,'GET','/owner_onboarding.php?lang=ar',303,'/owner_onboarding_editor.php?lang=ar');
+    foreach ([$null,journeyBrowser(journeyServer($root.'/private-app',['1','1','0']),$on->getConfig('cookies'))] as $unavailable) {
+        $body=journeyRequest($unavailable,'GET','/owner_onboarding.php?view=paused&lang=en',503);
+        journeyAssert(!str_contains($body,'data-journey-resume') && !str_contains($body,'data-journey-dashboard') && str_contains($body,'Use another account') && str_contains($body,'Logout'),'Unavailable pause grants navigation authority');
+    }
+    $body=journeyRequest($c,'GET','/owner_onboarding.php?view=paused&lang=en',200);
+    journeyAssert(str_contains($body,'data-journey-dashboard') && !str_contains($body,'data-journey-resume'),'Completed pause lost policy-independent access');
+    echo "PASS journey pause current authority fixed resume Dashboard and null-policy or gate-off unavailable states without loops or writes\n";
+    foreach (['view=complete','view[]=paused','view=paused&view=paused','view=paused&lang=fr','view=paused&return=https://invalid.test','user_id='.$legacy,'view=%70aused','lang=en&lang=ar'] as $query) {
+        journeyRequest($on,'GET','/owner_onboarding.php?'.$query,400);
+    }
+    foreach ([$client,$on,$b,journeyBrowser($original)] as $rejected) { journeyRequest($rejected,'POST','/owner_onboarding.php?view=paused',405,null,['form_params'=>['csrf_token'=>$csrf,'completed'=>true]]); }
+    journeyRequest(journeyBrowser($enabled),'GET','/owner_onboarding.php?view=paused',303,'/owner_login.php');
+    echo "PASS journey pause strict presentation-only query legacy POST rejection and authenticated no-store boundary\n";
+
     $stage='binding'; $db->prepare('UPDATE onboarding_completions SET portfolio_id=? WHERE user_id=?')->execute([$barePortfolio,$completed]);
     journeyRequest($c,'GET','/owner.php',303,'/owner_onboarding.php');
     $db->prepare('UPDATE onboarding_completions SET portfolio_id=? WHERE user_id=?')->execute([$receipt['portfolio_id'],$completed]);
@@ -171,6 +192,11 @@ try {
         if ($mode==='disabled') { $db->exec("UPDATE users SET account_status='disabled' WHERE id=$completed"); }
         if ($mode==='context') { $jar=journeySession($bare)[0]; }
         journeyRequest(journeyBrowser($enabled,$jar),'GET','/owner.php',$mode==='context' ? 303 : 403,$mode==='context' ? '/owner_onboarding_editor.php' : null);
+        // The prior denial deliberately invalidates its session. Use an independent
+        // persisted session to verify pause's first-request 403 as well.
+        [$pauseJar]=journeySession($mode==='context' ? $bare : $completed,$mode==='expired' ? static function (): void { $_SESSION[INTERNAL_USER_SESSION_KEY]['authenticated_at']-=43201; } : null);
+        $body=journeyRequest(journeyBrowser($enabled,$pauseJar),'GET','/owner_onboarding.php?view=paused&lang=en',$mode==='context' ? 200 : 403);
+        if ($mode==='context') { journeyAssert(!str_contains($body,'data-journey-dashboard'),'Switched bare account inherited completed navigation'); }
         $db->exec("UPDATE users SET authz_version=1,account_status='active' WHERE id=$completed");
     }
     journeyRequest(journeyBrowser($enabled),'GET','/owner.php',303,'/owner_login.php');

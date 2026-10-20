@@ -1,5 +1,10 @@
 # Authentication and onboarding history
 
+## 2026-10-20 — Card 05 bounded private navigation (local review)
+
+[33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md): Save and exit reaches a strictly validated private pause presentation only after acknowledged saves, with explicit current-authority Resume/Dashboard and CSRF switch/logout. Confirmed receipt shows a fixed Dashboard link without automatic navigation or loss of unsaved-work protection. Extend existing HTTP/browser/renderer CI coverage, preserve original failures and report local evidence/gaps. No migration/core/API/catalog/capture/authentication/publication/gate or actual policy change. Card 05/launch are not complete.
+
+
 ## 2026-10-20 — Card 05 bounded server routing/access (local)
 
 Added schema-only 020 and explicit maintenance-only frozen original-owner capture, centralized fixed destinations, receipt-bound/shared Owner access checks and retired legacy POST/helper creation. Existing owner readiness/policy exceptions and public behavior remain. Tests explicitly distinguish synthetic legacy owners and add routing/cutover/bypass coverage; all previous calls retained. Commands/results/failures/gaps: [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md). No push/deployment/live migration/capture/activation.

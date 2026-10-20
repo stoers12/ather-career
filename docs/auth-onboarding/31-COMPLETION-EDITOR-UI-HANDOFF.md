@@ -1,5 +1,8 @@
 # Card 04 — bounded private editor completion review and recovery
 
+Bounded navigation successor: [33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md) adds an explicit Dashboard action after validated completion/receipt, preserving local-input warning and unsaved-work protection. Earlier no-Dashboard evidence below is historical. No automatic redirect, core/API change or activation.
+
+
 Baseline fetched/verified: `38b4db27c608bc47a40d93c72742db3e5e918921`.
 Worktree `.worktrees/onboarding-completion-editor`, branch
 `feat/onboarding-completion-editor-20261020`. Applicable ancestor instructions,

@@ -16,6 +16,7 @@ foreach (['ar','en'] as $locale) {
         phase2Assert($xpath->query('//*[@data-completion-status and @role="status" and @aria-live="polite"]')->length===1 && $xpath->query('//*[@data-completion-review-body and @hidden]')->length===1,'Private completion live status and no fabricated review');
         phase2Assert($xpath->query('//*[@data-draft-field]')->length===8,'Editor must expose exactly the approved seven fields/eight controls');
         phase2Assert($xpath->query('//button[@data-create and @disabled]')->length===1,'Create must start disabled');
+        phase2Assert($xpath->query('//a[@data-completion-dashboard and @hidden and @href="/owner.php"]')->length===1,'Dashboard action starts hidden and targets reauthorizing fixed route');
         phase2Assert(!str_contains($html,'m••••d@example.com') && str_contains($html,'onboarding_editor.js?v='),'Editor email/script boundary');
         phase2Assert(str_contains($html,'aria-live="polite"') && str_contains($html,'data-editor-context='),'Accessible editor feedback/context');
 
