@@ -1,5 +1,7 @@
 # 01 — Verified current state
 
+Card 05 first bounded slice starts from merged `435ee57e31baa2e233f30a8162090ade07741066`. Local server routing now distinguishes a frozen legacy owner binding, a correctly bound committed completion, and incomplete setup. No deployment/capture/activation is claimed; see [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).
+
 Local bounded successor (2026-10-20): [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md), based on merged `38b4db27c608bc47a40d93c72742db3e5e918921`. Private editor review/confirmation/recovery is implemented for review only; earlier deployed/merged records below retain their historical scope. No deployment/activation or real policies.
 
 Local successor (2026-10-20): [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) adds default-off authenticated completion receipt/review/confirmation HTTP only at baseline `dd63500e11e34019856bf438cab354502886bd31`. Earlier deployed/merged status records below are historical; no new deployment or activation is claimed.

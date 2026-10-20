@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/../tests/phase2/support/completion-fixtures.php';
 completionFixtureLoadCore(true);
+require_once __DIR__.'/../tests/phase2/support/owner-journey-fixtures.php';
 require_once __DIR__.'/../includes/profile_writes.php';
 
 final class CompletionFaultDatabase extends PDO
@@ -189,7 +190,7 @@ try {
     echo "PASS completion genuine same-User exact/changed-intent, cross-User slug and draft-save races serialize without partial winners\n";
 
     $stage='legacy'; [$uid,$ctx]=$new();
-    $db->prepare('INSERT INTO portfolios (owner_user_id,public_slug) VALUES (?,?)')->execute([$uid,str_repeat('l',64)]); $ctx=completionSession($uid,false);
+    $db->prepare('INSERT INTO portfolios (owner_user_id,public_slug) VALUES (?,?)')->execute([$uid,str_repeat('l',64)]); journeyFixtureLegacyOwner($db,$uid); $ctx=completionSession($uid,false);
     createAuthorizedPersonalInfo($db,requireOwnedPortfolioContext($db),['full_name'=>'Existing professional name','professional_title'=>'Existing role','public_contact_visible'=>1]);
     completionAssert(requireOwnedPortfolioContext($db)->userId===$uid && readOnboardingCompletion($db,$ctx)===null,'Existing owner access changed or completion manufactured');
     completionDenied($db,fn()=>prepareOnboardingCompletionReview($db,$ctx,3),OnboardingCompletionConflictException::class);

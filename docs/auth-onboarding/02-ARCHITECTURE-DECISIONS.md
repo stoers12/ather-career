@@ -1,5 +1,9 @@
 # 02 — Architecture decision records
 
+## AUTH-ADR-025 — Frozen legacy access and committed completion
+
+Owner-authorized bounded Card 05 implementation: ordinary Owner authority requires current session/account/authz/ownership plus either an original User→Portfolio binding captured once under explicit exclusive maintenance, or committed completion evidence joined to the same owned Portfolio and Profile. No ID/date threshold, browser/session cohort flag, recurring adoption, readiness or current-policy gate for existing-owner access. Migration 020 prepares empty schema only; its separate CLI seals the legacy set atomically and retries verify it without expansion. Missing/partial capture fails closed, never inferred from Portfolio existence. This is access/routing integration, not a new publication policy. [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md) records maintenance, fixtures and remaining work.
+
 Implementation note, not new product/policy approval: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) presents exact server-owned plain-text documents and requires three fresh explicit actions plus a recording click. Interface locale does not select authoritative documents. Age remains self-attestation; Privacy Notice acknowledgement is not blanket consent. No access/readiness/completion authority or owner gating is added.
 
 **Card 04 implementation boundary (2026-10-19):** The owner authorized only the

@@ -15,6 +15,7 @@ require_once __DIR__ . '/onboarding_drafts.php';
 require_once __DIR__ . '/profile_version.php';
 require_once __DIR__ . '/final_profile_fields.php';
 require_once __DIR__ . '/onboarding_completions.php';
+require_once __DIR__ . '/owner_journey_cutover.php';
 
 class MigrationPreconditionException extends RuntimeException
 {
@@ -714,6 +715,7 @@ function executeOptionalProjectGithubUrlMigration(PDO $database): void
 
 function executeSqlMigration(PDO $database, array $migration): void
 {
+    if ($migration['version'] === '020' && $migration['name'] === 'owner_journey_cutover') { executeOwnerJourneyCutoverMigration($database); return; }
     if ($migration['version'] === '019' && $migration['name'] === 'onboarding_completions') {
         executeOnboardingCompletionMigration($database);
         return;
@@ -827,6 +829,7 @@ function runMigrations(): void
                 if ($migration['version'] === '017') { verifyProfileVersionSchema($database); }
                 if ($migration['version'] === '018') { verifyFinalProfileSchema($database); }
                 if ($migration['version'] === '019') { verifyOnboardingCompletionSchema($database); }
+                if ($migration['version'] === '020') { verifyOwnerJourneyCutoverSchema($database); }
                 continue;
             }
 
@@ -863,4 +866,4 @@ function runMigrations(): void
     }
 }
 
-runMigrations();
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { runMigrations(); }

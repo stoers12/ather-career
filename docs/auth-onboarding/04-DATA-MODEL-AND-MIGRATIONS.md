@@ -1,5 +1,9 @@
 # 04 — Data model and migration plan
 
+## Additive 020 — owner journey cutover (local, not applied live)
+
+`portfolios.legacy_owner_user_id INT UNSIGNED NULL DEFAULT NULL` stores the original owner binding solely for a controlled snapshot; existing content/ownership/timestamps/visibility/profile_version stay unchanged. `owner_journey_cutover` stores singleton id 1, fixed revision, snapshot count, BINARY(32) SHA256 of sorted `[portfolio_id, original_user_id]` pairs and original UTC microsecond capture time. Migration creates/verifies empty schema and refuses populated unrecorded state. It never captures. An explicit separate CLI seals all owned Portfolios present at maintenance cutover in one SERIALIZABLE transaction and verifies only previously marked rows on retry. No runtime write path may change those fields. Restored startup verifies schema and preserves the seal, never adopts unmarked rows. [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).
+
 No schema change in [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md). Existing 015 exact evidence and bounded server-session presentation records remain the only attestation persistence. Editor document bodies, presentation token and unchecked/checked actions are transient RAM/DOM state, independent of draft fields/version/operation receipts. Neither current Profile nor completion evidence is changed by document presentation.
 
 **Card 04 HTTP slice (2026-10-19):** No migration or evidence-schema change. The new

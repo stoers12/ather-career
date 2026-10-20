@@ -4,6 +4,7 @@ declare(strict_types=1);
 // No HTTP/public shim, production resolver override or runtime fake-policy setting.
 require_once __DIR__.'/../tests/phase2/support/completion-fixtures.php';
 completionFixtureLoadCore(true);
+require_once __DIR__.'/../database/migrate.php';
 $db=getDatabaseConnection();
 completionAssert((int)$db->query('SELECT COUNT(*) FROM onboarding_completions')->fetchColumn()===0,'Restored startup fixture requires no prior completion evidence');
 $root=completionSessionRoot();
@@ -11,6 +12,14 @@ try {
     $id=completionNewUser($db); $context=completionSeed($db,$id,completionFields());
     $outcome=completeOnboarding($db,$context,completionIntent(prepareOnboardingCompletionReview($db,$context,3)));
     completionAssert($outcome===readOnboardingCompletion($db,$context),'Restored completion evidence missing');
+    captureLegacyOwnerCutover($db);
+    $bare=completionNewUser($db); $db->prepare('INSERT INTO portfolios(owner_user_id) VALUES (?)')->execute([$bare]);
+    $before=completionSnapshot($db); captureLegacyOwnerCutover($db);
+    completionAssert($before===completionSnapshot($db),'Frozen restored snapshot expanded');
+    $ctx=completionSession($bare); $denied=false;
+    try { requireOwnedPortfolioContext($db); } catch (AuthorizationDeniedException) { $denied=true; }
+    completionAssert($denied,'Restored post-cutover bare owner gained access');
+    echo "PASS guarded restored fixture preserves frozen legacy set and excludes later bare Portfolio\n";
     echo "PASS guarded restored fixture contains committed private completion/Profile/draft/exact attestation evidence\n";
 } finally { completionEndSession($root); }
 // Durable rows intentionally remain only in the disposable restore database;

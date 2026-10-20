@@ -59,7 +59,9 @@ function publicLifecycleCreatePortfolio(PDO $database, int $userId): int
     $statement = $database->prepare('INSERT INTO portfolios (owner_user_id) VALUES (:owner_user_id)');
     $statement->execute(['owner_user_id' => $userId]);
 
-    return (int) $database->lastInsertId();
+    $id = (int) $database->lastInsertId();
+    journeyFixtureLegacyOwner($database, $userId);
+    return $id;
 }
 
 function publicLifecycleContext(int $userId, int $portfolioId): AuthorizedPortfolioContext

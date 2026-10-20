@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/security_events.php';
+require_once __DIR__ . '/owner_journey.php';
 
 /**
  * The safe result for an invalid internal session, current User, or ownership
@@ -171,6 +172,11 @@ function requireOwnedPortfolioContext(PDO $database): AuthorizedPortfolioContext
     if ($portfolioId === null) {
         throw new AuthorizationDeniedException('Portfolio authorization failed.');
     }
+
+    try {
+        $journey = ownerJourneyState($database, $user);
+        if (!$journey['access'] || $journey['portfolio_id'] !== $portfolioId) { throw new AuthorizationDeniedException('Portfolio journey authorization failed.'); }
+    } catch (PDOException $exception) { throw new AuthorizationDeniedException('Portfolio journey authorization failed.', 0, $exception); }
 
     return AuthorizedPortfolioContext::fromValidatedOwnership($user, $portfolioId);
 }

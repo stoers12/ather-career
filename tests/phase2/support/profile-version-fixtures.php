@@ -14,7 +14,7 @@ function profileTestSnapshot(PDO $db): array
     $result = [];
     foreach ($db->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN) as $table) {
         $rows = $db->query('SELECT * FROM `' . $table . '`')->fetchAll(PDO::FETCH_ASSOC);
-        $encoded = array_map(static fn ($row) => json_encode($row, JSON_THROW_ON_ERROR), $rows);
+        $encoded = array_map(static fn ($row) => serialize($row), $rows);
         sort($encoded); $result[$table] = $encoded;
     }
     ksort($result); return $result;
@@ -30,6 +30,7 @@ function profileTestMigrate(bool $success, ?string $failure = null): void
 }
 function profileTestContext(PDO $db, int $userId): AuthorizedPortfolioContext
 {
+    journeyFixtureLegacyOwner($db, $userId);
     attestationTestSession($userId); return requireOwnedPortfolioContext($db);
 }
 function profileTestPng(string $path): void

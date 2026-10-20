@@ -100,55 +100,40 @@ try {
     putenv('DB_PASSWORD=' . $rootPassword);
     $db = new PDO("mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4", 'root', $rootPassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
     $db->exec('CREATE TABLE users (id INT PRIMARY KEY, account_status VARCHAR(20) NOT NULL, authz_version INT NOT NULL)');
-    $db->exec('CREATE TABLE portfolios (id INT AUTO_INCREMENT PRIMARY KEY, owner_user_id INT NOT NULL UNIQUE)');
+    $db->exec('CREATE TABLE portfolios (id INT AUTO_INCREMENT PRIMARY KEY, owner_user_id INT NOT NULL UNIQUE, legacy_owner_user_id INT NULL)');
+    $db->exec('CREATE TABLE personal_info (id INT PRIMARY KEY, portfolio_id INT NOT NULL)');
+    $db->exec('CREATE TABLE onboarding_completions (user_id INT PRIMARY KEY, portfolio_id INT NOT NULL, profile_id INT NOT NULL)');
+    $db->exec("CREATE TABLE owner_journey_cutover (id INT PRIMARY KEY,revision VARBINARY(64),snapshot_count INT,snapshot_digest BINARY(32),captured_at DATETIME(6))");
+    $db->exec("INSERT INTO owner_journey_cutover VALUES (1,'owner-journey-cutover-v1',0,UNHEX(SHA2('[]',256)),UTC_TIMESTAMP(6))");
     for ($id = 1; $id <= 16; $id++) { $db->exec("INSERT INTO users VALUES ({$id}, 'active', 1)"); }
-    foreach (['false', 'unknown', 'missing', 'malformed', 'stale', 'identity_mismatch', 'authz_mismatch'] as $index => $state) {
-        [$status, $count, $body] = routeCase($db, $index + 1, $state, true, ['email_verified' => 'true', 'user_id' => '13']);
-        if ($status !== 403 || $count !== 0 || substr_count($body, 'We cannot confirm your email for this sign-in') !== 1
-            || str_contains($body, 'temporarily unavailable') || !str_contains($body, 'Use another account')
-            || !str_contains($body, 'Logout')) { throw new RuntimeException("{$state} denial or presentation failed."); }
-    }
-    [$status, $count] = routeCase($db, 8, 'true', false);
-    if ($status !== 403 || $count !== 0) { throw new RuntimeException('Invalid CSRF created a Portfolio.'); }
-    [$status, $count] = routeCase($db, 9, 'expired');
-    if ($status !== 403 || $count !== 0) { throw new RuntimeException('Expired session created a Portfolio.'); }
-    $db->exec("UPDATE users SET account_status = 'disabled' WHERE id = 10");
-    [$status, $count] = routeCase($db, 10, 'true');
-    if ($status !== 403 || $count !== 0) { throw new RuntimeException('Disabled account created a Portfolio.'); }
-    [$status, $count] = routeCase($db, 11, 'true', true, ['email_verified' => 'false', 'user_id' => '12']);
-    if ($status !== 303 || $count !== 1) { throw new RuntimeException('Verified current session did not create exactly one Portfolio.'); }
-    [$status, $count] = routeCase($db, 11, 'missing');
-    if ($status !== 303 || $count !== 1) { throw new RuntimeException('Existing owner lost access or duplicate handling failed.'); }
-    $db->exec('INSERT INTO portfolios (owner_user_id) VALUES (12)');
-    [$status, $count] = routeCase($db, 12, 'false');
-    if ($status !== 303 || $count !== 1) { throw new RuntimeException('Grandfathered owner was gated.'); }
-    [$status, $count, $body] = routeCase($db, 13, 'unknown', true, [], 'GET');
-    if ($status !== 200 || $count !== 0 || substr_count($body, 'We cannot confirm your email for this sign-in') !== 1
-        || str_contains($body, '>Create Portfolio</button>') || !str_contains($body, 'Use another account')
-        || !str_contains($body, 'Logout')) { throw new RuntimeException('Unavailable presentation removed account options or exposed creation.'); }
-    saveRouteUiEvidence($body, 'readiness-denied');
-    [$status, $count, $body] = routeCase($db, 13, 'true', true, [], 'GET');
-    if ($status !== 200 || $count !== 0 || !str_contains($body, '>Create Portfolio</button>')) {
-        throw new RuntimeException('Ready presentation did not expose creation.');
-    }
-    saveRouteUiEvidence($body, 'readiness-available');
-    foreach (['missing_config', 'database_unavailable'] as $failureMode) {
-        foreach (['GET', 'POST'] as $method) {
-            [$status, $count, $body] = routeCase($db, 13, 'true', true, [], $method, $failureMode);
-            if ($status !== 503 || $count !== 0 || substr_count($body, 'Portfolio creation is temporarily unavailable.') !== 1
-                || str_contains($body, 'cannot confirm your email') || str_contains($body, '>Create Portfolio</button>')
-                || !str_contains($body, 'Use another account') || !str_contains($body, 'Logout')) {
-                throw new RuntimeException("Infrastructure {$failureMode} {$method} presentation failed.");
-            }
+    foreach (['false','unknown','missing','malformed','stale','identity_mismatch','authz_mismatch','true','expired','session_authz_mismatch','invalid_session'] as $state) {
+        foreach ([true,false] as $csrf) {
+            [$status,$count]=routeCase($db,1,$state,$csrf,['email_verified'=>'true','user_id'=>'13']);
+            if ($status!==405 || $count!==0) { throw new RuntimeException('Retired POST accepted readiness/identity/CSRF override.'); }
         }
     }
-    [$status, $count] = routeCase($db, 14, 'session_authz_mismatch');
-    if ($status !== 403 || $count !== 0) { throw new RuntimeException('Authorization-version mismatch created a Portfolio.'); }
-    [$status, $count] = routeCase($db, 15, 'invalid_session');
-    if ($status !== 303 || $count !== 0) { throw new RuntimeException('Invalid session created a Portfolio.'); }
-    $db->exec('INSERT INTO portfolios (owner_user_id) VALUES (16)');
-    [$status, $count] = routeCase($db, 16, 'unknown');
-    if ($status !== 303 || $count !== 1) { throw new RuntimeException('Existing owner with unknown readiness was gated.'); }
+    foreach (['false','unknown','missing','malformed','stale','identity_mismatch','authz_mismatch','true'] as $state) {
+        [$status,$count,$body]=routeCase($db,13,$state,true,[],'GET');
+        if ($status!==503 || $count!==0 || !str_contains($body,'Use another account') || !str_contains($body,'Logout') || str_contains($body,'>Create Portfolio</button>')) { throw new RuntimeException('Unavailable GET lost account options or exposed bare creation.'); }
+    }
+    $db->exec('INSERT INTO portfolios (owner_user_id,legacy_owner_user_id) VALUES (12,12),(16,16)');
+    foreach ([12,16] as $id) {
+        foreach (['false','unknown','missing','true'] as $state) {
+            [$status,$count]=routeCase($db,$id,$state,true,[],'GET');
+            if ($status!==303 || $count!==1) { throw new RuntimeException('Explicit grandfathered owner was gated by readiness.'); }
+        }
+    }
+    foreach (['expired','session_authz_mismatch'] as $state) {
+        [$status,$count]=routeCase($db,13,$state,true,[],'GET');
+        if ($status!==403 || $count!==0) { throw new RuntimeException('Invalid session reached protected legacy GET.'); }
+    }
+    $db->exec("UPDATE users SET account_status='disabled' WHERE id=10");
+    [$status,$count]=routeCase($db,10,'true',true,[],'GET');
+    if ($status!==403 || $count!==0) { throw new RuntimeException('Disabled User reached protected legacy GET.'); }
+    foreach (['missing_config','database_unavailable'] as $failureMode) {
+        [$status,$count,$body]=routeCase($db,13,'true',true,[],'GET',$failureMode);
+        if ($status!==503 || $count!==0 || !str_contains($body,'Use another account') || !str_contains($body,'Logout')) { throw new RuntimeException('Dependency holding response lost safe account controls.'); }
+    }
     session_id('');
     startOwnerSession();
     establishVerifiedInternalUserSession(13, 1);

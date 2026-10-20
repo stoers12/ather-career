@@ -127,6 +127,7 @@ try {
     phase2Assert(!ownerHasPortfolio($database, AuthenticatedUserContext::fromValidatedUser($resolved['user_id'])), 'Identity resolution granted a Portfolio.');
     $database->prepare('INSERT INTO portfolios (owner_user_id) VALUES (:user_id)')->execute(['user_id' => $knownId]);
     $knownPortfolio = (int) $database->lastInsertId();
+    journeyFixtureLegacyOwner($database, $knownId);
     $syntheticEmail = 'matching-profile@phase2a.invalid';
     $database->prepare('INSERT INTO personal_info (portfolio_id, full_name, email) VALUES (:portfolio_id, :name, :email)')
         ->execute(['portfolio_id' => $knownPortfolio, 'name' => 'Synthetic Owner', 'email' => $syntheticEmail]);
@@ -139,6 +140,7 @@ try {
         ->execute(['user_id' => $foreignUserId, 'issuer' => $configuration->issuer, 'subject' => $foreignSubject]);
     $database->prepare('INSERT INTO portfolios (owner_user_id) VALUES (:user_id)')->execute(['user_id' => $foreignUserId]);
     $foreignPortfolio = (int) $database->lastInsertId();
+    journeyFixtureLegacyOwner($database, $foreignUserId);
     $database->prepare('INSERT INTO personal_info (portfolio_id, full_name) VALUES (:portfolio_id, :name)')
         ->execute(['portfolio_id' => $foreignPortfolio, 'name' => 'Synthetic Foreign Owner']);
     $foreignProfileId = (int) $database->lastInsertId();

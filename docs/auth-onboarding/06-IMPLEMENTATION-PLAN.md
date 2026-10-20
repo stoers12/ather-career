@@ -1,5 +1,9 @@
 # 06 — Phased implementation plan
 
+## Card 05 first slice — local server routing/access
+
+Implement frozen maintenance cohort, shared eligibility/fixed destinations and retire alternate first creation before any eventual routing activation/deployment. Test capture/retry/partial/restore and direct protected bypasses, preserving existing owner rules. Next separate work: Card 05 navigation/UI/account journeys, owner acceptance, real policy/operator preparation and controlled maintenance cutover. No whole-card completion or launch claim. [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).
+
 Bounded Card 04 progress: [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md) implements only private editor final saved review/confirmation/receipt recovery atop existing core/HTTP. Local review and separately approved real policy/rollout decisions remain next; this does not authorize launch or finish the journey. No new capability gate, migration or framework.
 
 Bounded transport progress: [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) implements only completion receipt recovery/review/confirmation JSON, independent of attestation recording and editor UI. Owner review of source/evidence is next; real policies, final review UI, Create integration, routing/cutover and activation remain separate. No wider contract recommendation is accepted.
