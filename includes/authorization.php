@@ -76,10 +76,12 @@ function authorizationPositiveInteger(mixed $value): ?int
  * Reads the PHP session identity and validates it against the current users
  * row. No request, cookie, header, or caller-supplied identifier participates
  * in this decision.
+ * An owned write transaction may request the current User row lock before
+ * taking any Portfolio lock; ordinary callers retain nonlocking reads.
  *
  * @throws AuthorizationDeniedException
  */
-function requireAuthenticatedUser(PDO $database): AuthenticatedUserContext
+function requireAuthenticatedUser(PDO $database, bool $forUpdate = false): AuthenticatedUserContext
 {
     $session = currentInternalUserSession();
     if ($session === null) {
@@ -95,7 +97,7 @@ function requireAuthenticatedUser(PDO $database): AuthenticatedUserContext
             'SELECT id, account_status, authz_version
              FROM users
              WHERE id = :internal_user_id
-             LIMIT 1'
+             LIMIT 1' . ($forUpdate ? ' FOR UPDATE' : '')
         );
         $statement->execute(['internal_user_id' => $session['internal_user_id']]);
         $user = $statement->fetch(PDO::FETCH_ASSOC);

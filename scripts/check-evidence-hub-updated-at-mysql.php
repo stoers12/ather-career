@@ -16,10 +16,12 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/portfolio_scoped_data.php';
 require_once __DIR__ . '/../includes/project_evidence_repository.php';
 require_once __DIR__ . '/../includes/public_lifecycle.php';
+require_once __DIR__ . '/../tests/phase2/support/publication-mutation-fixtures.php';
 
 $database = getDatabaseConnection();
 $database->exec("SET time_zone = '+00:00'");
 $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 10);
+journeyFixtureLegacyOwner($database, 1);
 $rows = $database->query('SELECT id, UNIX_TIMESTAMP(created_at) AS created_epoch, UNIX_TIMESTAMP(updated_at) AS updated_epoch FROM projects WHERE id IN (2,3) ORDER BY id')->fetchAll(PDO::FETCH_ASSOC);
 if (count($rows) !== 2 || (int) $rows[0]['created_epoch'] !== 1767225600 || (int) $rows[1]['created_epoch'] !== 1772582400) {
     throw new RuntimeException('Synthetic migration rows are missing.');
@@ -73,14 +75,14 @@ if ($database->query('SELECT updated_at FROM projects WHERE id=2')->fetchColumn(
 $database->exec("UPDATE portfolios SET public_slug = 'synthetic-owner' WHERE id=10");
 $database->exec("INSERT INTO personal_info (portfolio_id, full_name) VALUES (10, 'Synthetic Owner')");
 $beforePublication = $database->query('SELECT updated_at FROM projects WHERE id=3')->fetchColumn();
-publishOwnedPortfolio($database, $context);
+publicationFixtureMutation($database, $context, 'publish');
 $afterPublication = $database->query('SELECT updated_at FROM projects WHERE id=3')->fetchColumn();
 if ($afterPublication === $beforePublication) throw new RuntimeException('Publication toggle did not advance all project timestamps.');
-publishOwnedPortfolio($database, $context);
+publicationFixtureMutation($database, $context, 'publish');
 if ($database->query('SELECT updated_at FROM projects WHERE id=3')->fetchColumn() !== $afterPublication) {
     throw new RuntimeException('Unchanged publication state advanced project timestamps.');
 }
-unpublishOwnedPortfolio($database, $context);
+publicationFixtureMutation($database, $context, 'unpublish');
 if ($database->query('SELECT updated_at FROM projects WHERE id=3')->fetchColumn() === $afterPublication) {
     throw new RuntimeException('Unpublication toggle did not advance project timestamps.');
 }

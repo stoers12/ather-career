@@ -9,7 +9,7 @@ final class TenantAuthorizationStaticTest
         $authorization = self::normalizeLineEndings(self::read('includes/authorization.php'));
         $scopedData = self::normalizeLineEndings(self::read('includes/portfolio_scoped_data.php'));
 
-        phase2Assert(str_contains($authorization, 'function requireAuthenticatedUser(PDO $database): AuthenticatedUserContext'), 'P2J-03 authenticated User helper is missing.');
+        phase2Assert(str_contains($authorization, 'function requireAuthenticatedUser(PDO $database, bool $forUpdate = false): AuthenticatedUserContext'), 'Authenticated User helper must preserve ordinary reads and support current write-lock validation.');
         phase2Assert(str_contains($authorization, 'function requireOwnedPortfolioContext(PDO $database): AuthorizedPortfolioContext'), 'P2J-03 owned Portfolio helper is missing.');
         phase2Assert(str_contains($authorization, 'account_status') && str_contains($authorization, "!== 'active'"), 'Current active-account validation is missing.');
         phase2Assert(str_contains($authorization, 'authz_version') && str_contains($authorization, '!== $session[\'authz_version\']'), 'Session authz version validation is missing.');

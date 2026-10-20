@@ -186,6 +186,10 @@ jobs:
           # Routing and D1 entry tests use guarded synthetic cohorts and preserve the frozen set.
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-owner-journey-route-tests.php
 
+          # Current publication authorization, owned transactions and real HTTP
+          # interleavings use isolated synthetic owners and verify full cleanup.
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/run-publication-mutation-tests.php
+
       - name: Authenticated draft editor browser checks
         run: |
           set -euo pipefail

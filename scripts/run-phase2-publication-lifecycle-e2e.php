@@ -13,6 +13,7 @@ require_once __DIR__ . '/../includes/authorization.php';
 require_once __DIR__ . '/../includes/portfolio_scoped_data.php';
 require_once __DIR__ . '/../includes/public_contact.php';
 require_once __DIR__ . '/../includes/public_lifecycle.php';
+require_once __DIR__ . '/../tests/phase2/support/publication-mutation-fixtures.php';
 require_once __DIR__ . '/../includes/public_url.php';
 require_once __DIR__ . '/../includes/owner_publication_presentation.php';
 require_once __DIR__ . '/../includes/media_access.php';
@@ -65,7 +66,9 @@ function publicationLifecycleE2eCreatePortfolio(PDO $database, int $userId): int
     $statement = $database->prepare('INSERT INTO portfolios (owner_user_id) VALUES (:owner_user_id)');
     $statement->execute(['owner_user_id' => $userId]);
 
-    return (int) $database->lastInsertId();
+    $portfolioId = (int) $database->lastInsertId();
+    journeyFixtureLegacyOwner($database, $userId);
+    return $portfolioId;
 }
 
 function publicationLifecycleE2eContext(int $userId, int $portfolioId): AuthorizedPortfolioContext
@@ -384,8 +387,8 @@ try {
     );
     $passed[] = 'T-E2E-INITIAL-PRIVATE';
 
-    phase2AssertSame('e2e-tenant-b', setOwnedPublicSlug($database, $contextB, 'E2E-Tenant-B'), 'B could not reserve its independent slug.');
-    phase2AssertSame('e2e-tenant-a', setOwnedPublicSlug($database, $contextA, ' E2E-Tenant-A '), 'A slug was not normalized and reserved.');
+    phase2AssertSame('e2e-tenant-b', publicationFixtureMutation($database, $contextB, 'set_slug', 'E2E-Tenant-B'), 'B could not reserve its independent slug.');
+    phase2AssertSame('e2e-tenant-a', publicationFixtureMutation($database, $contextA, 'set_slug', ' E2E-Tenant-A '), 'A slug was not normalized and reserved.');
     $reservedA = ownedPublicLifecycleState($database, $contextA);
     phase2AssertSame(0, $reservedA['is_published'], 'Reserved A slug incorrectly became public.');
     phase2AssertSame('https://localhost:8443/p/e2e-tenant-a', publicPortfolioUrl($reservedA['public_slug']), 'Reserved A URL did not use configured PUBLIC_BASE_URL.');
@@ -398,18 +401,18 @@ try {
     phase2Assert(!str_contains($reservedMarkup, 'View Portfolio') && !str_contains($reservedMarkup, 'Copy Link') && str_contains($reservedMarkup, 'not live'), 'Reserved state offered misleading public actions.');
     foreach (['ab', str_repeat('a', 65), 'bad--slug', 'p', 'https://example.test/p/e2e-tenant-a'] as $invalidSlug) {
         publicationLifecycleE2eExpectException(
-            static fn (): string => setOwnedPublicSlug($database, $contextA, $invalidSlug),
+            static fn (): string => publicationFixtureMutation($database, $contextA, 'set_slug', $invalidSlug),
             'Invalid slug was accepted: ' . $invalidSlug,
             PublicLifecycleValidationException::class,
         );
     }
     publicationLifecycleE2eExpectException(
-        static fn (): string => setOwnedPublicSlug($database, $contextA, 'e2e-tenant-b'),
+        static fn (): string => publicationFixtureMutation($database, $contextA, 'set_slug', 'e2e-tenant-b'),
         'Duplicate B slug was accepted by A.',
         PublicLifecycleConflictException::class,
     );
     publicationLifecycleE2eExpectException(
-        static fn (): string => setOwnedPublicSlug($database, $contextB, 'e2e-tenant-a'),
+        static fn (): string => publicationFixtureMutation($database, $contextB, 'set_slug', 'e2e-tenant-a'),
         'Tenant B claimed A reserved slug.',
         PublicLifecycleConflictException::class,
     );
@@ -420,24 +423,24 @@ try {
     $portfolioReadiness = publicationLifecycleE2eCreatePortfolio($database, $userReadiness);
     $contextReadiness = publicationLifecycleE2eContext($userReadiness, $portfolioReadiness);
     publicationLifecycleE2eExpectException(
-        static fn (): null => publishOwnedPortfolio($database, $contextReadiness),
+        static fn () => publicationFixtureMutation($database, $contextReadiness, 'publish'),
         'Missing slug was publishable.',
         PublicLifecycleValidationException::class,
     );
-    setOwnedPublicSlug($database, $contextReadiness, 'e2e-readiness');
+    publicationFixtureMutation($database, $contextReadiness, 'set_slug', 'e2e-readiness');
     publicationLifecycleE2eExpectException(
-        static fn (): null => publishOwnedPortfolio($database, $contextReadiness),
+        static fn () => publicationFixtureMutation($database, $contextReadiness, 'publish'),
         'Missing professional name was publishable.',
         PublicLifecycleValidationException::class,
     );
     $passed[] = 'T-E2E-READINESS';
 
-    publishOwnedPortfolio($database, $contextA);
+    publicationFixtureMutation($database, $contextA, 'publish');
     $publishedA = ownedPublicLifecycleState($database, $contextA);
     phase2AssertSame(1, $publishedA['is_published'], 'Publish did not set A public state.');
     phase2Assert(is_string($publishedA['published_at']) && $publishedA['published_at'] !== '', 'Publish did not set first publication time.');
     $firstPublishedAt = $publishedA['published_at'];
-    publishOwnedPortfolio($database, $contextA);
+    publicationFixtureMutation($database, $contextA, 'publish');
     phase2AssertSame($firstPublishedAt, ownedPublicLifecycleState($database, $contextA)['published_at'], 'Idempotent publish changed first publication time.');
     ob_start();
     renderOwnerPublicationPresentation($publishedA, ownerPublicationPublicUrl($publishedA));
@@ -550,14 +553,14 @@ try {
     phase2AssertSame('e2e-tenant-b', ownedPublicLifecycleState($database, $contextB)['public_slug'], 'A action changed B publication state.');
     $passed[] = 'T-E2E-LIVE-EDIT-OWNER-ISOLATION';
 
-    publishOwnedPortfolio($database, $contextB);
+    publicationFixtureMutation($database, $contextB, 'publish');
     $publicB = resolvePublicReadContext($database, 'e2e-tenant-b');
     phase2AssertSame($portfolioB, $publicB?->portfolioId, 'Published B did not resolve independently.');
     phase2AssertSame(404, publicationLifecycleE2eHttpRequest($server['port'], '/public_media.php?slug=e2e-tenant-b&type=project&id=' . $aResources['project_ids'][0])['status'], 'B public media context exposed A project media.');
     $publishedB = ownedPublicLifecycleState($database, $contextB);
 
-    unpublishOwnedPortfolio($database, $contextA);
-    unpublishOwnedPortfolio($database, $contextA);
+    publicationFixtureMutation($database, $contextA, 'unpublish');
+    publicationFixtureMutation($database, $contextA, 'unpublish');
     $offlineA = ownedPublicLifecycleState($database, $contextA);
     phase2AssertSame(0, $offlineA['is_published'], 'Unpublish did not hide A.');
     phase2AssertSame($firstPublishedAt, $offlineA['published_at'], 'Unpublish changed first publication time.');
@@ -578,20 +581,20 @@ try {
     $offlineMarkup = (string) ob_get_clean();
     phase2Assert(str_contains($offlineMarkup, 'Your public link is offline') && !str_contains($offlineMarkup, 'View Portfolio'), 'Offline state offered a misleading View action.');
     publicationLifecycleE2eExpectException(
-        static fn (): string => setOwnedPublicSlug($database, $contextA, 'e2e-a-renamed'),
+        static fn (): string => publicationFixtureMutation($database, $contextA, 'set_slug', 'e2e-a-renamed'),
         'Permanent A slug changed after unpublish.',
         PublicLifecycleConflictException::class,
     );
     $userD = publicationLifecycleE2eCreateUser($database, 'tenant-d');
     $portfolioD = publicationLifecycleE2eCreatePortfolio($database, $userD);
     publicationLifecycleE2eExpectException(
-        static fn (): string => setOwnedPublicSlug($database, publicationLifecycleE2eContext($userD, $portfolioD), 'e2e-tenant-a'),
+        static fn (): string => publicationFixtureMutation($database, publicationLifecycleE2eContext($userD, $portfolioD), 'set_slug', 'e2e-tenant-a'),
         'Another never-published tenant claimed A permanent slug.',
         PublicLifecycleConflictException::class,
     );
     $passed[] = 'T-E2E-UNPUBLISH-PERMANENCE';
 
-    publishOwnedPortfolio($database, $contextA);
+    publicationFixtureMutation($database, $contextA, 'publish');
     $republishedA = ownedPublicLifecycleState($database, $contextA);
     phase2AssertSame(['public_slug' => 'e2e-tenant-a', 'is_published' => 1, 'published_at' => $firstPublishedAt], $republishedA, 'Republish changed permanent state.');
     phase2AssertSame($portfolioA, resolvePublicReadContext($database, 'e2e-tenant-a')?->portfolioId, 'Republished A was not public with its original slug.');

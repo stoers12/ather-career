@@ -65,15 +65,13 @@ try {
             throw new RuntimeException('CI profile conflicts with the fixture.');
         }
 
-        $context = AuthorizedPortfolioContext::fromValidatedOwnership(
-            AuthenticatedUserContext::fromValidatedUser($userId),
-            $portfolioId,
-        );
-        if ($portfolio['public_slug'] === null) {
-            setOwnedPublicSlug($database, $context, CI_SMOKE_SLUG);
-        }
-        if ((int) $portfolio['is_published'] !== 1) {
-            publishOwnedPortfolio($database, $context);
+        // This guarded singleton provisioner seeds public-read smoke data; it
+        // has no authenticated Owner session. Mutation authorization is tested
+        // by run-publication-mutation-tests.php, never bypassed by this fixture.
+        $database->prepare('UPDATE portfolios SET public_slug=?,is_published=1,published_at=COALESCE(published_at,CURRENT_TIMESTAMP) WHERE id=?')
+            ->execute([CI_SMOKE_SLUG, $portfolioId]);
+        if ((int)$portfolio['is_published'] !== 1) {
+            $database->prepare('UPDATE projects SET updated_at=CURRENT_TIMESTAMP(6) WHERE portfolio_id=?')->execute([$portfolioId]);
         }
         if (resolvePublicReadContext($database, CI_SMOKE_SLUG)?->portfolioId !== $portfolioId) {
             throw new RuntimeException('CI portfolio did not become public.');

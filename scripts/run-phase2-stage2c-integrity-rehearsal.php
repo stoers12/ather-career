@@ -13,6 +13,7 @@ require_once __DIR__ . '/../includes/owner_actions.php';
 require_once __DIR__ . '/../includes/public_contact.php';
 require_once __DIR__ . '/../includes/media_access.php';
 require_once __DIR__ . '/../includes/public_lifecycle.php';
+require_once __DIR__ . '/../tests/phase2/support/publication-mutation-fixtures.php';
 
 const STAGE2C_TEST_ISSUER = 'https://issuer.test/stage2c';
 const STAGE2C_REFERENCE_MONTH = '2026-09';
@@ -36,7 +37,9 @@ function stage2cCreatePortfolio(PDO $database, int $userId): int
     $statement = $database->prepare('INSERT INTO portfolios (owner_user_id) VALUES (:owner_user_id)');
     $statement->execute(['owner_user_id' => $userId]);
 
-    return (int) $database->lastInsertId();
+    $portfolioId = (int) $database->lastInsertId();
+    journeyFixtureLegacyOwner($database, $userId);
+    return $portfolioId;
 }
 
 function stage2cContext(int $userId, int $portfolioId): AuthorizedPortfolioContext
@@ -264,19 +267,19 @@ try {
     $passed[] = 'T2C-TRANSACTION-ROLLBACK';
 
     $suffix = bin2hex(random_bytes(5));
-    setOwnedPublicSlug($database, $contextC, 'stage2c-incomplete-' . $suffix);
+    publicationFixtureMutation($database, $contextC, 'set_slug', 'stage2c-incomplete-' . $suffix);
     try {
-        publishOwnedPortfolio($database, $contextC);
+        publicationFixtureMutation($database, $contextC, 'publish');
         throw new RuntimeException('Incomplete portfolio was published.');
     } catch (PublicLifecycleValidationException) {
     }
-    setOwnedPublicSlug($database, $contextA, 'stage2c-a-' . $suffix);
+    publicationFixtureMutation($database, $contextA, 'set_slug', 'stage2c-a-' . $suffix);
     try {
-        setOwnedPublicSlug($database, $contextB, 'stage2c-a-' . $suffix);
+        publicationFixtureMutation($database, $contextB, 'set_slug', 'stage2c-a-' . $suffix);
         throw new RuntimeException('Duplicate public slug was accepted.');
     } catch (PublicLifecycleConflictException) {
     }
-    publishOwnedPortfolio($database, $contextA);
+    publicationFixtureMutation($database, $contextA, 'publish');
     $publicA = resolvePublicReadContext($database, 'stage2c-a-' . $suffix);
     phase2Assert($publicA instanceof PublicReadContext && $publicA->portfolioId === $portfolioA, 'Published portfolio did not resolve publicly.');
     $publicPayload = listPublicProjectJsonPayload($database, $publicA, 'stage2c-a-' . $suffix);
@@ -321,7 +324,7 @@ try {
     phase2Assert(!is_file(resolvePrivateMediaPath($oldKey, $portfolioA, 'projects')), 'Unreferenced project media was not retired after successful delete.');
     $passed[] = 'T2C-MEDIA-COMPENSATION-AND-REFERENCE-SAFETY';
 
-    unpublishOwnedPortfolio($database, $contextA);
+    publicationFixtureMutation($database, $contextA, 'unpublish');
     phase2AssertSame(null, resolvePublicReadContext($database, 'stage2c-a-' . $suffix), 'Unpublished portfolio remained publicly available.');
     phase2AssertSame(null, publicMediaDescriptor($database, PublicReadContext::fromPublishedPortfolio($portfolioA), 'project', (string) $projectA), 'Deleted/unpublished public media remained available.');
     $passed[] = 'T2C-UNPUBLISHED-PUBLIC-DENIAL';

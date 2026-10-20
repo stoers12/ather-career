@@ -21,6 +21,51 @@ final class PublicLifecycleConflictException extends RuntimeException
 {
 }
 
+final class PublicLifecycleWriteUncertainException extends RuntimeException
+{
+}
+
+/** Publication owns its short transaction. Reject ambient use before touching
+ * it: neither a caller's snapshot nor its lock order can authorize this write.
+ * Once COMMIT is attempted, rollback cannot prove that COMMIT did not land.
+ */
+function runPublicLifecycleWriteTransaction(PDO $database, callable $operation): mixed
+{
+    if ($database->getAttribute(PDO::ATTR_ERRMODE) !== PDO::ERRMODE_EXCEPTION || $database->inTransaction()) {
+        throw new LogicException('Publication writes require exception mode and an owned transaction.');
+    }
+    if (!$database->beginTransaction()) { throw new RuntimeException('Publication write could not start.'); }
+    $commitAttempted = false;
+    try {
+        $result = $operation();
+        $commitAttempted = true;
+        if (!$database->commit()) { throw new RuntimeException('Publication commit was not acknowledged.'); }
+        return $result;
+    } catch (Throwable $exception) {
+        $rolledBack = false;
+        try { $rolledBack = $database->inTransaction() && $database->rollBack(); } catch (Throwable) {}
+        if (!$commitAttempted && $rolledBack) { throw $exception; }
+        throw new PublicLifecycleWriteUncertainException('Publication outcome is uncertain; reload before another change.', 0, $exception);
+    }
+}
+
+/** Current authorization, in Profile's User -> Portfolio order. Every read
+ * deciding write authority is a locking/current read, including journey proof.
+ * A supplied context identifies the expected resource; it grants no authority.
+ */
+function lockPublicLifecycleOwner(PDO $database, AuthorizedPortfolioContext $context): void
+{
+    $user = requireAuthenticatedUser($database, true);
+    if ($user->userId !== $context->userId) { throw new AuthorizationDeniedException('Publication User mismatch.'); }
+    $lock = $database->prepare('SELECT id FROM portfolios WHERE id = ? AND owner_user_id = ? FOR UPDATE');
+    $lock->execute([$context->portfolioId, $user->userId]);
+    if ($lock->fetchColumn() === false) { throw new AuthorizationDeniedException('Publication ownership missing.'); }
+    $journey = ownerJourneyState($database, $user, true);
+    if (!$journey['access'] || $journey['portfolio_id'] !== $context->portfolioId) {
+        throw new AuthorizationDeniedException('Publication journey authorization failed.');
+    }
+}
+
 /**
  * A public read capability derived only from a published slug, current
  * publication state, and the owning User account status.
@@ -73,14 +118,14 @@ function requirePublicSlug(mixed $candidate): string
 }
 
 /** @return array{public_slug: string|null, is_published: int, published_at: string|null} */
-function ownedPublicLifecycleState(PDO $database, AuthorizedPortfolioContext $context): array
+function ownedPublicLifecycleState(PDO $database, AuthorizedPortfolioContext $context, bool $forUpdate = false): array
 {
     $statement = $database->prepare(
         'SELECT public_slug, is_published, published_at
          FROM portfolios
          WHERE id = :authorized_portfolio_id
            AND owner_user_id = :authorized_user_id
-         LIMIT 1'
+         LIMIT 1' . ($forUpdate ? ' FOR UPDATE' : '')
     );
     $statement->execute([
         'authorized_portfolio_id' => $context->portfolioId,
@@ -111,8 +156,9 @@ function setOwnedPublicSlug(PDO $database, AuthorizedPortfolioContext $context, 
 {
     $slug = requirePublicSlug($candidate);
     try {
-        return runDatabaseTransaction($database, static function () use ($database, $context, $slug): string {
-            $state = ownedPublicLifecycleState($database, $context);
+        return runPublicLifecycleWriteTransaction($database, static function () use ($database, $context, $slug): string {
+            lockPublicLifecycleOwner($database, $context);
+            $state = ownedPublicLifecycleState($database, $context, true);
             if ($state['published_at'] !== null) {
                 throw new PublicLifecycleConflictException('Your public slug is permanent after first publication.');
             }
@@ -130,7 +176,7 @@ function setOwnedPublicSlug(PDO $database, AuthorizedPortfolioContext $context, 
                 'authorized_user_id' => $context->userId,
             ]);
 
-            $updated = ownedPublicLifecycleState($database, $context);
+            $updated = ownedPublicLifecycleState($database, $context, true);
             if ($updated['published_at'] !== null) {
                 throw new PublicLifecycleConflictException('Your public slug is permanent after first publication.');
             }
@@ -150,8 +196,9 @@ function setOwnedPublicSlug(PDO $database, AuthorizedPortfolioContext $context, 
 
 function publishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $context): void
 {
-    runDatabaseTransaction($database, static function () use ($database, $context): void {
-        $state = ownedPublicLifecycleState($database, $context);
+    runPublicLifecycleWriteTransaction($database, static function () use ($database, $context): void {
+        lockPublicLifecycleOwner($database, $context);
+        $state = ownedPublicLifecycleState($database, $context, true);
         $publicationChanged = $state['is_published'] !== 1;
         $slug = normalizePublicSlug($state['public_slug']);
         if ($slug === null || $slug !== $state['public_slug'] || in_array($slug, PUBLIC_SLUG_RESERVED, true)) {
@@ -162,7 +209,7 @@ function publishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $contex
             'SELECT full_name
              FROM personal_info
              WHERE portfolio_id = :authorized_portfolio_id
-             LIMIT 1'
+             LIMIT 1 FOR UPDATE'
         );
         $profile->execute(['authorized_portfolio_id' => $context->portfolioId]);
         $fullName = $profile->fetchColumn();
@@ -181,7 +228,7 @@ function publishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $contex
             'authorized_portfolio_id' => $context->portfolioId,
             'authorized_user_id' => $context->userId,
         ]);
-        if ($statement->rowCount() !== 1 && ownedPublicLifecycleState($database, $context)['is_published'] !== 1) {
+        if ($statement->rowCount() !== 1 && ownedPublicLifecycleState($database, $context, true)['is_published'] !== 1) {
             throw new RuntimeException('Portfolio publication could not be saved.');
         }
         if ($publicationChanged) {
@@ -196,8 +243,9 @@ function publishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $contex
 
 function unpublishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $context): void
 {
-    runDatabaseTransaction($database, static function () use ($database, $context): void {
-        $publicationChanged = ownedPublicLifecycleState($database, $context)['is_published'] === 1;
+    runPublicLifecycleWriteTransaction($database, static function () use ($database, $context): void {
+        lockPublicLifecycleOwner($database, $context);
+        $publicationChanged = ownedPublicLifecycleState($database, $context, true)['is_published'] === 1;
         $statement = $database->prepare(
             'UPDATE portfolios
              SET is_published = 0
@@ -208,7 +256,7 @@ function unpublishOwnedPortfolio(PDO $database, AuthorizedPortfolioContext $cont
             'authorized_portfolio_id' => $context->portfolioId,
             'authorized_user_id' => $context->userId,
         ]);
-        if ($statement->rowCount() !== 1 && ownedPublicLifecycleState($database, $context)['is_published'] !== 0) {
+        if ($statement->rowCount() !== 1 && ownedPublicLifecycleState($database, $context, true)['is_published'] !== 0) {
             throw new RuntimeException('Portfolio unpublication could not be saved.');
         }
         if ($publicationChanged) {

@@ -12,6 +12,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/authorization.php';
 require_once __DIR__ . '/../includes/public_lifecycle.php';
+require_once __DIR__ . '/../tests/phase2/support/publication-mutation-fixtures.php';
 
 const PUBLIC_LIFECYCLE_TEST_ISSUER = 'https://issuer.test/ather-career';
 
@@ -191,14 +192,14 @@ try {
     publicLifecycleSeedSkill($database, $portfolioB, 'B Skill');
     publicLifecycleSeedProject($database, $portfolioB, 'B Project');
 
-    phase2AssertSame('a-draft', setOwnedPublicSlug($database, $contextA, 'a-draft'), 'Never-published Portfolio could not claim a slug.');
-    phase2AssertSame('a-public', setOwnedPublicSlug($database, $contextA, 'A-Public'), 'Never-published Portfolio could change its slug.');
-    phase2AssertSame('b-unpublished', setOwnedPublicSlug($database, $contextB, 'b-unpublished'), 'B could not claim a draft slug.');
+    phase2AssertSame('a-draft', publicationFixtureMutation($database, $contextA, 'set_slug', 'a-draft'), 'Never-published Portfolio could not claim a slug.');
+    phase2AssertSame('a-public', publicationFixtureMutation($database, $contextA, 'set_slug', 'A-Public'), 'Never-published Portfolio could change its slug.');
+    phase2AssertSame('b-unpublished', publicationFixtureMutation($database, $contextB, 'set_slug', 'b-unpublished'), 'B could not claim a draft slug.');
     $passed[] = 'T-PUBLIC-SLUG';
 
     phase2AssertSame(null, resolvePublicReadContext($database, 'a-public'), 'Unpublished A was publicly available.');
     phase2AssertSame(null, resolvePublicReadContext($database, 'missing-slug'), 'Unknown slug was publicly available.');
-    publishOwnedPortfolio($database, $contextA);
+    publicationFixtureMutation($database, $contextA, 'publish');
     $stateA = ownedPublicLifecycleState($database, $contextA);
     phase2AssertSame(1, $stateA['is_published'], 'A was not published.');
     phase2Assert(is_string($stateA['published_at']) && $stateA['published_at'] !== '', 'First publication did not set published_at.');
@@ -213,8 +214,8 @@ try {
     phase2AssertSame(null, resolvePublicReadContext($database, 'b-unpublished'), 'Unpublished B was publicly available.');
 
     phase2AssertSame($portfolioA, publicLifecycleContext($userA, $portfolioA)->portfolioId, 'A owner context changed while reading public data.');
-    setOwnedPublicSlug($database, $contextB, 'b-public');
-    publishOwnedPortfolio($database, $contextB);
+    publicationFixtureMutation($database, $contextB, 'set_slug', 'b-public');
+    publicationFixtureMutation($database, $contextB, 'publish');
     $publicB = resolvePublicReadContext($database, 'b-public');
     phase2AssertSame($portfolioB, $publicB?->portfolioId, 'Published B did not resolve to its Portfolio.');
     phase2AssertSame(['B Project'], array_column(listPublicProjects($database, $publicB), 'title'), 'B public JSON source leaked A projects.');
@@ -226,16 +227,16 @@ try {
     phase2AssertSame($portfolioA, requireOwnedPortfolioContext($database)->portfolioId, 'A gained B owner authority through B public slug.');
     $passed[] = 'T-PUBLIC-READ';
 
-    unpublishOwnedPortfolio($database, $contextA);
+    publicationFixtureMutation($database, $contextA, 'unpublish');
     $afterUnpublish = ownedPublicLifecycleState($database, $contextA);
     phase2AssertSame(0, $afterUnpublish['is_published'], 'Unpublish did not hide A.');
     phase2AssertSame($firstPublishedAt, $afterUnpublish['published_at'], 'Unpublish cleared or changed published_at.');
     try {
-        setOwnedPublicSlug($database, $contextA, 'a-renamed');
+        publicationFixtureMutation($database, $contextA, 'set_slug', 'a-renamed');
         throw new RuntimeException('A slug changed after first publication.');
     } catch (PublicLifecycleConflictException) {
     }
-    publishOwnedPortfolio($database, $contextA);
+    publicationFixtureMutation($database, $contextA, 'publish');
     phase2AssertSame($firstPublishedAt, ownedPublicLifecycleState($database, $contextA)['published_at'], 'Republish changed the first publication timestamp.');
     $database->prepare("UPDATE users SET account_status = 'disabled' WHERE id = :id")->execute(['id' => $userB]);
     phase2AssertSame(null, resolvePublicReadContext($database, 'b-public'), 'Disabled owner remained publicly available.');
