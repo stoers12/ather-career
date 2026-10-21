@@ -1,5 +1,9 @@
 # Authentication and onboarding history
 
+## 2026-10-21 — separate integrated-fixture restoration cleanup correction
+
+Confirm the retained Sourcery finding: failed original-source symlink restoration previously threw before User/identity/completion fixture cleanup. Nest database cleanup in finally, retain restoration failure reporting, and reach restart only after both restoration and cleanup succeed. A bounded obstruction in disposable source copies verifies before/after behavior without a production switch or cleanup framework. This is independent of the ONBOARD-UI-003 acceptance commit; Card 08 remains open and Card 07 paused.
+
 ## 2026-10-21 — Card 08 bounded ONBOARD-UI-003 acceptance evidence
 
 Extend the existing synthetic integrated HTTP journey with incomplete Dashboard/direct-add destinations and completed zero/existing-project Dashboard-link-to-add-form assertions. Read fingerprints preserve every table; the existing project is a disposable SQL fixture removed in finally. No project-creation POST, production UI/schema/route change or dedicated banner requirement. Sealed-legacy coverage retained. Local evidence/review only; Card 08 original scope remains unresolved, Card 07 paused.

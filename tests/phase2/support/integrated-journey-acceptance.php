@@ -155,12 +155,16 @@ function routingIntegratedJourney(PDO $database, string $subject): void
         global $appProcess;
         routingStop($appProcess);
         $serverEnvironment = $originalEnvironment;
-        if (is_link($root . '/http/app')) { unlink($root . '/http/app'); }
-        routingAssert(is_string($originalApp) && symlink($originalApp, $root . '/http/app'), 'Original test source restoration failed.');
-        if (is_int($userId)) {
-            $database->prepare('DELETE FROM user_identities WHERE user_id=?')->execute([$userId]);
-            completionCleanup($database, [$userId]);
+        try {
+            if (is_link($root . '/http/app')) { unlink($root . '/http/app'); }
+            routingAssert(is_string($originalApp) && symlink($originalApp, $root . '/http/app'), 'Original test source restoration failed.');
+        } finally {
+            if (is_int($userId)) {
+                $database->prepare('DELETE FROM user_identities WHERE user_id=?')->execute([$userId]);
+                completionCleanup($database, [$userId]);
+            }
         }
+        // A restoration or cleanup exception must propagate before any restart.
         routingStartApp('1');
     }
     routingAssert($before === routingRows($database), 'Integrated fixture did not preserve all preexisting rows.');
