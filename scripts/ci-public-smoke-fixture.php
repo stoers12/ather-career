@@ -71,7 +71,7 @@ try {
         $database->prepare('UPDATE portfolios SET public_slug=?,is_published=1,published_at=COALESCE(published_at,CURRENT_TIMESTAMP) WHERE id=?')
             ->execute([CI_SMOKE_SLUG, $portfolioId]);
         if ((int)$portfolio['is_published'] !== 1) {
-            $database->prepare('UPDATE projects SET updated_at=CURRENT_TIMESTAMP(6) WHERE portfolio_id=?')->execute([$portfolioId]);
+            $database->prepare('UPDATE projects SET is_published=1,updated_at=CURRENT_TIMESTAMP(6) WHERE portfolio_id=?')->execute([$portfolioId]);
         }
         if (resolvePublicReadContext($database, CI_SMOKE_SLUG)?->portfolioId !== $portfolioId) {
             throw new RuntimeException('CI portfolio did not become public.');

@@ -71,7 +71,7 @@ final class OwnerFlowStaticTest
         }
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $database->exec("CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL);
-            CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT, category TEXT, description TEXT, github_url TEXT NULL, image_path TEXT NULL, technologies TEXT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, created_at TEXT, updated_at TEXT);
+            CREATE TABLE projects (is_published INTEGER NOT NULL DEFAULT 0, id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT, category TEXT, description TEXT, github_url TEXT NULL, image_path TEXT NULL, technologies TEXT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, created_at TEXT, updated_at TEXT);
             INSERT INTO portfolios (id, owner_user_id) VALUES (10, 1), (20, 2);
             INSERT INTO projects (id, portfolio_id, title, category, description, github_url, image_path, technologies, problem_statement, personal_role, measurable_outcome, created_at, updated_at)
             VALUES (19, 10, 'Project', 'Web', 'Description', 'https://example.test/old', NULL, NULL, NULL, NULL, NULL, '2020-01-01', '2020-01-01')");

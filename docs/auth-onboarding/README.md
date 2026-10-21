@@ -1,5 +1,8 @@
 # Ather authentication and onboarding project record
 
+Bounded local Card06: [per-project publication](CARD06-PER-PROJECT-PUBLICATION.md) implements private new projects, an independent owner selection and shared current public eligibility with additive022. Technical legacy transition authorized for disposable review; actual gates off, policies null, registration Google-only. Next: local source/evidence review, not launch; Card07 paused.
+
+
 Card 08 bounded ONBOARD-UI-003 evidence follow-up: the integrated synthetic HTTP fixture now checks incomplete Dashboard/direct add GET routing, then follows the actual Dashboard Add Project href for a completed owner with zero projects and with one disposable fixture project. Add-mode controls, Projects empty-state presence/absence and whole-row preservation are asserted. No project-creation POST, banner, new route or production change; the sealed-legacy exception remains. Next: local review of this evidence slice; original Card 08 scope remains unresolved and Card 07 stays paused.
 
 Separate test-helper correction: integrated fixture database cleanup now runs in a nested finally even if restoring the original app symlink fails. The restoration failure still propagates, and restart occurs only after successful restoration and cleanup. A bounded external probe in disposable source/database copies verifies the original leak and corrected exceptional path; it adds no production switch. Review this correction independently of ONBOARD-UI-003 acceptance.

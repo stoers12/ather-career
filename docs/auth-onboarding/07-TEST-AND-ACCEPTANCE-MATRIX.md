@@ -1,5 +1,8 @@
 # 07 — Test and acceptance matrix
 
+Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). Focused guarded migration/CLI/HTTP and existing-style browser proofs cover defaults, mixed public/private HTML/JSON/media with a valid image, parent hide/republish, current authority/locks and uncertain COMMIT. Existing suites retained. Actual local commands/failures/gaps belong to the external handoff; no hosted success claim.
+
+
 ## Card 08 — bounded ONBOARD-UI-003 HTTP evidence
 
 The existing integrated fixture checks the callback-authenticated incomplete User's Dashboard and direct `owner_projects.php?add=1` GETs: both must return 303 to the capable `/owner_onboarding_editor.php`, with all table fingerprints unchanged. After actual completion, it asserts zero owned projects, extracts and follows the rendered Dashboard Add Project href, and verifies the authorized form's add action, empty title, absent edit ID and CSRF control. It repeats with one private SQL-seeded disposable project, retaining the ordinary action while rejecting the Projects empty-state invitation. Every GET compares all table fingerprints; fixture removal restores the pre-seed snapshot. No project-creation POST is issued. Existing sealed-legacy routing coverage remains unchanged. This closes only the named row/route evidence gap when executed successfully, not all of Card 08; the original approved scope remains unresolved, and earlier CI is separate from new local execution.

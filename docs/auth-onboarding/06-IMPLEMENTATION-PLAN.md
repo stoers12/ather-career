@@ -1,5 +1,8 @@
 # 06 — Phased implementation plan
 
+Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). The owner authorized this bounded technical transition and implementation in disposable databases. Existing projects inherit Portfolio publication once, without historic individual-consent attribution. No live migration approval or Phase6/Evidence/slug/launch completion.
+
+
 ## Card 05 first slice — local server routing/access
 
 Implement frozen maintenance cohort, shared eligibility/fixed destinations and retire alternate first creation before any eventual routing activation/deployment. Test capture/retry/partial/restore and direct protected bypasses, preserving existing owner rules. Next separate work: Card 05 navigation/UI/account journeys, owner acceptance, real policy/operator preparation and controlled maintenance cutover. No whole-card completion or launch claim. [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).

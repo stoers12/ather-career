@@ -34,6 +34,7 @@ function publicationFixtureMutation(PDO $db, AuthorizedPortfolioContext $context
 function publicationMutation(PDO $db, AuthorizedPortfolioContext $context, string $action, mixed $slug = null): mixed
 {
     switch ($action) {
+        case 'project': setOwnedProjectPublication($db, $context, $slug['id'], $slug['value']); return null;
         case 'set_slug': return setOwnedPublicSlug($db, $context, $slug);
         case 'publish': publishOwnedPortfolio($db, $context); return null;
         case 'unpublish': unpublishOwnedPortfolio($db, $context); return null;
@@ -77,6 +78,7 @@ class PublicationFixtureDatabase extends PDO
     {
         if (str_contains($query, 'FROM users') && str_contains($query, 'FOR UPDATE')) { $this->barrier('before_user'); }
         if (str_starts_with($query, 'SELECT id FROM portfolios')) { $this->barrier('after_user'); }
+        if (str_starts_with($query, 'SELECT is_published FROM projects')) { $this->barrier('after_portfolio'); }
         if (str_starts_with($query, 'UPDATE portfolios')) { $this->barrier('after_portfolio'); }
         if ($this->fault === 'statement' && str_starts_with($query, 'UPDATE projects')) {
             throw new PDOException('Synthetic failure after Portfolio update.');

@@ -1,5 +1,8 @@
 # Authentication and onboarding history
 
+Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). 2026-10-22: local additive022 and explicit per-project controls/current shared public eligibility; owner-authorized technical legacy transition in disposable databases. Preserve content/ownership/timestamps/choices and existing transaction/uncertainty boundaries. No Evidence/slug expansion, live operation or launch; Card07 paused.
+
+
 ## 2026-10-21 — separate integrated-fixture restoration cleanup correction
 
 Confirm the retained Sourcery finding: failed original-source symlink restoration previously threw before User/identity/completion fixture cleanup. Nest database cleanup in finally, retain restoration failure reporting, and reach restart only after both restoration and cleanup succeed. A bounded obstruction in disposable source copies verifies before/after behavior without a production switch or cleanup framework. This is independent of the ONBOARD-UI-003 acceptance commit; Card 08 remains open and Card 07 paused.

@@ -96,8 +96,8 @@ function publicLifecycleSeedSkill(PDO $database, int $portfolioId, string $name)
 function publicLifecycleSeedProject(PDO $database, int $portfolioId, string $title): void
 {
     $statement = $database->prepare(
-        'INSERT INTO projects (portfolio_id, title, category, description, github_url)
-         VALUES (:portfolio_id, :title, :category, :description, :github_url)'
+        'INSERT INTO projects (is_published, portfolio_id, title, category, description, github_url)
+         VALUES (1, :portfolio_id, :title, :category, :description, :github_url)'
     );
     $statement->execute([
         'portfolio_id' => $portfolioId,

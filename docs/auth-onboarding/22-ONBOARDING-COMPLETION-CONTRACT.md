@@ -1,5 +1,8 @@
 # Bounded onboarding completion contract
 
+Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). Independent publication successor only; accepted completion/receipt/Profile mapping, requiredness and policies unchanged. Later projects start private; independent owner selection plus Portfolio publication is required. No optional draft import, Evidence publishing or new completion gate.
+
+
 Bounded navigation successor: [33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md) adds only presentation/navigation around the unchanged accepted completion contract. Pause grants no authority; receipt-based Dashboard navigation is explicit and preserves local unsaved-work protection. No new requirement, core/API/capture/catalog/publication policy or activation.
 
 Owner-authorized Card 05 server-side successor (2026-10-20): [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md) now implements the bounded routing/access dependency: frozen original legacy-owner bindings or correctly bound completion evidence, centralized fixed destinations, shared Owner access enforcement and retired legacy first creation. It does not approve unrelated recommendations, change completion/receipt mappings or publication policy, activate capabilities, provide real policies or complete Card 05 UI/navigation. Historical routing-deferred statements below retain their earlier scope.

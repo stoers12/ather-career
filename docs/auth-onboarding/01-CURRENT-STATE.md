@@ -1,5 +1,8 @@
 # 01 — Verified current state
 
+Bounded successor: [per-project publication](CARD06-PER-PROJECT-PUBLICATION.md) implements independent project selection and additive022. Earlier descriptions of all-project public exposure are historical. Local/disposable review only; no running-source/schema activation claimed.
+
+
 Card 05 first bounded slice starts from merged `435ee57e31baa2e233f30a8162090ade07741066`. Local server routing now distinguishes a frozen legacy owner binding, a correctly bound committed completion, and incomplete setup. No deployment/capture/activation is claimed; see [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).
 
 Local bounded successor (2026-10-20): [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md), based on merged `38b4db27c608bc47a40d93c72742db3e5e918921`. Private editor review/confirmation/recovery is implemented for review only; earlier deployed/merged records below retain their historical scope. No deployment/activation or real policies.

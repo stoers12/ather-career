@@ -1,5 +1,8 @@
 # Card 06 — Publication Mutation Authorization and Transaction Safety
 
+Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). The independent project-flag action reuses the same owned transaction/current authorization and lock order. Earlier three-helper evidence retains its scope; public project reads now also require the independent flag.
+
+
 Bounded implementation based on `c797f13a9fb79f1a39ba4776f876452fd326a454`.
 This slice is distinct from overall Card 06 acceptance and launch readiness.
 

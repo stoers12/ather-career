@@ -1,0 +1,4 @@
+-- Guarded additive migration in database/project_publication.php.
+-- Exclusive maintenance: initialize only NULL project flags from the Portfolio's
+-- publication state once. This technical transition is not individual consent.
+-- Preserve all initialized choices and timestamps on retry/restored startup.

@@ -1,5 +1,8 @@
 # 02 — Architecture decision records
 
+AUTH-ADR-020 bounded implementation: [per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). The owner authorized the technical one-time Portfolio0/1 inheritance for existing projects in this local/disposable slice; no historic individual consent is inferred. New projects private; active owner + published Portfolio + matching selected project are all required. No ADR021 Evidence or ADR022 slug expansion or live authorization.
+
+
 ## AUTH-ADR-026 — Authenticated entry presentation (D1 only)
 
 Owner-approved: [34 — authenticated entry D1](34-AUTHENTICATED-ENTRY-D1-HANDOFF.md). Inspecting a session cookie is not authority. Validate the current internal User, account status, lifetime and authz version, then reuse ownerJourneyDestination for a fixed explicit Dashboard/Resume or unavailable presentation. No redirect/OIDC discovery/transaction replacement/start-limit consumption on an authorized entry GET. Targets reauthorize; malformed/invalid authority is retired/denied, dependency failure grants no unproven action. No new readiness/consent/ownership rule. D2 (public registration discovery and launch copy) remains deferred; no additional provider, account linking or provider logout is approved.

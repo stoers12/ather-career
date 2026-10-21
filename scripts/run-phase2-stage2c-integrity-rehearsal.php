@@ -279,6 +279,7 @@ try {
         throw new RuntimeException('Duplicate public slug was accepted.');
     } catch (PublicLifecycleConflictException) {
     }
+    $database->prepare('UPDATE projects SET is_published=1 WHERE portfolio_id=?')->execute([$contextA->portfolioId]);
     publicationFixtureMutation($database, $contextA, 'publish');
     $publicA = resolvePublicReadContext($database, 'stage2c-a-' . $suffix);
     phase2Assert($publicA instanceof PublicReadContext && $publicA->portfolioId === $portfolioA, 'Published portfolio did not resolve publicly.');

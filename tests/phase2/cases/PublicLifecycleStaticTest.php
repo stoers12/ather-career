@@ -29,7 +29,7 @@ final class PublicLifecycleStaticTest
         ] as $fragment) {
             phase2Assert(str_contains($lifecycle, $fragment), "P2J-05 public data access is not Portfolio scoped: {$fragment}");
         }
-        phase2Assert(preg_match('/FROM projects\\s+WHERE portfolio_id = :public_portfolio_id/', $lifecycle) === 1, 'P2J-05 public projects query is not Portfolio scoped.');
+        phase2Assert(str_contains($lifecycle, 'function publicProjectEligibilitySql') && str_contains($lifecycle, 'projects.portfolio_id=:public_portfolio_id') && str_contains($lifecycle, 'projects.is_published=1'), 'P2J-05 public projects query is not Portfolio scoped.');
         phase2Assert(preg_match('/FROM skills\\s+WHERE portfolio_id = :public_portfolio_id/', $lifecycle) === 1, 'P2J-05 public skills query is not Portfolio scoped.');
         phase2Assert(!str_contains($lifecycle, '$_SESSION') && !str_contains($lifecycle, 'requireOwnedPortfolioContext'), 'P2J-05 public context must not use owner authority.');
 

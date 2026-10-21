@@ -1,5 +1,8 @@
 # 05 — Proposed user flows and route contracts
 
+Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). Existing Projects page gains one separate POST/CSRF exact0/1 action. Content saves and GET do not publish; a selected project cannot publish a private Portfolio. Shared filtering also covers contact-error HTML and project media. No new route or onboarding/slug flow.
+
+
 Implemented bounded D1 successor: [34 — authenticated entry D1](34-AUTHENTICATED-ENTRY-D1-HANDOFF.md). signin.php and signup.php retain anonymous GET/HEAD; owner_login retains GET-only and its existing method selector validation. Authorized visits display localized signed-in controls without automatic navigation/authentication. Dashboard points only to /owner.php; Resume points to /owner_onboarding.php?lang=ar|en for a fresh server decision; neither unproven Portfolio existence nor browser state grants access. Unavailable journey →503 with account actions; invalid session →403 safe sign-in recovery; authorization dependency failure →503 without authenticated controls. D2 public registration discovery/landing messaging remains deferred, and anonymous flows are unchanged.
 
 ## Card 05 bounded pause/resume and explicit Dashboard navigation

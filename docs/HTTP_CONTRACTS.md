@@ -117,3 +117,6 @@ client query claims do not alter it. Direct fixture requests are denied. Fixture
 start no session, send no email, create no account and grant no verified status or
 access. Refresh/resend/onboarding controls are natively disabled. See the
 [implementation and prerequisite record](SIGNUP-VERIFICATION-IMPLEMENTATION.md).
+
+
+Per-project publication: public HTML, project JSON and project media share current active-owner, published-Portfolio, matching-project and project.is_published=1 eligibility. A project flag alone grants no public access. Private project metadata/keys are not serialized; authorized Owner preview/media remain independent. The Projects page has a separate CSRF-protected publication POST; uncertain commit acknowledgement requires explicit reload/review, never automatic replay.

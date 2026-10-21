@@ -323,14 +323,42 @@ function listPublicSkills(PDO $database, PublicReadContext $context): array
     return $statement->fetchAll(PDO::FETCH_ASSOC);
 }
 
+/** Fixed SQL, shared by HTML, allow-listed JSON and project media. A context
+ * identifies the Portfolio; recheck current account and publication at query time.
+ */
+function publicProjectEligibilitySql(): string
+{
+    return " FROM projects JOIN portfolios ON portfolios.id=projects.portfolio_id
+        JOIN users ON users.id=portfolios.owner_user_id
+        WHERE projects.portfolio_id=:public_portfolio_id
+          AND portfolios.is_published=1 AND users.account_status='active'
+          AND projects.is_published=1";
+}
+
+function setOwnedProjectPublication(PDO $database, AuthorizedPortfolioContext $context, int $projectId, mixed $published): void
+{
+    if ($projectId < 1 || !in_array($published, [0, 1], true)) {
+        throw new PublicLifecycleValidationException('Choose a valid project and publication value.');
+    }
+    runPublicLifecycleWriteTransaction($database, static function () use ($database, $context, $projectId, $published): void {
+        lockPublicLifecycleOwner($database, $context);
+        $query = $database->prepare('SELECT is_published FROM projects WHERE id=? AND portfolio_id=? FOR UPDATE');
+        $query->execute([$projectId, $context->portfolioId]);
+        $current = $query->fetchColumn();
+        if ($current === false) { throw new AuthorizationDeniedException('Project publication ownership missing.'); }
+        if ((int)$current === $published) { return; }
+        $update = $database->prepare('UPDATE projects SET is_published=?, updated_at=CURRENT_TIMESTAMP(6) WHERE id=? AND portfolio_id=?');
+        $update->execute([$published, $projectId, $context->portfolioId]);
+        if ($update->rowCount() !== 1) { throw new RuntimeException('Project publication could not be saved.'); }
+    });
+}
+
 /** @return list<array<string, mixed>> */
 function listPublicProjects(PDO $database, PublicReadContext $context): array
 {
     $statement = $database->prepare(
-        'SELECT id, title, category, description, github_url, image_path, technologies, created_at
-         FROM projects
-         WHERE portfolio_id = :public_portfolio_id
-         ORDER BY created_at DESC, id DESC'
+        'SELECT projects.id, projects.title, projects.category, projects.description, projects.github_url, projects.image_path, projects.technologies, projects.created_at'
+        . publicProjectEligibilitySql() . ' ORDER BY projects.created_at DESC, projects.id DESC'
     );
     $statement->execute(['public_portfolio_id' => $context->portfolioId]);
 
@@ -358,10 +386,8 @@ function listPublicProjectJsonPayload(PDO $database, PublicReadContext $context,
     }
 
     $statement = $database->prepare(
-        'SELECT id, title, category, description, github_url, image_path, technologies
-         FROM projects
-         WHERE portfolio_id = :public_portfolio_id
-         ORDER BY created_at DESC, id DESC'
+        'SELECT projects.id, projects.title, projects.category, projects.description, projects.github_url, projects.image_path, projects.technologies'
+        . publicProjectEligibilitySql() . ' ORDER BY projects.created_at DESC, projects.id DESC'
     );
     $statement->execute(['public_portfolio_id' => $context->portfolioId]);
 
