@@ -9,11 +9,17 @@ function profileTestAssert(bool $condition, string $message): void
 {
     if (!$condition) { throw new RuntimeException($message); }
 }
+/** ADD/DROP rehearsal DDL can move column ordinals; compare every named value. */
+function profileTestCanonicalRows(array $rows): array
+{
+    foreach ($rows as &$row) { ksort($row); } unset($row);
+    return $rows;
+}
 function profileTestSnapshot(PDO $db): array
 {
     $result = [];
     foreach ($db->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN) as $table) {
-        $rows = $db->query('SELECT * FROM `' . $table . '`')->fetchAll(PDO::FETCH_ASSOC);
+        $rows = profileTestCanonicalRows($db->query('SELECT * FROM `' . $table . '`')->fetchAll(PDO::FETCH_ASSOC));
         $encoded = array_map(static fn ($row) => serialize($row), $rows);
         sort($encoded); $result[$table] = $encoded;
     }

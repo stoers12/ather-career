@@ -63,12 +63,13 @@ try {
     profileTestAssert(is_file('/.dockerenv'), 'HTTP fixtures require disposable Docker.');
     $environment = TestEnvironment::create(); $root = $environment->namespaceRoot . '/profile-http'; mkdir($root); mkdir($root . '/sessions'); mkdir($root . '/public'); mkdir($root . '/limits');
     symlink(realpath(__DIR__ . '/..'), $root . '/app'); copy(__DIR__ . '/../public/owner_profile.php', $root . '/public/owner_profile.php');
+    foreach (['p.php','p_contact.php','p_projects.php','owner_preview.php'] as $shim) { copy(__DIR__ . '/../public/' . $shim, $root . '/public/' . $shim); }
     $png = $root . '/synthetic.png'; profileTestPng($png);
     session_save_path($root . '/sessions'); session_name(OWNER_SESSION_NAME); ini_set('session.cache_limiter', '');
     $socket = stream_socket_server('tcp://127.0.0.1:0', $errno, $message); $address = stream_socket_get_name($socket, false); fclose($socket); $port = (int) substr($address, strrpos($address, ':') + 1);
     $env = array_intersect_key(getenv(), array_flip(['PATH', 'APP_ENV', 'ATHERCAR_TEST_MODE', 'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'ATHERCAR_TEST_DB_NAME']));
     $env += ['SESSION_COOKIE_SECURE' => '0', 'ATHERCAR_REGISTRATION_ENABLED' => '0', 'ATHERCAR_ONBOARDING_DRAFT_HTTP_ENABLED' => '0',
-        'ATHERCAR_STORAGE_ROOT' => $environment->storageRoot, 'RATE_LIMIT_STATE_DIR' => $root . '/limits', 'TRUSTED_PROXY_CIDRS' => ''];
+        'ATHERCAR_STORAGE_ROOT' => $environment->storageRoot, 'RATE_LIMIT_STATE_DIR' => $root . '/limits', 'TRUSTED_PROXY_CIDRS' => '', 'PUBLIC_BASE_URL'=>'https://profile-test.invalid'];
     $process = proc_open([PHP_BINARY, '-d', 'session.save_path=' . $root . '/sessions', '-d', 'display_errors=0', '-S', '127.0.0.1:' . $port, '-t', $root . '/public'],
         [0 => ['pipe', 'r'], 1 => ['file', $root . '/private-http.log', 'a'], 2 => ['file', $root . '/private-http.log', 'a']], $pipes, null, $env);
     profileTestAssert(is_resource($process), 'HTTP server unavailable.'); fclose($pipes[0]);
@@ -83,9 +84,9 @@ try {
     $form = profileForm($browserA); $old = profileForm($tab2); $id = (int) $form['profile_id'];
     profilePost($browserA, $form + ['full_name' => 'New current name'], 303);
     $typed = '  Unsaved <name>  '; $secrets[] = $typed;
-    $body = profilePost($tab2, $old + ['full_name' => $typed, 'public_contact_present' => '1', 'public_contact_visible' => '1'], 409);
+    $body = profilePost($tab2, $old + ['full_name' => $typed, 'public_email_present' => '1', 'public_email_visible' => '1'], 409);
     profileTestAssert(str_contains($body, 'value="  Unsaved &lt;name&gt;  "') && str_contains($body, 'name="expected_profile_version" value="1"')
-        && preg_match('/name="public_contact_visible"[^>]* checked/', $body) === 1 && str_contains($body, 'Reload saved profile'), 'Conflict discarded input/choice/version or lacks explicit recovery.');
+        && preg_match('/name="public_email_visible"[^>]* checked/', $body) === 1 && str_contains($body, 'Reload saved profile'), 'Conflict discarded input/choice/version or lacks explicit recovery.');
     profileTestAssert($db->query("SELECT full_name FROM personal_info WHERE id=$id")->fetchColumn() === 'New current name', 'Stale form overwrote current name.');
     $form = profileForm($browserA); profilePost($browserA, $form + ['full_name' => 'New current name'], 303);
     profileTestAssert((int) profileForm($browserA)['expected_profile_version'] === (int) $form['expected_profile_version'] + 1, 'HTTP same-value save did not increment.');
@@ -93,20 +94,60 @@ try {
 
     $phase = 'patch and visibility'; $form = profileForm($browserA); profilePost($browserA, $form + ['hero_headline' => ''], 303);
     profileTestAssert($db->query("SELECT hero_headline FROM personal_info WHERE id=$id")->fetchColumn() === null && $db->query("SELECT location FROM personal_info WHERE id=$id")->fetchColumn() === 'Keep location', 'Clear/omission semantics wrong.');
-    foreach ([['public_contact_visible' => '1'], [], ['public_contact_visible' => '0'], ['public_contact_present' => '1'], ['public_contact_present' => '1', 'public_contact_visible' => '1']] as $input) {
-        $before = (int) $db->query("SELECT public_contact_visible FROM personal_info WHERE id=$id")->fetchColumn();
+    foreach ([['public_email_visible' => '1'], [], ['public_email_visible' => '0'], ['public_email_present' => '1'], ['public_email_present' => '1', 'public_email_visible' => '1']] as $input) {
+        $before = (int) $db->query("SELECT public_email_visible FROM personal_info WHERE id=$id")->fetchColumn();
         profilePost($browserA, profileForm($browserA) + $input, 303);
-        $expected = $input === [] ? $before : (int) (($input['public_contact_visible'] ?? '0') === '1');
-        profileTestAssert((int) $db->query("SELECT public_contact_visible FROM personal_info WHERE id=$id")->fetchColumn() === $expected, 'Explicit visibility/preservation failed.');
+        $expected = $input === [] ? $before : (int) (($input['public_email_visible'] ?? '0') === '1');
+        profileTestAssert((int) $db->query("SELECT public_email_visible FROM personal_info WHERE id=$id")->fetchColumn() === $expected, 'Explicit visibility/preservation failed.');
     }
     foreach ([null, '', '01', '-1', '1.0', '2147483648', ['1']] as $token) {
         $input = profileForm($browserA); if ($token === null) { unset($input['expected_profile_version']); } else { $input['expected_profile_version'] = $token; }
         profilePost($browserA, $input + ['full_name' => 'Still here'], 409);
     }
-    foreach ([['full_name' => ['invalid']], ['email' => 'invalid'], ['public_contact_visible' => ['1']], ['public_contact_present' => '0'], ['profile_image_path' => 'forged']] as $input) { profilePost($browserA, profileForm($browserA) + $input, 422); }
+    foreach ([['full_name' => ['invalid']], ['email' => 'invalid'], ['public_email_visible' => ['1']], ['public_email_present' => '0'], ['profile_image_path' => 'forged']] as $input) { profilePost($browserA, profileForm($browserA) + $input, 422); }
     $version = (int) profileForm($browserA)['expected_profile_version']; $db->exec("UPDATE personal_info SET profile_version=2147483647 WHERE id=$id");
     profilePost($browserA, profileForm($browserA), 409); $db->exec("UPDATE personal_info SET profile_version=$version WHERE id=$id");
     echo "PASS profile HTTP omitted fields, explicit NULL clears, deliberate visibility, invalid/missing tokens, malformed patches and exhaustion\n";
+
+    $phase = 'per-type contact HTTP';
+    profilePost($browserA, profileForm($browserA) + ['email'=>'contact-http@example.test','phone_primary'=>'+962 79 345 6789','phone_secondary'=>'+962 78 876 5432'], 303);
+    $slug='contact-http-'.bin2hex(random_bytes(6));
+    // Public-read fixture only; publication authorization is tested separately.
+    $db->prepare('UPDATE portfolios SET public_slug=?,is_published=1,published_at=CURRENT_TIMESTAMP WHERE id=?')->execute([$slug,$portfolios[0]]);
+    foreach ([[0,0],[1,0],[0,1],[1,1]] as [$email,$phone]) {
+        profilePost($browserA, profileForm($browserA) + ['public_email_visible'=>(string)$email,'public_phone_visible'=>(string)$phone],303);
+        $loaded=profileHttp($browserA,'GET',200);
+        foreach (['public_email_visible'=>$email,'public_phone_visible'=>$phone] as $field=>$value) {
+            profileTestAssert((preg_match('/name="'.$field.'"[^>]* checked/',$loaded)===1)===(bool)$value,'HTTP reload lost independent checkbox.');
+        }
+        foreach ([['GET','/p.php?slug='.$slug,200],['POST','/p_contact.php?slug='.$slug,422]] as [$method,$route,$code]) {
+            $response=$browserA->request($method,$route); $html=(string)$response->getBody();
+            profileTestAssert($response->getStatusCode()===$code && str_contains($html,'contact-http@example.test')===(bool)$email
+                && str_contains($html,'mailto:contact-http@example.test')===(bool)$email
+                && str_contains($html,'+962 79 345 6789')===(bool)$phone && str_contains($html,'tel:+962793456789')===(bool)$phone
+                && !str_contains($html,'+962 78 876 5432'),'Real public/contact-error route leaked hidden contacts.');
+        }
+        $response=$browserA->get('/p_projects.php?slug='.$slug); $json=(string)$response->getBody();
+        profileTestAssert($response->getStatusCode()===200 && !str_contains($json,'contact-http@example.test') && !str_contains($json,'345 6789')
+            && !str_contains($json,'email') && !str_contains($json,'phone'),'Contact appeared in public JSON allow-list.');
+    }
+    $preview=(string)$browserA->get('/owner_preview.php')->getBody();
+    profileTestAssert(str_contains($preview,'contact-http@example.test') && str_contains($preview,'tel:+962793456789'),'Private HTTP preview lost saved contacts.');
+    $form=profileForm($browserA); profilePost($browserA,$form+['public_email_present'=>'1'],303);
+    $row=loadAuthorizedPersonalInfo($db,AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser($a),$portfolios[0]));
+    profileTestAssert((int)$row['public_email_visible']===0 && (int)$row['public_phone_visible']===1,'HTTP unchecked email hid phone.');
+    profilePost($browserA,profileForm($browserA)+['public_phone_visible'=>'0'],303);
+    profilePost($browserA,profileForm($browserA)+['professional_title'=>'Text preserves private contacts'],303);
+    foreach ([['public_phone_visible'=>['1']],['public_phone_present'=>'0'],['public_email_visible'=>'on']] as $bad) { profilePost($browserA,profileForm($browserA)+['location'=>'Must not save']+$bad,422); }
+    foreach ([['public_contact_present'=>'1'],['public_contact_visible'=>'0'],['public_contact_visible'=>'1']] as $oldInput) {
+        $form=profileForm($browserA); $retained=profilePost($browserA,$form+['full_name'=>'Old aggregate retained text']+$oldInput,409);
+        profileTestAssert(str_contains($retained,'value="Old aggregate retained text"') && str_contains($retained,'contact form is outdated')
+            && str_contains($retained,'name="expected_profile_version" value="'.$form['expected_profile_version'].'"'),'Old aggregate form lost input or upgraded token.');
+    }
+    $before=profileTestSnapshot($db); $bad=profileForm($browserA); $bad['csrf_token']='invalid';
+    profilePost($browserA,$bad+['public_email_visible'=>'1','public_phone_visible'=>'1'],403);
+    profileTestAssert($before===profileTestSnapshot($db),'CSRF contact change wrote data.');
+    echo "PASS contact-types real HTTP four-combination saves reloads public HTML mailto tel contact errors JSON and private preview; per-type off malformed old aggregate409 retention and CSRF\n";
 
     $phase = 'authorization'; profilePost($browserB, profileForm($browserB) + ['full_name' => 'Other account'], 303); $otherForm = profileForm($browserB);
     $forged = profileForm($browserA); $forged['profile_id'] = $otherForm['profile_id']; profilePost($browserA, $forged + ['full_name' => 'Forbidden'], 404);

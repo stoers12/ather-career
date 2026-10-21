@@ -47,8 +47,15 @@ visibility choices and the original token. Even pre-handler upload denials must
 not replace that token with a fresh version. Same-value saves advance once.
 Malformed patches return 422; successful mutations retain the existing 303 PRG.
 Omitted fields preserve storage; supplied empty optional text clears to NULL.
-Visibility is explicit 0/1, or exact `public_contact_present=1` plus an unchecked
-checkbox for false; omission of both preserves it. Photo selections may need
+Email and primary-phone visibility use independent `public_email_visible` and
+`public_phone_visible` string 0/1 values. Each has its own exact `*_present=1`
+marker (`public_email_present` / `public_phone_present`); its unchecked checkbox
+means false only for that type. Omission of both value and marker preserves that
+type. Malformed input rejects the whole patch. Retired `public_contact_visible`
+or `public_contact_present` submissions return 409 with retained input and an
+explicit reload/review message; they never infer independent choices. See the
+[per-type contact handoff](auth-onboarding/CARD06-PER-TYPE-CONTACT-VISIBILITY.md).
+Photo selections may need
 reselection. Uncertain COMMIT outcomes return honest 503/reload guidance and retain
 potentially referenced media. Authorization/CSRF and existing-owner readiness policy
 are unchanged. See [the scoped handoff](auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).

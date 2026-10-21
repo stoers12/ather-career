@@ -29,7 +29,7 @@ switch($action){
             saveOwnedProfilePatch($db,$owned,(int)$row['id'],(int)$row['profile_version'],['full_name'=>'Later authoritative Profile']);session_write_close();
         }else{
             if((int)$db->query('SELECT COUNT(*) FROM portfolios WHERE owner_user_id IN ('.implode(',',array_map('intval',$c['users'])).') AND (is_published<>0 OR published_at IS NOT NULL)')->fetchColumn()!==0){exit(1);}
-            if((int)$db->query('SELECT COUNT(*) FROM personal_info WHERE portfolio_id IN (SELECT id FROM portfolios WHERE owner_user_id IN ('.implode(',',array_map('intval',$c['users'])).')) AND public_contact_visible<>0')->fetchColumn()!==0){exit(1);}
+            if((int)$db->query('SELECT COUNT(*) FROM personal_info WHERE portfolio_id IN (SELECT id FROM portfolios WHERE owner_user_id IN ('.implode(',',array_map('intval',$c['users'])).')) AND (public_email_visible<>0 OR public_phone_visible<>0)')->fetchColumn()!==0){exit(1);}
         }
         break;
     default:exit(2);

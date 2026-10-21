@@ -96,9 +96,9 @@ try {
     $form = profileForm($browserA); $old = profileForm($tab2); $id = (int) $form['profile_id'];
     profilePost($browserA, $form + ['full_name' => 'New current name'], 303);
     $typed = '  Unsaved <name>  '; $secrets[] = $typed;
-    $body = profilePost($tab2, $old + ['full_name' => $typed, 'public_contact_present' => '1', 'public_contact_visible' => '1'], 409);
+    $body = profilePost($tab2, $old + ['full_name' => $typed, 'public_email_present' => '1', 'public_email_visible' => '1'], 409);
     profileTestAssert(str_contains($body, 'value="  Unsaved &lt;name&gt;  "') && str_contains($body, 'name="expected_profile_version" value="1"')
-        && preg_match('/name="public_contact_visible"[^>]* checked/', $body) === 1 && str_contains($body, 'Reload saved profile'), 'Conflict discarded input/choice/version or lacks explicit recovery.');
+        && preg_match('/name="public_email_visible"[^>]* checked/', $body) === 1 && str_contains($body, 'Reload saved profile'), 'Conflict discarded input/choice/version or lacks explicit recovery.');
     profileTestAssert($db->query("SELECT full_name FROM personal_info WHERE id=$id")->fetchColumn() === 'New current name', 'Stale form overwrote current name.');
     $form = profileForm($browserA); profilePost($browserA, $form + ['full_name' => 'New current name'], 303);
     profileTestAssert((int) profileForm($browserA)['expected_profile_version'] === (int) $form['expected_profile_version'] + 1, 'HTTP same-value save did not increment.');
@@ -149,17 +149,17 @@ try {
 
     $phase = 'patch and visibility'; $form = profileForm($browserA); profilePost($browserA, $form + ['hero_headline' => ''], 303);
     profileTestAssert($db->query("SELECT hero_headline FROM personal_info WHERE id=$id")->fetchColumn() === null && $db->query("SELECT location FROM personal_info WHERE id=$id")->fetchColumn() === 'Unrelated edit', 'Clear/omission semantics wrong.');
-    foreach ([['public_contact_visible' => '1'], [], ['public_contact_visible' => '0'], ['public_contact_present' => '1'], ['public_contact_present' => '1', 'public_contact_visible' => '1']] as $input) {
-        $before = (int) $db->query("SELECT public_contact_visible FROM personal_info WHERE id=$id")->fetchColumn();
+    foreach ([['public_email_visible' => '1'], [], ['public_email_visible' => '0'], ['public_email_present' => '1'], ['public_email_present' => '1', 'public_email_visible' => '1']] as $input) {
+        $before = (int) $db->query("SELECT public_email_visible FROM personal_info WHERE id=$id")->fetchColumn();
         profilePost($browserA, profileForm($browserA) + $input, 303);
-        $expected = $input === [] ? $before : (int) (($input['public_contact_visible'] ?? '0') === '1');
-        profileTestAssert((int) $db->query("SELECT public_contact_visible FROM personal_info WHERE id=$id")->fetchColumn() === $expected, 'Explicit visibility/preservation failed.');
+        $expected = $input === [] ? $before : (int) (($input['public_email_visible'] ?? '0') === '1');
+        profileTestAssert((int) $db->query("SELECT public_email_visible FROM personal_info WHERE id=$id")->fetchColumn() === $expected, 'Explicit visibility/preservation failed.');
     }
     foreach ([null, '', '01', '-1', '1.0', '2147483648', ['1']] as $token) {
         $input = profileForm($browserA); if ($token === null) { unset($input['expected_profile_version']); } else { $input['expected_profile_version'] = $token; }
         profilePost($browserA, $input + ['full_name' => 'Still here'], 409);
     }
-    foreach ([['full_name' => ['invalid']], ['email' => 'invalid'], ['public_contact_visible' => ['1']], ['public_contact_present' => '0'], ['profile_image_path' => 'forged']] as $input) { profilePost($browserA, profileForm($browserA) + $input, 422); }
+    foreach ([['full_name' => ['invalid']], ['email' => 'invalid'], ['public_email_visible' => ['1']], ['public_email_present' => '0'], ['profile_image_path' => 'forged']] as $input) { profilePost($browserA, profileForm($browserA) + $input, 422); }
     $version = (int) profileForm($browserA)['expected_profile_version']; $db->exec("UPDATE personal_info SET profile_version=2147483647 WHERE id=$id");
     profilePost($browserA, profileForm($browserA), 409); $db->exec("UPDATE personal_info SET profile_version=$version WHERE id=$id");
     echo "PASS profile HTTP omitted fields, explicit NULL clears, deliberate visibility, invalid/missing tokens, malformed patches and exhaustion\n";

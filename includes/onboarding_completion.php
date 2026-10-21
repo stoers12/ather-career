@@ -38,7 +38,7 @@ function onboardingCompletionProfile(array $fields): array
         throw new PublicLifecycleValidationException('Invalid initial profile link.');
     }
     return ['full_name'=>$fields['display_name'],'hero_headline'=>$fields['headline'],
-        ...array_intersect_key($fields,array_flip(FINAL_PROFILE_FIELDS)), 'public_contact_visible'=>0];
+        ...array_intersect_key($fields,array_flip(FINAL_PROFILE_FIELDS)), 'public_email_visible'=>0, 'public_phone_visible'=>0];
 }
 
 /** @internal One owned transaction, User lock and independently repeated session

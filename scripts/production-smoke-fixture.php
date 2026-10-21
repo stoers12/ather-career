@@ -126,7 +126,7 @@ function productionSmokeAssertSchema(PDO $database): void
 
     $required = [
         'portfolios' => ['public_slug', 'is_published', 'published_at'],
-        'personal_info' => ['profile_image_path', 'public_contact_visible'],
+        'personal_info' => ['profile_image_path', 'public_email_visible', 'public_phone_visible'],
         'projects' => ['image_path', 'technologies'],
         'messages' => ['recipient_portfolio_id'],
         'experiences' => ['portfolio_id', 'experience_type'],
@@ -209,7 +209,7 @@ function productionSmokeSeed(PDO $database, string $slug): array
         'facebook_url' => '',
         'website_url' => '',
         'profile_image_path' => $profileImage,
-        'public_contact_visible' => true,
+        'public_email_visible' => true, 'public_phone_visible' => true,
     ]);
     createAuthorizedSkill($database, $context, 'Synthetic Reliability');
     createAuthorizedSkill($database, $context, 'Production Validation');

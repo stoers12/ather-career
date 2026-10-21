@@ -38,20 +38,20 @@ echo contactRehearsalChild([__DIR__ . '/../database/migrate.php']);
 phase2AssertSame('0', (string) $db->query('SELECT public_contact_visible FROM personal_info')->fetchColumn(), 'Migration opted in an existing profile.');
 $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(2), 2);
 createAuthorizedPersonalInfo($db, $context, ['full_name' => 'New owner']);
-phase2AssertSame(0, (int) loadAuthorizedPersonalInfo($db, $context)['public_contact_visible'], 'New profile did not default OFF.');
+phase2AssertSame(0, (int) loadAuthorizedPersonalInfo($db, $context)['public_email_visible'], 'New profile did not default OFF.');
 phase2Assert(str_contains(contactRehearsalChild([__DIR__ . '/../database/migrate.php']), 'No pending migrations.'), 'Migration runner is not idempotent.');
 
 // Run the real public page and contact-error entrypoints in child processes.
-foreach ([0, 1, 0] as $visible) {
+foreach ([[0,0],[1,0],[0,1],[1,1]] as [$emailVisible,$phoneVisible]) {
     $owner = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 1);
-    updateAuthorizedPersonalInfo($db, $owner, 1, ['public_contact_visible' => $visible], (int) loadAuthorizedPersonalInfo($db, $owner)['profile_version']);
+    updateAuthorizedPersonalInfo($db, $owner, 1, ['public_email_visible' => $emailVisible, 'public_phone_visible' => $phoneVisible], (int) loadAuthorizedPersonalInfo($db, $owner)['profile_version']);
     foreach (['public_portfolio.php', 'public_contact.php'] as $route) {
         $code = '$_SERVER["REQUEST_METHOD"]=' . var_export($route === 'public_contact.php' ? 'POST' : 'GET', true) . '; $_GET["slug"]="contact-owner"; $_POST=[]; require ' . var_export(dirname(__DIR__) . '/' . $route, true) . ';';
         $html = contactRehearsalChild(['-r', $code]);
         phase2Assert(str_contains($html, 'Synthetic Owner'), 'Real route did not render the profile.');
-        phase2AssertSame((bool) $visible, str_contains($html, 'private@example.org'), 'Real public route violated email visibility.');
-        phase2AssertSame((bool) $visible, str_contains($html, '+962 79 123 4567'), 'Real public route violated phone visibility.');
-        phase2AssertSame((bool) $visible, str_contains($html, 'mailto:'), 'Real public route violated link visibility.');
+        phase2AssertSame((bool) $emailVisible, str_contains($html, 'private@example.org'), 'Real public route violated email visibility.');
+        phase2AssertSame((bool) $phoneVisible, str_contains($html, '+962 79 123 4567'), 'Real public route violated phone visibility.');
+        phase2AssertSame((bool) $emailVisible, str_contains($html, 'mailto:'), 'Real public route violated link visibility.');
         if ($route === 'public_contact.php') phase2Assert(str_contains($html, 'Please correct the highlighted fields'), 'Contact route did not exercise validation-error rendering.');
     }
 }

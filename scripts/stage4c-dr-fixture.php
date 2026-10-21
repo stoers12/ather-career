@@ -121,7 +121,7 @@ function stage4cFixtureSeed(PDO $database, string $slug): array
         'facebook_url' => '',
         'website_url' => '',
         'profile_image_path' => $profile,
-        'public_contact_visible' => true,
+        'public_email_visible' => true, 'public_phone_visible' => true,
     ]);
     foreach (['Recovery', 'MySQL', 'PHP', 'Apache', 'Security'] as $skill) {
         createAuthorizedSkill($database, $context, $skill);

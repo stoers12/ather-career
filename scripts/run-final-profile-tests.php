@@ -8,13 +8,13 @@ $db=getDatabaseConnection(); $initial=profileTestSnapshot($db); $users=[]; $port
 $ledger=$db->query("SELECT applied_at FROM schema_migrations WHERE version='018'")->fetchColumn();
 try {
     profileTestAssert(is_file('/.dockerenv') && $ledger!==false, 'Requires migrated disposable Docker database.');
-    $rows=$db->query('SELECT * FROM personal_info')->fetchAll(PDO::FETCH_ASSOC);
+    $rows=profileTestCanonicalRows($db->query('SELECT * FROM personal_info')->fetchAll(PDO::FETCH_ASSOC));
     foreach ($rows as $row) { foreach (FINAL_PROFILE_FIELDS as $field) { profileTestAssert($row[$field]===null,'018 upgrade fixture must precede final-field edits.'); } }
     $db->exec("DELETE FROM schema_migrations WHERE version='018'");
     $db->exec('ALTER TABLE personal_info DROP COLUMN country_code, DROP COLUMN preferred_language, DROP COLUMN professional_status, DROP COLUMN specialization');
     profileTestMigrate(false,'after-final-profile-alter');
     profileTestAssert($db->query("SELECT applied_at FROM schema_migrations WHERE version='018'")->fetchColumn()===false,'Interrupted ALTER recorded ledger.');
-    profileTestAssert($rows===$db->query('SELECT * FROM personal_info')->fetchAll(PDO::FETCH_ASSOC),'018 changed existing values/timestamps/ownership/visibility/version.');
+    profileTestAssert($rows===profileTestCanonicalRows($db->query('SELECT * FROM personal_info')->fetchAll(PDO::FETCH_ASSOC)),'018 changed existing values/timestamps/ownership/visibility/version.');
     profileTestMigrate(true); profileTestMigrate(true);
     $db->exec('ALTER TABLE personal_info MODIFY preferred_language CHAR(2) CHARACTER SET ascii COLLATE ascii_general_ci NULL'); profileTestMigrate(false);
     $db->exec('ALTER TABLE personal_info MODIFY preferred_language CHAR(2) CHARACTER SET ascii COLLATE ascii_bin NULL');
