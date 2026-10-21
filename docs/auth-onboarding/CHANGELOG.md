@@ -1,5 +1,9 @@
 # Authentication and onboarding history
 
+## 2026-10-21 — Card 08 first integrated journey test (local slice)
+
+Connect the existing mock OIDC registration callback and its User/session/readiness to unseeded draft HTTP save/pause/resume, explicit attestations/review/confirmation, private completion/receipt/Dashboard, and later Profile HTTP-edit preservation through historical retries. Reuse guarded source-copy policies and existing disposable registration fixture/CI invocation; retain every existing group. Test/documentation only: production policies remain null, actual gates off. Original approved Card 08 scope unavailable in the bounded local records; current journey checklist is provisional alongside unchanged accepted contracts. No Card 08 closure or provider/browser qualification claim. Card 07 remains paused.
+
 ## 2026-10-20 — Card 05 D1 authenticated entry (local implementation only)
 
 [34 — authenticated entry D1](34-AUTHENTICATED-ENTRY-D1-HANDOFF.md): current-authorized signin/signup/owner_login now offer localized fixed Dashboard/Resume or honest unavailable state with protected account actions. No automatic OIDC/navigation, discovery or start-attempt consumption for authorized visits; stale/malformed authority fails closed. Anonymous/default-off entry and Google-only explicit registration, callback/register/retry refusals and security boundaries remain. Existing CI suites gain focused route/mock/browser checks; local Apache/build and cleanup evidence retained. No schema/gate/policy/capture change. D2 discovery/launch copy deferred; no provider/hosting/manual accessibility certification or launch-ready journey claim.

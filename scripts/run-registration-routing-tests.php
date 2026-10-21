@@ -449,6 +449,8 @@ PHP;
     routingAssert($protected === routingRows($database, true), 'Registration routing changed Portfolio, ownership, content, consent or migration rows.');
     routingAssert((int) $database->query('SELECT COUNT(*) FROM user_identities WHERE oidc_subject LIKE ' . $database->quote($prefix . '%') . ' AND (provider_name IS NOT NULL OR connection_name IS NOT NULL)')->fetchColumn() === 0, 'Provider metadata was inferred.');
     echo "PASS routing all preexisting Users/bindings and protected ownership/content unchanged; no automatic Portfolio or provider metadata\n";
+    require_once __DIR__ . '/../tests/phase2/support/integrated-journey-acceptance.php';
+    routingIntegratedJourney($database, $prefix . 'integrated-journey');
 } catch (Throwable $exception) {
     fwrite(STDERR, 'FAIL registration routing: ' . ($exception instanceof PDOException ? 'database operation failed, driver ' . (int) ($exception->errorInfo[1] ?? 0) : (get_class($exception) === RuntimeException::class ? $exception->getMessage() : get_class($exception))) . ' [line ' . $exception->getLine() . "]\n");
     if (isset($root) && is_file($root . '/http-private.log')) {
