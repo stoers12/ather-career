@@ -1,5 +1,9 @@
 # 07 — Test and acceptance matrix
 
+## Card 08 — bounded ONBOARD-UI-003 HTTP evidence
+
+The existing integrated fixture checks the callback-authenticated incomplete User's Dashboard and direct `owner_projects.php?add=1` GETs: both must return 303 to the capable `/owner_onboarding_editor.php`, with all table fingerprints unchanged. After actual completion, it asserts zero owned projects, extracts and follows the rendered Dashboard Add Project href, and verifies the authorized form's add action, empty title, absent edit ID and CSRF control. It repeats with one private SQL-seeded disposable project, retaining the ordinary action while rejecting the Projects empty-state invitation. Every GET compares all table fingerprints; fixture removal restores the pre-seed snapshot. No project-creation POST is issued. Existing sealed-legacy routing coverage remains unchanged. This closes only the named row/route evidence gap when executed successfully, not all of Card 08; the original approved scope remains unresolved, and earlier CI is separate from new local execution.
+
 ## Card 08 — first bounded integrated journey coverage
 
 The original approved Card 08 card was not located in the bounded local review. The current owner-requested journey checklist is provisional; existing sources remain the purpose contract in [17](17-REGISTRATION-ROUTING-HANDOFF.md), accepted first-completion overlay in [22](22-ONBOARDING-COMPLETION-CONTRACT.md), transport [28](28-ATTESTATION-HTTP-HANDOFF.md)/[30](30-COMPLETION-HTTP-HANDOFF.md) and routing/navigation [32](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md)/[33](33-JOURNEY-NAVIGATION-UI-HANDOFF.md). Stable requirements AUTH-OIDC-001/002, ONBOARD-DRAFT-002/004 and the accepted later-Profile authority are unchanged.
