@@ -213,7 +213,7 @@ PHP;
     routingAssert(proc_close($cert) === 0, 'Test TLS certificate generation failed.'); chmod($root . '/tls-key.pem', 0600);
     $appPort = routingPort(); $issuerPort = 443; $issuer = 'https://registration-routing.test/';
     $serverEnvironment = array_intersect_key(getenv(), array_flip(['PATH', 'APP_ENV', 'ATHERCAR_TEST_MODE', 'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'ATHERCAR_TEST_DB_NAME']));
-    $serverEnvironment += ['EXPECTED_OIDC_ISSUER' => $issuer, 'OIDC_CLIENT_ID' => 'registration-routing-client', 'OIDC_CLIENT_SECRET' => bin2hex(random_bytes(24)), 'OIDC_REDIRECT_URI' => 'https://app.invalid/owner_oidc_callback.php', 'SESSION_COOKIE_SECURE' => '0', 'RATE_LIMIT_STATE_DIR' => $root . '/rate', 'TMPDIR' => $root];
+    $serverEnvironment += ['EXPECTED_OIDC_ISSUER' => $issuer, 'OIDC_CLIENT_ID' => 'registration-routing-client', 'OIDC_CLIENT_SECRET' => bin2hex(random_bytes(24)), 'OIDC_REDIRECT_URI' => 'https://app.invalid/owner_oidc_callback.php', 'PUBLIC_BASE_URL' => 'https://app.invalid', 'SESSION_COOKIE_SECURE' => '0', 'RATE_LIMIT_STATE_DIR' => $root . '/rate', 'TMPDIR' => $root];
     putenv('RATE_LIMIT_STATE_DIR=' . $root . '/rate');
     session_save_path($root . '/sessions'); session_name(OWNER_SESSION_NAME); ini_set('session.use_cookies', '0'); ini_set('session.cache_limiter', ''); ini_set('session.use_strict_mode', '0');
     $mockProcess = routingProcess([PHP_BINARY, __DIR__ . '/../tests/phase2/support/registration-oidc-mock.php', $root, (string) $issuerPort], $serverEnvironment, $root . '/issuer-private.log');
@@ -407,7 +407,12 @@ PHP;
         $r=$b->get($entryPath);routingAssert($r->getStatusCode()===503 && !str_contains((string)$r->getBody(),'data-entry-dashboard'),'Switched account inherited Dashboard');
         routingAssert(preg_match('/name="csrf_token" value="([a-f0-9]{64})"/',(string)$r->getBody(),$matches)===1,'Unavailable signed-in entry lost CSRF');
         $old=routingCookie($b);$r=$b->post('/owner_logout.php',['form_params'=>['csrf_token'=>$matches[1]]]);
-        routingAssert($r->getStatusCode()===303 && $r->getHeaderLine('Location')==='owner_login.php' && !is_file($root.'/sessions/sess_'.$old) && !isset(routingSession($b)[INTERNAL_USER_SESSION_KEY]),'Entry local logout failed');
+        parse_str((string)parse_url($r->getHeaderLine('Location'),PHP_URL_QUERY),$logout);
+        routingAssert($r->getStatusCode()===303 && parse_url($r->getHeaderLine('Location'),PHP_URL_PATH)==='/v2/logout'
+            && parse_url($r->getHeaderLine('Location'),PHP_URL_HOST)==='registration-routing.test'
+            && ($logout['client_id']??null)==='registration-routing-client' && ($logout['returnTo']??null)==='https://app.invalid/signin.php'
+            && count($logout)===2 && !is_file($root.'/sessions/sess_'.$old)
+            && !isset(routingSession($b)[INTERNAL_USER_SESSION_KEY]) && !isset(routingSession($b)[OWNER_READINESS_SESSION_KEY]),'Entry standard logout failed');
     }
     echo "PASS routing D1 real entry account forms retain methods CSRF registration retry refusals session retirement known-account return and local logout without linking\n";
 
