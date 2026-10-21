@@ -94,6 +94,7 @@ function runtimeSchemaIsCompatible(PDO $database): bool
         ['personal_info', 'professional_status'],
         ['personal_info', 'specialization'],
         ['projects', 'technologies'],
+        ['projects', 'is_published'],
         ['experiences', 'portfolio_id'],
         ['messages', 'recipient_portfolio_id'],
         ['onboarding_attestations', 'recorded_at'],

@@ -155,6 +155,8 @@ function publicationLifecycleE2eSeedTenant(PDO $database, AuthorizedPortfolioCon
         null,
         ['SQL'],
     );
+    // This guarded public-read fixture explicitly selects its two synthetic projects.
+    $database->prepare('UPDATE projects SET is_published=1 WHERE id IN (?,?)')->execute([$projectWithMedia,$projectWithoutMedia]);
     createAuthorizedExperience($database, $context, [
         'experience_type' => 'employment',
         'role_title' => 'E2E ' . strtoupper($label) . ' Role',

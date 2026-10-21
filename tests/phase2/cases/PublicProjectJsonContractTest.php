@@ -12,7 +12,7 @@ final class PublicProjectJsonContractTest
         $database->exec(
             "CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT NOT NULL);
              CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT, is_published INTEGER NOT NULL);
-             CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT, category TEXT, description TEXT, github_url TEXT, image_path TEXT, technologies TEXT, created_at TEXT NOT NULL)"
+             CREATE TABLE projects (is_published INTEGER NOT NULL DEFAULT 0, id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT, category TEXT, description TEXT, github_url TEXT, image_path TEXT, technologies TEXT, created_at TEXT NOT NULL)"
         );
 
         $storageRoot = $environment->storageRoot . DIRECTORY_SEPARATOR . 'json-public-media';
@@ -35,6 +35,7 @@ final class PublicProjectJsonContractTest
                 (200, 20, 'Draft image', 'Private', 'Draft description', '', 'portfolios/20/projects/draft-private.webp', '[]', '2026-01-03')"
         );
 
+        $database->exec('UPDATE projects SET is_published=1 WHERE portfolio_id=10');
         try {
             $context = resolvePublicReadContext($database, 'public-owner');
             phase2Assert($context instanceof PublicReadContext, 'Published Portfolio did not resolve for JSON contract test.');

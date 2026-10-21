@@ -1,5 +1,8 @@
 # 03 — Security and privacy threat model
 
+Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). One shared current SQL eligibility rule protects HTML/JSON/media; per-project writes reuse publication authorization/locks and uncertainty semantics. Old binaries may re-expose hidden projects and must not run after cutover. No broader security closure.
+
+
 Bounded D1 implementation: [34 — authenticated entry D1](34-AUTHENTICATED-ENTRY-D1-HANDOFF.md). All authenticated/denied/dependency entry responses are private/no-store; Vary: Cookie separates entry representations. A cookie only triggers inspection; invalid/null records are retired, valid-shaped sessions require current database authorization. No session/Portfolio flags or return URL select authority. Failed authorization exposes no authenticated controls; an already authorized User with unavailable journey dependencies gets account actions only. Existing switch/logout CSRF and callback refusal remain unchanged. No new legal/readiness gate or provider freshness claim.
 
 ## Card 05 navigation boundary

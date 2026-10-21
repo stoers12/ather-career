@@ -6,6 +6,7 @@ require_once __DIR__ . '/portfolio_scoped_data.php';
 require_once __DIR__ . '/error_reporting.php';
 require_once __DIR__ . '/profile_actions.php';
 require_once __DIR__ . '/project_actions.php';
+require_once __DIR__ . '/public_lifecycle.php';
 require_once __DIR__ . '/experience_actions.php';
 require_once __DIR__ . '/transaction.php';
 require_once __DIR__ . '/profile_form_actions.php';
@@ -122,6 +123,10 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
 {
     $action = isset($post['action']) && is_string($post['action']) ? $post['action'] : '';
     $newImagePath = null;
+    if ($action === 'set_project_publication') { return handleProjectPublicationAction($database, $context, $post, $files); }
+    if (array_key_exists('is_published', $post)) {
+        return projectActionResult(['Use the separate project publication control.'], 'add', null, null, [], 422);
+    }
 
     try {
         if ($action === 'delete') {

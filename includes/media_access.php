@@ -45,11 +45,7 @@ function publicMediaDescriptor(PDO $database, PublicReadContext $context, mixed 
         return null;
     }
     $statement = $database->prepare(
-        'SELECT image_path
-         FROM projects
-         WHERE id = :resource_id
-           AND portfolio_id = :public_portfolio_id
-         LIMIT 1'
+        'SELECT projects.image_path' . publicProjectEligibilitySql() . ' AND projects.id = :resource_id LIMIT 1'
     );
     $statement->execute(['resource_id' => $projectId, 'public_portfolio_id' => $context->portfolioId]);
     $key = $statement->fetchColumn();

@@ -250,7 +250,7 @@ function deleteAuthorizedSkill(PDO $database, AuthorizedPortfolioContext $contex
 function listAuthorizedProjects(PDO $database, AuthorizedPortfolioContext $context): array
 {
     $statement = $database->prepare(
-        'SELECT id, title, category, description, github_url, image_path, technologies, created_at
+        'SELECT id, title, category, description, github_url, image_path, technologies, created_at, is_published
          FROM projects
          WHERE portfolio_id = :authorized_portfolio_id
          ORDER BY created_at DESC, id DESC'
@@ -274,7 +274,7 @@ function findAuthorizedProject(PDO $database, AuthorizedPortfolioContext $contex
     }
 
     $statement = $database->prepare(
-        'SELECT id, title, category, description, github_url, image_path, technologies, created_at
+        'SELECT id, title, category, description, github_url, image_path, technologies, created_at, is_published
          FROM projects
          WHERE id = :resource_id
            AND portfolio_id = :authorized_portfolio_id
@@ -310,13 +310,13 @@ function createAuthorizedProject(
     if ($evidenceValues === []) {
         // Preserve the legacy column set when no private evidence is supplied.
         $statement = $database->prepare(
-            'INSERT INTO projects (portfolio_id, title, category, description, github_url, image_path, technologies)
-             VALUES (:authorized_portfolio_id, :title, :category, :description, :github_url, :image_path, :technologies)'
+            'INSERT INTO projects (portfolio_id, title, category, description, github_url, image_path, technologies, is_published)
+             VALUES (:authorized_portfolio_id, :title, :category, :description, :github_url, :image_path, :technologies, 0)'
         );
     } else {
         $evidenceColumns = array_keys($evidenceValues);
-        $columns = ['portfolio_id', 'title', 'category', 'description', 'github_url', 'image_path', 'technologies', ...$evidenceColumns];
-        $parameters = [':authorized_portfolio_id', ':title', ':category', ':description', ':github_url', ':image_path', ':technologies', ...array_map(static fn (string $field): string => ':' . $field, $evidenceColumns)];
+        $columns = ['portfolio_id', 'title', 'category', 'description', 'github_url', 'image_path', 'technologies', 'is_published', ...$evidenceColumns];
+        $parameters = [':authorized_portfolio_id', ':title', ':category', ':description', ':github_url', ':image_path', ':technologies', '0', ...array_map(static fn (string $field): string => ':' . $field, $evidenceColumns)];
         $statement = $database->prepare(
             'INSERT INTO projects (' . implode(', ', $columns) . ')
              VALUES (' . implode(', ', $parameters) . ')'

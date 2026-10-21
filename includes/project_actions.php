@@ -166,3 +166,42 @@ function projectActionResult(array $errors = [], string $formMode = 'add', ?arra
         'status' => $status,
     ];
 }
+
+
+/** Separate from content/image handling: uncertain publication never cleans media. */
+function handleProjectPublicationAction(PDO $database, AuthorizedPortfolioContext $context, array $post, array $files): array
+{
+    $keys = array_keys($post); sort($keys);
+    $id = projectActionId($post['id'] ?? null);
+    if ($keys !== ['action', 'csrf_token', 'id', 'is_published'] || $files !== [] || $id === null
+        || !in_array($post['is_published'] ?? null, ['0', '1'], true)) {
+        return projectActionResult(['Invalid project publication request.'], 'add', null, null, [], 422);
+    }
+    try {
+        setOwnedProjectPublication($database, $context, $id, (int)$post['is_published']);
+        setProjectSuccessFlash('Project publication choice saved. Public access also requires a published Portfolio.');
+        return projectActionResult([], 'add', null, 'owner_projects.php');
+    } catch (AuthorizationDeniedException) {
+        return projectActionResult(['Project publication is not authorized.'], 'add', null, null, [], 403);
+    } catch (PublicLifecycleWriteUncertainException) {
+        return projectActionResult(['The publication choice may already be saved. Reload Projects to review the current choice before another change.'], 'add', null, null, [], 503);
+    } catch (Throwable $exception) {
+        reportApplicationError($exception, 'owner_projects.php', 'project_publication');
+        return projectActionResult(['Project publication could not be saved. Reload Projects to review its current choice.'], 'add', null, null, [], 503);
+    }
+}
+
+function renderProjectPublicationControl(array $project, bool $portfolioPublished): void
+{
+    $selected = (int)$project['is_published'] === 1;
+    $status = $selected ? ($portfolioPublished ? 'Published in public Portfolio' : 'Selected for public Portfolio (Portfolio is private)') : 'Private project';
+    $label = $selected ? 'Hide project' : 'Show in public Portfolio';
+    echo '<p class="project-publication-status">' . ownerEscapeHtml($status) . '</p>';
+    echo '<form method="POST" action="owner_projects.php" data-owner-form class="project-publication-form">';
+    echo '<input type="hidden" name="action" value="set_project_publication">';
+    echo '<input type="hidden" name="csrf_token" value="' . ownerEscapeHtml(getCsrfToken()) . '">';
+    echo '<input type="hidden" name="id" value="' . (int)$project['id'] . '">';
+    echo '<input type="hidden" name="is_published" value="' . ($selected ? '0' : '1') . '">';
+    echo '<button type="submit" class="button-secondary" data-pending-label="Saving publication…">' . ownerEscapeHtml($label) . '</button>';
+    echo '<p class="form-hint">Only selected projects appear when your Portfolio is published. Project Evidence remains private.</p></form>';
+}

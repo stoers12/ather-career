@@ -1,5 +1,8 @@
 # 04 — Data model and migration plan
 
+Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). Actual additive022 adds projects.is_published, enforced0/1/default0. Nullable staging initializes only uninitialized legacy rows from Portfolio publication once, preserving choices and content/ownership/timestamps. Historical017 publication proposal is not its migration number.
+
+
 ## Additive 020 — owner journey cutover (local, not applied live)
 
 `portfolios.legacy_owner_user_id INT UNSIGNED NULL DEFAULT NULL` stores the original owner binding solely for a controlled snapshot; existing content/ownership/timestamps/visibility/profile_version stay unchanged. `owner_journey_cutover` stores singleton id 1, fixed revision, snapshot count, BINARY(32) SHA256 of sorted `[portfolio_id, original_user_id]` pairs and original UTC microsecond capture time. Migration creates/verifies empty schema and refuses populated unrecorded state. It never captures. An explicit separate CLI seals all owned Portfolios present at maintenance cutover in one SERIALIZABLE transaction and verifies only previously marked rows on retry. No runtime write path may change those fields. Restored startup verifies schema and preserves the seal, never adopts unmarked rows. [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).

@@ -247,7 +247,7 @@ function productionSmokeSeed(PDO $database, string $slug): array
     // Guarded synthetic public-read provisioning has no Owner session.
     $database->prepare('UPDATE portfolios SET public_slug=?,is_published=1,published_at=CURRENT_TIMESTAMP WHERE id=?')
         ->execute([$slug, $portfolioId]);
-    $database->prepare('UPDATE projects SET updated_at=CURRENT_TIMESTAMP(6) WHERE portfolio_id=?')->execute([$portfolioId]);
+    $database->prepare('UPDATE projects SET is_published=1,updated_at=CURRENT_TIMESTAMP(6) WHERE portfolio_id=?')->execute([$portfolioId]);
 
     return ['portfolio_id' => $portfolioId, 'project_id' => $projectId];
 }
@@ -604,7 +604,7 @@ try {
         $database->prepare('UPDATE portfolios SET is_published=?,published_at=COALESCE(published_at,CURRENT_TIMESTAMP) WHERE id=?')
             ->execute([$action === 'republish' ? 1 : 0, $portfolio['portfolio_id']]);
         if ($portfolio['is_published'] !== ($action === 'republish' ? 1 : 0)) {
-            $database->prepare('UPDATE projects SET updated_at=CURRENT_TIMESTAMP(6) WHERE portfolio_id=?')->execute([$portfolio['portfolio_id']]);
+            $database->prepare('UPDATE projects SET is_published=1,updated_at=CURRENT_TIMESTAMP(6) WHERE portfolio_id=?')->execute([$portfolio['portfolio_id']]);
         }
     } elseif ($action !== 'state') {
         productionSmokeFail('an allowed action is required.');

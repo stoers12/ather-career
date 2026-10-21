@@ -94,7 +94,7 @@ try {
     $profileA = (int) $database->lastInsertId();
     $profile->execute(['portfolio_id' => $portfolioB, 'name' => 'Media B', 'path' => 'uploads/profile/b-profile.png']);
     $profileB = (int) $database->lastInsertId();
-    $project = $database->prepare('INSERT INTO projects (portfolio_id, title, category, description, github_url, image_path) VALUES (:portfolio_id, :title, \'Media\', \'Private media test\', \'https://example.test/media\', :path)');
+    $project = $database->prepare('INSERT INTO projects (is_published, portfolio_id, title, category, description, github_url, image_path) VALUES (1, :portfolio_id, :title, \'Media\', \'Private media test\', \'https://example.test/media\', :path)');
     $project->execute(['portfolio_id' => $portfolioA, 'title' => 'Media A Project', 'path' => 'uploads/projects/a-project.png']);
     $projectA = (int) $database->lastInsertId();
     $project->execute(['portfolio_id' => $portfolioB, 'title' => 'Media B Project', 'path' => 'uploads/projects/b-project.png']);

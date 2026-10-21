@@ -1,5 +1,8 @@
 # 08 — Operations, rollback and recovery
 
+Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). Project022 requires a separately approved continuous exclusive-maintenance window, including all project and Portfolio-publication writers. Preserve bindings/content/timestamps/initialized flags; lost exclusivity or ambiguous schema stops. Switch readers/writers together; old code ignores flags and may re-expose hidden projects. Forward/data-preserving recovery only after compatibility review; no live action here.
+
+
 ## Card 05 cutover — NOT executed on canonical/live data
 
 This version must not serve normal private traffic until the separate controlled cutover is reviewed and complete. Stop/drain all old/new writers, PHP workers, maintenance jobs and pending completion/draft requests; keep registration and all actual capabilities off. Back up and verify the exact intended DB; inspect owned Portfolio/User bindings and empty 020 state. Apply reviewed migration 020 under maintenance (schema only). Only then run `php database/capture-owner-journey-cutover.php --confirm-exclusive-maintenance --database=<exact database name>` with server-side maintenance credentials. The CLI flags acknowledge operator control; they do not stop traffic automatically. It acquires a named lock, owns one SERIALIZABLE transaction, locks the Portfolio set, writes original-owner bindings and seals count/digest/time atomically. Verify the seal/frozen bindings before reopening traffic. This task authorizes no actual cutover.
