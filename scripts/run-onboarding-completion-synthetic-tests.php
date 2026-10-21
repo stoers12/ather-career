@@ -110,7 +110,7 @@ try {
     $outcome=completeOnboarding($db,$context,$intent); $receiptBefore=completionSnapshot($db);
     completionAssert($draftBefore===readOnboardingDraft($db,$context),'Completion rewrote draft');
     $owned=requireOwnedPortfolioContext($db); $profile=loadAuthorizedPersonalInfo($db,$owned);
-    completionAssert($profile['full_name']===$draftBefore['fields']['display_name'] && $profile['hero_headline']==='Explicit corrected headline' && (int)$profile['profile_version']===1 && (int)$profile['public_contact_visible']===0,'Final mapping/version/private contact mismatch');
+    completionAssert($profile['full_name']===$draftBefore['fields']['display_name'] && $profile['hero_headline']==='Explicit corrected headline' && (int)$profile['profile_version']===1 && (int)$profile['public_email_visible']===0 && (int)$profile['public_phone_visible']===0,'Final mapping/version/private contact mismatch');
     foreach (['email','phone_primary','phone_secondary','location','professional_title','about_me','profile_image_path'] as $field) { completionAssert($profile[$field]===null,'Optional draft/provider data promoted'); }
     $state=ownedPublicLifecycleState($db,$owned); completionAssert($state['is_published']===0 && $state['published_at']===null,'Completion published');
     $row=$db->query("SELECT * FROM onboarding_completions WHERE user_id=$id")->fetch(PDO::FETCH_ASSOC);
@@ -125,7 +125,7 @@ try {
     $changed=$intent; $changed['reviewToken']=str_repeat('c',64); completionDenied($db,fn()=>completeOnboarding($db,$context,$changed),OnboardingCompletionConflictException::class);
     completionDenied($db,fn()=>saveOnboardingDraft($db,$context,5,'5:'.bin2hex(random_bytes(16)),'public_identity',['display_name'=>'Must not replay']),OnboardingDraftConflictException::class);
     completionAssert($outcome===readOnboardingCompletion($db,$context),'Receipt recovery disagreed');
-    $beforeEdit=completionSnapshot($db); saveOwnedProfilePatch($db,$owned,$outcome['profile_id'],1,['full_name'=>'Current professional name','hero_headline'=>null,'country_code'=>null,'preferred_language'=>null,'professional_status'=>null,'specialization'=>null]);
+    $beforeEdit=completionSnapshot($db); saveOwnedProfilePatch($db,$owned,$outcome['profile_id'],1,['full_name'=>'Current professional name','public_email_visible'=>1,'public_phone_visible'=>0,'hero_headline'=>null,'country_code'=>null,'preferred_language'=>null,'professional_status'=>null,'specialization'=>null]);
     $afterEdit=completionSnapshot($db); $context=completionSession($id,false); $GLOBALS['completion_fixture_bundle']=null;
     completionAssert(readOnboardingCompletion($db,$context)===$outcome && completeOnboarding($db,$context,$intent)===$outcome && $afterEdit===completionSnapshot($db),'Later-session receipt replay overwrote current Profile');
     completionAssert(loadAuthorizedPersonalInfo($db,requireOwnedPortfolioContext($db))['full_name']==='Current professional name','Current Profile lost');
@@ -191,7 +191,7 @@ try {
 
     $stage='legacy'; [$uid,$ctx]=$new();
     $db->prepare('INSERT INTO portfolios (owner_user_id,public_slug) VALUES (?,?)')->execute([$uid,str_repeat('l',64)]); journeyFixtureLegacyOwner($db,$uid); $ctx=completionSession($uid,false);
-    createAuthorizedPersonalInfo($db,requireOwnedPortfolioContext($db),['full_name'=>'Existing professional name','professional_title'=>'Existing role','public_contact_visible'=>1]);
+    createAuthorizedPersonalInfo($db,requireOwnedPortfolioContext($db),['full_name'=>'Existing professional name','professional_title'=>'Existing role','public_email_visible' => 1, 'public_phone_visible' => 1]);
     completionAssert(requireOwnedPortfolioContext($db)->userId===$uid && readOnboardingCompletion($db,$ctx)===null,'Existing owner access changed or completion manufactured');
     completionDenied($db,fn()=>prepareOnboardingCompletionReview($db,$ctx,3),OnboardingCompletionConflictException::class);
     echo "PASS completion existing-owner policy, 64-character existing slug and no manufactured legacy completion\n";

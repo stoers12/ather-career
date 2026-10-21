@@ -25,7 +25,8 @@ $fields = [
 ];
 $profile = array_fill_keys($fields, '');
 $profile['profile_image_path'] = null;
-$profile['public_contact_visible'] = false;
+$profile['public_email_visible'] = false;
+$profile['public_phone_visible'] = false;
 $skills = [];
 $errors = [];
 $fieldErrors = [];
@@ -150,11 +151,14 @@ ownerLayoutStart('Personal Info', 'profile');
         <?php foreach (['email' => 'Email', 'phone_primary' => 'Primary Phone', 'phone_secondary' => 'Secondary Phone', 'location' => 'Location'] as $field => $label): ?>
             <label class="form-field" for="<?php echo $field; ?>"><span><?php echo $label; ?></span><input type="<?php echo $field === 'email' ? 'email' : 'text'; ?>" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo ownerEscapeHtml((string) $profile[$field]); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS[$field]; ?>"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, $field); ?>></label><?php ownerRenderFieldError($fieldErrors, $field); ?>
         <?php endforeach; ?>
-        <div class="form-field-full">
-            <input type="hidden" name="public_contact_present" value="1"><label class="checkbox-field" for="public_contact_visible"><input type="checkbox" id="public_contact_visible" name="public_contact_visible" value="1"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'public_contact_visible', 'public-contact-help'); ?><?php echo !empty($profile['public_contact_visible']) ? ' checked' : ''; ?>>Show my phone and email on my public Portfolio.</label>
-            <p class="form-hint" id="public-contact-help">When enabled, visitors can see your primary phone and profile email. Private Preview always shows your saved contact details.</p>
-            <?php ownerRenderFieldError($fieldErrors, 'public_contact_visible'); ?>
-        </div>
+        <?php foreach (['public_email_visible' => ['public_email_present', 'profile email'], 'public_phone_visible' => ['public_phone_present', 'primary phone']] as $visibility => [$marker, $contactLabel]): ?>
+            <div class="form-field-full">
+                <input type="hidden" name="<?php echo $marker; ?>" value="1"><label class="checkbox-field" for="<?php echo $visibility; ?>"><input type="checkbox" id="<?php echo $visibility; ?>" name="<?php echo $visibility; ?>" value="1"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, $visibility, $visibility . '-help'); ?><?php echo !empty($profile[$visibility]) ? ' checked' : ''; ?>>Show my <?php echo $contactLabel; ?> on my public Portfolio.</label>
+                <p class="form-hint" id="<?php echo $visibility; ?>-help">Only your saved <?php echo $contactLabel; ?> is affected. Private Preview always shows your saved contact details.</p>
+                <?php ownerRenderFieldError($fieldErrors, $visibility); ?>
+            </div>
+        <?php endforeach; ?>
+        <p class="form-hint form-field-full">Your secondary phone stays private.</p>
         <h2 class="form-section-title">About Me</h2>
         <label class="form-field form-field-full" for="about_me"><span>About Me</span><textarea id="about_me" name="about_me" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS['about_me']; ?>"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'about_me'); ?>><?php echo ownerEscapeHtml((string) $profile['about_me']); ?></textarea></label><?php ownerRenderFieldError($fieldErrors, 'about_me'); ?>
         <label class="form-field form-field-full" for="work_description"><span>Professional summary <em>(optional)</em></span><textarea id="work_description" name="work_description" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS['work_description']; ?>"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'work_description', 'professional-summary-help'); ?>><?php echo ownerEscapeHtml((string) $profile['work_description']); ?></textarea><small id="professional-summary-help" class="form-hint">Add supporting context for your public Hero.</small></label><?php ownerRenderFieldError($fieldErrors, 'work_description'); ?>

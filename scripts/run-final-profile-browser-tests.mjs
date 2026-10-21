@@ -45,6 +45,25 @@ try {
   check(await p.locator('#preferred_language').inputValue()==='ar' && await p.locator('html').getAttribute('lang')==='en','Preference changed interface language');
   console.log('PASS final-profile browser real saves/reload preserve exact mixed Unicode and distinct legacy fields');
 
+  stage='independent contact visibility';
+  await p.locator('#email').fill('browser-contact@example.test');
+  await p.locator('#phone_primary').fill('+962 79 456 7890');
+  await p.locator('#phone_secondary').fill('+962 78 765 4321');
+  for (const id of ['public_email_visible','public_phone_visible']) {
+    check(await p.locator('label[for="'+id+'"]').count()===1 && await p.locator('#'+id).getAttribute('aria-describedby')===id+'-help','Independent checkbox label/help missing');
+    check(!await p.locator('#'+id).isChecked(),'New Profile contact did not default private');
+    await p.locator('#'+id).focus(); await p.keyboard.press('Space');
+    check(await p.locator('#'+id).isChecked(),'Independent checkbox is not keyboard operable');
+    await p.keyboard.press('Space');
+  }
+  check(await p.locator('[name="public_contact_visible"],[name="public_contact_present"],[name="public_phone_secondary_visible"]').count()===0,'Retired/secondary visibility control appeared');
+  for (const [email,phone] of [[false,false],[true,false],[false,true],[true,true]]) {
+    await p.locator('#public_email_visible').setChecked(email); await p.locator('#public_phone_visible').setChecked(phone); await save(p); await p.reload();
+    check(await p.locator('#public_email_visible').isChecked()===email && await p.locator('#public_phone_visible').isChecked()===phone,'Save/reload coupled the contact choices');
+    check(await p.locator('#email').inputValue()==='browser-contact@example.test' && await p.locator('#phone_primary').inputValue()==='+962 79 456 7890','Toggle changed stored contact text');
+  }
+  console.log('PASS contact-types browser private defaults independent labels keyboard four combinations and exact save reload without secondary control');
+
   stage='boundaries and errors';
   await p.locator('#specialization').fill('😀'.repeat(150)); await save(p);
   check(await p.locator('#specialization').inputValue()==='😀'.repeat(150),'HTML UTF-16 maxlength blocked valid 150 code points');
@@ -58,8 +77,10 @@ try {
 
   stage='two tabs'; const tab=await context.newPage(); await tab.goto(base+'/owner_profile.php'); const stale=await version(tab);
   await p.locator('#specialization').fill('Current private specialization'); await save(p);
+  await tab.locator('#public_email_visible').check(); await tab.locator('#public_phone_visible').uncheck();
   await tab.locator('#country_code').selectOption('EG'); await tab.locator('#specialization').fill('Unsaved private specialization'); await save(tab,409);
   check(await version(tab)===stale && await tab.locator('#country_code').inputValue()==='EG' && await tab.locator('#specialization').inputValue()==='Unsaved private specialization','Conflict lost choices/input/original version');
+  check(await tab.locator('#public_email_visible').isChecked() && !await tab.locator('#public_phone_visible').isChecked(),'Conflict discarded independent visibility choices');
   check(await tab.getByRole('link',{name:/Reload saved profile/}).count()===1,'Explicit conflict recovery missing');
   await tab.setViewportSize({width:390,height:844});
   check(tab.viewportSize().width===390 && tab.viewportSize().height===844,'Conflict screenshot is not at the mobile viewport');
@@ -73,7 +94,7 @@ try {
   stage='responsive controls';
   for (const width of [1440,1024,768,390,320]) {
     await p.setViewportSize({width,height:1000});
-    for (const id of ['country_code','preferred_language','professional_status','specialization']) {
+    for (const id of ['country_code','preferred_language','professional_status','specialization','public_email_visible','public_phone_visible']) {
       const box=await p.locator('#'+id).boundingBox(); check(box && box.x>=0 && box.x+box.width<=width+1,'Control exceeds viewport');
       await p.locator('#'+id).focus();
       check(await p.locator('#'+id).evaluate(e=>document.activeElement===e),'Control cannot receive keyboard focus');

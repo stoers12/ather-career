@@ -1,0 +1,5 @@
+-- Guarded additive migration in database/profile_contact_types.php.
+-- NULL pairs are an uninitialized migration sentinel only. Copy the original
+-- aggregate once per uninitialized row, then enforce private defaults/non-NULL.
+-- Never recompute initialized independent choices, including after lost ledger
+-- acknowledgement. The legacy aggregate remains frozen compatibility history.

@@ -29,13 +29,13 @@ $db = getDatabaseConnection(); $initial = profileTestSnapshot($db); $users = [];
 $ledger = $db->query("SELECT applied_at FROM schema_migrations WHERE version='017'")->fetchColumn();
 try {
     profileTestAssert($ledger !== false && is_file('/.dockerenv'), 'Requires migrated disposable Docker database.');
-    $profiles = $db->query('SELECT * FROM personal_info')->fetchAll(PDO::FETCH_ASSOC);
+    $profiles = profileTestCanonicalRows($db->query('SELECT * FROM personal_info')->fetchAll(PDO::FETCH_ASSOC));
     foreach ($profiles as $row) { profileTestAssert((int) $row['profile_version'] === 1, 'Migration upgrade fixture must precede profile editing.'); }
     $db->exec("DELETE FROM schema_migrations WHERE version='017'");
     $db->exec('ALTER TABLE personal_info DROP CHECK chk_personal_info_profile_version, DROP COLUMN profile_version');
     profileTestMigrate(false, 'after-profile-version-alter');
     profileTestAssert($db->query("SELECT applied_at FROM schema_migrations WHERE version='017'")->fetchColumn() === false, 'Failed migration recorded ledger.');
-    profileTestAssert($profiles === $db->query('SELECT * FROM personal_info')->fetchAll(PDO::FETCH_ASSOC), 'Upgrade changed profile data/timestamps/ownership.');
+    profileTestAssert($profiles === profileTestCanonicalRows($db->query('SELECT * FROM personal_info')->fetchAll(PDO::FETCH_ASSOC)), 'Upgrade changed profile data/timestamps/ownership.');
     profileTestMigrate(true); profileTestMigrate(true);
     $db->exec('ALTER TABLE personal_info ALTER CHECK chk_personal_info_profile_version NOT ENFORCED'); profileTestMigrate(false);
     $db->exec('ALTER TABLE personal_info ALTER CHECK chk_personal_info_profile_version ENFORCED');
@@ -53,7 +53,7 @@ try {
         $users[] = (int) $db->lastInsertId(); $db->prepare('INSERT INTO portfolios (owner_user_id) VALUES (?)')->execute([$users[$i]]); $portfolios[] = (int) $db->lastInsertId();
     }
     [$a, $b, $empty] = $users; $context = profileTestContext($db, $a);
-    $saved = saveOwnedProfilePatch($db, $context, null, 0, ['full_name' => 'Synthetic Name', 'location' => 'Keep location', 'public_contact_visible' => true,
+    $saved = saveOwnedProfilePatch($db, $context, null, 0, ['full_name' => 'Synthetic Name', 'location' => 'Keep location', 'public_email_visible' => true, 'public_phone_visible' => true,
         'country_code'=>'JO', 'preferred_language'=>'ar', 'professional_status'=>'student', 'specialization'=>'Exact retained discipline']); $id = $saved['id'];
     $v = 1; $saved = saveOwnedProfilePatch($db, $context, $id, $v, ['full_name' => 'Synthetic Name']);
     profileTestAssert($saved['profile_version'] === 2 && loadAuthorizedPersonalInfo($db, $context)['location'] === 'Keep location', 'Same-value increment or omission failed.');

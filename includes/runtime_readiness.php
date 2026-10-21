@@ -86,6 +86,8 @@ function runtimeSchemaIsCompatible(PDO $database): bool
         ['portfolios', 'is_published'],
         ['personal_info', 'hero_headline'],
         ['personal_info', 'public_contact_visible'],
+        ['personal_info', 'public_email_visible'],
+        ['personal_info', 'public_phone_visible'],
         ['personal_info', 'profile_version'],
         ['personal_info', 'country_code'],
         ['personal_info', 'preferred_language'],

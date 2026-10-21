@@ -36,7 +36,7 @@ function handleVersionedProfileAction(PDO $database, AuthorizedPortfolioContext 
     $fieldErrors = []; $patch = []; $newImagePath = null;
     $allowed = ['action', 'csrf_token', 'profile_id', 'expected_profile_version'];
     if ($action === 'save_profile') {
-        $allowed = [...$allowed, ...$fields, 'public_contact_present', 'public_contact_visible'];
+        $allowed = [...$allowed, ...$fields, 'public_email_present', 'public_email_visible', 'public_phone_present', 'public_phone_visible'];
         foreach ($fields as $field) {
             if (!array_key_exists($field, $post)) { continue; }
             if (is_string($post[$field])) { $profile[$field] = $post[$field]; }
@@ -66,12 +66,14 @@ function handleVersionedProfileAction(PDO $database, AuthorizedPortfolioContext 
         foreach (['linkedin_url', 'github_url', 'instagram_url', 'facebook_url', 'website_url'] as $field) {
             if (isset($patch[$field]) && !isSafeHttpUrl($patch[$field])) { $fieldErrors[$field] = 'Please enter a valid HTTP or HTTPS URL.'; }
         }
-        $hasVisibility = array_key_exists('public_contact_visible', $post);
-        $hasMarker = array_key_exists('public_contact_present', $post);
-        if (($hasMarker && $post['public_contact_present'] !== '1') || ($hasVisibility && !in_array($post['public_contact_visible'], ['0', '1'], true))) {
-            $fieldErrors['public_contact_visible'] = 'Please select a valid contact visibility option.';
-        } elseif ($hasVisibility || $hasMarker) {
-            $patch['public_contact_visible'] = $profile['public_contact_visible'] = $hasVisibility && $post['public_contact_visible'] === '1';
+        foreach (['public_email_visible' => 'public_email_present', 'public_phone_visible' => 'public_phone_present'] as $field => $marker) {
+            $hasVisibility = array_key_exists($field, $post);
+            $hasMarker = array_key_exists($marker, $post);
+            if (($hasMarker && $post[$marker] !== '1') || ($hasVisibility && !in_array($post[$field], ['0', '1'], true))) {
+                $fieldErrors[$field] = 'Please select a valid contact visibility option.';
+            } elseif ($hasVisibility || $hasMarker) {
+                $patch[$field] = $profile[$field] = $hasVisibility && $post[$field] === '1';
+            }
         }
     }
     if (array_diff(array_keys($post), $allowed) !== [] || ($action !== 'upload_profile_image' && $files !== [])
@@ -79,7 +81,11 @@ function handleVersionedProfileAction(PDO $database, AuthorizedPortfolioContext 
         $fieldErrors['profile'] = 'The form contains unsupported fields. Please reload and review.';
     }
     if ($expected === null) { $fieldErrors['profile'] = 'This form has no valid profile version. Reload and review before saving.'; }
-    if ($fieldErrors !== []) { return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, $expected === null ? 409 : 422); }
+    $outdatedContact = array_key_exists('public_contact_present', $post) || array_key_exists('public_contact_visible', $post);
+    if ($outdatedContact) {
+        $fieldErrors['profile'] = 'This contact form is outdated. Your entries are kept here; reload and review email and primary-phone visibility separately before saving.';
+    }
+    if ($fieldErrors !== []) { return ownerProfileActionResult(validationErrorList($fieldErrors), $profile, null, $fieldErrors, $expected === null || $outdatedContact ? 409 : 422); }
     try {
         if ($database->inTransaction()) { throw new LogicException('Profile form cannot join another transaction.'); }
         $target = ownerProfileActionTarget($database, $context, $post, $current);

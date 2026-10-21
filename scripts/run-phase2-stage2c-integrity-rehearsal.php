@@ -69,7 +69,7 @@ function stage2cProfileValues(string $name): array
         'facebook_url' => '',
         'website_url' => '',
         'profile_image_path' => null,
-        'public_contact_visible' => false,
+        'public_email_visible' => false, 'public_phone_visible' => false,
     ];
 }
 
@@ -199,7 +199,7 @@ try {
     phase2AssertSame(false, updateAuthorizedPersonalInfo($database, $contextA, $profileB, ['location' => 'Foreign'], (int) loadAuthorizedPersonalInfo($database, $contextA)['profile_version']), 'Owner A updated Owner B profile.');
     $passed[] = 'T2C-PROFILE-OWNER-SCOPE';
 
-    $fields = array_values(array_diff(AUTHORIZED_PERSONAL_INFO_FIELDS, ['profile_image_path', 'public_contact_visible']));
+    $fields = array_values(array_diff(AUTHORIZED_PERSONAL_INFO_FIELDS, ['profile_image_path', 'public_email_visible', 'public_phone_visible']));
     $profileState = loadAuthorizedPersonalInfo($database, $contextA);
     $skillResult = handleAuthorizedProfileAction($database, $contextA, [
         'action' => 'add_skill',

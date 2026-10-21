@@ -98,7 +98,7 @@ function publicationLifecycleE2eProfileValues(string $name, string $profileImage
         'facebook_url' => '',
         'website_url' => '',
         'profile_image_path' => $profileImage,
-        'public_contact_visible' => false,
+        'public_email_visible' => false, 'public_phone_visible' => false,
     ];
 }
 

@@ -260,18 +260,18 @@ try {
     $phase='complete';$review=compHttpReview($a)['review'];$intent=['action'=>'complete',...completionIntent($review)];$original=compHttpPost($a,$intent,200,false)['receipt'];
     compHttpAssert(array_keys($original)===['portfolio_id','profile_id','draft_version','initial_profile_version','contract_revision','catalog_revision','deferred_fields','completed_at'],'Receipt leaked raw records.');
     $owned=compHttpSession($a,static fn()=>requireOwnedPortfolioContext($database));$profile=loadAuthorizedPersonalInfo($database,$owned);
-    compHttpAssert((int)$profile['profile_version']===1 && (int)$profile['public_contact_visible']===0 && $profile['full_name']===$review['fields']['display_name'],'Private mapping changed.');
+    compHttpAssert((int)$profile['profile_version']===1 && (int)$profile['public_email_visible']===0 && (int)$profile['public_phone_visible']===0 && $profile['full_name']===$review['fields']['display_name'],'Private mapping changed.');
     compHttpAssert((int)$database->query('SELECT is_published FROM portfolios WHERE id='.$original['portfolio_id'])->fetchColumn()===0,'Published on completion.');
     compHttpAssert(compHttpPost($a,$intent)['receipt']===$original,'Exact repeat rewrote receipt.');
     compHttpPost($a,array_replace($intent,['operationId'=>'3:'.bin2hex(random_bytes(16))]),409);compHttpReview($a,3,409);
     echo "PASS completion HTTP first atomic private creation original receipt projection exact retries and changed intent conflict\n";
 
     $phase='later production recovery';
-    compHttpSession($a,static function()use($database,$owned,$original):void{saveOwnedProfilePatch($database,$owned,$original['profile_id'],1,['full_name'=>'Later Profile edit']);});
+    compHttpSession($a,static function()use($database,$owned,$original):void{saveOwnedProfilePatch($database,$owned,$original['profile_id'],1,['full_name'=>'Later Profile edit','public_email_visible'=>0,'public_phone_visible'=>1]);});
     compHttpStart('1',false);$later=compHttpBrowser($userA);$other=compHttpBrowser($userB);
     compHttpAssert(compHttpRequest($later,'GET',200)['receipt']===$original && compHttpPost($later,$intent)['receipt']===$original,'Null policy or later session blocked historical receipt.');
     compHttpAssert(compHttpRequest($other,'GET',200,['headers'=>['X-User-ID'=>(string)$userA]])['receipt']===null,'Cross-account receipt leak.');
-    compHttpAssert(loadAuthorizedPersonalInfo($database,$owned)['full_name']==='Later Profile edit','Receipt rewrote later edit.');
+    $laterProfile=loadAuthorizedPersonalInfo($database,$owned); compHttpAssert($laterProfile['full_name']==='Later Profile edit' && (int)$laterProfile['public_email_visible']===0 && (int)$laterProfile['public_phone_visible']===1,'Receipt rewrote later edit or independent visibility.');
     echo "PASS completion HTTP later-session recovery and exact retry under original null policies preserve later Profile edits and account boundaries\n";
 
     $phase='concurrent';compHttpStart('1',true);$race=$new();$c=compHttpBrowser($race,$ready,0);$d=compHttpBrowser($race,$ready,1);$rr=compHttpReview($c)['review'];

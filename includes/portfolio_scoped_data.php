@@ -26,7 +26,8 @@ const AUTHORIZED_PERSONAL_INFO_FIELDS = [
     'facebook_url',
     'website_url',
     'profile_image_path',
-    'public_contact_visible',
+    'public_email_visible',
+    'public_phone_visible',
 ];
 
 /** @return array<string, mixed> */
@@ -42,7 +43,7 @@ function authorizedPersonalInfoValues(array $values): array
 
     $normalized = [];
     foreach ($values as $field => $value) {
-        if ($field === 'public_contact_visible') {
+        if (in_array($field, ['public_email_visible', 'public_phone_visible'], true)) {
             if (!in_array($value, [true, false, 0, 1], true)) {
                 throw new InvalidArgumentException('Contact visibility must be a boolean.');
             }
@@ -71,7 +72,7 @@ function findAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext $c
     $statement = $database->prepare(
         'SELECT id, full_name, professional_title, hero_headline, email, phone_primary, phone_secondary,
                 location, about_me, work_description, linkedin_url, github_url,
-                instagram_url, facebook_url, website_url, profile_image_path, public_contact_visible, updated_at, profile_version,
+                instagram_url, facebook_url, website_url, profile_image_path, public_email_visible, public_phone_visible, updated_at, profile_version,
                 country_code, preferred_language, professional_status, specialization
          FROM personal_info
          WHERE id = :resource_id
@@ -93,7 +94,7 @@ function loadAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext $c
     $statement = $database->prepare(
         'SELECT id, full_name, professional_title, hero_headline, email, phone_primary, phone_secondary,
                 location, about_me, work_description, linkedin_url, github_url,
-                instagram_url, facebook_url, website_url, profile_image_path, public_contact_visible, updated_at, profile_version,
+                instagram_url, facebook_url, website_url, profile_image_path, public_email_visible, public_phone_visible, updated_at, profile_version,
                 country_code, preferred_language, professional_status, specialization
          FROM personal_info
          WHERE portfolio_id = :authorized_portfolio_id
