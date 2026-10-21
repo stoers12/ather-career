@@ -88,6 +88,7 @@ final class HttpValidationContractTest
             'owner_register.php' => "header('Location: ' . \$authorization['url'], true, 302)",
             'owner_switch_account.php' => "header('Location: ' . \$authorization['url'], true, 302)",
             'owner_auth_retry.php' => "header('Location: ' . \$authorization['url'], true, 302)",
+            'owner_logout.php' => "header('Location: ' . \$logoutUrl, true, 303)",
         ];
         phase2Assert(substr_count($runtime, "header('Location:") === count($approvedRedirects), 'Runtime redirect inventory changed.');
         foreach ($approvedRedirects as $route => $statement) {

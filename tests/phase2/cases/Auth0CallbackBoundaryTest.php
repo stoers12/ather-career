@@ -37,6 +37,8 @@ final class Auth0CallbackBoundaryTest
         phase2Assert(str_contains($owner, 'requireOwnedPortfolioContext($database)')
             && str_contains($owner, "httpRedirect('/owner_login.php')")
             && str_contains($logout, 'requireValidCsrfToken')
-            && str_contains($logout, "httpRedirect('owner_login.php')"), 'Owner authorization, logout, or anonymous redirect changed.');
+            && str_contains($logout, 'destroyOwnerSession();')
+            && str_contains($logout, '$logoutUrl = auth0LogoutUrl();')
+            && str_contains($logout, 'renderOwnerPartialLogout();'), 'Owner authorization, session retirement, or standard logout boundary changed.');
     }
 }

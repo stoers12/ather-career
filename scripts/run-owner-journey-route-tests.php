@@ -43,6 +43,9 @@ function journeyServer(string $docroot,array $flags,bool $unavailableDatabase=fa
     global $servers,$root;
     $socket=stream_socket_server('tcp://127.0.0.1:0',$errno,$error); $address=stream_socket_get_name($socket,false); fclose($socket); $port=(int)substr($address,strrpos($address,':')+1);
     $env=getenv(); $env['SESSION_COOKIE_SECURE']='0'; $env['PUBLIC_BASE_URL']='https://journey-test.invalid'; $env['RATE_LIMIT_STATE_DIR']=$root.'/limits';
+    // Trusted synthetic configuration for no-follow standard logout assertions.
+    $env['EXPECTED_OIDC_ISSUER']='https://127.0.0.1:1/'; $env['OIDC_CLIENT_ID']='journey-client';
+    $env['OIDC_CLIENT_SECRET']='journey-synthetic-secret'; $env['OIDC_REDIRECT_URI']='https://journey-test.invalid/owner_oidc_callback.php';
     if ($unavailableDatabase) { $env['DB_HOST']='127.0.0.1'; $env['DB_PORT']='1'; }
     foreach (['DRAFT','ATTESTATION','COMPLETION'] as $index=>$gate) { $env['ATHERCAR_ONBOARDING_'.$gate.'_HTTP_ENABLED']=$flags[$index]; }
     $router=$root.'/router-'.$port.'.php';
@@ -295,7 +298,7 @@ try {
     journeyRequest(journeyBrowser($enabled),'GET','/owner.php',303,'/owner_login.php');
     [$jar,$csrf]=journeySession($incomplete); $c=journeyBrowser($original,$jar);
     journeyRequest($c,'POST','/owner_switch_account.php',403,null,['form_params'=>['csrf_token'=>'wrong']]);
-    journeyRequest($c,'POST','/owner_logout.php',303,'owner_login.php',['form_params'=>['csrf_token'=>$csrf]]);
+    journeyRequest($c,'POST','/owner_logout.php',303,'https://127.0.0.1:1/v2/logout?client_id=journey-client&returnTo=https%3A%2F%2Fjourney-test.invalid%2Fsignin.php',['form_params'=>['csrf_token'=>$csrf]]);
     journeyRequest($c,'GET','/owner.php',303,'/owner_login.php');
     echo "PASS journey anonymous expired revoked disabled switched-account and logout boundaries\n";
 

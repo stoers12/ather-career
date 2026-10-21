@@ -30,6 +30,26 @@ public JSON fields. There are no active JSON
 mutation or JSON request-body contracts. HTML form routes remain HTML
 workflows and are not JSON APIs.
 
+## Standard Owner logout
+
+`owner_logout.php` remains an explicit POST accepting only the session CSRF
+field, without query parameters or uploads. Invalid method/CSRF/input returns
+405/403 before retiring the session. A valid request destroys the full local
+session, including authentication, readiness and pending OIDC state, then sends
+303 to the configured Auth0 issuer's `/v2/logout` with only `client_id` and the
+fixed `returnTo=PUBLIC_BASE_URL/signin.php`. It never requests federated logout.
+The exact return URI must already be in **Allowed Logout URLs of that client**.
+No return/end-session URL comes from the request or Host header; no ID token,
+sid, provider claim or secret is stored or included to support logout.
+
+Missing/invalid trusted configuration after local retirement returns private,
+no-store 503 with bilingual partial-logout feedback and a fixed `/signin.php`
+link. Local authority is not restored. Local retirement failure is not reported
+as success. The outbound redirect only initiates Auth0 SSO logout; a browser or
+Auth0/network/allowlist failure after leaving Ather is not detectable here.
+Neither the plain Sign In return nor a fabricated visit claims remote success.
+Google's browser session may remain active. See the [bounded handoff](auth-onboarding/CARD07-STANDARD-LOGOUT.md).
+
 Unhandled web exceptions are reported through the existing sanitized
 application-error logger with a correlation identifier, route/action context,
 exception class, and broad category. Client responses are generic and do not
