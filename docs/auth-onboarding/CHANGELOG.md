@@ -1,5 +1,13 @@
 # Authentication and onboarding history
 
+## 2026-10-21 — separate integrated-fixture restoration cleanup correction
+
+Confirm the retained Sourcery finding: failed original-source symlink restoration previously threw before User/identity/completion fixture cleanup. Nest database cleanup in finally, retain restoration failure reporting, and reach restart only after both restoration and cleanup succeed. A bounded obstruction in disposable source copies verifies before/after behavior without a production switch or cleanup framework. This is independent of the ONBOARD-UI-003 acceptance commit; Card 08 remains open and Card 07 paused.
+
+## 2026-10-21 — Card 08 bounded ONBOARD-UI-003 acceptance evidence
+
+Extend the existing synthetic integrated HTTP journey with incomplete Dashboard/direct-add destinations and completed zero/existing-project Dashboard-link-to-add-form assertions. Read fingerprints preserve every table; the existing project is a disposable SQL fixture removed in finally. No project-creation POST, production UI/schema/route change or dedicated banner requirement. Sealed-legacy coverage retained. Local evidence/review only; Card 08 original scope remains unresolved, Card 07 paused.
+
 ## 2026-10-21 — Card 08 first integrated journey test (local slice)
 
 Connect the existing mock OIDC registration callback and its User/session/readiness to unseeded draft HTTP save/pause/resume, explicit attestations/review/confirmation, private completion/receipt/Dashboard, and later Profile HTTP-edit preservation through historical retries. Reuse guarded source-copy policies and existing disposable registration fixture/CI invocation; retain every existing group. Test/documentation only: production policies remain null, actual gates off. Original approved Card 08 scope unavailable in the bounded local records; current journey checklist is provisional alongside unchanged accepted contracts. No Card 08 closure or provider/browser qualification claim. Card 07 remains paused.

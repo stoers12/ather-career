@@ -6,6 +6,59 @@ require_once __DIR__ . '/journey-routing-fixtures.php';
 require_once __DIR__ . '/completion-fixtures.php';
 require_once __DIR__ . '/../../../includes/onboarding_drafts.php';
 
+function routingProjectRead(PDO $database, \GuzzleHttp\Client $browser, string $path, int $status = 200, ?string $destination = null): string
+{
+    $before = routingRows($database);
+    $response = $browser->get($path);
+    routingAssert($response->getStatusCode() === $status && $response->getHeaderLine('Location') === ($destination ?? ''), 'Project invitation GET lost its authorized destination: ' . $path);
+    routingAssert(str_contains($response->getHeaderLine('Cache-Control'), 'no-store'), 'Project invitation GET lost private caching.');
+    routingAssert($before === routingRows($database), 'Project invitation GET changed projects or protected rows: ' . $path);
+    return (string) $response->getBody();
+}
+
+function routingProjectInvitation(PDO $database, \GuzzleHttp\Client $browser, int $portfolioId): void
+{
+    $before = routingRows($database);
+    routingAssert((int) $database->query('SELECT COUNT(*) FROM projects WHERE portfolio_id=' . $portfolioId)->fetchColumn() === 0, 'Completion must leave this owner with zero projects.');
+    $check = static function (bool $hasProject) use ($database, $browser): void {
+        $dashboard = new DOMDocument();
+        @$dashboard->loadHTML(routingProjectRead($database, $browser, '/owner.php'));
+        $links = (new DOMXPath($dashboard))->query('//a[normalize-space(.)="+ Add Project"]');
+        routingAssert($links->length === 1, 'Dashboard must expose one usable ordinary Add Project action.');
+        $target = $links->item(0)->getAttribute('href');
+        routingAssert($target === 'owner_projects.php?add=1', 'Dashboard Add Project lost the existing local add destination.');
+        // Follow the rendered href, rather than requesting an independently constructed URL.
+        $formPage = routingProjectRead($database, $browser, $target);
+        $form = new DOMDocument();
+        @$form->loadHTML($formPage);
+        $xpath = new DOMXPath($form);
+        $forms = $xpath->query('//form[@action="owner_projects.php" and translate(@method,"post","POST")="POST"][input[@name="action" and @value="add"]]');
+        routingAssert($forms->length === 1 && $xpath->query('.//input[@name="id"]', $forms->item(0))->length === 0, 'Rendered invitation did not open the add-mode form.');
+        routingAssert($xpath->query('.//input[@name="title" and @value=""]', $forms->item(0))->length === 1 && str_contains($formPage, 'Add New Project'), 'Add form inherited an existing project or lost its heading.');
+        routingAssert($xpath->query('.//input[@name="csrf_token" and string-length(@value)=64]', $forms->item(0))->length === 1, 'Authorized add form lost its CSRF control.');
+        $projects = routingProjectRead($database, $browser, '/owner_projects.php');
+        foreach ([$formPage, $projects] as $page) {
+            routingAssert(str_contains($page, 'Add your first project') === !$hasProject && str_contains($page, 'No projects yet') === !$hasProject, 'Projects empty-state invitation does not match the owner project rows.');
+        }
+    };
+    $check(false);
+    echo "PASS routing ONBOARD-UI-003 completed zero-project owner follows rendered Dashboard Add Project to authorized add form; GET preserves all rows\n";
+
+    $projectId = null;
+    try {
+        // Disposable fixture only: never submit a project-creation POST.
+        $database->prepare('INSERT INTO projects (portfolio_id,title,category,description,github_url) VALUES (?,?,?,?,?)')->execute([$portfolioId, 'Synthetic existing invitation project', 'Synthetic', 'Private acceptance fixture only', '']);
+        $projectId = (int) $database->lastInsertId();
+        $existing = $database->query('SELECT * FROM projects WHERE id=' . $projectId)->fetch(PDO::FETCH_ASSOC);
+        $check(true);
+        routingAssert($database->query('SELECT * FROM projects WHERE id=' . $projectId)->fetch(PDO::FETCH_ASSOC) === $existing, 'Invitation reads changed the existing fixture project.');
+        echo "PASS routing ONBOARD-UI-003 completed existing-project owner retains ordinary Dashboard Add Project and add form without Projects empty-state invitation; all rows preserved\n";
+    } finally {
+        if (is_int($projectId)) { $database->prepare('DELETE FROM projects WHERE id=? AND portfolio_id=?')->execute([$projectId, $portfolioId]); }
+    }
+    routingAssert($before === routingRows($database), 'Project invitation fixture cleanup changed preexisting rows.');
+}
+
 function routingIntegratedJourney(PDO $database, string $subject): void
 {
     global $root, $serverEnvironment;
@@ -37,6 +90,10 @@ function routingIntegratedJourney(PDO $database, string $subject): void
         $userId = $state[INTERNAL_USER_SESSION_KEY]['internal_user_id'] ?? null;
         routingAssert(is_int($userId) && ($state[OWNER_READINESS_SESSION_KEY]['internal_user_id'] ?? null) === $userId, 'Callback authority did not bind the integrated journey.');
         $session = routingCookie($browser);
+        foreach (['/owner.php', '/owner_projects.php?add=1'] as $path) {
+            routingProjectRead($database, $browser, $path, 303, '/owner_onboarding_editor.php');
+        }
+        echo "PASS routing ONBOARD-UI-003 incomplete authenticated Dashboard and direct project-add GET require the capable onboarding editor; all rows preserved\n";
         $json = static function (string $method, string $path, int $status = 200, array $options = []) use ($browser): array {
             $r = $browser->request($method, $path, $options);
             routingAssert($r->getStatusCode() === $status, 'Integrated ' . $path . ' expected ' . $status . ', got ' . $r->getStatusCode());
@@ -81,6 +138,7 @@ function routingIntegratedJourney(PDO $database, string $subject): void
         $portfolioId = (int) $receipt['portfolio_id'];
         routingAssert((int) $database->query('SELECT is_published FROM portfolios WHERE id=' . $portfolioId)->fetchColumn() === 0, 'Integrated completion published the Portfolio.');
         routingAssert($browser->get('/owner.php')->getStatusCode() === 200, 'Completion receipt did not authorize Dashboard access.');
+        routingProjectInvitation($database, $browser, $portfolioId);
 
         $edit = $browser->post('/owner_profile.php', ['form_params' => ['action' => 'save_profile', 'csrf_token' => $csrf, 'profile_id' => (string) $receipt['profile_id'], 'expected_profile_version' => '1', 'full_name' => 'Later integrated Profile']]);
         routingAssert($edit->getStatusCode() === 303 && $edit->getHeaderLine('Location') === 'owner_profile.php?saved=1', 'Later Profile HTTP save failed, status ' . $edit->getStatusCode());
@@ -97,12 +155,16 @@ function routingIntegratedJourney(PDO $database, string $subject): void
         global $appProcess;
         routingStop($appProcess);
         $serverEnvironment = $originalEnvironment;
-        if (is_link($root . '/http/app')) { unlink($root . '/http/app'); }
-        routingAssert(is_string($originalApp) && symlink($originalApp, $root . '/http/app'), 'Original test source restoration failed.');
-        if (is_int($userId)) {
-            $database->prepare('DELETE FROM user_identities WHERE user_id=?')->execute([$userId]);
-            completionCleanup($database, [$userId]);
+        try {
+            if (is_link($root . '/http/app')) { unlink($root . '/http/app'); }
+            routingAssert(is_string($originalApp) && symlink($originalApp, $root . '/http/app'), 'Original test source restoration failed.');
+        } finally {
+            if (is_int($userId)) {
+                $database->prepare('DELETE FROM user_identities WHERE user_id=?')->execute([$userId]);
+                completionCleanup($database, [$userId]);
+            }
         }
+        // A restoration or cleanup exception must propagate before any restart.
         routingStartApp('1');
     }
     routingAssert($before === routingRows($database), 'Integrated fixture did not preserve all preexisting rows.');
