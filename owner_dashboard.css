@@ -19,12 +19,12 @@
 .owner-dashboard-page .admin-layout { display: flex; min-block-size: 100vh; }
 .owner-dashboard-page .admin-sidebar {
     position: sticky; inset-block-start: 0; display: flex; flex: 0 0 var(--dash-sidebar); flex-direction: column;
-    block-size: 100vh; min-block-size: 760px; padding: 35px 18px 26px; background: #102d23; color: #edf5f0;
+    block-size: 100vh; min-block-size: 0; overflow-y: auto; scroll-padding-block: 8px; padding: 35px 18px 26px; background: #102d23; color: #edf5f0;
 }
-.owner-dashboard-page .admin-brand { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-block-end: 58px; padding: 5px 30px; }
+.owner-dashboard-page .admin-brand { display: flex; flex-shrink: 0; flex-direction: column; align-items: center; gap: 8px; margin-block-end: 58px; padding: 5px 30px; }
 .owner-dashboard-page .admin-brand img { display: block; inline-size: 190px; max-inline-size: 100%; block-size: auto; }
 .owner-dashboard-page .admin-brand span { color: #aebdb4; font-size: 17px; letter-spacing: .18em; }
-.owner-dashboard-page .dashboard-navigation { display: flex; flex-direction: column; flex: 1; min-block-size: 0; }
+.owner-dashboard-page .dashboard-navigation { display: flex; flex-direction: column; flex: 1 0 auto; min-block-size: 0; }
 .owner-dashboard-page .admin-sidebar nav { display: grid; gap: 7px; }
 .owner-dashboard-page .admin-sidebar nav a { display: flex; gap: 32px; align-items: center; min-block-size: 58px; padding: 12px 24px; border-radius: 10px; font-size: 19px; }
 .owner-dashboard-page:lang(en) .admin-sidebar nav a { padding-inline-end: 8px; gap: 30px; font-size: 18px; }
@@ -152,7 +152,7 @@
 @media (max-width:800px) {
     .owner-dashboard-page { font-size: 17px; }
     .owner-dashboard-page .admin-layout { display: block; }
-    .owner-dashboard-page .admin-sidebar { position: static; min-block-size: 0; block-size: auto; inline-size: auto; padding: 18px; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 14px; }
+    .owner-dashboard-page .admin-sidebar { position: static; min-block-size: 0; block-size: auto; overflow: visible; inline-size: auto; padding: 18px; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 14px; }
     .owner-dashboard-page .admin-brand { flex-direction: row; margin: 0; padding: 0; justify-content: start; gap: 10px; }
     .owner-dashboard-page .admin-brand img { inline-size: 140px; }
     .owner-dashboard-page .admin-brand span { display: none; }
