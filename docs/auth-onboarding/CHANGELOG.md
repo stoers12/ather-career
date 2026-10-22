@@ -1,5 +1,9 @@
 # Authentication and onboarding history
 
+## 2026-10-22 — bounded PR #8 historical reconciliation
+
+From main `b9d27994d5c2d2c6e9d950158256a481ca2f1332`, reconcile six documentation files only: README, this changelog and phase records 10–13. Preserve PR #7's [historical finalization](13-PHASE2B-PROMPT-LOGIN-EXPERIMENT.md#finalization-evidence-2026-10-09-utc), identify outdated temporary/unmerged checkpoints, and retain the newer D1 and standard-logout notes. Verify PR #3/#6/#7 merge metadata and PR #7 exact-merge CI metadata; attribute old owner/Agent observations rather than claiming a new runtime, data, provider or review-log check. Do not adopt PR #8's obsolete state/next-action text or its historical review exception. No application/schema/workflow change, new test/authentication, deployment, activation or PR #8 merge/closure is part of this correction.
+
 Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). 2026-10-22: local additive022 and explicit per-project controls/current shared public eligibility; owner-authorized technical legacy transition in disposable databases. Preserve content/ownership/timestamps/choices and existing transaction/uncertainty boundaries. No Evidence/slug expansion, live operation or launch; Card07 paused.
 
 
