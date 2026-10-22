@@ -97,6 +97,41 @@
 .owner-dashboard-page:dir(rtl) .admin-sidebar nav a span,
 .owner-dashboard-page:dir(rtl) .dashboard-stat-top > div { flex: 1; }
 .owner-dashboard-page .dashboard-nav-toggle { display: none; }
+/* Desktop light reference refinements; phone and dark layouts retain their existing rules. */
+@media (min-width:1251px) {
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) { --dash-bg: #f5f7f5; --dash-border: #dfe4e1; }
+    .owner-dashboard-page:lang(ar):not([data-evidence-hub-theme="dark"]) { --dash-sidebar: 291px; font-weight: 400; }
+    .owner-dashboard-page:dir(rtl):not([data-evidence-hub-theme="dark"]) .admin-content { padding-inline: 42px 45px; }
+    .owner-dashboard-page:dir(rtl):not([data-evidence-hub-theme="dark"]) .admin-sidebar { padding-inline: 15px; }
+    .owner-dashboard-page:dir(rtl):not([data-evidence-hub-theme="dark"]) .admin-sidebar nav a span { text-align: center; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .admin-sidebar { background: radial-gradient(ellipse at 30% 45%, #153a2d, #102d23 78%); }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .admin-sidebar nav a { gap: 32px; }
+    .owner-dashboard-page:lang(en):not([data-evidence-hub-theme="dark"]) .admin-sidebar nav a { font-size: 19px; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .admin-sidebar nav a svg { inline-size: 32px; block-size: 32px; stroke-width: 1.5; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .sidebar-footer { padding-block-start: 24px; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-eyebrow { font-weight: 500; }
+    .owner-dashboard-page:lang(ar):not([data-evidence-hub-theme="dark"]) h1 { font-weight: 500; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-header { min-block-size: 164px; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-tools { gap: 16px; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-preview { padding-inline: 20px; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-language { border-inline-start: 0; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-visibility { background: #fcf9f5; padding-inline: 22px; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-status { background: #faeed8; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-status svg { inline-size: 27px; block-size: 27px; stroke-width: 1.5; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-project-panel[data-project-state="first"] { min-block-size: 294px; padding-block: 26px; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) [data-project-state="first"] .dashboard-project-copy { margin-block-end: 12px; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) [data-project-state="first"] .dashboard-project-copy h2 { font-size: 34px; }
+    .owner-dashboard-page:lang(ar):not([data-evidence-hub-theme="dark"]) [data-project-state="first"] .dashboard-project-copy h2 { font-size: 32px; font-weight: 500; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-project-illustration { inline-size: 350px; block-size: 238px; object-fit: contain; margin-inline-end: 40px; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-stat-icon svg { inline-size: 34px; block-size: 34px; stroke-width: 1.5; }
+    .owner-dashboard-page:lang(ar):not([data-evidence-hub-theme="dark"]) .dashboard-stat h2 { font-weight: 500; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-stat strong { margin-block-start: 6px; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-stat a { margin-block-start: 8px; }
+    .owner-dashboard-page:dir(rtl):not([data-evidence-hub-theme="dark"]) .dashboard-stat a { justify-content: end; gap: 18px; }
+    .owner-dashboard-page:lang(en):not([data-evidence-hub-theme="dark"]) .dashboard-other-actions { grid-template-columns: minmax(0,.97fr) minmax(0,1.03fr); }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-other-actions a { gap: 26px; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-other-actions a > svg:first-child { inline-size: 34px; block-size: 34px; stroke-width: 1.5; }
+}
 @media (max-width:1250px) {
     .owner-dashboard-page, .owner-dashboard-page:lang(ar) { --dash-sidebar: 244px; }
     .owner-dashboard-page .admin-content { padding-inline: 28px; }
