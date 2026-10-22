@@ -72,6 +72,8 @@
 .owner-dashboard-page:lang(ar) .dashboard-add { min-inline-size: 225px; }
 .owner-dashboard-page .dashboard-add:hover { background: #124e37; }
 .owner-dashboard-page .dashboard-project-illustration { inline-size: 330px; max-inline-size: 36%; block-size: auto; margin-inline-end: 48px; }
+.owner-dashboard-page[data-evidence-hub-theme="dark"] .dashboard-project-illustration { filter: invert(.85) hue-rotate(180deg) saturate(.55); }
+.owner-dashboard-page[data-evidence-hub-theme="dark"] .dashboard-preview { border-color: var(--dash-muted); }
 .owner-dashboard-page .dashboard-project-panel[data-project-state="next"] { min-block-size: 160px; }
 .owner-dashboard-page [data-project-state="next"] .dashboard-project-copy { display: grid; inline-size: 100%; grid-template-columns: minmax(0,1fr) auto; gap: 8px 24px; align-items: center; }
 .owner-dashboard-page [data-project-state="next"] h2 { font-size: 28px; }
@@ -139,7 +141,12 @@
     .owner-dashboard-page .dashboard-header { flex-wrap: wrap; padding-block-end: 24px; }
     .owner-dashboard-page .dashboard-tools { order: -1; margin-inline-start: auto; }
     .owner-dashboard-page .dashboard-heading { flex-basis: 100%; }
-    .owner-dashboard-page .dashboard-stat-top { gap: 16px; }
+    .owner-dashboard-page .dashboard-stat-top { gap: 16px; flex-wrap: wrap; }
+    .owner-dashboard-page .dashboard-stat-top > div { min-inline-size: 0; overflow-wrap: anywhere; }
+    .owner-dashboard-page .dashboard-project-panel { flex-wrap: wrap; }
+    .owner-dashboard-page .dashboard-project-copy { flex: 1 1 280px; overflow-wrap: anywhere; }
+    .owner-dashboard-page .dashboard-project-illustration { margin-inline: auto; }
+    .owner-dashboard-page .dashboard-add { min-inline-size: 0; max-inline-size: 100%; }
     .owner-dashboard-page .dashboard-stat { padding-inline: 20px; }
 }
 @media (max-width:800px) {
@@ -157,6 +164,7 @@
     .owner-dashboard-page .sidebar-footer { margin-block-start: 20px; margin-inline: 0; }
     .owner-dashboard-page .admin-content, .owner-dashboard-page:dir(rtl) .admin-content { padding: 22px 16px; }
     .owner-dashboard-page h1, .owner-dashboard-page:lang(ar) h1 { font-size: 30px; }
+    .owner-dashboard-page .dashboard-header { gap: 16px; padding-block-end: 20px; min-block-size: 0; }
     .owner-dashboard-page .dashboard-heading > p:last-child { font-size: 18px; }
     .owner-dashboard-page .dashboard-tools { gap: 10px; flex-shrink: 1; flex-wrap: wrap; justify-content: end; font-size: 14px; }
     .owner-dashboard-page .dashboard-preview { padding-inline: 10px; min-block-size: 42px; }
@@ -166,8 +174,9 @@
     .owner-dashboard-page .dashboard-visibility { flex-direction: column; align-items: start; padding: 18px; }
     .owner-dashboard-page .dashboard-visibility p { font-size: 17px; }
     .owner-dashboard-page .dashboard-visibility a { white-space: normal; font-size: 17px; }
-    .owner-dashboard-page .dashboard-project-panel { padding: 24px 20px; flex-direction: column-reverse; align-items: start; }
-    .owner-dashboard-page .dashboard-project-illustration { align-self: center; inline-size: 210px; max-inline-size: 100%; margin-inline-end: 0; }
+    .owner-dashboard-page .dashboard-project-panel { padding: 20px; flex-direction: column; align-items: start; gap: 16px; }
+    .owner-dashboard-page .dashboard-project-copy { flex: none; inline-size: 100%; }
+    .owner-dashboard-page .dashboard-project-illustration { align-self: center; inline-size: 144px; max-inline-size: 100%; margin-inline: 0; }
     .owner-dashboard-page [data-project-state="next"] .dashboard-project-copy { display: block; }
     .owner-dashboard-page [data-project-state="next"] p { margin-block: 12px 20px; }
     .owner-dashboard-page .dashboard-project-copy h2 { font-size: 25px; }
