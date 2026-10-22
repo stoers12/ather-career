@@ -1,5 +1,9 @@
 # Ather authentication and onboarding project record
 
+## Historical Phase 2A/2B reconciliation — 2026-10-22
+
+[Historical finalization evidence](13-PHASE2B-PROMPT-LOGIN-EXPERIMENT.md#finalization-evidence-2026-10-09-utc) preserves the bounded closure of PR #3/#6/#7 and distinguishes verified merge/CI metadata from retained owner/Agent observations. Draft PR #8 is a historical source, not a merged implementation dependency. Its old current-state and next-action text is not adopted. Later implementation notes below retain their own scope; this entry neither updates deployment/activation status nor restores the old instruction to begin Landing. The dated 2026-10-06 status further below is historical.
+
 Bounded local Card06: [per-project publication](CARD06-PER-PROJECT-PUBLICATION.md) implements private new projects, an independent owner selection and shared current public eligibility with additive022. Technical legacy transition authorized for disposable review; actual gates off, policies null, registration Google-only. Next: local source/evidence review, not launch; Card07 paused.
 
 
@@ -26,7 +30,7 @@ Card 04 bounded completion transport: [30 — completion HTTP transport](30-COMP
 
 **Step-2 visual follow-up (2026-10-15):** The owner reports that the earlier navigation and step-3 corrections work as expected. The country select and adjacent preferred-language cards now share a 60px control height in the Public identity preview; owner visual acceptance of this separate alignment correction is pending.
 
-**Current status (2026-10-06):** Phase 2A is merged, deployed, and accepted after two intentional signed Owner callbacks. Canonical main is `e1cd58d41d9996d3a97df425e9fd098d98258fbb`; Migration 014 and five exact bindings remain. Phase 2B account selection is being developed only in an isolated branch; see [its scoped contract](11-PHASE2B-ACCOUNT-SELECTION.md). No Phase 2B runtime or Auth0 change is authorized. The older phase records below retain their historical dates.
+**Historical status (2026-10-06; superseded for Phase 2A/2B completion by the reconciliation above):** Phase 2A is merged, deployed, and accepted after two intentional signed Owner callbacks. Canonical main is `e1cd58d41d9996d3a97df425e9fd098d98258fbb`; Migration 014 and five exact bindings remain. Phase 2B account selection is being developed only in an isolated branch; see [its scoped contract](11-PHASE2B-ACCOUNT-SELECTION.md). No Phase 2B runtime or Auth0 change is authorized. The older phase records below retain their historical dates.
 
 Ather is a broader professional platform, initially focused on students and graduates in Jordan. It preserves the story, decisions, role, evidence, lessons and impact behind work. The established green-and-gold identity carries into later design work. AI recommendations and recruiter/company accounts are future capabilities.
 
