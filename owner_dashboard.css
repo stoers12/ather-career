@@ -116,7 +116,7 @@
     .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-preview { padding-inline: 20px; }
     .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-language { border-inline-start: 0; }
     .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-visibility { background: #fcf9f5; padding-inline: 22px; }
-    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-status { background: #faeed8; }
+    .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-status { --dash-gold: #926014; background: #faeed8; }
     .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-status svg { inline-size: 27px; block-size: 27px; stroke-width: 1.5; }
     .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) .dashboard-project-panel[data-project-state="first"] { min-block-size: 294px; padding-block: 26px; }
     .owner-dashboard-page:not([data-evidence-hub-theme="dark"]) [data-project-state="first"] .dashboard-project-copy { margin-block-end: 12px; }
