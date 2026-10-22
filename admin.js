@@ -1,5 +1,22 @@
 (function () {
     'use strict';
+    var navigationToggle = document.querySelector('[data-owner-nav-toggle]');
+    if (navigationToggle) {
+        var navigation = document.getElementById(navigationToggle.getAttribute('aria-controls'));
+        var sidebar = navigationToggle.closest('.admin-sidebar');
+        document.body.classList.add('dashboard-nav-enabled');
+        navigationToggle.addEventListener('click', function () {
+            var open = navigationToggle.getAttribute('aria-expanded') !== 'true';
+            navigationToggle.setAttribute('aria-expanded', String(open));
+            sidebar.classList.toggle('dashboard-nav-open', open);
+        });
+        navigation.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape' || navigationToggle.getAttribute('aria-expanded') !== 'true') return;
+            navigationToggle.setAttribute('aria-expanded', 'false');
+            sidebar.classList.remove('dashboard-nav-open');
+            navigationToggle.focus();
+        });
+    }
     var modal;
     var lastActiveElement;
     function confirmAction(message, callback, title, actionLabel) {
