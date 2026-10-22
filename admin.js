@@ -2,7 +2,6 @@
     'use strict';
     var navigationToggle = document.querySelector('[data-owner-nav-toggle]');
     if (navigationToggle) {
-        var navigation = document.getElementById(navigationToggle.getAttribute('aria-controls'));
         var sidebar = navigationToggle.closest('.admin-sidebar');
         document.body.classList.add('dashboard-nav-enabled');
         navigationToggle.addEventListener('click', function () {
@@ -10,8 +9,9 @@
             navigationToggle.setAttribute('aria-expanded', String(open));
             sidebar.classList.toggle('dashboard-nav-open', open);
         });
-        navigation.addEventListener('keydown', function (event) {
+        sidebar.addEventListener('keydown', function (event) {
             if (event.key !== 'Escape' || navigationToggle.getAttribute('aria-expanded') !== 'true') return;
+            event.preventDefault();
             navigationToggle.setAttribute('aria-expanded', 'false');
             sidebar.classList.remove('dashboard-nav-open');
             navigationToggle.focus();
@@ -91,16 +91,23 @@
         });
     });
 
+    var pendingOwnerButtons = new WeakMap();
+
     function restoreOwnerFormState(form) {
         form.dataset.submitting = '';
         form.removeAttribute('aria-busy');
-        form.querySelectorAll('[data-owner-pending-original]').forEach(function (control) {
-            control.disabled = false;
-            control.removeAttribute('aria-disabled');
-            control.textContent = control.dataset.ownerPendingOriginal;
-            control.style.minWidth = control.dataset.ownerPendingWidth || '';
-            delete control.dataset.ownerPendingOriginal;
-            delete control.dataset.ownerPendingWidth;
+        form.querySelectorAll('button, input').forEach(function (control) {
+            var original = pendingOwnerButtons.get(control);
+            if (!original) return;
+            control.disabled = original.disabled;
+            if (original.ariaDisabled === null) control.removeAttribute('aria-disabled');
+            else control.setAttribute('aria-disabled', original.ariaDisabled);
+            if (original.value !== null) control.value = original.value;
+            original.text.forEach(function (entry) { entry.node.nodeValue = entry.value; });
+            if (original.addedLabel) original.addedLabel.remove();
+            control.style.setProperty('min-width', original.minWidth, original.minWidthPriority);
+            if (!original.hadStyle && control.getAttribute('style') === '') control.removeAttribute('style');
+            pendingOwnerButtons.delete(control);
         });
     }
 
@@ -118,10 +125,36 @@
 
             form.dataset.submitting = '1';
             form.setAttribute('aria-busy', 'true');
-            submitter.dataset.ownerPendingOriginal = submitter.textContent;
-            submitter.dataset.ownerPendingWidth = submitter.style.minWidth || '';
+            var original = {
+                disabled: submitter.disabled,
+                ariaDisabled: submitter.getAttribute('aria-disabled'),
+                minWidth: submitter.style.getPropertyValue('min-width'),
+                minWidthPriority: submitter.style.getPropertyPriority('min-width'),
+                hadStyle: submitter.hasAttribute('style'),
+                value: submitter.tagName === 'INPUT' ? submitter.value : null,
+                text: [],
+                addedLabel: null
+            };
+            var pendingLabel = submitter.getAttribute('data-pending-label') || 'Saving…';
+            if (original.value === null) {
+                var walker = document.createTreeWalker(submitter, NodeFilter.SHOW_TEXT, {
+                    acceptNode: function (node) {
+                        return node.parentElement.closest('svg') || node.nodeValue.trim() === ''
+                            ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+                    }
+                });
+                var textNode;
+                while ((textNode = walker.nextNode())) original.text.push({ node: textNode, value: textNode.nodeValue });
+            }
+            pendingOwnerButtons.set(submitter, original);
             submitter.style.minWidth = Math.ceil(submitter.getBoundingClientRect().width) + 'px';
-            submitter.textContent = submitter.getAttribute('data-pending-label') || 'Saving…';
+            if (original.value !== null) submitter.value = pendingLabel;
+            else if (original.text.length) {
+                original.text.forEach(function (entry, index) { entry.node.nodeValue = index === 0 ? pendingLabel : ''; });
+            } else {
+                original.addedLabel = document.createTextNode(pendingLabel);
+                submitter.appendChild(original.addedLabel);
+            }
             submitter.disabled = true;
             submitter.setAttribute('aria-disabled', 'true');
         });
