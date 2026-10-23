@@ -22,7 +22,6 @@
     function closeAccountMenu(restoreFocus) {
         if (!accountMenu || !accountMenu.open) return;
         accountMenu.open = false;
-        accountTrigger.setAttribute('aria-expanded', 'false');
         if (restoreFocus && isVisible(accountTrigger)) accountTrigger.focus();
     }
     function positionAccountMenu() {
@@ -168,7 +167,6 @@
     mobileQuery.addEventListener('change', applyViewportState);
     if (accountMenu) {
         accountMenu.addEventListener('toggle', function () {
-            accountTrigger.setAttribute('aria-expanded', accountMenu.open ? 'true' : 'false');
             if (accountMenu.open) { hideSidebarTooltip(); positionAccountMenu(); }
         });
         accountMenu.addEventListener('keydown', function (event) {

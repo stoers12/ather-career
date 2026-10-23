@@ -472,7 +472,9 @@ body.evidence-hub-page .evidence-hub-sidebar .evidence-hub-icon { width: 20px; h
 body.evidence-hub-page .evidence-hub-sidebar-footer { display: flex; flex: 0 0 auto; flex-direction: column; gap: 4px; width: 100%; margin: 0; padding: 12px 0 0; border-top: 1px solid rgba(216, 243, 231, .14); }
 body.evidence-hub-page .evidence-hub-owner-context { display: flex; align-items: center; width: 100%; min-height: 44px; gap: 12px; padding: 4px 12px; border-radius: 9px; color: #d7e7dc; font-size: 14px; line-height: 18px; cursor: pointer; list-style: none; }
 body.evidence-hub-page .evidence-hub-owner-context::-webkit-details-marker { display: none; }
-body.evidence-hub-page .evidence-hub-owner-context::after { content: ""; flex: 0 0 6px; height: 6px; margin-inline-start: auto; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); }
+/* A decorative child keeps the disclosure independent of tooltip pseudo-elements. */
+body.evidence-hub-page .evidence-hub-account-indicator { flex: 0 0 6px; height: 6px; margin-inline-start: auto; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); }
+body.evidence-hub-page details[open] > summary > .evidence-hub-account-indicator { transform: rotate(225deg); }
 body.evidence-hub-page .evidence-hub-owner-context:hover,
 body.evidence-hub-page .evidence-hub-account-menu[open] > summary { background: var(--eh-sidebar-hover); }
 body.evidence-hub-page .evidence-hub-account-menu { width: 100%; }
@@ -505,7 +507,7 @@ body.evidence-hub-page.evidence-hub-sidebar-collapsed .evidence-hub-sign-out .ev
 body.evidence-hub-page.evidence-hub-sidebar-collapsed .evidence-hub-private-workspace { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 body.evidence-hub-page.evidence-hub-sidebar-collapsed .evidence-hub-owner-context { justify-content: center; padding-inline: 0; }
 @media (min-width: 1101px) {
-    body.evidence-hub-page.evidence-hub-sidebar-collapsed .evidence-hub-owner-context::after { display: none; }
+    body.evidence-hub-page.evidence-hub-sidebar-collapsed .evidence-hub-account-indicator { display: none; }
 }
 @media (max-width: 1100px) {
     body.evidence-hub-page .admin-layout,

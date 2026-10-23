@@ -105,6 +105,13 @@ final class AccountSelectionStaticTest
             $panel = '//details[@class="evidence-hub-account-menu"]/div[@id="evidence-hub-account-actions"]';
             phase2Assert($xpath->query('//details/summary[@aria-controls="evidence-hub-account-actions" and @aria-label="Account options"]')->length === 1
                 && $xpath->query($panel . '/form')->length === 2, 'Evidence Hub must expose an accessible native disclosure containing both original account forms.');
+            $disclosure = '//details[@class="evidence-hub-account-menu"]';
+            phase2Assert($xpath->query($disclosure . '[not(@open)]/*[1][self::summary and not(@aria-expanded) and not(@role)]')->length === 1
+                && $xpath->query($disclosure . '/summary/span[@class="evidence-hub-account-indicator" and @aria-hidden="true" and not(@tabindex)]')->length === 1,
+                'Account disclosure must start closed with its native summary first and an unfocusable decorative indicator.');
+            $hubScript = (string) file_get_contents($root . 'evidence_hub.js');
+            phase2Assert(!str_contains($hubScript, "accountTrigger.setAttribute('aria-expanded'")
+                && str_contains($hubScript, 'accountMenu.open'), 'Account disclosure state must come only from details.open.');
             foreach (['/owner_switch_account.php', '/owner_logout.php'] as $action) {
                 $form = $panel . '/form[@method="POST" and @action="' . $action . '"]';
                 phase2Assert($xpath->query($form)->length === 1

@@ -176,9 +176,10 @@ function ownerEvidenceHubNavigation(): void
         </nav>
         <div class="sidebar-footer evidence-hub-sidebar-footer">
             <details class="evidence-hub-account-menu">
-                <summary class="evidence-hub-owner-context" aria-label="Account options" aria-controls="evidence-hub-account-actions" aria-expanded="false" data-sidebar-tooltip="Account options">
+                <summary class="evidence-hub-owner-context" aria-label="Account options" aria-controls="evidence-hub-account-actions" data-sidebar-tooltip="Account options">
                     <?php echo evidenceHubOwnerIcon('user-round'); ?>
                     <span class="evidence-hub-owner-context-copy"><span>Portfolio owner</span><span class="evidence-hub-private-workspace"><?php echo evidenceHubOwnerIcon('lock-keyhole'); ?><span>Private workspace</span></span></span>
+                    <span class="evidence-hub-account-indicator" aria-hidden="true"></span>
                 </summary>
                 <div class="evidence-hub-account-panel" id="evidence-hub-account-actions" role="group" aria-label="Account actions">
                     <?php ownerAccountSelectionForm(true); ?>
