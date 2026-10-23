@@ -14,7 +14,7 @@ try {
   browser=await chromium.launch({headless:true});
   context=await browser.newContext({viewport:{width:1440,height:1000}});
   await context.addCookies([{name:fixture.cookie.Name,value:fixture.cookie.Value,url:base,httpOnly:true,sameSite:'Lax'}]);
-  const p=await context.newPage(); await p.goto(base+'/owner_projects.php');
+  const p=await context.newPage(); await p.goto(base+'/owner_projects.php?lang=en');
   const card=p.locator('.admin-project-grid article').filter({has:p.getByRole('heading',{name:'Project Alpha',exact:true})});
   const form=card.locator('.project-publication-form');
   stage='explicit keyboard controls';

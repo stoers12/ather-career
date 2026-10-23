@@ -103,8 +103,8 @@ foreach (['statement','after'] as $mode) {
         completionAssert(str_contains($body,'may already be saved') && ownedPublicLifecycleState($db,$fresh)['is_published']===1,'HTTP uncertain result concealed or compensated commit.');
         // Explicit authorized GET uses the ordinary reader, without replaying POST.
         file_put_contents($root.'/control/mode','');
-        $response=$client->get('/owner_publication.php');
-        completionAssert($response->getStatusCode()===200 && str_contains((string)$response->getBody(),'Your Portfolio is live'),'Authorized state recovery failed.');
+        $response=$client->get('/owner_publication.php?lang=en');
+        completionAssert($response->getStatusCode()===200 && $response->getHeaderLine('Content-Language')==='en' && str_contains((string)$response->getBody(),'Your Portfolio is live'),'Authorized state recovery failed.');
     }
 }
 file_put_contents($root.'/control/mode','');
