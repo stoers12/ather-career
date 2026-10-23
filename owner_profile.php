@@ -125,7 +125,6 @@ ownerLayoutStart('Personal Info', 'profile', true, ['account_name' => $profile['
 ?>
 <div class="admin-page-header">
     <div class="admin-page-header-copy"><p class="admin-eyebrow"><?php echo ownerEscapeHtml(ownerText('Profile')); ?></p><h1 class="admin-page-title"><?php echo ownerEscapeHtml(ownerText('Personal Info')); ?></h1><p class="admin-page-description"><?php echo ownerEscapeHtml(ownerText('Manage your private Portfolio information.')); ?></p></div>
-    <div class="admin-page-header-actions"><a class="button-primary" href="owner_preview.php"><?php echo ownerEscapeHtml(ownerText('Private Preview')); ?></a></div>
 </div>
 <?php ownerRenderFormFeedback($message, $errors, $fieldErrors); if (isset($profile['_submitted_profile_version']) && $errors !== []) { echo '<p><a href="owner_profile.php">Reload saved profile and review before applying your changes again</a>. A selected photo may need reselection.</p>'; } ?>
 <div class="profile-summary"><div><strong><?php echo ownerEscapeHtml($profile['full_name'] ?: ownerText('Your name')); ?></strong><span><?php echo ownerEscapeHtml($profile['professional_title'] ?: ownerText('Add a professional title')); ?></span></div><div class="completion"><div class="completion-header"><span><?php echo ownerEscapeHtml(ownerText('Profile completion')); ?></span><strong><?php echo $profileCompletion; ?>%</strong></div><progress value="<?php echo $profileCompletion; ?>" max="100"><?php echo $profileCompletion; ?>%</progress></div></div>

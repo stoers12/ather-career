@@ -175,15 +175,19 @@ function ownerEvidenceHubNavigation(): void
             <?php endforeach; ?>
         </nav>
         <div class="sidebar-footer evidence-hub-sidebar-footer">
-            <div class="evidence-hub-owner-context" tabindex="0" data-sidebar-tooltip="Portfolio owner — Private workspace" data-sidebar-tooltip-always="true">
-                <?php echo evidenceHubOwnerIcon('user-round'); ?>
-                <span class="evidence-hub-owner-context-copy"><span>Portfolio owner</span><span class="evidence-hub-private-workspace"><?php echo evidenceHubOwnerIcon('lock-keyhole'); ?><span>Private workspace</span></span></span>
-            </div>
-            <?php ownerAccountSelectionForm(true); ?>
-            <form class="sidebar-logout-form" method="POST" action="/owner_logout.php" data-owner-form>
-                <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
-                <button class="sidebar-logout-button evidence-hub-sign-out" type="submit" data-pending-label="Logging out…" aria-label="Log out" data-sidebar-tooltip="Log out" data-sidebar-tooltip-always="true"><?php echo evidenceHubOwnerIcon('log-out'); ?><span class="evidence-hub-sidebar-label">Log out</span></button>
-            </form>
+            <details class="evidence-hub-account-menu">
+                <summary class="evidence-hub-owner-context" aria-label="Account options" aria-controls="evidence-hub-account-actions" aria-expanded="false" data-sidebar-tooltip="Account options">
+                    <?php echo evidenceHubOwnerIcon('user-round'); ?>
+                    <span class="evidence-hub-owner-context-copy"><span>Portfolio owner</span><span class="evidence-hub-private-workspace"><?php echo evidenceHubOwnerIcon('lock-keyhole'); ?><span>Private workspace</span></span></span>
+                </summary>
+                <div class="evidence-hub-account-panel" id="evidence-hub-account-actions" role="group" aria-label="Account actions">
+                    <?php ownerAccountSelectionForm(true); ?>
+                    <form class="sidebar-logout-form" method="POST" action="/owner_logout.php" data-owner-form>
+                        <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
+                        <button class="sidebar-logout-button evidence-hub-sign-out" type="submit" data-pending-label="Logging out…" aria-label="Log out"><?php echo evidenceHubOwnerIcon('log-out'); ?><span class="evidence-hub-account-action-label">Log out</span></button>
+                    </form>
+                </div>
+            </details>
         </div>
     </aside>
     <div class="evidence-hub-mobile-backdrop" id="evidence-hub-mobile-backdrop" aria-hidden="true" hidden></div>
@@ -195,7 +199,7 @@ function ownerAccountSelectionForm(bool $evidenceHub = false, ?string $locale = 
     ?>
     <form class="sidebar-logout-form" method="POST" action="/owner_switch_account.php" data-owner-form>
         <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
-        <button class="sidebar-logout-button<?php echo $evidenceHub ? ' evidence-hub-sign-out' : ''; ?>" type="submit" data-pending-label="<?php echo $locale !== null ? ownerDashboardCopy('switch_pending', $locale) : 'Opening account selection…'; ?>"<?php if ($evidenceHub): ?> data-sidebar-tooltip="Use another account" data-sidebar-tooltip-always="true"<?php endif; ?>><?php if ($evidenceHub): ?><?php echo evidenceHubOwnerIcon('user-round'); ?><span class="evidence-hub-sidebar-label"><?php endif; ?><?php if ($locale !== null): ?><?php echo evidenceHubOwnerIcon('switch'); ?><?php echo ownerDashboardCopy('switch', $locale); ?><?php else: ?>Use another account <span lang="ar" dir="rtl">استخدام حساب آخر</span><?php endif; ?><?php if ($evidenceHub): ?></span><?php endif; ?></button>
+        <button class="sidebar-logout-button<?php echo $evidenceHub ? ' evidence-hub-sign-out' : ''; ?>" type="submit" data-pending-label="<?php echo $locale !== null ? ownerDashboardCopy('switch_pending', $locale) : 'Opening account selection…'; ?>"><?php if ($evidenceHub): ?><?php echo evidenceHubOwnerIcon('user-round'); ?><span class="evidence-hub-account-action-label"><?php endif; ?><?php if ($locale !== null): ?><?php echo evidenceHubOwnerIcon('switch'); ?><?php echo ownerDashboardCopy('switch', $locale); ?><?php else: ?>Use another account<?php if (!$evidenceHub): ?> <span lang="ar" dir="rtl">استخدام حساب آخر</span><?php endif; ?><?php endif; ?><?php if ($evidenceHub): ?></span><?php endif; ?></button>
     </form>
     <?php
 }

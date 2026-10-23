@@ -45,7 +45,7 @@ final class AccountSelectionStaticTest
             && str_contains($layout, 'method="POST"')
             && str_contains($layout, 'getCsrfToken()')
             && str_contains($layout, 'Use another account')
-            && str_contains($layout, 'lang="ar" dir="rtl"'), 'Account selection must be keyboard-operable and bilingual in both Owner navigations.');
+            && str_contains($layout, 'lang="ar" dir="rtl"'), 'Account selection must remain keyboard-operable, with localized workspace and English Evidence Hub presentation.');
         phase2Assert(str_contains($shim, "require dirname(__DIR__) . '/app/owner_switch_account.php'")
             && str_contains($callback, 'resolveAuth0InternalUser')
             && !preg_match('/logout_uri|federated|account_link|account_merge|INSERT\s+INTO\s+users/i', $route), 'Selection must return through the existing exact binding and never federate logout or create accounts.');
@@ -91,11 +91,27 @@ final class AccountSelectionStaticTest
                     && str_contains($rendered, 'name="csrf_token"')
                     && str_contains($rendered, 'value="' . str_repeat('a', 64) . '"')
                     && str_contains($rendered, '<button ')
-                    && str_contains($rendered, 'Use another account')
-                    && str_contains($rendered, '<span lang="ar" dir="rtl">استخدام حساب آخر</span>'), 'Rendered account chooser lost its POST, CSRF, keyboard, English, or Arabic contract.');
+                    && str_contains($rendered, 'Use another account'), 'Rendered account chooser lost its POST, CSRF, native button or English label.');
             }
-            phase2Assert(str_contains($hub, 'data-sidebar-tooltip="Use another account"')
-                && str_contains($hub, 'evidence-hub-sidebar-label'), 'Collapsed Evidence Hub chooser lost its accessible label.');
+            phase2Assert(str_contains($standard, '<span lang="ar" dir="rtl">استخدام حساب آخر</span>')
+                && !str_contains($hub, 'استخدام حساب آخر') && !str_contains($hub, 'lang="ar"')
+                && str_contains($hub, 'evidence-hub-account-action-label'), 'Only the Evidence Hub account action must omit the Arabic line and retain a visible English label when navigation is collapsed.');
+            ob_start();
+            ownerEvidenceHubNavigation();
+            $navigation = (string) ob_get_clean();
+            $dom = new DOMDocument();
+            @$dom->loadHTML('<?xml encoding="UTF-8">' . $navigation);
+            $xpath = new DOMXPath($dom);
+            $panel = '//details[@class="evidence-hub-account-menu"]/div[@id="evidence-hub-account-actions"]';
+            phase2Assert($xpath->query('//details/summary[@aria-controls="evidence-hub-account-actions" and @aria-label="Account options"]')->length === 1
+                && $xpath->query($panel . '/form')->length === 2, 'Evidence Hub must expose an accessible native disclosure containing both original account forms.');
+            foreach (['/owner_switch_account.php', '/owner_logout.php'] as $action) {
+                $form = $panel . '/form[@method="POST" and @action="' . $action . '"]';
+                phase2Assert($xpath->query($form)->length === 1
+                    && $xpath->query($form . '/input')->length === 1
+                    && $xpath->query($form . '/input[@name="csrf_token" and @value="' . str_repeat('a', 64) . '"]')->length === 1
+                    && $xpath->query($form . '/button[@type="submit"]')->length === 1, 'Moving account actions must preserve exact POST destinations, a single CSRF field and native submission.');
+            }
             foreach (['ar' => 'تبديل الحساب', 'en' => 'Switch account'] as $locale => $label) {
                 ob_start();
                 ownerAccountSelectionForm(false, $locale);
