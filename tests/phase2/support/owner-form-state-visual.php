@@ -12,7 +12,7 @@ $page = $argv[2] ?? 'dashboard';
 $pages = ['dashboard'=>'Dashboard', 'profile'=>'Personal Info', 'projects'=>'Projects',
     'experiences'=>'Experience', 'messages'=>'Messages', 'publication'=>'Publication', 'evidence_hub'=>'Evidence Hub'];
 if (!isset($pages[$page])) exit(2);
-ownerLayoutStart($pages[$page], $page, $page === 'dashboard', $page === 'dashboard' ? ['locale'=>$locale, 'account_name'=>'Synthetic owner'] : []);
+ownerLayoutStart($pages[$page], $page, true, ['locale'=>$locale, 'account_name'=>'Synthetic owner']);
 ?>
 <h1>Owner form-state regression fixture</h1>
 <?php if ($page === 'publication'): ?>

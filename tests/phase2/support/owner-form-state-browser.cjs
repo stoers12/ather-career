@@ -71,7 +71,7 @@ async function simulatedRestore(page,form,button,label){
   const url=base+'/owner.php?lang='+locale;
   const visit=async(suffix='')=>{await p.goto(url+suffix,{waitUntil:'networkidle'});await p.evaluate(()=>document.fonts.ready);};
   if(group!=='buttons'){
-   await visit();const toggle=p.locator('[data-owner-nav-toggle]'),nav=p.locator('#dashboard-navigation');
+   await visit();const toggle=p.locator('[data-owner-nav-toggle]'),nav=p.locator('#owner-navigation');
    for(const target of ['toggle','link','switch','logout']){
     await toggle.click();assert.equal(await toggle.getAttribute('aria-expanded'),'true');assert.equal(await nav.isVisible(),true);
     const focused=target==='toggle'?toggle:target==='link'?nav.locator('nav a').first():nav.locator('form[action="/owner_'+(target==='switch'?'switch_account':'logout')+'.php"] button');
@@ -95,13 +95,14 @@ async function simulatedRestore(page,form,button,label){
   }
   assert.deepEqual(errors,[]);await context.close();
   if(group!=='buttons'){
-   const nojs=await browser.newContext({javaScriptEnabled:false,viewport:{width,height:844}});const p=await nojs.newPage();await p.goto(url);assert.equal(await p.locator('#dashboard-navigation').isVisible(),true);assert.equal(await p.locator('#dashboard-navigation nav a').count(),7);assert.equal(await p.locator('[data-owner-nav-toggle]').isVisible(),false);await nojs.close();checks.push({check:locale+' '+width+' no-JS navigation',result:'PASS'});
+   const nojs=await browser.newContext({javaScriptEnabled:false,viewport:{width,height:844}});const p=await nojs.newPage();await p.goto(url);assert.equal(await p.locator('#owner-navigation').isVisible(),true);assert.equal(await p.locator('#owner-navigation nav a').count(),7);assert.equal(await p.locator('[data-owner-nav-toggle]').isVisible(),false);await nojs.close();checks.push({check:locale+' '+width+' no-JS navigation',result:'PASS'});
   }
  }
  if(group!=='menu'){
   const c=await browser.newContext({viewport:{width:1440,height:1000}});const p=await c.newPage();
   for(const page of ['profile','projects','experiences','messages','evidence_hub']){
    await p.goto(base+'/owner.php?lang=en&page='+page,{waitUntil:'networkidle'});
+   if(page==='evidence_hub'){await p.locator('.evidence-hub-account-menu > summary').press('Enter');await p.waitForFunction(()=>document.querySelector('.evidence-hub-account-menu').open);}
    for(const action of ['switch_account','logout']){
     const form=p.locator('form[action="/owner_'+action+'.php"]');await simulatedRestore(p,form,form.locator('button'),page+' shared '+action);
    }
