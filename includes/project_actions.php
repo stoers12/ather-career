@@ -196,12 +196,21 @@ function renderProjectPublicationControl(array $project, bool $portfolioPublishe
     $selected = (int)$project['is_published'] === 1;
     $status = $selected ? ($portfolioPublished ? 'Published in public Portfolio' : 'Selected for public Portfolio (Portfolio is private)') : 'Private project';
     $label = $selected ? 'Hide project' : 'Show in public Portfolio';
+    if (isset($GLOBALS['owner_workspace_locale'])) {
+        $status = ownerText($status);
+        $label = ownerText($label);
+    }
     echo '<p class="project-publication-status">' . ownerEscapeHtml($status) . '</p>';
     echo '<form method="POST" action="owner_projects.php" data-owner-form class="project-publication-form">';
     echo '<input type="hidden" name="action" value="set_project_publication">';
     echo '<input type="hidden" name="csrf_token" value="' . ownerEscapeHtml(getCsrfToken()) . '">';
     echo '<input type="hidden" name="id" value="' . (int)$project['id'] . '">';
     echo '<input type="hidden" name="is_published" value="' . ($selected ? '0' : '1') . '">';
-    echo '<button type="submit" class="button-secondary" data-pending-label="Saving publication…">' . ownerEscapeHtml($label) . '</button>';
-    echo '<p class="form-hint">Only selected projects appear when your Portfolio is published. Project Evidence remains private.</p></form>';
+    $pending = isset($GLOBALS['owner_workspace_locale']) ? ownerText('Saving publication…') : 'Saving publication…';
+    $hint = 'Only selected projects appear when your Portfolio is published. Project Evidence remains private.';
+    if (isset($GLOBALS['owner_workspace_locale'])) {
+        $hint = ownerText($hint);
+    }
+    echo '<button type="submit" class="button-secondary" data-pending-label="' . ownerEscapeHtml($pending) . '">' . ownerEscapeHtml($label) . '</button>';
+    echo '<p class="form-hint">' . ownerEscapeHtml($hint) . '</p></form>';
 }

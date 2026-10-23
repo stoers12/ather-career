@@ -169,7 +169,9 @@ final class EvidenceHubOwnerRoutePresenterTest
         phase2Assert(str_contains($layout, 'bool $themeCapable = false') && str_contains($layout, 'if ($themeCapable)') && str_contains($layout, "versionedAssetUrl('owner_theme.js')") && str_contains($layout, "versionedAssetUrl('admin.js')"), 'Shared Owner layout must load its theme resolver only for explicit theme-capable pages.');
         phase2Assert(strpos($layout, "versionedAssetUrl('owner_theme.js')") > strpos($layout, '<body') && strpos($layout, "versionedAssetUrl('owner_theme.js')") < strpos($layout, '<div class="admin-layout'), 'Owner theme must resolve before workspace content.');
         phase2Assert(str_contains(self::read('owner_evidence_hub.php'), "ownerLayoutStart('Evidence Hub', 'evidence_hub', true)") && str_contains(self::read('owner_project_evidence.php'), "ownerLayoutStart('Edit project evidence', 'evidence_hub', true)"), 'Evidence Hub and its editor must explicitly opt in to dark theme capability.');
-        phase2Assert(str_contains(self::read('owner_profile.php'), "ownerLayoutStart('Personal Info', 'profile')"), 'Unchanged Owner pages must retain the default Light-only capability.');
+        foreach (['owner_profile.php' => ['Personal Info', 'profile'], 'owner_projects.php' => ['Projects', 'projects'], 'owner_experiences.php' => ['Experience', 'experiences'], 'owner_messages.php' => ['Messages', 'messages'], 'owner_publication.php' => ['Publication', 'publication']] as $route => [$title, $active]) {
+            phase2Assert(str_contains(self::read($route), "ownerLayoutStart('{$title}', '{$active}', true, ['account_name' =>"), 'Portfolio workspace routes must explicitly opt into the shared theme with their own active page.');
+        }
         foreach (['evidence-hub-mobile-close', 'Close navigation', 'evidence-hub-mobile-backdrop', 'aria-controls="evidence-hub-mobile-drawer"'] as $required) {
             phase2Assert(str_contains($layout, $required), "Evidence Hub mobile drawer structure is missing {$required}.");
         }

@@ -3,17 +3,17 @@
     var navigationToggle = document.querySelector('[data-owner-nav-toggle]');
     if (navigationToggle) {
         var sidebar = navigationToggle.closest('.admin-sidebar');
-        document.body.classList.add('dashboard-nav-enabled');
+        document.body.classList.add('owner-nav-enabled');
         navigationToggle.addEventListener('click', function () {
             var open = navigationToggle.getAttribute('aria-expanded') !== 'true';
             navigationToggle.setAttribute('aria-expanded', String(open));
-            sidebar.classList.toggle('dashboard-nav-open', open);
+            sidebar.classList.toggle('owner-nav-open', open);
         });
         sidebar.addEventListener('keydown', function (event) {
             if (event.key !== 'Escape' || navigationToggle.getAttribute('aria-expanded') !== 'true') return;
             event.preventDefault();
             navigationToggle.setAttribute('aria-expanded', 'false');
-            sidebar.classList.remove('dashboard-nav-open');
+            sidebar.classList.remove('owner-nav-open');
             navigationToggle.focus();
         });
     }
@@ -27,9 +27,10 @@
             document.body.appendChild(modal);
         }
         lastActiveElement = document.activeElement;
-        modal.querySelector('#confirm-title').textContent = title || 'Are you sure?';
+        modal.querySelector('#confirm-title').textContent = title || document.body.getAttribute('data-owner-confirm-title') || 'Are you sure?';
+        modal.querySelector('.confirm-cancel').textContent = document.body.getAttribute('data-owner-confirm-cancel') || 'Cancel';
         modal.querySelector('.confirm-message').textContent = message;
-        modal.querySelector('.confirm-ok').textContent = actionLabel || 'Continue';
+        modal.querySelector('.confirm-ok').textContent = actionLabel || document.body.getAttribute('data-owner-confirm-action') || 'Continue';
         modal.hidden = false;
         var cancel = modal.querySelector('.confirm-cancel');
         var ok = modal.querySelector('.confirm-ok');

@@ -40,7 +40,7 @@ final class AccountSelectionStaticTest
             && str_contains($oidc, "\$prompt !== 'select_account'")
             && str_contains($oidc, "\$parameters['prompt'] = \$prompt")
             && str_contains($oidc, 'unset($_SESSION[AUTH0_AUTH_TRANSACTION_KEY])'), 'Prompt allow-list or one-time transaction changed.');
-        phase2Assert(str_contains($layout, 'ownerAccountSelectionForm();') && str_contains($layout, 'ownerAccountSelectionForm(true);')
+        phase2Assert(str_contains($layout, 'ownerAccountSelectionForm(false, $locale);') && str_contains($layout, 'ownerAccountSelectionForm(true);')
             && str_contains($layout, 'action="/owner_switch_account.php"')
             && str_contains($layout, 'method="POST"')
             && str_contains($layout, 'getCsrfToken()')
@@ -96,6 +96,19 @@ final class AccountSelectionStaticTest
             }
             phase2Assert(str_contains($hub, 'data-sidebar-tooltip="Use another account"')
                 && str_contains($hub, 'evidence-hub-sidebar-label'), 'Collapsed Evidence Hub chooser lost its accessible label.');
+            foreach (['ar' => 'تبديل الحساب', 'en' => 'Switch account'] as $locale => $label) {
+                ob_start();
+                ownerAccountSelectionForm(false, $locale);
+                $localized = (string) ob_get_clean();
+                $dom = new DOMDocument();
+                @$dom->loadHTML('<?xml encoding="UTF-8">' . $localized);
+                $xpath = new DOMXPath($dom);
+                phase2Assert($xpath->query('//form[@method="POST" and @action="/owner_switch_account.php"]')->length === 1
+                    && $xpath->query('//input[@name="csrf_token" and @value="' . str_repeat('a', 64) . '"]')->length === 1
+                    && $xpath->query('//input')->length === 1
+                    && $xpath->query('//button[@type="submit"]')->length === 1
+                    && str_contains($localized, $label), 'Localized workspace chooser lost its strict POST, single CSRF field, native submit button or locale.');
+            }
         } finally {
             while (ob_get_level() > $outputLevel) {
                 ob_end_clean();

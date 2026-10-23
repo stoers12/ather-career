@@ -15,7 +15,7 @@ require_once __DIR__ . '/includes/owner_dashboard_copy.php';
 startOwnerSession();
 httpRegisterExceptionBoundary('owner.php');
 httpRequireMethod(['GET', 'HEAD']);
-$locale = ($_GET['lang'] ?? null) === 'en' ? 'en' : 'ar';
+$locale = ownerLocale();
 header('Content-Type: text/html; charset=utf-8');
 header('Content-Language: ' . $locale);
 $dashboard = $profile = $publication = null;
@@ -51,15 +51,6 @@ ownerLayoutStart($copy('title'), 'dashboard', true, ['locale' => $locale, 'accou
         <p class="dashboard-eyebrow"><?php echo $copy('title'); ?></p>
         <h1><?php echo $copy('welcome'); ?><?php if ($firstName !== ''): ?><?php echo $locale === 'ar' ? '، ' : ', '; ?><bdi><?php echo ownerEscapeHtml($firstName); ?></bdi><?php endif; ?></h1>
         <p><?php echo $copy('subtitle'); ?></p>
-    </div>
-    <div class="dashboard-tools">
-        <a class="dashboard-preview" href="/owner_preview.php"><?php echo evidenceHubOwnerIcon('eye'); ?><span><?php echo $copy('preview'); ?></span></a>
-        <a class="dashboard-language" href="/owner.php?lang=<?php echo $locale === 'ar' ? 'en' : 'ar'; ?>" lang="<?php echo $locale === 'ar' ? 'en' : 'ar'; ?>" hreflang="<?php echo $locale === 'ar' ? 'en' : 'ar'; ?>"><?php echo $locale === 'ar' ? 'EN' : 'العربية'; ?></a>
-        <div class="dashboard-themes" role="group" aria-label="<?php echo $locale === 'ar' ? 'المظهر' : 'Appearance'; ?>">
-            <?php foreach (['dark' => 'moon', 'light' => 'sun'] as $theme => $icon): ?>
-            <button type="button" data-owner-theme="<?php echo $theme; ?>" aria-label="<?php echo $copy($theme); ?>" aria-pressed="false"><?php echo evidenceHubOwnerIcon($icon); ?></button>
-            <?php endforeach; ?>
-        </div>
     </div>
 </header>
 <div class="dashboard-visibility<?php echo $viewState === 'published' ? ' dashboard-visibility--live' : ''; ?>">
