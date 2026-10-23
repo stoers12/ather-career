@@ -23,6 +23,9 @@ final class EvidenceHubRequiredGatesStaticTest
         );
         phase2Assert(!preg_match('/(?m)^\s*EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY:(?!\s*\$\{)[^\r\n]+/', $compose), 'Production Compose contains an Evidence Hub HMAC default.');
         phase2Assert(str_contains($dockerfile, '/var/www/app/evidence_hub.css') && str_contains($dockerfile, '/var/www/app/evidence_hub.js') && str_contains($dockerfile, '/var/www/app/owner_theme.js'), 'Production image does not publish the Evidence Hub and Owner theme assets.');
+        foreach (['owner_workspace.css', 'owner_dashboard.css', 'assets/images/dashboard-projects.svg'] as $asset) {
+            phase2Assert(str_contains($dockerfile, '/var/www/app/' . $asset) && str_contains($gate, "'" . $asset . "'"), 'Production must publish and verify the shared Owner and Dashboard assets.');
+        }
 
         foreach ([
             'EvidenceHubRecommendationActionHttpMySqlTest',

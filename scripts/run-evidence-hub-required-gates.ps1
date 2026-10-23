@@ -79,7 +79,11 @@ function Assert-CurrentSourceIdentity([string]$Root, [string]$Image, [string]$La
     $containerRoot = if ($Layout -eq 'production') { '/var/www/app' } else { '/var/www/html' }
     $check = "set -eu; cd $containerRoot; sha256sum -c /audit/source.manifest; test -f database/migrations/011_recommendation_dispositions.sql; test -f owner_evidence_hub.php; test -f evidence_hub.css; test -f evidence_hub.js; test -f owner_theme.js"
     if ($Layout -eq 'development') { $check += '; test "$(readlink -f /var/www/app)" = /var/www/html' }
-    if ($Layout -eq 'production') { $check += '; test -f /var/www/public/evidence_hub.css; test -f /var/www/public/evidence_hub.js; test -f /var/www/public/owner_theme.js' }
+    if ($Layout -eq 'production') {
+        foreach ($asset in @('style.css', 'admin.css', 'owner_workspace.css', 'owner_dashboard.css', 'admin.js', 'owner_theme.js', 'evidence_hub.css', 'evidence_hub.js', 'assets/fonts/OFL.txt', 'assets/fonts/noto-sans-arabic-400.ttf', 'assets/fonts/noto-sans-arabic-500.ttf', 'assets/images/ather-navbar-logo.png', 'assets/images/dashboard-projects.svg')) {
+            $check += "; test -s /var/www/public/$asset; cmp /var/www/app/$asset /var/www/public/$asset"
+        }
+    }
     & docker run --rm --entrypoint sh -v "${Root}:/verification-source:ro" -v "${Manifest}:/audit/source.manifest:ro" $Image -lc $check
     if ($LASTEXITCODE -ne 0) { Fail-Gate 'source identity' 'container-visible application source differs from the intended verification source' }
 }
