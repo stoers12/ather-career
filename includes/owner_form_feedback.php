@@ -53,7 +53,7 @@ function ownerRenderFieldError(array $fieldErrors, string $field): void
 function ownerRenderRequiredIndicator(): void
 {
     ?>
-    <span class="required-indicator" aria-hidden="true">*</span><span class="visually-hidden"> (required)</span>
+    <span class="required-indicator" aria-hidden="true">*</span><span class="visually-hidden"> <?php echo isset($GLOBALS['owner_workspace_locale']) ? ownerEscapeHtml(ownerText('(required)')) : '(required)'; ?></span>
     <?php
 }
 
@@ -77,7 +77,7 @@ function ownerRenderFormFeedback(string $successMessage, array $errors, array $f
     }
     ?>
     <section class="status-message error owner-error-summary" id="owner-form-error-summary" role="alert" tabindex="-1" data-error-summary>
-        <h2>Review the highlighted fields</h2>
+        <h2><?php echo isset($GLOBALS['owner_workspace_locale']) ? ownerEscapeHtml(ownerText('Review the highlighted fields')) : 'Review the highlighted fields'; ?></h2>
         <ul>
             <?php foreach ($messages as $error): ?>
                 <li><?php echo ownerEscapeHtml($error); ?></li>

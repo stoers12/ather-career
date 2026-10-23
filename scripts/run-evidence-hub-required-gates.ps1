@@ -79,7 +79,11 @@ function Assert-CurrentSourceIdentity([string]$Root, [string]$Image, [string]$La
     $containerRoot = if ($Layout -eq 'production') { '/var/www/app' } else { '/var/www/html' }
     $check = "set -eu; cd $containerRoot; sha256sum -c /audit/source.manifest; test -f database/migrations/011_recommendation_dispositions.sql; test -f owner_evidence_hub.php; test -f evidence_hub.css; test -f evidence_hub.js; test -f owner_theme.js"
     if ($Layout -eq 'development') { $check += '; test "$(readlink -f /var/www/app)" = /var/www/html' }
-    if ($Layout -eq 'production') { $check += '; test -f /var/www/public/evidence_hub.css; test -f /var/www/public/evidence_hub.js; test -f /var/www/public/owner_theme.js' }
+    if ($Layout -eq 'production') {
+        foreach ($asset in @('style.css', 'admin.css', 'owner_workspace.css', 'owner_dashboard.css', 'admin.js', 'owner_theme.js', 'evidence_hub.css', 'evidence_hub.js', 'assets/fonts/OFL.txt', 'assets/fonts/noto-sans-arabic-400.ttf', 'assets/fonts/noto-sans-arabic-500.ttf', 'assets/images/ather-navbar-logo.png', 'assets/images/dashboard-projects.svg')) {
+            $check += "; test -s /var/www/public/$asset; cmp /var/www/app/$asset /var/www/public/$asset"
+        }
+    }
     & docker run --rm --entrypoint sh -v "${Root}:/verification-source:ro" -v "${Manifest}:/audit/source.manifest:ro" $Image -lc $check
     if ($LASTEXITCODE -ne 0) { Fail-Gate 'source identity' 'container-visible application source differs from the intended verification source' }
 }
@@ -172,6 +176,8 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', "DB_NAME=$timestampDatabaseName", '-e', 'DB_USER=root', '-e', "DB_PASSWORD=$databasePassword", '-e', 'EVIDENCE_HUB_TIMESTAMP_MYSQL_TEST=1', $Image, 'scripts/run-evidence-hub-mysql-timestamp-test.php'))
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_R3_MYSQL_TEST=1', $Image, 'scripts/run-evidence-hub-mysql-disposition-test.php'))
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_TEST=1', $Image, 'scripts/run-evidence-hub-http-action-test.php', '--seed'))
+        # These fixtures model existing owners. Seal their legacy ownership while no Apache/writers are running.
+        Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @($Image, 'database/capture-owner-journey-cutover.php', '--confirm-exclusive-maintenance', "--database=$databaseName"))
         $webBootstrapEnvironment = @('-e', 'EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP=1', '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_NONCE_A=$bootstrapNonceA", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_SUBJECT_A=$bootstrapSubjectA", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_NONCE_B=$bootstrapNonceB", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_SUBJECT_B=$bootstrapSubjectB", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_STATE_DIR=$bootstrapState")
         Invoke-Tool 'docker' (@('run', '--detach', '--name', $web, '--network', $network, '-p', "127.0.0.1:${port}:80", '-v', "${bridge}:/tmp/bridge", '-e', 'EVIDENCE_HUB_VISUAL_TEST=1') + $webBootstrapEnvironment + $baseEnvironment + @($Image))
         for ($attempt = 0; $attempt -lt 60; $attempt++) {

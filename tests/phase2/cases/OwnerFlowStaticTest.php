@@ -55,7 +55,9 @@ final class OwnerFlowStaticTest
     private static function optionalProjectGithubUrl(): void
     {
         $form = self::read('owner_projects.php');
-        phase2Assert(str_contains($form, 'GitHub URL <em>(optional)</em>') && str_contains($form, 'Leave blank to hide the public GitHub link.'), 'Owner form does not explain optional GitHub URLs.');
+        phase2Assert(str_contains($form, "ownerText('GitHub URL')")
+            && str_contains($form, "ownerText('(optional)')")
+            && str_contains($form, "ownerText('Leave blank to hide the public GitHub link.')"), 'Owner form must localize the optional GitHub label and its visibility explanation.');
         phase2Assert(!preg_match('/id="github_url"[^>]*\srequired(?:\s|>)/', $form), 'Owner form still requires a GitHub URL.');
         require_once PHASE2_REPOSITORY_ROOT . '/includes/owner_actions.php';
         phase2AssertSame(null, submittedStringField(['github_url' => '   '], 'github_url', PROJECT_GITHUB_URL_MAX_LENGTH, 'GitHub URL')['error'], 'Blank GitHub URL was rejected.');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/presentation.php';
+require_once __DIR__ . '/owner_dashboard_copy.php';
 
 function ownerEscapeHtml(string $value): string
 {
@@ -12,35 +13,49 @@ function ownerEscapeHtml(string $value): string
 
 require_once __DIR__ . '/owner_form_feedback.php';
 
-function ownerLayoutStart(string $title, string $activePage, bool $themeCapable = false): void
+/** @param array{locale?: string, account_name?: string} $workspace Presentation only; routes retain authorization. */
+function ownerLayoutStart(string $title, string $activePage, bool $themeCapable = false, array $workspace = []): void
 {
     $isEvidenceHub = $activePage === 'evidence_hub';
+    $isDashboard = $activePage === 'dashboard';
     $isEvidenceHubOverview = $isEvidenceHub && $title === 'Evidence Hub';
+    $locale = $isEvidenceHub ? 'en' : (($workspace['locale'] ?? ownerLocale()) === 'en' ? 'en' : 'ar');
+    $workspace['locale'] = $locale;
+    if ($isEvidenceHub) {
+        unset($GLOBALS['owner_workspace_locale']);
+    } else {
+        $GLOBALS['owner_workspace_locale'] = $locale;
+        ownerPersistLocale($locale);
+        $title = ownerText($title);
+    }
     ?>
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="<?php echo $locale; ?>" dir="<?php echo $locale === 'ar' ? 'rtl' : 'ltr'; ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow">
-    <title><?php echo $isEvidenceHub ? 'Evidence Hub — My Portfolio' : ownerEscapeHtml($title) . ' - My Portfolio'; ?></title>
+    <title><?php echo $isEvidenceHub ? 'Evidence Hub — My Portfolio' : ownerEscapeHtml($title) . ' — Ather Career'; ?></title>
     <link rel="icon" type="image/png" href="/assets/images/ather-navbar-logo.png">
+    <?php if ($isEvidenceHub): ?>
     <link rel="stylesheet" href="/<?php echo versionedAssetUrl('style.css'); ?>">
     <link rel="stylesheet" href="/<?php echo versionedAssetUrl('admin.css'); ?>">
-    <?php if ($isEvidenceHub): ?>
     <link rel="stylesheet" href="/<?php echo versionedAssetUrl('evidence_hub.css'); ?>">
+    <?php else: ?>
+    <link rel="stylesheet" href="/<?php echo versionedAssetUrl('owner_workspace.css'); ?>">
+    <?php if ($isDashboard): ?><link rel="stylesheet" href="/<?php echo versionedAssetUrl('owner_dashboard.css'); ?>"><?php endif; ?>
     <?php endif; ?>
     <script src="/<?php echo versionedAssetUrl('admin.js'); ?>" defer></script>
     <?php if ($isEvidenceHub): ?>
     <script src="/<?php echo versionedAssetUrl('evidence_hub.js'); ?>" defer></script>
     <?php endif; ?>
 </head>
-<body<?php echo $isEvidenceHub ? ' class="evidence-hub-page"' : ''; ?>>
+<body class="<?php echo $isEvidenceHub ? 'evidence-hub-page' : 'owner-workspace-page' . ($isDashboard ? ' owner-dashboard-page' : ''); ?>"<?php if (!$isEvidenceHub): ?> data-owner-confirm-title="<?php echo ownerEscapeHtml(ownerText('Are you sure?')); ?>" data-owner-confirm-cancel="<?php echo ownerEscapeHtml(ownerText('Cancel')); ?>" data-owner-confirm-action="<?php echo ownerEscapeHtml(ownerText('Continue')); ?>"<?php endif; ?>>
 <?php if ($themeCapable): ?>
 <script src="/<?php echo versionedAssetUrl('owner_theme.js'); ?>"></script>
 <?php endif; ?>
 <div class="admin-layout<?php echo $isEvidenceHub ? ' evidence-hub-layout' : ''; ?>">
-    <?php ownerNavigation($activePage); ?>
+    <?php ownerNavigation($activePage, $workspace); ?>
     <main class="admin-content" id="main-content" tabindex="-1">
         <?php if ($isEvidenceHub): ?>
         <header class="evidence-hub-topbar" aria-label="Evidence Hub application chrome">
@@ -51,45 +66,67 @@ function ownerLayoutStart(string $title, string $activePage, bool $themeCapable 
                 <?php endif; ?>
             </div>
         </header>
-        <?php endif; ?>
+        <?php else: ownerWorkspaceToolbar($locale); endif; ?>
         <section>
     <?php
 }
 
-function ownerNavigation(string $activePage): void
+function ownerNavigation(string $activePage, array $workspace = []): void
 {
     if ($activePage === 'evidence_hub') {
         ownerEvidenceHubNavigation();
         return;
     }
+    $locale = ($workspace['locale'] ?? ownerLocale()) === 'en' ? 'en' : 'ar';
+    $copy = static fn (string $key): string => ownerDashboardCopy($key, $locale);
     $links = [
-        'dashboard' => ['/owner.php', 'Dashboard'],
-        'profile' => ['/owner_profile.php', 'Personal info'],
-        'projects' => ['/owner_projects.php', 'Projects'],
-        'experiences' => ['/owner_experiences.php', 'Experience'],
-        'messages' => ['/owner_messages.php', 'Messages'],
-        'evidence_hub' => ['/owner/evidence-hub', 'Evidence Hub'],
-        'publication' => ['/owner_publication.php', 'Publication'],
+        'dashboard' => ['/owner.php', 'home'],
+        'profile' => ['/owner_profile.php', 'user'],
+        'projects' => ['/owner_projects.php', 'folder'],
+        'experiences' => ['/owner_experiences.php', 'briefcase'],
+        'messages' => ['/owner_messages.php', 'mail'],
+        'evidence_hub' => ['/owner/evidence-hub', 'document-check'],
+        'publication' => ['/owner_publication.php', 'settings'],
     ];
+    $accountName = trim((string) ($workspace['account_name'] ?? ''));
     ?>
-    <a class="skip-link admin-skip-link" href="#main-content">Skip to main content</a>
+    <a class="skip-link admin-skip-link" href="#main-content"><?php echo $copy('skip'); ?></a>
     <aside class="admin-sidebar">
-        <a class="admin-brand" href="/owner.php"><span class="brand-mark">P</span><span>Portfolio Owner</span></a>
-        <nav aria-label="Owner navigation">
-            <span class="nav-group-label">Workspace</span>
-            <?php foreach ($links as $key => [$href, $label]): ?>
-                <a class="<?php echo $activePage === $key ? 'active' : ''; ?>" href="<?php echo $href; ?>"<?php echo $activePage === $key ? ' aria-current="page"' : ''; ?>><?php echo ownerEscapeHtml($label); ?></a>
-            <?php endforeach; ?>
-        </nav>
-        <div class="sidebar-footer">
-            <a href="/owner_preview.php">Private Preview</a>
-            <?php ownerAccountSelectionForm(); ?>
-            <form class="sidebar-logout-form" method="POST" action="/owner_logout.php" data-owner-form>
-                <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
-                <button class="sidebar-logout-button" type="submit" data-pending-label="Signing out…">Logout</button>
-            </form>
+        <a class="admin-brand" href="/owner.php?lang=<?php echo $locale; ?>"><img src="/assets/images/ather-navbar-logo.png" alt="Ather" width="880" height="155"><span>Career</span></a>
+        <button class="owner-nav-toggle" type="button" data-owner-nav-toggle aria-controls="owner-navigation" aria-expanded="false"><?php echo evidenceHubOwnerIcon('menu'); ?><?php echo $copy('menu'); ?></button>
+        <div class="owner-navigation" id="owner-navigation">
+            <nav aria-label="<?php echo $copy('navigation'); ?>">
+                <?php foreach ($links as $key => [$href, $icon]): ?>
+                <a class="<?php echo $activePage === $key ? 'active' : ''; ?>" href="<?php echo $href; ?><?php echo $key === 'evidence_hub' ? '' : '?lang=' . $locale; ?>"<?php echo $activePage === $key ? ' aria-current="page"' : ''; ?>><?php echo evidenceHubOwnerIcon($icon); ?><span><?php echo $copy($key); ?></span></a>
+                <?php endforeach; ?>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="owner-account"><?php echo evidenceHubOwnerIcon('user'); ?><bdi><?php echo ownerEscapeHtml($accountName !== '' ? $accountName : $copy('account')); ?></bdi></div>
+                <?php ownerAccountSelectionForm(false, $locale); ?>
+                <form class="sidebar-logout-form" method="POST" action="/owner_logout.php" data-owner-form>
+                    <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
+                    <button class="sidebar-logout-button" type="submit" data-pending-label="<?php echo $copy('logout_pending'); ?>"><?php echo evidenceHubOwnerIcon('log-out'); ?><?php echo $copy('logout'); ?></button>
+                </form>
+            </div>
         </div>
     </aside>
+    <?php
+}
+
+function ownerWorkspaceToolbar(string $locale): void
+{
+    $copy = static fn (string $key): string => ownerDashboardCopy($key, $locale);
+    $alternate = $locale === 'ar' ? 'en' : 'ar';
+    ?>
+    <header class="owner-toolbar" aria-label="<?php echo ownerEscapeHtml(ownerText('Workspace tools')); ?>">
+        <a class="owner-preview" href="/owner_preview.php"><?php echo evidenceHubOwnerIcon('eye'); ?><span><?php echo $copy('preview'); ?></span></a>
+        <a class="owner-language" href="<?php echo ownerEscapeHtml(ownerLanguageUrl($alternate)); ?>" lang="<?php echo $alternate; ?>" hreflang="<?php echo $alternate; ?>"><?php echo $locale === 'ar' ? 'EN' : ownerText('Arabic'); ?></a>
+        <div class="owner-themes" role="group" aria-label="<?php echo ownerEscapeHtml(ownerText('Appearance')); ?>">
+            <?php foreach (['dark' => 'moon', 'light' => 'sun'] as $theme => $icon): ?>
+            <button type="button" data-owner-theme="<?php echo $theme; ?>" aria-label="<?php echo $copy($theme); ?>" aria-pressed="false"><?php echo evidenceHubOwnerIcon($icon); ?></button>
+            <?php endforeach; ?>
+        </div>
+    </header>
     <?php
 }
 
@@ -138,27 +175,32 @@ function ownerEvidenceHubNavigation(): void
             <?php endforeach; ?>
         </nav>
         <div class="sidebar-footer evidence-hub-sidebar-footer">
-            <div class="evidence-hub-owner-context" tabindex="0" data-sidebar-tooltip="Portfolio owner — Private workspace" data-sidebar-tooltip-always="true">
-                <?php echo evidenceHubOwnerIcon('user-round'); ?>
-                <span class="evidence-hub-owner-context-copy"><span>Portfolio owner</span><span class="evidence-hub-private-workspace"><?php echo evidenceHubOwnerIcon('lock-keyhole'); ?><span>Private workspace</span></span></span>
-            </div>
-            <?php ownerAccountSelectionForm(true); ?>
-            <form class="sidebar-logout-form" method="POST" action="/owner_logout.php" data-owner-form>
-                <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
-                <button class="sidebar-logout-button evidence-hub-sign-out" type="submit" data-pending-label="Logging out…" aria-label="Log out" data-sidebar-tooltip="Log out" data-sidebar-tooltip-always="true"><?php echo evidenceHubOwnerIcon('log-out'); ?><span class="evidence-hub-sidebar-label">Log out</span></button>
-            </form>
+            <details class="evidence-hub-account-menu">
+                <summary class="evidence-hub-owner-context" aria-label="Account options" aria-controls="evidence-hub-account-actions" data-sidebar-tooltip="Account options">
+                    <?php echo evidenceHubOwnerIcon('user-round'); ?>
+                    <span class="evidence-hub-owner-context-copy"><span>Portfolio owner</span><span class="evidence-hub-private-workspace"><?php echo evidenceHubOwnerIcon('lock-keyhole'); ?><span>Private workspace</span></span></span>
+                    <span class="evidence-hub-account-indicator" aria-hidden="true"></span>
+                </summary>
+                <div class="evidence-hub-account-panel" id="evidence-hub-account-actions" role="group" aria-label="Account actions">
+                    <?php ownerAccountSelectionForm(true); ?>
+                    <form class="sidebar-logout-form" method="POST" action="/owner_logout.php" data-owner-form>
+                        <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
+                        <button class="sidebar-logout-button evidence-hub-sign-out" type="submit" data-pending-label="Logging out…" aria-label="Log out"><?php echo evidenceHubOwnerIcon('log-out'); ?><span class="evidence-hub-account-action-label">Log out</span></button>
+                    </form>
+                </div>
+            </details>
         </div>
     </aside>
     <div class="evidence-hub-mobile-backdrop" id="evidence-hub-mobile-backdrop" aria-hidden="true" hidden></div>
     <?php
 }
 
-function ownerAccountSelectionForm(bool $evidenceHub = false): void
+function ownerAccountSelectionForm(bool $evidenceHub = false, ?string $locale = null): void
 {
     ?>
     <form class="sidebar-logout-form" method="POST" action="/owner_switch_account.php" data-owner-form>
         <input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
-        <button class="sidebar-logout-button<?php echo $evidenceHub ? ' evidence-hub-sign-out' : ''; ?>" type="submit" data-pending-label="Opening account selection…"<?php if ($evidenceHub): ?> data-sidebar-tooltip="Use another account" data-sidebar-tooltip-always="true"<?php endif; ?>><?php if ($evidenceHub): ?><?php echo evidenceHubOwnerIcon('user-round'); ?><span class="evidence-hub-sidebar-label"><?php endif; ?>Use another account <span lang="ar" dir="rtl">استخدام حساب آخر</span><?php if ($evidenceHub): ?></span><?php endif; ?></button>
+        <button class="sidebar-logout-button<?php echo $evidenceHub ? ' evidence-hub-sign-out' : ''; ?>" type="submit" data-pending-label="<?php echo $locale !== null ? ownerDashboardCopy('switch_pending', $locale) : 'Opening account selection…'; ?>"><?php if ($evidenceHub): ?><?php echo evidenceHubOwnerIcon('user-round'); ?><span class="evidence-hub-account-action-label"><?php endif; ?><?php if ($locale !== null): ?><?php echo evidenceHubOwnerIcon('switch'); ?><?php echo ownerDashboardCopy('switch', $locale); ?><?php else: ?>Use another account<?php if (!$evidenceHub): ?> <span lang="ar" dir="rtl">استخدام حساب آخر</span><?php endif; ?><?php endif; ?><?php if ($evidenceHub): ?></span><?php endif; ?></button>
     </form>
     <?php
 }
@@ -173,6 +215,12 @@ function evidenceHubOwnerIcon(string $name): string
      * "AS IS" AND THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES AND LIABILITY.
      */
     $paths = [
+        'folder' => '<path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+        'mail' => '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m3 5 9 8 9-8"/>',
+        'settings' => '<path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/>',
+        'sun' => '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',
+        'plus' => '<path d="M12 4v16M4 12h16"/>',
+        'switch' => '<path d="M4 8h16l-4-4M20 16H4l4 4"/>',
         'menu' => '<path d="M4 6h16M4 12h16M4 18h16"/>',
         'arrow-left' => '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
         'panel-left-close' => '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18m7-6-3-3 3-3"/>',
