@@ -33,7 +33,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: harness
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
 
       - name: Checkout exact CI-passing source
@@ -56,7 +56,10 @@ jobs:
           test -z "$(git -C candidate status --porcelain)"
           test "$(git -C harness rev-parse HEAD)" = "$HARNESS_SHA"
           test -z "$(git -C harness status --porcelain)"
-          test "$(git -C harness rev-parse HEAD^)" = "$CANDIDATE"
+          test "$(git -C harness rev-parse HEAD^)" = c223b9d37b4e8cc19de3af1bf672a6d048eab38f
+          test "$(git -C harness rev-parse HEAD^^)" = "$CANDIDATE"
+          test "$(git -C harness rev-list --count "$CANDIDATE"..HEAD)" = 2
+          test "$(git -C harness rev-list --count --merges "$CANDIDATE"..HEAD)" = 0
           diff=$(git -C harness diff --name-only "$CANDIDATE" HEAD)
           test "$diff" = $'.github/workflows/card11-final-acceptance.yml\nscripts/run-evidence-hub-required-gates.ps1'
           test "$RUNNER_OS" = Linux
@@ -72,6 +75,24 @@ jobs:
           curl --version | head -1
           docker version --format '{{.Server.Version}}'
           printf 'source=%s\nharness=%s\npr_merge=%s\nrunner_image=%s\n' "$CANDIDATE" "$HARNESS_SHA" "$MERGE_SHA" "$ImageVersion" > "$RUNNER_TEMP/card11-private/identity.txt"
+
+      - name: Verify actual native curl resolver before builds
+        shell: pwsh
+        working-directory: harness
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tokens = $null; $errors = $null
+          $path = Join-Path $PWD 'scripts/run-evidence-hub-required-gates.ps1'
+          $ast = [Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+          if ($errors.Count) { throw 'Gate runner has PowerShell syntax errors' }
+          $resolver = @($ast.FindAll({ param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-NativeCurl' }, $true))
+          if ($resolver.Count -ne 1) { throw 'Expected exactly one native curl resolver' }
+          # Evaluate only this definition, never the gate runner entry point.
+          . ([scriptblock]::Create($resolver[0].Extent.Text))
+          $executables = @(Get-NativeCurl)
+          if ($executables.Count -ne 1 -or $executables[0] -isnot [string] -or -not [IO.Path]::IsPathFullyQualified($executables[0]) -or -not (Test-Path -LiteralPath $executables[0] -PathType Leaf)) { throw 'Native curl resolver must return one executable path' }
+          & $executables[0] --version
+          if ($LASTEXITCODE -ne 0) { throw 'Resolved native curl --version failed' }
 
       - name: Run complete existing required-gate runner
         id: gates

@@ -23,7 +23,7 @@ function Invoke-Tool([string]$Name, [string[]]$Arguments) {
 
 function Get-NativeCurl {
     $name = if ($IsWindows) { 'curl.exe' } else { 'curl' }
-    return (Get-Command $name -CommandType Application -ErrorAction Stop).Source
+    return (Get-Command $name -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 }
 
 function Protect-GateSecret([string]$Value) {
