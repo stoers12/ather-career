@@ -33,7 +33,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: harness
-          fetch-depth: 3
+          fetch-depth: 4
           persist-credentials: false
 
       - name: Checkout exact CI-passing source
@@ -56,9 +56,10 @@ jobs:
           test -z "$(git -C candidate status --porcelain)"
           test "$(git -C harness rev-parse HEAD)" = "$HARNESS_SHA"
           test -z "$(git -C harness status --porcelain)"
-          test "$(git -C harness rev-parse HEAD^)" = c223b9d37b4e8cc19de3af1bf672a6d048eab38f
-          test "$(git -C harness rev-parse HEAD^^)" = "$CANDIDATE"
-          test "$(git -C harness rev-list --count "$CANDIDATE"..HEAD)" = 2
+          test "$(git -C harness rev-parse HEAD^)" = 7f1cc8f9ea7ab9a6b50de39faf1c4e1d99d30a41
+          test "$(git -C harness rev-parse HEAD^^)" = c223b9d37b4e8cc19de3af1bf672a6d048eab38f
+          test "$(git -C harness rev-parse HEAD~3)" = "$CANDIDATE"
+          test "$(git -C harness rev-list --count "$CANDIDATE"..HEAD)" = 3
           test "$(git -C harness rev-list --count --merges "$CANDIDATE"..HEAD)" = 0
           diff=$(git -C harness diff --name-only "$CANDIDATE" HEAD)
           test "$diff" = $'.github/workflows/card11-final-acceptance.yml\nscripts/run-evidence-hub-required-gates.ps1'

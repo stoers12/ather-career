@@ -30,6 +30,73 @@ function Protect-GateSecret([string]$Value) {
     if ($env:GITHUB_ACTIONS -eq 'true') { Write-Host "::add-mask::$Value" }
 }
 
+function Restore-LinuxCookieJarOwnership([string]$Temporary, [string]$Phase) {
+    if (-not $IsLinux) { return }
+    $uid = (& id -u); if ($LASTEXITCODE -ne 0) { Fail-Gate 'cookie handoff' 'runner UID unavailable' }
+    $gid = (& id -g); if ($LASTEXITCODE -ne 0) { Fail-Gate 'cookie handoff' 'runner GID unavailable' }
+    if ($uid -notmatch '^[1-9][0-9]*$' -or $gid -notmatch '^[0-9]+$') { Fail-Gate 'cookie handoff' 'a non-root runner is required' }
+    $parent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('/')
+    $code = @'
+import os, re, stat, sys
+root, parent, uid, gid, phase = sys.argv[1:]
+fds = []
+def require(condition, reason):
+    if not condition:
+        raise ValueError(reason)
+def metadata(kind, name, info):
+    print(f"COOKIE_JAR_METADATA phase={phase} kind={kind} name={name} uid={info.st_uid} gid={info.st_gid} mode={stat.S_IMODE(info.st_mode):04o}", flush=True)
+try:
+    uid, gid = int(uid), int(gid)
+    require(uid > 0 and gid >= 0 and os.geteuid() == 0, 'identity')
+    require((uid, gid) == (int(os.environ['SUDO_UID']), int(os.environ['SUDO_GID'])), 'sudo-caller')
+    require(phase in ('initial', 'before-http', 'after-http', 'before-editor', 'after-editor'), 'phase')
+    require(os.path.isabs(parent) and os.path.normpath(parent) == parent, 'parent')
+    require(os.path.dirname(root) == parent and re.fullmatch(r'ather-evidence-hub-(gates|focused)-[a-f0-9]{32}', os.path.basename(root)), 'namespace')
+    # Traverse every directory by descriptor: no symlink component is followed.
+    current = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+    fds.append(current)
+    for component in parent.split('/')[1:] + [os.path.basename(root), 'bridge']:
+        current = os.open(component, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=current)
+        fds.append(current)
+        if len(fds) >= len(parent.split('/')) + 1:
+            info = os.fstat(current)
+            require(info.st_uid == uid and stat.S_IMODE(info.st_mode) == 0o700, 'private-directory')
+            metadata('directory', 'bridge' if component == 'bridge' else 'run-root', info)
+    names = ['owner-a.cookiejar', 'owner-b.cookiejar']
+    if phase != 'initial':
+        names.append('fabricated.cookiejar')
+    jars = []
+    for name in names:
+        entry = os.stat(name, dir_fd=current, follow_symlinks=False)
+        metadata('before', name, entry)
+        require(stat.S_ISREG(entry.st_mode) and entry.st_nlink == 1 and entry.st_uid in (0, uid), 'regular-run-owned-file')
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=current)
+        fds.append(fd)
+        info = os.fstat(fd)
+        require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1 and info.st_uid in (0, uid), 'regular-run-owned-file')
+        require((entry.st_dev, entry.st_ino) == (info.st_dev, info.st_ino), 'entry-changed')
+        jars.append((name, fd, info))
+    # Validate the complete set before modifying any file. Never read contents,
+    # replace a jar, walk recursively, or operate on a pathname with privilege.
+    for name, fd, info in jars:
+        entry = os.stat(name, dir_fd=current, follow_symlinks=False)
+        require((entry.st_dev, entry.st_ino) == (info.st_dev, info.st_ino) and entry.st_nlink == 1, 'entry-changed')
+    for name, fd, info in jars:
+        os.fchown(fd, uid, gid)
+        os.fchmod(fd, 0o600)
+        restored = os.fstat(fd)
+        require((restored.st_uid, restored.st_gid, stat.S_IMODE(restored.st_mode)) == (uid, gid, 0o600), 'restoration')
+        metadata('after', name, restored)
+except (OSError, ValueError, KeyError) as error:
+    print(f"COOKIE_JAR_HANDOFF_FAILED phase={phase} type={type(error).__name__} errno={getattr(error, 'errno', None)}", file=sys.stderr)
+    sys.exit(1)
+finally:
+    for fd in reversed(fds):
+        os.close(fd)
+'@
+    Invoke-Tool 'sudo' @('--non-interactive', '--', 'python3', '-I', '-c', $code, $Temporary, $parent, $uid, $gid, $Phase)
+}
+
 function Remove-DisposableDockerResources([string]$Kind, [string[]]$Names) {
     # Enumerate first: resources may not exist when setup fails. Never prune.
     $format = if ($Kind -eq 'image') { '{{.Repository}}' } else { '{{.Name}}' }
@@ -231,12 +298,21 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
     $bridge = Join-Path $Temporary 'bridge'
     $profile = Join-Path $Temporary 'browser-profile'; $screenshots = Join-Path $Temporary 'screenshots'
     New-Item -ItemType Directory -Path $bridge,$profile,$screenshots | Out-Null
+    if ($IsLinux) {
+        $parent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('/')
+        if ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($Temporary)) -ne $parent -or [IO.Path]::GetFileName($Temporary) -notmatch '^ather-evidence-hub-(gates|focused)-[a-f0-9]{32}$') { Fail-Gate 'cookie handoff' 'invalid run-owned directory' }
+        foreach ($directory in @($Temporary, $bridge, $profile, $screenshots)) {
+            if ((Get-Item -LiteralPath $directory -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { Fail-Gate 'cookie handoff' 'unexpected directory symlink' }
+            [IO.File]::SetUnixFileMode($directory, [IO.UnixFileMode]::UserRead -bor [IO.UnixFileMode]::UserWrite -bor [IO.UnixFileMode]::UserExecute)
+        }
+    }
     $ownerAJar = Join-Path $bridge 'owner-a.cookiejar'
     $ownerBJar = Join-Path $bridge 'owner-b.cookiejar'
     $invalidJar = Join-Path $bridge 'fabricated.cookiejar'
     [IO.File]::WriteAllText($ownerAJar, '', [Text.UTF8Encoding]::new($false))
     [IO.File]::WriteAllText($ownerBJar, '', [Text.UTF8Encoding]::new($false))
     try {
+        Restore-LinuxCookieJarOwnership $Temporary 'initial'
         Invoke-Tool 'docker' @('network', 'create', $network)
         Invoke-Tool 'docker' @('run', '--detach', '--name', $database, '--network', $network, '--network-alias', 'evidencehubdb', '-e', "MYSQL_DATABASE=$databaseName", '-e', "MYSQL_USER=$databaseUser", '-e', "MYSQL_PASSWORD=$databasePassword", '-e', "MYSQL_ROOT_PASSWORD=$databasePassword", '-v', "$(Join-Path $Root 'database/portfolio_db.sql'):/docker-entrypoint-initdb.d/01-portfolio.sql:ro", 'mysql:8.4')
         Wait-DisposableMySql $database
@@ -289,7 +365,10 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         $invalidLines = Get-Content -LiteralPath $ownerAJar
         $invalidLines = $invalidLines | ForEach-Object { if (($_ -match '^#' -and $_ -notmatch '^#HttpOnly_') -or $_ -notmatch "`t") { $_ } else { $fields = $_ -split "`t"; $fields[$fields.Count - 1] = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant(); $fields -join "`t" } }
         [IO.File]::WriteAllLines($invalidJar, [string[]]$invalidLines, [Text.UTF8Encoding]::new($false))
+        Restore-LinuxCookieJarOwnership $Temporary 'before-http'
+        if ($IsLinux) { Invoke-Tool 'docker' @('exec', $web, 'sh', '-ec', 'uid=$(id -u); gid=$(id -g); printf "COOKIE_JAR_WRITER consumer=http uid=%s gid=%s\n" "$uid" "$gid"') }
         Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_TEST=1', '-e', 'EVIDENCE_HUB_HTTP_ACTION_BASE_URL=http://127.0.0.1', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_INVALID=/tmp/bridge/fabricated.cookiejar', $web, 'php', 'scripts/run-evidence-hub-http-action-test.php'))
+        Restore-LinuxCookieJarOwnership $Temporary 'after-http'
         if ($null -ne $Playwright) {
             $sessionLine = Get-Content -LiteralPath $ownerAJar | Where-Object { $_ -match '(^|\t)portfolio_owner_session\t' -or $_ -match '^#HttpOnly_.*\tportfolio_owner_session\t' } | Select-Object -First 1
             if (-not [string]::IsNullOrWhiteSpace($sessionLine)) { $actionSession = ($sessionLine -split "`t")[-1] } else { $actionSession = '' }
@@ -299,7 +378,10 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-visual.cjs'), $screenshots)
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs'))
         }
+        Restore-LinuxCookieJarOwnership $Temporary 'before-editor'
+        if ($IsLinux) { Invoke-Tool 'docker' @('exec', $web, 'sh', '-ec', 'uid=$(id -u); gid=$(id -g); printf "COOKIE_JAR_WRITER consumer=editor uid=%s gid=%s\n" "$uid" "$gid"') }
         Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', $web, 'php', 'scripts/check-evidence-edit-http.php'))
+        Restore-LinuxCookieJarOwnership $Temporary 'after-editor'
     } finally {
         & docker exec $web rm -rf $bootstrapState 2>$null | Out-Null
         Remove-Item -LiteralPath $ownerAJar,$ownerBJar,$invalidJar -Force -ErrorAction SilentlyContinue
