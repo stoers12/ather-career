@@ -3,7 +3,9 @@ param(
     [string]$SourceRoot = (Split-Path -Parent $PSScriptRoot),
     [switch]$IdentityChallenge,
     [switch]$RegistrationChallenge,
-    [switch]$Focused
+    [switch]$Focused,
+    [switch]$InstallChromium,
+    [string]$EvidenceDirectory = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -19,12 +21,66 @@ function Invoke-Tool([string]$Name, [string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { Fail-Gate $Name "command returned $LASTEXITCODE" }
 }
 
+function Get-NativeCurl {
+    $name = if ($IsWindows) { 'curl.exe' } else { 'curl' }
+    return (Get-Command $name -CommandType Application -ErrorAction Stop).Source
+}
+
+function Protect-GateSecret([string]$Value) {
+    if ($env:GITHUB_ACTIONS -eq 'true') { Write-Host "::add-mask::$Value" }
+}
+
+function Remove-DisposableDockerResources([string]$Kind, [string[]]$Names) {
+    # Enumerate first: resources may not exist when setup fails. Never prune.
+    $format = if ($Kind -eq 'image') { '{{.Repository}}' } else { '{{.Name}}' }
+    if ($Kind -eq 'container') { $format = '{{.Names}}' }
+    $arguments = @($Kind, 'ls', '--format', $format)
+    if ($Kind -eq 'container') { $arguments += '--all' }
+    $existing = @(& docker @arguments)
+    if ($LASTEXITCODE -ne 0) { Fail-Gate 'cleanup' "cannot enumerate $Kind resources" }
+    foreach ($name in $Names) {
+        if ($existing -notcontains $name) { continue }
+        $remove = @($Kind, 'rm')
+        if ($Kind -eq 'container') { $remove += @('--force', '--volumes') }
+        if ($Kind -eq 'image') { $remove += '--force' }
+        Invoke-Tool 'docker' ($remove + $name) | Out-Host
+    }
+}
+
+function Export-GateEvidence([string]$Temporary) {
+    if ($EvidenceDirectory -eq '') { return }
+    # Only synthetic screenshots and source hashes; never browser profiles/jars.
+    foreach ($path in @('source.manifest', 'screenshots')) {
+        $source = Join-Path $Temporary $path
+        if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination $EvidenceDirectory -Recurse -Force }
+    }
+}
+
+function Remove-GateTemporary([string]$Path) {
+    $target = [IO.Path]::GetFullPath($Path)
+    $parent = [IO.Path]::GetDirectoryName($target).TrimEnd([IO.Path]::DirectorySeparatorChar)
+    $expected = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd([IO.Path]::DirectorySeparatorChar)
+    if ($parent -ne $expected -or [IO.Path]::GetFileName($target) -notmatch '^ather-evidence-hub-(gates|focused|playwright)-[a-f0-9]{32}$') { Fail-Gate 'cleanup' 'temporary target is outside the run-owned namespace' }
+    Remove-Item -LiteralPath $target -Recurse -Force
+}
+
+function Complete-GateCleanup([string]$Temporary, [hashtable]$Playwright, [string[]]$Images) {
+    $failures = @()
+    try { Export-GateEvidence $Temporary } catch { $failures += 'evidence export' }
+    if ($Playwright) {
+        try { Remove-GateTemporary $Playwright.Directory } catch { $failures += 'temporary Playwright' }
+    }
+    try { Remove-GateTemporary $Temporary } catch { $failures += 'temporary gate files' }
+    try { Remove-DisposableDockerResources 'image' $Images } catch { $failures += 'disposable images' }
+    if ($failures.Count -gt 0) { Fail-Gate 'cleanup' ($failures -join ', ') }
+}
+
 function Get-SourceFiles([string]$Root) {
     # Docker deliberately omits .gitignore from its build context. It is not
     # runtime source, so the identity manifest excludes it rather than masking
     # a real application-source mismatch.
     $excluded = @('.git', 'vendor', 'node_modules', 'runtime', '.env', '.gitignore', '.vscode')
-    Get-ChildItem -LiteralPath $Root -Recurse -File | Where-Object {
+    Get-ChildItem -LiteralPath $Root -Recurse -File -Force | Where-Object {
         $relative = $_.FullName.Substring($Root.Length).TrimStart('\', '/') -replace '\\', '/'
         -not ($excluded | Where-Object { $relative -eq $_ -or $relative.StartsWith("$_/") })
     } | Sort-Object FullName
@@ -93,22 +149,33 @@ function New-TemporaryPlaywright([string]$Root) {
     New-Item -ItemType Directory -Path $temporary | Out-Null
     try {
         $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'
+        if ($InstallChromium) { $env:PLAYWRIGHT_BROWSERS_PATH = '0' }
         Push-Location $temporary
         try { Invoke-Tool 'npm' @('install', '--ignore-scripts', '--no-save', '--package-lock=false', 'playwright@1.58.2') | Out-Host } finally { Pop-Location }
         $module = Join-Path $temporary 'node_modules/playwright'
         $package = Get-Content -Raw -LiteralPath (Join-Path $module 'package.json') | ConvertFrom-Json
         if ($package.version -ne '1.58.2') { Fail-Gate 'Playwright' "expected 1.58.2; received $($package.version)" }
-        $browsers = Get-Content -Raw -LiteralPath (Join-Path $temporary 'node_modules/playwright-core/browsers.json')
-        if ($browsers -notmatch '"revision"\s*:\s*"1208"') { Fail-Gate 'Playwright' 'Chromium revision 1208 is not declared' }
+        $browsers = Get-Content -Raw -LiteralPath (Join-Path $temporary 'node_modules/playwright-core/browsers.json') | ConvertFrom-Json
+        $chromium = @($browsers.browsers | Where-Object name -eq 'chromium')
+        if ($chromium.Count -ne 1 -or $chromium[0].revision -ne '1208' -or $chromium[0].browserVersion -ne '145.0.7632.6') { Fail-Gate 'Playwright' 'full Chromium revision 1208 / version 145.0.7632.6 is not declared' }
+        if ($InstallChromium) {
+            Invoke-Tool 'node' @((Join-Path $module 'cli.js'), 'install', '--with-deps', '--no-shell', 'chromium') | Out-Host
+        }
         return @{ Directory = $temporary; Module = $module }
-    } catch { Remove-Item -LiteralPath $temporary -Recurse -Force -ErrorAction SilentlyContinue; throw }
+    } catch { try { Remove-GateTemporary $temporary } catch { Write-Warning 'Temporary Playwright cleanup failed' }; throw }
 }
 
-function Get-Chromium1208Executable {
-    $cache = Join-Path $env:LOCALAPPDATA 'ms-playwright/chromium-1208/chrome-win64/chrome.exe'
+function Get-Chromium1208Executable([hashtable]$Playwright) {
+    $cache = (& node -e 'process.stdout.write(require(process.argv[1]).chromium.executablePath())' $Playwright.Module)
+    if ($LASTEXITCODE -ne 0 -or ($cache -replace '\\', '/') -notmatch '/chromium-1208/') { Fail-Gate 'Playwright' 'full Chromium revision 1208 executable resolution failed' }
     if (-not (Test-Path -LiteralPath $cache) -or (Get-Item -LiteralPath $cache).Length -eq 0) { Fail-Gate 'Playwright' 'validated full Chromium revision 1208 is unavailable' }
-    $version = [string](Get-Item -LiteralPath $cache).VersionInfo.ProductVersion
-    if ($version -notmatch '145\.0\.7632\.6') { Fail-Gate 'Playwright' "Chromium version is incompatible: $version" }
+    if ($IsWindows) {
+        $version = [string](Get-Item -LiteralPath $cache).VersionInfo.ProductVersion
+        if ($version -ne '145.0.7632.6') { Fail-Gate 'Playwright' 'Chromium product version is incompatible' }
+    } else {
+        $version = ((& $cache --version) -join '').Trim()
+        if ($LASTEXITCODE -ne 0 -or $version -notmatch '^(Chromium|Google Chrome for Testing) 145\.0\.7632\.6$') { Fail-Gate 'Playwright' 'Chromium executable version is incompatible' }
+    }
     return $cache
 }
 
@@ -128,11 +195,17 @@ function Wait-DisposableMySql([string]$Container) {
 }
 
 function Invoke-DisposableHttpStatus([string]$Url, [string]$Method = 'GET', [hashtable]$Headers = @{}, [string]$CookieJar = '') {
-    $arguments = @('--silent', '--show-error', '--output', 'NUL', '--write-out', '%{http_code}', '--max-redirs', '0', '--request', $Method)
+    $sink = if ($IsWindows) { 'NUL' } else { '/dev/null' }
+    $arguments = @('--silent', '--show-error', '--output', $sink, '--write-out', '%{http_code}', '--max-redirs', '0', '--request', $Method)
     foreach ($name in $Headers.Keys) { $arguments += @('--header', "$name`:$($Headers[$name])") }
     if ($CookieJar -ne '') { $arguments += @('--cookie', $CookieJar, '--cookie-jar', $CookieJar) }
-    $status = @(& curl.exe @arguments $Url)
+    $status = @(& (Get-NativeCurl) @arguments $Url)
     if ($LASTEXITCODE -ne 0) { Fail-Gate 'web bootstrap' 'native cookie-jar HTTP client failed' }
+    if ($CookieJar -ne '' -and (Test-Path -LiteralPath $CookieJar)) {
+        foreach ($line in Get-Content -LiteralPath $CookieJar) {
+            if ($line -match '(^|\t)portfolio_owner_session\t') { Protect-GateSecret (($line -split "`t")[-1]) }
+        }
+    }
     return ($status -join '').Trim()
 }
 
@@ -148,6 +221,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
     $hmac = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
     $bootstrapNonceA = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
     $bootstrapNonceB = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+    foreach ($secret in @($databasePassword, $hmac, $bootstrapNonceA, $bootstrapNonceB)) { Protect-GateSecret $secret }
     if ($bootstrapNonceA -eq $bootstrapNonceB) { Fail-Gate 'web bootstrap' 'bootstrap nonces must be unique' }
     $bootstrapSubjectA = "evidence-hub-gate-owner-a-$run"
     $bootstrapSubjectB = "evidence-hub-gate-owner-b-$run"
@@ -196,15 +270,16 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         if ((Invoke-DisposableHttpStatus "$baseUrl/owner/evidence-hub") -ne '303') { Fail-Gate 'web bootstrap' 'anonymous protected route did not redirect' }
         if ((Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath") -ne '405') { Fail-Gate 'web bootstrap' 'GET bootstrap was not rejected' }
         if ((Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath" 'POST' @{ 'X-Evidence-Hub-Bootstrap-Nonce' = 'invalid' }) -ne '404') { Fail-Gate 'web bootstrap' 'wrong bootstrap nonce was not rejected' }
-        $ownerABootstrapStatus = ((& curl.exe --silent --show-error --output NUL --write-out '%{http_code}' --max-redirs 0 --request POST --header "X-Evidence-Hub-Bootstrap-Nonce:$bootstrapNonceA" --cookie $ownerAJar --cookie-jar $ownerAJar "$baseUrl/$bootstrapPath") -join '').Trim()
+        $ownerABootstrapStatus = Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath" 'POST' @{ 'X-Evidence-Hub-Bootstrap-Nonce' = $bootstrapNonceA } $ownerAJar
         if ($ownerABootstrapStatus -ne '204') {
             $bootstrapDiagnostic = @(& docker logs --tail 20 $web 2>&1 | Select-String -Pattern 'Evidence Hub Web-SAPI bootstrap failed' | ForEach-Object { $_.ToString() }) -join ' '
-            $bootstrapResult = @(& curl.exe --silent --show-error --dump-header - --output NUL --max-redirs 0 --request POST --header "X-Evidence-Hub-Bootstrap-Nonce:$bootstrapNonceA" "$baseUrl/$bootstrapPath" 2>$null | Select-String -Pattern '^X-Evidence-Hub-Bootstrap-Result:' | ForEach-Object { $_.ToString().Trim() }) -join ' '
+            $sink = if ($IsWindows) { 'NUL' } else { '/dev/null' }
+            $bootstrapResult = @(& (Get-NativeCurl) --silent --show-error --dump-header - --output $sink --max-redirs 0 --request POST --header "X-Evidence-Hub-Bootstrap-Nonce:$bootstrapNonceA" "$baseUrl/$bootstrapPath" 2>$null | Select-String -Pattern '^X-Evidence-Hub-Bootstrap-Result:' | ForEach-Object { $_.ToString().Trim() }) -join ' '
             Fail-Gate 'web bootstrap' ("Owner A Apache bootstrap returned HTTP $ownerABootstrapStatus" + $(if ($bootstrapResult -eq '') { '' } else { "; $bootstrapResult" }) + $(if ($bootstrapDiagnostic -eq '') { '' } else { "; $bootstrapDiagnostic" }))
         }
         if ((Get-Item -LiteralPath $ownerAJar).Length -eq 0) { Fail-Gate 'web bootstrap' 'Owner A Apache cookie jar is empty' }
         if ((Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath" 'POST' @{ 'X-Evidence-Hub-Bootstrap-Nonce' = $bootstrapNonceA } $ownerAJar) -ne '404') { Fail-Gate 'web bootstrap' 'Owner A bootstrap nonce replay was accepted' }
-        $ownerBBootstrapStatus = ((& curl.exe --silent --show-error --output NUL --write-out '%{http_code}' --max-redirs 0 --request POST --header "X-Evidence-Hub-Bootstrap-Nonce:$bootstrapNonceB" --cookie $ownerBJar --cookie-jar $ownerBJar "$baseUrl/$bootstrapPath") -join '').Trim()
+        $ownerBBootstrapStatus = Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath" 'POST' @{ 'X-Evidence-Hub-Bootstrap-Nonce' = $bootstrapNonceB } $ownerBJar
         if ($ownerBBootstrapStatus -ne '204') { Fail-Gate 'web bootstrap' 'Owner B Apache bootstrap did not establish a session' }
         if ((Get-Item -LiteralPath $ownerBJar).Length -eq 0 -or (Get-FileHash -Algorithm SHA256 $ownerAJar).Hash -eq (Get-FileHash -Algorithm SHA256 $ownerBJar).Hash) { Fail-Gate 'web bootstrap' 'two independent Apache cookie jars were not established' }
         if ((Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath" 'POST' @{ 'X-Evidence-Hub-Bootstrap-Nonce' = $bootstrapNonceB } $ownerBJar) -ne '404') { Fail-Gate 'web bootstrap' 'Owner B bootstrap nonce replay was accepted' }
@@ -219,6 +294,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
             $sessionLine = Get-Content -LiteralPath $ownerAJar | Where-Object { $_ -match '(^|\t)portfolio_owner_session\t' -or $_ -match '^#HttpOnly_.*\tportfolio_owner_session\t' } | Select-Object -First 1
             if (-not [string]::IsNullOrWhiteSpace($sessionLine)) { $actionSession = ($sessionLine -split "`t")[-1] } else { $actionSession = '' }
             if ([string]::IsNullOrWhiteSpace($actionSession)) { Fail-Gate 'action visual session' 'Owner A native cookie jar did not contain an application session.' }
+            Protect-GateSecret $actionSession
             $env:PLAYWRIGHT_MODULE = $Playwright.Module; $env:EVIDENCE_HUB_EDGE_EXECUTABLE = $Chromium; $env:EVIDENCE_HUB_BROWSER_PROFILE = $profile; $env:EVIDENCE_HUB_VISUAL_BASE_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_TEST_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_SESSION_COOKIE = $actionSession
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-visual.cjs'), $screenshots)
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs'))
@@ -227,8 +303,9 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
     } finally {
         & docker exec $web rm -rf $bootstrapState 2>$null | Out-Null
         Remove-Item -LiteralPath $ownerAJar,$ownerBJar,$invalidJar -Force -ErrorAction SilentlyContinue
-        & docker rm -f $web $database 2>$null | Out-Null
-        & docker network rm $network 2>$null | Out-Null
+        try { Remove-DisposableDockerResources 'container' @($web, $database) } finally {
+            Remove-DisposableDockerResources 'network' @($network)
+        }
     }
 }
 
@@ -261,16 +338,15 @@ function Invoke-RequiredGates {
         & docker run --rm --entrypoint php -v "${resolvedRoot}:/var/www/html:ro" -w /var/www/html -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 $devImage scripts/run-phase2-tests.php
         if ($LASTEXITCODE -ne 0) { Fail-Gate 'Phase-2' 'fast deterministic suite failed' }
         $playwright = New-TemporaryPlaywright $resolvedRoot
-        $chrome = Get-Chromium1208Executable
+        $chrome = Get-Chromium1208Executable $playwright
         Invoke-RequiredMySqlAndBrowserGates $resolvedRoot $devImage $playwright $chrome $temporary
         $productionKey = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+        Protect-GateSecret $productionKey
         & docker run --rm --entrypoint php -e APP_ENV=production -e PUBLIC_BASE_URL=https://portfolio-gate.invalid -e SESSION_COOKIE_SECURE=true -e EXPECTED_OIDC_ISSUER=https://oidc-gate.invalid/ -e OIDC_CLIENT_ID=synthetic-gate-client -e OIDC_CLIENT_SECRET=synthetic-gate-secret -e OIDC_REDIRECT_URI=https://portfolio-gate.invalid/owner_oidc_callback.php -e EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY=$productionKey $productionImage scripts/check-production-security.php
         if ($LASTEXITCODE -ne 0) { Fail-Gate 'production security' 'production security gate failed' }
         Write-Host 'REQUIRED_GATES_PASSED'
     } finally {
-        if ($playwright) { Remove-Item -LiteralPath $playwright.Directory -Recurse -Force -ErrorAction SilentlyContinue }
-        Remove-Item -LiteralPath $temporary -Recurse -Force -ErrorAction SilentlyContinue
-        & docker image rm -f $devImage $productionImage 2>$null | Out-Null
+        Complete-GateCleanup $temporary $playwright @($devImage, $productionImage)
     }
 }
 
@@ -286,13 +362,11 @@ function Invoke-FocusedTwoOwnerGate {
         Invoke-Tool 'docker' @('build', '--pull=false', '-f', (Join-Path $resolvedRoot 'Dockerfile'), '-t', $image, $resolvedRoot)
         Assert-CurrentSourceIdentity $resolvedRoot $image 'development' $manifest
         $playwright = New-TemporaryPlaywright $resolvedRoot
-        $chromium = Get-Chromium1208Executable
+        $chromium = Get-Chromium1208Executable $playwright
         Invoke-RequiredMySqlAndBrowserGates $resolvedRoot $image $playwright $chromium $temporary
         Write-Host 'FOCUSED_TWO_OWNER_GATE_PASSED'
     } finally {
-        if ($playwright) { Remove-Item -LiteralPath $playwright.Directory -Recurse -Force -ErrorAction SilentlyContinue }
-        Remove-Item -LiteralPath $temporary -Recurse -Force -ErrorAction SilentlyContinue
-        & docker image rm -f $image 2>$null | Out-Null
+        Complete-GateCleanup $temporary $playwright @($image)
     }
 }
 
@@ -303,6 +377,21 @@ if ($IdentityChallenge -or $RegistrationChallenge) {
     exit 0
 }
 
-if ($Focused) { Invoke-FocusedTwoOwnerGate; exit 0 }
-
-Invoke-RequiredGates
+$savedEnvironment = @{}
+foreach ($name in @('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', 'PLAYWRIGHT_BROWSERS_PATH', 'PLAYWRIGHT_MODULE', 'EVIDENCE_HUB_EDGE_EXECUTABLE', 'EVIDENCE_HUB_BROWSER_PROFILE', 'EVIDENCE_HUB_VISUAL_BASE_URL', 'EVIDENCE_HUB_ACTION_TEST_URL', 'EVIDENCE_HUB_ACTION_SESSION_COOKIE')) {
+    $savedEnvironment[$name] = [Environment]::GetEnvironmentVariable($name)
+}
+Push-Location (Resolve-Path -LiteralPath $SourceRoot).Path
+try {
+    if ($EvidenceDirectory -ne '') {
+        $EvidenceDirectory = [IO.Path]::GetFullPath($EvidenceDirectory)
+        $root = (Get-Location).Path.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+        if ($EvidenceDirectory.StartsWith($root, [StringComparison]::OrdinalIgnoreCase) -or $EvidenceDirectory -eq (Get-Location).Path) { Fail-Gate 'evidence' 'evidence must be outside verification source' }
+        if (Test-Path -LiteralPath $EvidenceDirectory) { Fail-Gate 'evidence' 'evidence destination must be new' }
+        New-Item -ItemType Directory -Path $EvidenceDirectory | Out-Null
+    }
+    if ($Focused) { Invoke-FocusedTwoOwnerGate } else { Invoke-RequiredGates }
+} finally {
+    Pop-Location
+    foreach ($name in $savedEnvironment.Keys) { [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name]) }
+}
