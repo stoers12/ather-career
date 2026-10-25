@@ -8,9 +8,24 @@ const base=process.env.ATHERCAR_COMPLETION_BROWSER_BASE_URL,original=process.env
 if(![base,original,off].every(x=>/^http:\/\/127\.0\.0\.1:\d+$/.test(x||'')))process.exit(2);
 const evidence=process.env.ATHERCAR_EDITOR_EVIDENCE_DIR,fixture=JSON.parse(fs.readFileSync(path.join(evidence,'private-context.json'),'utf8'));
 const shots=path.join(evidence,'screenshots');fs.mkdirSync(shots,{recursive:true});
-const endpoint='/owner_onboarding_completion.php',contexts=[];let browser,stage='startup';
+const endpoint='/owner_onboarding_completion.php',contexts=[];let browser,diagnosticPage,stage='startup';
 const fields=['display_name','country_code','preferred_language','professional_status','specialization','headline','slug_candidate','name_ar','name_en','city','university','graduation_year','biography','phone'];
 function check(ok,message){if(!ok){const e=new Error('Assertion');e.safeMessage=message;throw e;}}
+const dashboardGreeting='#main-content .dashboard-header .dashboard-heading > h1 > bdi';
+async function dashboardAction(p,operation,action){
+ try{return await action();}catch(error){error.safeOperation=operation;diagnosticPage=p;throw error;}
+}
+async function dashboardOwner(p){
+ const greeting=p.locator(dashboardGreeting);
+ check(await greeting.count()===1,'Dashboard must expose one current-owner greeting');
+ return greeting.textContent();
+}
+async function dashboardDiagnostics(p){
+ const pathname=new URL(p.url()).pathname,language=await p.locator('html').evaluateAll(nodes=>nodes[0]?.getAttribute('lang'));
+ return{pathname:['/owner.php','/owner_profile.php','/owner_onboarding_editor.php','/owner_login.php','/signin.php'].includes(pathname)?pathname:'[other]',
+  documentLanguage:['en','ar'].includes(language)?language:'[other]',
+  greeting:await p.locator(dashboardGreeting).evaluateAll(nodes=>({count:nodes.length,expectedOwner:nodes.length===1&&nodes[0].textContent==='Later'}))};
+}
 function control(action){execFileSync('docker',['exec',process.env.ATHERCAR_EDITOR_CONTAINER,'php',process.env.ATHERCAR_EDITOR_APP_ROOT+'/scripts/run-onboarding-completion-browser-control.php',fixture.control,action],{stdio:'pipe'});}
 async function cookie(c,id){await c.addCookies([{name:'portfolio_owner_session',value:fixture.sessions[id],url:base,httpOnly:true,sameSite:'Lax'}]);}
 async function context(id='a'){const c=await browser.newContext({viewport:{width:1440,height:1100}});contexts.push(c);await cookie(c,id);return c;}
@@ -100,9 +115,15 @@ try{
  await o.locator('[data-completion-confirm]').first().focus();await o.keyboard.press('Space');check(await o.locator('[data-create]').isDisabled(),'Keyboard single confirmation insufficient');await o.locator('[data-completion-confirm]').nth(1).focus();await o.keyboard.press('Space');check(await o.locator('[data-create]').isEnabled()&&await o.locator('[data-completion-status]').getAttribute('aria-live')==='polite','Keyboard labels and live status');control('assert-private');check([a,b,c,d,e,f,h,i,j,local,later,o].every(p=>p.stats.errors===0),'No browser runtime errors');
  console.log('PASS completion browser honest absent values AR-EN RTL-LTR themes 1440-1024-768-390-320 keyboard focus and live status');
  stage='explicit Dashboard after recovery without policies';
- const nav=await open(ca,original);await state(nav,'completed');check(new URL(nav.url()).pathname==='/owner_onboarding_editor.php'&&nav.stats.complete.length===0,'Receipt never automatically navigates or replays');
+ const nav=await dashboardAction(null,'open-recovered-editor',()=>open(ca,original));
+ await dashboardAction(nav,'wait-recovered-completion-state',()=>state(nav,'completed'));check(new URL(nav.url()).pathname==='/owner_onboarding_editor.php'&&nav.stats.complete.length===0,'Receipt never automatically navigates or replays');
  check(await nav.locator('[data-completion-dashboard]').getAttribute('href')==='/owner.php','Dashboard fixed reauthorizing route');
- await nav.locator('[data-completion-dashboard]').focus();await nav.keyboard.press('Enter');await nav.waitForURL('**/owner.php');check(await nav.locator('.admin-page-title bdi').textContent()==='Later','Dashboard reauthorizes and renders current Profile greeting');await nav.goto(original+'/owner_profile.php');check(await nav.locator('input[name="full_name"]').inputValue()==='Later authoritative Profile','Original receipt preserves complete current Profile');
+ await dashboardAction(nav,'focus-recovered-dashboard-link',()=>nav.locator('[data-completion-dashboard]').focus());
+ await dashboardAction(nav,'activate-recovered-dashboard-link',()=>nav.keyboard.press('Enter'));
+ await dashboardAction(nav,'wait-recovered-dashboard-url',()=>nav.waitForURL('**/owner.php'));
+ await dashboardAction(nav,'verify-recovered-dashboard-owner',async()=>check(await dashboardOwner(nav)==='Later','Dashboard reauthorizes and renders current Profile greeting'));
+ await dashboardAction(nav,'open-current-profile',()=>nav.goto(original+'/owner_profile.php'));
+ await dashboardAction(nav,'verify-current-profile-owner',async()=>check(await nav.locator('input[name="full_name"]').inputValue()==='Later authoritative Profile','Original receipt preserves complete current Profile'));
  console.log('PASS journey browser explicit keyboard Dashboard after policy-independent receipt recovery preserves later Profile and never redirects automatically');
 
  stage='save pause and explicit resume with newer input';
@@ -156,11 +177,17 @@ try{
  }
  console.log('PASS journey D1 browser incomplete Resume and null-policy or gate-off unavailable account controls without mutation');
  stage='D1 explicit keyboard navigation';
- const dp=await ca.newPage();await dp.goto(base+'/owner_login.php?lang=en');await dp.locator('[data-entry-dashboard]').focus();await dp.keyboard.press('Enter');await dp.waitForURL('**/owner.php');check(await dp.locator('.admin-page-title bdi').textContent()==='Later','Entry target lost current Profile');await dp.close();
+ const dp=await ca.newPage();await dashboardAction(dp,'open-signed-in-entry',()=>dp.goto(base+'/owner_login.php?lang=en'));
+ await dashboardAction(dp,'focus-entry-dashboard-link',()=>dp.locator('[data-entry-dashboard]').focus());
+ await dashboardAction(dp,'activate-entry-dashboard-link',()=>dp.keyboard.press('Enter'));
+ await dashboardAction(dp,'wait-entry-dashboard-url',()=>dp.waitForURL('**/owner.php'));
+ await dashboardAction(dp,'verify-entry-dashboard-owner',async()=>check(await dashboardOwner(dp)==='Later','Entry target lost current Profile'));await dp.close();
  const savedEntryDraft=(await (await cn.request.get(base+'/owner_onboarding_draft.php')).json()).draft;
  const rp=await cn.newPage();await rp.goto(base+'/signin.php?lang=en');await rp.locator('.af-language').focus();await rp.keyboard.press('Enter');check(await rp.locator('html').getAttribute('lang')==='ar','Entry language keyboard action');await rp.locator('[data-entry-resume]').focus();await rp.keyboard.press('Enter');await rp.waitForURL('**/owner_onboarding_editor.php?lang=ar');await rp.waitForSelector('[data-save-state="saved"]');check(await rp.locator('[data-draft-field="specialization"]').inputValue()===savedEntryDraft.fields.specialization,'Entry Resume lost acknowledged exact draft');await rp.close();
  console.log('PASS journey D1 browser explicit keyboard Dashboard and server-routed Resume preserve current Profile and saved values');
 
  fs.writeFileSync(path.join(shots,'README.txt'),'Redacted synthetic data only. No session/token/body exports, HAR or raw HTML. Automated Chromium checks do not certify manual screen readers, Safari or physical devices.\n');
-}catch(error){console.error('FAIL completion browser '+stage+(error.safeMessage?': '+error.safeMessage:': '+(error.name==='TimeoutError'?'timeout waiting for browser condition':'safe infrastructure failure')));process.exitCode=1;}
+}catch(error){console.error('FAIL completion browser '+stage+(error.safeOperation?' ['+error.safeOperation+']':'')+(error.safeMessage?': '+error.safeMessage:': '+(error.name==='TimeoutError'?'timeout waiting for browser condition':'safe infrastructure failure')));process.exitCode=1;
+ if(error.safeOperation){try{console.error('DIAGNOSTIC completion '+JSON.stringify(await dashboardDiagnostics(diagnosticPage)));}catch{console.error('DIAGNOSTIC completion unavailable');}}
+}
 finally{for(const c of contexts)try{await c.close();}catch{}if(browser)await browser.close();fs.writeFileSync(path.join(evidence,'stop'),'stop');}

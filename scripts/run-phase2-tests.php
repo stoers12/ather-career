@@ -33,6 +33,7 @@ require_once __DIR__ . '/../tests/phase2/cases/OperationalRecoveryStaticTest.php
 require_once __DIR__ . '/../tests/phase2/cases/Auth0OidcStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/Auth0CallbackBoundaryTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/AccountSelectionStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/OwnerWorkspacePresentationTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/LegacyBackendRemovalStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/HttpValidationContractTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/PublicProjectJsonContractTest.php';
@@ -59,6 +60,7 @@ require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubUndoTest.php';
 $environment = null;
 $failures = [];
 $tests = [
+    'shared Owner workspace locale, layout and account-form contract' => [OwnerWorkspacePresentationTest::class, 'run'],
     'provider-independent internal-user session contract' => [IdentitySessionContractTest::class, 'run'],
     'ownership migration static contract' => [OwnershipMigrationStaticTest::class, 'run'],
     'owner flow static contract' => [OwnerFlowStaticTest::class, 'run'],

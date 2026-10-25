@@ -29,11 +29,26 @@
         }
     }
 
-    function applyTheme() {
-        root.setAttribute('data-evidence-hub-theme', resolvedTheme());
+    function applyTheme(value) {
+        var theme = value === 'light' || value === 'dark' ? value : resolvedTheme();
+        root.setAttribute('data-evidence-hub-theme', theme);
+        if (typeof document.querySelectorAll === 'function') document.querySelectorAll('[data-owner-theme]').forEach(function (button) {
+            button.setAttribute('aria-pressed', button.getAttribute('data-owner-theme') === theme ? 'true' : 'false');
+        });
     }
 
     applyTheme();
+    if (typeof document.addEventListener === 'function') document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('[data-owner-theme]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var theme = button.getAttribute('data-owner-theme');
+                if (theme !== 'light' && theme !== 'dark') return;
+                try { window.localStorage.setItem(themeKey, theme); } catch (error) { /* Apply for this page when storage is unavailable. */ }
+                applyTheme(theme);
+            });
+        });
+        applyTheme();
+    });
     if (systemTheme && typeof systemTheme.addEventListener === 'function') {
         systemTheme.addEventListener('change', function () {
             if (savedTheme() === null) applyTheme();

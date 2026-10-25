@@ -38,8 +38,8 @@ $public=new GuzzleHttp\Client(['base_uri'=>$base,'allow_redirects'=>false,'http_
 $slug=$db->query('SELECT public_slug FROM portfolios WHERE id='.$a->portfolioId)->fetchColumn();
 $uri='/p/'.$slug;
 $form=['action'=>'set_project_publication','csrf_token'=>$csrf,'id'=>(string)$alpha,'is_published'=>'0'];
-$html=projectPublicationHttp($owner,'GET','/owner_projects.php',200);
-completionAssert(str_contains($html,'project-publication-form') && str_contains($html,'Hide project') && str_contains($html,'Show in public Portfolio'),'Project controls missing.');
+$html=projectPublicationHttp($owner,'GET','/owner_projects.php?lang=en',200);
+completionAssert(str_contains($html,'<html lang="en"') && str_contains($html,'project-publication-form') && str_contains($html,'Hide project') && str_contains($html,'Show in public Portfolio'),'Project controls missing.');
 $checkPublic=static function (bool $visible) use ($public,$uri,$alpha,$hidden): void {
     $html=projectPublicationHttp($public,'GET',$uri,200);
     $json=json_decode(projectPublicationHttp($public,'GET',$uri.'/projects.json',200),true,32,JSON_THROW_ON_ERROR);

@@ -3,7 +3,9 @@ param(
     [string]$SourceRoot = (Split-Path -Parent $PSScriptRoot),
     [switch]$IdentityChallenge,
     [switch]$RegistrationChallenge,
-    [switch]$Focused
+    [switch]$Focused,
+    [switch]$InstallChromium,
+    [string]$EvidenceDirectory = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -19,12 +21,133 @@ function Invoke-Tool([string]$Name, [string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { Fail-Gate $Name "command returned $LASTEXITCODE" }
 }
 
+function Get-NativeCurl {
+    $name = if ($IsWindows) { 'curl.exe' } else { 'curl' }
+    return (Get-Command $name -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+}
+
+function Protect-GateSecret([string]$Value) {
+    if ($env:GITHUB_ACTIONS -eq 'true') { Write-Host "::add-mask::$Value" }
+}
+
+function Restore-LinuxCookieJarOwnership([string]$Temporary, [string]$Phase) {
+    if (-not $IsLinux) { return }
+    $uid = (& id -u); if ($LASTEXITCODE -ne 0) { Fail-Gate 'cookie handoff' 'runner UID unavailable' }
+    $gid = (& id -g); if ($LASTEXITCODE -ne 0) { Fail-Gate 'cookie handoff' 'runner GID unavailable' }
+    if ($uid -notmatch '^[1-9][0-9]*$' -or $gid -notmatch '^[0-9]+$') { Fail-Gate 'cookie handoff' 'a non-root runner is required' }
+    $parent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('/')
+    $code = @'
+import os, re, stat, sys
+root, parent, uid, gid, phase = sys.argv[1:]
+fds = []
+def require(condition, reason):
+    if not condition:
+        raise ValueError(reason)
+def metadata(kind, name, info):
+    print(f"COOKIE_JAR_METADATA phase={phase} kind={kind} name={name} uid={info.st_uid} gid={info.st_gid} mode={stat.S_IMODE(info.st_mode):04o}", flush=True)
+try:
+    uid, gid = int(uid), int(gid)
+    require(uid > 0 and gid >= 0 and os.geteuid() == 0, 'identity')
+    require((uid, gid) == (int(os.environ['SUDO_UID']), int(os.environ['SUDO_GID'])), 'sudo-caller')
+    require(phase in ('initial', 'before-http', 'after-http', 'before-editor', 'after-editor'), 'phase')
+    require(os.path.isabs(parent) and os.path.normpath(parent) == parent, 'parent')
+    require(os.path.dirname(root) == parent and re.fullmatch(r'ather-evidence-hub-(gates|focused)-[a-f0-9]{32}', os.path.basename(root)), 'namespace')
+    # Traverse every directory by descriptor: no symlink component is followed.
+    current = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+    fds.append(current)
+    for component in parent.split('/')[1:] + [os.path.basename(root), 'bridge']:
+        current = os.open(component, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=current)
+        fds.append(current)
+        if len(fds) >= len(parent.split('/')) + 1:
+            info = os.fstat(current)
+            require(info.st_uid == uid and stat.S_IMODE(info.st_mode) == 0o700, 'private-directory')
+            metadata('directory', 'bridge' if component == 'bridge' else 'run-root', info)
+    names = ['owner-a.cookiejar', 'owner-b.cookiejar']
+    if phase != 'initial':
+        names.append('fabricated.cookiejar')
+    jars = []
+    for name in names:
+        entry = os.stat(name, dir_fd=current, follow_symlinks=False)
+        metadata('before', name, entry)
+        require(stat.S_ISREG(entry.st_mode) and entry.st_nlink == 1 and entry.st_uid in (0, uid), 'regular-run-owned-file')
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=current)
+        fds.append(fd)
+        info = os.fstat(fd)
+        require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1 and info.st_uid in (0, uid), 'regular-run-owned-file')
+        require((entry.st_dev, entry.st_ino) == (info.st_dev, info.st_ino), 'entry-changed')
+        jars.append((name, fd, info))
+    # Validate the complete set before modifying any file. Never read contents,
+    # replace a jar, walk recursively, or operate on a pathname with privilege.
+    for name, fd, info in jars:
+        entry = os.stat(name, dir_fd=current, follow_symlinks=False)
+        require((entry.st_dev, entry.st_ino) == (info.st_dev, info.st_ino) and entry.st_nlink == 1, 'entry-changed')
+    for name, fd, info in jars:
+        os.fchown(fd, uid, gid)
+        os.fchmod(fd, 0o600)
+        restored = os.fstat(fd)
+        require((restored.st_uid, restored.st_gid, stat.S_IMODE(restored.st_mode)) == (uid, gid, 0o600), 'restoration')
+        metadata('after', name, restored)
+except (OSError, ValueError, KeyError) as error:
+    print(f"COOKIE_JAR_HANDOFF_FAILED phase={phase} type={type(error).__name__} errno={getattr(error, 'errno', None)}", file=sys.stderr)
+    sys.exit(1)
+finally:
+    for fd in reversed(fds):
+        os.close(fd)
+'@
+    Invoke-Tool 'sudo' @('--non-interactive', '--', 'python3', '-I', '-c', $code, $Temporary, $parent, $uid, $gid, $Phase)
+}
+
+function Remove-DisposableDockerResources([string]$Kind, [string[]]$Names) {
+    # Enumerate first: resources may not exist when setup fails. Never prune.
+    $format = if ($Kind -eq 'image') { '{{.Repository}}' } else { '{{.Name}}' }
+    if ($Kind -eq 'container') { $format = '{{.Names}}' }
+    $arguments = @($Kind, 'ls', '--format', $format)
+    if ($Kind -eq 'container') { $arguments += '--all' }
+    $existing = @(& docker @arguments)
+    if ($LASTEXITCODE -ne 0) { Fail-Gate 'cleanup' "cannot enumerate $Kind resources" }
+    foreach ($name in $Names) {
+        if ($existing -notcontains $name) { continue }
+        $remove = @($Kind, 'rm')
+        if ($Kind -eq 'container') { $remove += @('--force', '--volumes') }
+        if ($Kind -eq 'image') { $remove += '--force' }
+        Invoke-Tool 'docker' ($remove + $name) | Out-Host
+    }
+}
+
+function Export-GateEvidence([string]$Temporary) {
+    if ($EvidenceDirectory -eq '') { return }
+    # Only synthetic screenshots and source hashes; never browser profiles/jars.
+    foreach ($path in @('source.manifest', 'screenshots')) {
+        $source = Join-Path $Temporary $path
+        if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination $EvidenceDirectory -Recurse -Force }
+    }
+}
+
+function Remove-GateTemporary([string]$Path) {
+    $target = [IO.Path]::GetFullPath($Path)
+    $parent = [IO.Path]::GetDirectoryName($target).TrimEnd([IO.Path]::DirectorySeparatorChar)
+    $expected = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd([IO.Path]::DirectorySeparatorChar)
+    if ($parent -ne $expected -or [IO.Path]::GetFileName($target) -notmatch '^ather-evidence-hub-(gates|focused|playwright)-[a-f0-9]{32}$') { Fail-Gate 'cleanup' 'temporary target is outside the run-owned namespace' }
+    Remove-Item -LiteralPath $target -Recurse -Force
+}
+
+function Complete-GateCleanup([string]$Temporary, [hashtable]$Playwright, [string[]]$Images) {
+    $failures = @()
+    try { Export-GateEvidence $Temporary } catch { $failures += 'evidence export' }
+    if ($Playwright) {
+        try { Remove-GateTemporary $Playwright.Directory } catch { $failures += 'temporary Playwright' }
+    }
+    try { Remove-GateTemporary $Temporary } catch { $failures += 'temporary gate files' }
+    try { Remove-DisposableDockerResources 'image' $Images } catch { $failures += 'disposable images' }
+    if ($failures.Count -gt 0) { Fail-Gate 'cleanup' ($failures -join ', ') }
+}
+
 function Get-SourceFiles([string]$Root) {
     # Docker deliberately omits .gitignore from its build context. It is not
     # runtime source, so the identity manifest excludes it rather than masking
     # a real application-source mismatch.
     $excluded = @('.git', 'vendor', 'node_modules', 'runtime', '.env', '.gitignore', '.vscode')
-    Get-ChildItem -LiteralPath $Root -Recurse -File | Where-Object {
+    Get-ChildItem -LiteralPath $Root -Recurse -File -Force | Where-Object {
         $relative = $_.FullName.Substring($Root.Length).TrimStart('\', '/') -replace '\\', '/'
         -not ($excluded | Where-Object { $relative -eq $_ -or $relative.StartsWith("$_/") })
     } | Sort-Object FullName
@@ -79,7 +202,11 @@ function Assert-CurrentSourceIdentity([string]$Root, [string]$Image, [string]$La
     $containerRoot = if ($Layout -eq 'production') { '/var/www/app' } else { '/var/www/html' }
     $check = "set -eu; cd $containerRoot; sha256sum -c /audit/source.manifest; test -f database/migrations/011_recommendation_dispositions.sql; test -f owner_evidence_hub.php; test -f evidence_hub.css; test -f evidence_hub.js; test -f owner_theme.js"
     if ($Layout -eq 'development') { $check += '; test "$(readlink -f /var/www/app)" = /var/www/html' }
-    if ($Layout -eq 'production') { $check += '; test -f /var/www/public/evidence_hub.css; test -f /var/www/public/evidence_hub.js; test -f /var/www/public/owner_theme.js' }
+    if ($Layout -eq 'production') {
+        foreach ($asset in @('style.css', 'admin.css', 'owner_workspace.css', 'owner_dashboard.css', 'admin.js', 'owner_theme.js', 'evidence_hub.css', 'evidence_hub.js', 'assets/fonts/OFL.txt', 'assets/fonts/noto-sans-arabic-400.ttf', 'assets/fonts/noto-sans-arabic-500.ttf', 'assets/images/ather-navbar-logo.png', 'assets/images/dashboard-projects.svg')) {
+            $check += "; test -s /var/www/public/$asset; cmp /var/www/app/$asset /var/www/public/$asset"
+        }
+    }
     & docker run --rm --entrypoint sh -v "${Root}:/verification-source:ro" -v "${Manifest}:/audit/source.manifest:ro" $Image -lc $check
     if ($LASTEXITCODE -ne 0) { Fail-Gate 'source identity' 'container-visible application source differs from the intended verification source' }
 }
@@ -89,22 +216,33 @@ function New-TemporaryPlaywright([string]$Root) {
     New-Item -ItemType Directory -Path $temporary | Out-Null
     try {
         $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'
+        if ($InstallChromium) { $env:PLAYWRIGHT_BROWSERS_PATH = '0' }
         Push-Location $temporary
         try { Invoke-Tool 'npm' @('install', '--ignore-scripts', '--no-save', '--package-lock=false', 'playwright@1.58.2') | Out-Host } finally { Pop-Location }
         $module = Join-Path $temporary 'node_modules/playwright'
         $package = Get-Content -Raw -LiteralPath (Join-Path $module 'package.json') | ConvertFrom-Json
         if ($package.version -ne '1.58.2') { Fail-Gate 'Playwright' "expected 1.58.2; received $($package.version)" }
-        $browsers = Get-Content -Raw -LiteralPath (Join-Path $temporary 'node_modules/playwright-core/browsers.json')
-        if ($browsers -notmatch '"revision"\s*:\s*"1208"') { Fail-Gate 'Playwright' 'Chromium revision 1208 is not declared' }
+        $browsers = Get-Content -Raw -LiteralPath (Join-Path $temporary 'node_modules/playwright-core/browsers.json') | ConvertFrom-Json
+        $chromium = @($browsers.browsers | Where-Object name -eq 'chromium')
+        if ($chromium.Count -ne 1 -or $chromium[0].revision -ne '1208' -or $chromium[0].browserVersion -ne '145.0.7632.6') { Fail-Gate 'Playwright' 'full Chromium revision 1208 / version 145.0.7632.6 is not declared' }
+        if ($InstallChromium) {
+            Invoke-Tool 'node' @((Join-Path $module 'cli.js'), 'install', '--with-deps', '--no-shell', 'chromium') | Out-Host
+        }
         return @{ Directory = $temporary; Module = $module }
-    } catch { Remove-Item -LiteralPath $temporary -Recurse -Force -ErrorAction SilentlyContinue; throw }
+    } catch { try { Remove-GateTemporary $temporary } catch { Write-Warning 'Temporary Playwright cleanup failed' }; throw }
 }
 
-function Get-Chromium1208Executable {
-    $cache = Join-Path $env:LOCALAPPDATA 'ms-playwright/chromium-1208/chrome-win64/chrome.exe'
+function Get-Chromium1208Executable([hashtable]$Playwright) {
+    $cache = (& node -e 'process.stdout.write(require(process.argv[1]).chromium.executablePath())' $Playwright.Module)
+    if ($LASTEXITCODE -ne 0 -or ($cache -replace '\\', '/') -notmatch '/chromium-1208/') { Fail-Gate 'Playwright' 'full Chromium revision 1208 executable resolution failed' }
     if (-not (Test-Path -LiteralPath $cache) -or (Get-Item -LiteralPath $cache).Length -eq 0) { Fail-Gate 'Playwright' 'validated full Chromium revision 1208 is unavailable' }
-    $version = [string](Get-Item -LiteralPath $cache).VersionInfo.ProductVersion
-    if ($version -notmatch '145\.0\.7632\.6') { Fail-Gate 'Playwright' "Chromium version is incompatible: $version" }
+    if ($IsWindows) {
+        $version = [string](Get-Item -LiteralPath $cache).VersionInfo.ProductVersion
+        if ($version -ne '145.0.7632.6') { Fail-Gate 'Playwright' 'Chromium product version is incompatible' }
+    } else {
+        $version = ((& $cache --version) -join '').Trim()
+        if ($LASTEXITCODE -ne 0 -or $version -notmatch '^(Chromium|Google Chrome for Testing) 145\.0\.7632\.6$') { Fail-Gate 'Playwright' 'Chromium executable version is incompatible' }
+    }
     return $cache
 }
 
@@ -124,11 +262,17 @@ function Wait-DisposableMySql([string]$Container) {
 }
 
 function Invoke-DisposableHttpStatus([string]$Url, [string]$Method = 'GET', [hashtable]$Headers = @{}, [string]$CookieJar = '') {
-    $arguments = @('--silent', '--show-error', '--output', 'NUL', '--write-out', '%{http_code}', '--max-redirs', '0', '--request', $Method)
+    $sink = if ($IsWindows) { 'NUL' } else { '/dev/null' }
+    $arguments = @('--silent', '--show-error', '--output', $sink, '--write-out', '%{http_code}', '--max-redirs', '0', '--request', $Method)
     foreach ($name in $Headers.Keys) { $arguments += @('--header', "$name`:$($Headers[$name])") }
     if ($CookieJar -ne '') { $arguments += @('--cookie', $CookieJar, '--cookie-jar', $CookieJar) }
-    $status = @(& curl.exe @arguments $Url)
+    $status = @(& (Get-NativeCurl) @arguments $Url)
     if ($LASTEXITCODE -ne 0) { Fail-Gate 'web bootstrap' 'native cookie-jar HTTP client failed' }
+    if ($CookieJar -ne '' -and (Test-Path -LiteralPath $CookieJar)) {
+        foreach ($line in Get-Content -LiteralPath $CookieJar) {
+            if ($line -match '(^|\t)portfolio_owner_session\t') { Protect-GateSecret (($line -split "`t")[-1]) }
+        }
+    }
     return ($status -join '').Trim()
 }
 
@@ -144,6 +288,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
     $hmac = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
     $bootstrapNonceA = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
     $bootstrapNonceB = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+    foreach ($secret in @($databasePassword, $hmac, $bootstrapNonceA, $bootstrapNonceB)) { Protect-GateSecret $secret }
     if ($bootstrapNonceA -eq $bootstrapNonceB) { Fail-Gate 'web bootstrap' 'bootstrap nonces must be unique' }
     $bootstrapSubjectA = "evidence-hub-gate-owner-a-$run"
     $bootstrapSubjectB = "evidence-hub-gate-owner-b-$run"
@@ -153,12 +298,21 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
     $bridge = Join-Path $Temporary 'bridge'
     $profile = Join-Path $Temporary 'browser-profile'; $screenshots = Join-Path $Temporary 'screenshots'
     New-Item -ItemType Directory -Path $bridge,$profile,$screenshots | Out-Null
+    if ($IsLinux) {
+        $parent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('/')
+        if ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($Temporary)) -ne $parent -or [IO.Path]::GetFileName($Temporary) -notmatch '^ather-evidence-hub-(gates|focused)-[a-f0-9]{32}$') { Fail-Gate 'cookie handoff' 'invalid run-owned directory' }
+        foreach ($directory in @($Temporary, $bridge, $profile, $screenshots)) {
+            if ((Get-Item -LiteralPath $directory -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { Fail-Gate 'cookie handoff' 'unexpected directory symlink' }
+            [IO.File]::SetUnixFileMode($directory, [IO.UnixFileMode]::UserRead -bor [IO.UnixFileMode]::UserWrite -bor [IO.UnixFileMode]::UserExecute)
+        }
+    }
     $ownerAJar = Join-Path $bridge 'owner-a.cookiejar'
     $ownerBJar = Join-Path $bridge 'owner-b.cookiejar'
     $invalidJar = Join-Path $bridge 'fabricated.cookiejar'
     [IO.File]::WriteAllText($ownerAJar, '', [Text.UTF8Encoding]::new($false))
     [IO.File]::WriteAllText($ownerBJar, '', [Text.UTF8Encoding]::new($false))
     try {
+        Restore-LinuxCookieJarOwnership $Temporary 'initial'
         Invoke-Tool 'docker' @('network', 'create', $network)
         Invoke-Tool 'docker' @('run', '--detach', '--name', $database, '--network', $network, '--network-alias', 'evidencehubdb', '-e', "MYSQL_DATABASE=$databaseName", '-e', "MYSQL_USER=$databaseUser", '-e', "MYSQL_PASSWORD=$databasePassword", '-e', "MYSQL_ROOT_PASSWORD=$databasePassword", '-v', "$(Join-Path $Root 'database/portfolio_db.sql'):/docker-entrypoint-initdb.d/01-portfolio.sql:ro", 'mysql:8.4')
         Wait-DisposableMySql $database
@@ -172,6 +326,8 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', "DB_NAME=$timestampDatabaseName", '-e', 'DB_USER=root', '-e', "DB_PASSWORD=$databasePassword", '-e', 'EVIDENCE_HUB_TIMESTAMP_MYSQL_TEST=1', $Image, 'scripts/run-evidence-hub-mysql-timestamp-test.php'))
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_R3_MYSQL_TEST=1', $Image, 'scripts/run-evidence-hub-mysql-disposition-test.php'))
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_TEST=1', $Image, 'scripts/run-evidence-hub-http-action-test.php', '--seed'))
+        # These fixtures model existing owners. Seal their legacy ownership while no Apache/writers are running.
+        Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @($Image, 'database/capture-owner-journey-cutover.php', '--confirm-exclusive-maintenance', "--database=$databaseName"))
         $webBootstrapEnvironment = @('-e', 'EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP=1', '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_NONCE_A=$bootstrapNonceA", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_SUBJECT_A=$bootstrapSubjectA", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_NONCE_B=$bootstrapNonceB", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_SUBJECT_B=$bootstrapSubjectB", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_STATE_DIR=$bootstrapState")
         Invoke-Tool 'docker' (@('run', '--detach', '--name', $web, '--network', $network, '-p', "127.0.0.1:${port}:80", '-v', "${bridge}:/tmp/bridge", '-e', 'EVIDENCE_HUB_VISUAL_TEST=1') + $webBootstrapEnvironment + $baseEnvironment + @($Image))
         for ($attempt = 0; $attempt -lt 60; $attempt++) {
@@ -190,15 +346,16 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         if ((Invoke-DisposableHttpStatus "$baseUrl/owner/evidence-hub") -ne '303') { Fail-Gate 'web bootstrap' 'anonymous protected route did not redirect' }
         if ((Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath") -ne '405') { Fail-Gate 'web bootstrap' 'GET bootstrap was not rejected' }
         if ((Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath" 'POST' @{ 'X-Evidence-Hub-Bootstrap-Nonce' = 'invalid' }) -ne '404') { Fail-Gate 'web bootstrap' 'wrong bootstrap nonce was not rejected' }
-        $ownerABootstrapStatus = ((& curl.exe --silent --show-error --output NUL --write-out '%{http_code}' --max-redirs 0 --request POST --header "X-Evidence-Hub-Bootstrap-Nonce:$bootstrapNonceA" --cookie $ownerAJar --cookie-jar $ownerAJar "$baseUrl/$bootstrapPath") -join '').Trim()
+        $ownerABootstrapStatus = Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath" 'POST' @{ 'X-Evidence-Hub-Bootstrap-Nonce' = $bootstrapNonceA } $ownerAJar
         if ($ownerABootstrapStatus -ne '204') {
             $bootstrapDiagnostic = @(& docker logs --tail 20 $web 2>&1 | Select-String -Pattern 'Evidence Hub Web-SAPI bootstrap failed' | ForEach-Object { $_.ToString() }) -join ' '
-            $bootstrapResult = @(& curl.exe --silent --show-error --dump-header - --output NUL --max-redirs 0 --request POST --header "X-Evidence-Hub-Bootstrap-Nonce:$bootstrapNonceA" "$baseUrl/$bootstrapPath" 2>$null | Select-String -Pattern '^X-Evidence-Hub-Bootstrap-Result:' | ForEach-Object { $_.ToString().Trim() }) -join ' '
+            $sink = if ($IsWindows) { 'NUL' } else { '/dev/null' }
+            $bootstrapResult = @(& (Get-NativeCurl) --silent --show-error --dump-header - --output $sink --max-redirs 0 --request POST --header "X-Evidence-Hub-Bootstrap-Nonce:$bootstrapNonceA" "$baseUrl/$bootstrapPath" 2>$null | Select-String -Pattern '^X-Evidence-Hub-Bootstrap-Result:' | ForEach-Object { $_.ToString().Trim() }) -join ' '
             Fail-Gate 'web bootstrap' ("Owner A Apache bootstrap returned HTTP $ownerABootstrapStatus" + $(if ($bootstrapResult -eq '') { '' } else { "; $bootstrapResult" }) + $(if ($bootstrapDiagnostic -eq '') { '' } else { "; $bootstrapDiagnostic" }))
         }
         if ((Get-Item -LiteralPath $ownerAJar).Length -eq 0) { Fail-Gate 'web bootstrap' 'Owner A Apache cookie jar is empty' }
         if ((Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath" 'POST' @{ 'X-Evidence-Hub-Bootstrap-Nonce' = $bootstrapNonceA } $ownerAJar) -ne '404') { Fail-Gate 'web bootstrap' 'Owner A bootstrap nonce replay was accepted' }
-        $ownerBBootstrapStatus = ((& curl.exe --silent --show-error --output NUL --write-out '%{http_code}' --max-redirs 0 --request POST --header "X-Evidence-Hub-Bootstrap-Nonce:$bootstrapNonceB" --cookie $ownerBJar --cookie-jar $ownerBJar "$baseUrl/$bootstrapPath") -join '').Trim()
+        $ownerBBootstrapStatus = Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath" 'POST' @{ 'X-Evidence-Hub-Bootstrap-Nonce' = $bootstrapNonceB } $ownerBJar
         if ($ownerBBootstrapStatus -ne '204') { Fail-Gate 'web bootstrap' 'Owner B Apache bootstrap did not establish a session' }
         if ((Get-Item -LiteralPath $ownerBJar).Length -eq 0 -or (Get-FileHash -Algorithm SHA256 $ownerAJar).Hash -eq (Get-FileHash -Algorithm SHA256 $ownerBJar).Hash) { Fail-Gate 'web bootstrap' 'two independent Apache cookie jars were not established' }
         if ((Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath" 'POST' @{ 'X-Evidence-Hub-Bootstrap-Nonce' = $bootstrapNonceB } $ownerBJar) -ne '404') { Fail-Gate 'web bootstrap' 'Owner B bootstrap nonce replay was accepted' }
@@ -208,21 +365,29 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         $invalidLines = Get-Content -LiteralPath $ownerAJar
         $invalidLines = $invalidLines | ForEach-Object { if (($_ -match '^#' -and $_ -notmatch '^#HttpOnly_') -or $_ -notmatch "`t") { $_ } else { $fields = $_ -split "`t"; $fields[$fields.Count - 1] = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant(); $fields -join "`t" } }
         [IO.File]::WriteAllLines($invalidJar, [string[]]$invalidLines, [Text.UTF8Encoding]::new($false))
+        Restore-LinuxCookieJarOwnership $Temporary 'before-http'
+        if ($IsLinux) { Invoke-Tool 'docker' @('exec', $web, 'sh', '-ec', 'uid=$(id -u); gid=$(id -g); printf "COOKIE_JAR_WRITER consumer=http uid=%s gid=%s\n" "$uid" "$gid"') }
         Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_TEST=1', '-e', 'EVIDENCE_HUB_HTTP_ACTION_BASE_URL=http://127.0.0.1', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_INVALID=/tmp/bridge/fabricated.cookiejar', $web, 'php', 'scripts/run-evidence-hub-http-action-test.php'))
+        Restore-LinuxCookieJarOwnership $Temporary 'after-http'
         if ($null -ne $Playwright) {
             $sessionLine = Get-Content -LiteralPath $ownerAJar | Where-Object { $_ -match '(^|\t)portfolio_owner_session\t' -or $_ -match '^#HttpOnly_.*\tportfolio_owner_session\t' } | Select-Object -First 1
             if (-not [string]::IsNullOrWhiteSpace($sessionLine)) { $actionSession = ($sessionLine -split "`t")[-1] } else { $actionSession = '' }
             if ([string]::IsNullOrWhiteSpace($actionSession)) { Fail-Gate 'action visual session' 'Owner A native cookie jar did not contain an application session.' }
+            Protect-GateSecret $actionSession
             $env:PLAYWRIGHT_MODULE = $Playwright.Module; $env:EVIDENCE_HUB_EDGE_EXECUTABLE = $Chromium; $env:EVIDENCE_HUB_BROWSER_PROFILE = $profile; $env:EVIDENCE_HUB_VISUAL_BASE_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_TEST_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_SESSION_COOKIE = $actionSession
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-visual.cjs'), $screenshots)
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs'))
         }
+        Restore-LinuxCookieJarOwnership $Temporary 'before-editor'
+        if ($IsLinux) { Invoke-Tool 'docker' @('exec', $web, 'sh', '-ec', 'uid=$(id -u); gid=$(id -g); printf "COOKIE_JAR_WRITER consumer=editor uid=%s gid=%s\n" "$uid" "$gid"') }
         Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', $web, 'php', 'scripts/check-evidence-edit-http.php'))
+        Restore-LinuxCookieJarOwnership $Temporary 'after-editor'
     } finally {
         & docker exec $web rm -rf $bootstrapState 2>$null | Out-Null
         Remove-Item -LiteralPath $ownerAJar,$ownerBJar,$invalidJar -Force -ErrorAction SilentlyContinue
-        & docker rm -f $web $database 2>$null | Out-Null
-        & docker network rm $network 2>$null | Out-Null
+        try { Remove-DisposableDockerResources 'container' @($web, $database) } finally {
+            Remove-DisposableDockerResources 'network' @($network)
+        }
     }
 }
 
@@ -255,16 +420,15 @@ function Invoke-RequiredGates {
         & docker run --rm --entrypoint php -v "${resolvedRoot}:/var/www/html:ro" -w /var/www/html -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 $devImage scripts/run-phase2-tests.php
         if ($LASTEXITCODE -ne 0) { Fail-Gate 'Phase-2' 'fast deterministic suite failed' }
         $playwright = New-TemporaryPlaywright $resolvedRoot
-        $chrome = Get-Chromium1208Executable
+        $chrome = Get-Chromium1208Executable $playwright
         Invoke-RequiredMySqlAndBrowserGates $resolvedRoot $devImage $playwright $chrome $temporary
         $productionKey = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+        Protect-GateSecret $productionKey
         & docker run --rm --entrypoint php -e APP_ENV=production -e PUBLIC_BASE_URL=https://portfolio-gate.invalid -e SESSION_COOKIE_SECURE=true -e EXPECTED_OIDC_ISSUER=https://oidc-gate.invalid/ -e OIDC_CLIENT_ID=synthetic-gate-client -e OIDC_CLIENT_SECRET=synthetic-gate-secret -e OIDC_REDIRECT_URI=https://portfolio-gate.invalid/owner_oidc_callback.php -e EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY=$productionKey $productionImage scripts/check-production-security.php
         if ($LASTEXITCODE -ne 0) { Fail-Gate 'production security' 'production security gate failed' }
         Write-Host 'REQUIRED_GATES_PASSED'
     } finally {
-        if ($playwright) { Remove-Item -LiteralPath $playwright.Directory -Recurse -Force -ErrorAction SilentlyContinue }
-        Remove-Item -LiteralPath $temporary -Recurse -Force -ErrorAction SilentlyContinue
-        & docker image rm -f $devImage $productionImage 2>$null | Out-Null
+        Complete-GateCleanup $temporary $playwright @($devImage, $productionImage)
     }
 }
 
@@ -280,13 +444,11 @@ function Invoke-FocusedTwoOwnerGate {
         Invoke-Tool 'docker' @('build', '--pull=false', '-f', (Join-Path $resolvedRoot 'Dockerfile'), '-t', $image, $resolvedRoot)
         Assert-CurrentSourceIdentity $resolvedRoot $image 'development' $manifest
         $playwright = New-TemporaryPlaywright $resolvedRoot
-        $chromium = Get-Chromium1208Executable
+        $chromium = Get-Chromium1208Executable $playwright
         Invoke-RequiredMySqlAndBrowserGates $resolvedRoot $image $playwright $chromium $temporary
         Write-Host 'FOCUSED_TWO_OWNER_GATE_PASSED'
     } finally {
-        if ($playwright) { Remove-Item -LiteralPath $playwright.Directory -Recurse -Force -ErrorAction SilentlyContinue }
-        Remove-Item -LiteralPath $temporary -Recurse -Force -ErrorAction SilentlyContinue
-        & docker image rm -f $image 2>$null | Out-Null
+        Complete-GateCleanup $temporary $playwright @($image)
     }
 }
 
@@ -297,6 +459,21 @@ if ($IdentityChallenge -or $RegistrationChallenge) {
     exit 0
 }
 
-if ($Focused) { Invoke-FocusedTwoOwnerGate; exit 0 }
-
-Invoke-RequiredGates
+$savedEnvironment = @{}
+foreach ($name in @('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', 'PLAYWRIGHT_BROWSERS_PATH', 'PLAYWRIGHT_MODULE', 'EVIDENCE_HUB_EDGE_EXECUTABLE', 'EVIDENCE_HUB_BROWSER_PROFILE', 'EVIDENCE_HUB_VISUAL_BASE_URL', 'EVIDENCE_HUB_ACTION_TEST_URL', 'EVIDENCE_HUB_ACTION_SESSION_COOKIE')) {
+    $savedEnvironment[$name] = [Environment]::GetEnvironmentVariable($name)
+}
+Push-Location (Resolve-Path -LiteralPath $SourceRoot).Path
+try {
+    if ($EvidenceDirectory -ne '') {
+        $EvidenceDirectory = [IO.Path]::GetFullPath($EvidenceDirectory)
+        $root = (Get-Location).Path.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+        if ($EvidenceDirectory.StartsWith($root, [StringComparison]::OrdinalIgnoreCase) -or $EvidenceDirectory -eq (Get-Location).Path) { Fail-Gate 'evidence' 'evidence must be outside verification source' }
+        if (Test-Path -LiteralPath $EvidenceDirectory) { Fail-Gate 'evidence' 'evidence destination must be new' }
+        New-Item -ItemType Directory -Path $EvidenceDirectory | Out-Null
+    }
+    if ($Focused) { Invoke-FocusedTwoOwnerGate } else { Invoke-RequiredGates }
+} finally {
+    Pop-Location
+    foreach ($name in $savedEnvironment.Keys) { [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name]) }
+}

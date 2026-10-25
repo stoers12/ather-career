@@ -10,12 +10,34 @@
     var mobileQuery = window.matchMedia('(max-width: 1100px)');
     var sidebarKey = 'ather.evidenceHub.sidebarCollapsed';
     var mobileReturnFocus = null;
+    var accountMenu = document.querySelector('.evidence-hub-account-menu');
+    var accountTrigger = accountMenu && accountMenu.querySelector('summary');
+    var accountPanel = accountMenu && accountMenu.querySelector('.evidence-hub-account-panel');
     if (!root || !sidebar || !backdrop || !desktopToggle || !mobileToggle || !mobileClose) return;
 
     function safeGet(key) { try { return window.localStorage.getItem(key); } catch (error) { return null; } }
     function safeSet(key, value) { try { window.localStorage.setItem(key, value); } catch (error) { /* Visual state remains available for this page. */ } }
     function isMobile() { return mobileQuery.matches; }
     function isVisible(element) { return Boolean(element && element.getClientRects().length); }
+    function closeAccountMenu(restoreFocus) {
+        if (!accountMenu || !accountMenu.open) return;
+        accountMenu.open = false;
+        if (restoreFocus && isVisible(accountTrigger)) accountTrigger.focus();
+    }
+    function positionAccountMenu() {
+        if (!accountMenu || !accountMenu.open) return;
+        var bounds = accountTrigger.getBoundingClientRect();
+        accountPanel.style.left = '0px';
+        accountPanel.style.top = '0px';
+        // The mobile drawer is transformed; compensate its fixed-position origin.
+        var origin = accountPanel.getBoundingClientRect();
+        var left = !isMobile() && root.classList.contains('evidence-hub-sidebar-collapsed')
+            ? sidebar.getBoundingClientRect().right + 8 : bounds.left;
+        var top = bounds.top - accountPanel.offsetHeight - 8;
+        if (top < 8) top = bounds.bottom + 8;
+        accountPanel.style.left = Math.max(8, Math.min(left, window.innerWidth - accountPanel.offsetWidth - 8)) - origin.left + 'px';
+        accountPanel.style.top = Math.max(8, Math.min(top, window.innerHeight - accountPanel.offsetHeight - 8)) - origin.top + 'px';
+    }
     function setPanelState(collapsed) {
         var closeIcon = desktopToggle.querySelector('[data-evidence-hub-panel-state="close"]');
         var openIcon = desktopToggle.querySelector('[data-evidence-hub-panel-state="open"]');
@@ -28,6 +50,7 @@
     }
     function setCollapsed(collapsed, persist) {
         hideSidebarTooltip();
+        closeAccountMenu(false);
         var value = Boolean(collapsed);
         root.classList.toggle('evidence-hub-sidebar-collapsed', value);
         setPanelState(value);
@@ -35,6 +58,7 @@
     }
     function setMobileDrawer(open, restoreFocus) {
         hideSidebarTooltip();
+        closeAccountMenu(false);
         var active = Boolean(open && isMobile());
         root.classList.toggle('evidence-hub-mobile-open', active);
         root.classList.toggle('evidence-hub-mobile-scroll-lock', active);
@@ -86,6 +110,7 @@
     }
     function showSidebarTooltip(trigger) {
         hideSidebarTooltip();
+        if (accountMenu && accountMenu.open && accountMenu.contains(trigger)) return;
         var always = trigger && trigger.getAttribute('data-sidebar-tooltip-always') === 'true';
         if (!trigger || (!always && !root.classList.contains('evidence-hub-sidebar-collapsed'))) return;
         tooltipTrigger = trigger;
@@ -113,9 +138,18 @@
         if (event.target.closest('[aria-disabled="true"]') && (event.key === 'Enter' || event.key === ' ')) event.preventDefault();
     });
     document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && accountMenu && accountMenu.open) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            hideSidebarTooltip();
+            closeAccountMenu(true);
+            return;
+        }
         if (event.key === 'Escape') hideSidebarTooltip();
         if (event.key !== 'Tab' || !isMobile() || !root.classList.contains('evidence-hub-mobile-open')) return;
-        var controls = Array.from(sidebar.querySelectorAll('a, button, [tabindex="0"]')).filter(isVisible);
+        var controls = Array.from(sidebar.querySelectorAll('a, button, summary, [tabindex="0"]')).filter(function (element) {
+            return isVisible(element) && (!accountPanel || !accountPanel.contains(element) || accountMenu.open);
+        });
         var first = controls[0];
         var last = controls[controls.length - 1];
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
@@ -131,6 +165,23 @@
     sidebar.addEventListener('click', function (event) { if (isMobile() && event.target.closest('a')) setMobileDrawer(false, false); });
     document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && isMobile() && root.classList.contains('evidence-hub-mobile-open')) setMobileDrawer(false, true); });
     mobileQuery.addEventListener('change', applyViewportState);
+    if (accountMenu) {
+        accountMenu.addEventListener('toggle', function () {
+            if (accountMenu.open) { hideSidebarTooltip(); positionAccountMenu(); }
+        });
+        accountMenu.addEventListener('keydown', function (event) {
+            if (event.key === 'Tab') window.setTimeout(function () {
+                if (!accountMenu.contains(document.activeElement)) closeAccountMenu(false);
+            }, 0);
+        });
+        document.addEventListener('click', function (event) {
+            if (!accountMenu.contains(event.target)) closeAccountMenu(true);
+        });
+        window.addEventListener('resize', positionAccountMenu);
+        window.addEventListener('scroll', function (event) {
+            if (!accountPanel.contains(event.target)) positionAccountMenu();
+        }, true);
+    }
     window.addEventListener('pagehide', function () { setMobileDrawer(false, false); });
 }());
 

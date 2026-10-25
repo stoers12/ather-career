@@ -1,0 +1,170 @@
+name: Card 11 remaining required gates
+
+# Explicit opt-in on this existing same-repository Draft PR. No push trigger,
+# production environment, repository secrets, deployment, or write token.
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: card11-final-acceptance-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  required-gates:
+    if: >-
+      github.repository == 'stoers12/ather-career' &&
+      github.event.pull_request.number == 44 &&
+      github.event.pull_request.draft == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.ref == 'review/card11-complete-20261023' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.label.name == 'card11-final-acceptance'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CANDIDATE: 55ee8590d6e1410194eceb97ca70513084c0362a
+    steps:
+      - name: Checkout proposed harness
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: harness
+          fetch-depth: 4
+          persist-credentials: false
+
+      - name: Checkout exact CI-passing source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: 55ee8590d6e1410194eceb97ca70513084c0362a
+          path: candidate
+          persist-credentials: false
+
+      - name: Verify identities and isolated Linux prerequisites
+        shell: bash
+        env:
+          HARNESS_SHA: ${{ github.event.pull_request.head.sha }}
+          MERGE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir "$RUNNER_TEMP/card11-private"
+          test "$(git -C candidate rev-parse HEAD)" = "$CANDIDATE"
+          test -z "$(git -C candidate status --porcelain)"
+          test "$(git -C harness rev-parse HEAD)" = "$HARNESS_SHA"
+          test -z "$(git -C harness status --porcelain)"
+          test "$(git -C harness rev-parse HEAD^)" = 7f1cc8f9ea7ab9a6b50de39faf1c4e1d99d30a41
+          test "$(git -C harness rev-parse HEAD^^)" = c223b9d37b4e8cc19de3af1bf672a6d048eab38f
+          test "$(git -C harness rev-parse HEAD~3)" = "$CANDIDATE"
+          test "$(git -C harness rev-list --count "$CANDIDATE"..HEAD)" = 3
+          test "$(git -C harness rev-list --count --merges "$CANDIDATE"..HEAD)" = 0
+          diff=$(git -C harness diff --name-only "$CANDIDATE" HEAD)
+          test "$diff" = $'.github/workflows/card11-final-acceptance.yml\nscripts/run-evidence-hub-required-gates.ps1'
+          test "$RUNNER_OS" = Linux
+          test "$(uname -m)" = x86_64
+          test "$(docker info --format '{{.OSType}}')" = linux
+          containers=$(docker ps -aq); test -z "$containers"
+          volumes=$(docker volume ls -q); test -z "$volumes"
+          networks=$(docker network ls --filter type=custom -q); test -z "$networks"
+          test "$(df --output=avail -k "$RUNNER_TEMP" | tail -1)" -ge 8388608
+          pwsh -NoProfile -Command 'if ($PSVersionTable.PSVersion -lt [version]"7.2") { exit 1 }; $PSVersionTable.PSVersion.ToString()'
+          node --version
+          npm --version
+          curl --version | head -1
+          docker version --format '{{.Server.Version}}'
+          printf 'source=%s\nharness=%s\npr_merge=%s\nrunner_image=%s\n' "$CANDIDATE" "$HARNESS_SHA" "$MERGE_SHA" "$ImageVersion" > "$RUNNER_TEMP/card11-private/identity.txt"
+
+      - name: Verify actual native curl resolver before builds
+        shell: pwsh
+        working-directory: harness
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tokens = $null; $errors = $null
+          $path = Join-Path $PWD 'scripts/run-evidence-hub-required-gates.ps1'
+          $ast = [Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+          if ($errors.Count) { throw 'Gate runner has PowerShell syntax errors' }
+          $resolver = @($ast.FindAll({ param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-NativeCurl' }, $true))
+          if ($resolver.Count -ne 1) { throw 'Expected exactly one native curl resolver' }
+          # Evaluate only this definition, never the gate runner entry point.
+          . ([scriptblock]::Create($resolver[0].Extent.Text))
+          $executables = @(Get-NativeCurl)
+          if ($executables.Count -ne 1 -or $executables[0] -isnot [string] -or -not [IO.Path]::IsPathFullyQualified($executables[0]) -or -not (Test-Path -LiteralPath $executables[0] -PathType Leaf)) { throw 'Native curl resolver must return one executable path' }
+          & $executables[0] --version
+          if ($LASTEXITCODE -ne 0) { throw 'Resolved native curl --version failed' }
+
+      - name: Run complete existing required-gate runner
+        id: gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          cd candidate
+          set +e
+          pwsh -NoProfile -File ../harness/scripts/run-evidence-hub-required-gates.ps1 \
+            -SourceRoot "$PWD" -InstallChromium \
+            -EvidenceDirectory "$RUNNER_TEMP/card11-evidence" \
+            > "$RUNNER_TEMP/card11-private/stdout.raw" 2> "$RUNNER_TEMP/card11-private/stderr.raw"
+          result=$?
+          set -e
+          printf '%s\n' "$result" > "$RUNNER_TEMP/card11-private/exit-code.txt"
+          exit "$result"
+
+      - name: Verify cleanup and prepare sanitized evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/card11-evidence"
+          export PRIVATE="$RUNNER_TEMP/card11-private" EVIDENCE="$RUNNER_TEMP/card11-evidence"
+          python3 - <<'PY'
+          import hashlib, os, pathlib, re
+          private, evidence = pathlib.Path(os.environ['PRIVATE']), pathlib.Path(os.environ['EVIDENCE'])
+          streams = {name: (private / f'{name}.raw').read_text(errors='replace') if (private / f'{name}.raw').exists() else '' for name in ('stdout', 'stderr')}
+          secrets = re.findall(r'::add-mask::([^\r\n]+)', '\n'.join(streams.values()))
+          for name, content in streams.items():
+              content = re.sub(r'^.*::add-mask::.*(?:\n|$)', '', content, flags=re.M)
+              for secret in sorted(secrets, key=len, reverse=True):
+                  content = content.replace(secret, '[REDACTED]')
+              content = re.sub(r'(?i)((?:password|secret|token|nonce|cookie|csrf|session)[\w-]*\s*[=:]\s*)[^\s,;]+', r'\1[REDACTED]', content)
+              content = re.sub(r'(https?://[^\s?]+)\?[^\s]*', r'\1?[REDACTED]', content)
+              (evidence / f'{name}.txt').write_text(content)
+              for line in content.splitlines():
+                  if line.startswith(('PASS ', 'FAIL ', 'FAILED at ', 'SOURCE_FINGERPRINT=', 'REQUIRED_GATES_PASSED')) or 'REQUIRED GATE FAILED [' in line:
+                      print(line)
+          for name in ('identity.txt', 'exit-code.txt'):
+              if (private / name).exists():
+                  (evidence / name).write_bytes((private / name).read_bytes())
+          PY
+          # This VM started empty. Report leftovers; never globally prune or
+          # silently turn a failed orderly cleanup into a successful gate.
+          cleanup=0
+          containers=$(docker ps -aq) || cleanup=1
+          volumes=$(docker volume ls -q) || cleanup=1
+          networks=$(docker network ls --filter type=custom -q) || cleanup=1
+          images=$(docker image ls --format '{{.Repository}}') || cleanup=1
+          test -z "$containers" || cleanup=1
+          test -z "$volumes" || cleanup=1
+          test -z "$networks" || cleanup=1
+          test -z "$(printf '%s\n' "$images" | grep '^ather-evidence-hub-' || true)" || cleanup=1
+          printf '%s\n' "$cleanup" > "$EVIDENCE/cleanup-exit-code.txt"
+          python3 - <<'PY'
+          import hashlib, os, pathlib
+          root = pathlib.Path(os.environ['EVIDENCE'])
+          files = sorted(path for path in root.rglob('*') if path.is_file() and path.name != 'SHA256SUMS.txt')
+          (root / 'SHA256SUMS.txt').write_text(''.join(f'{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.relative_to(root).as_posix()}\n' for path in files))
+          PY
+          rm -rf -- "$RUNNER_TEMP/card11-private"
+          exit "$cleanup"
+
+      - name: Upload sanitized synthetic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: card11-required-gates-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/card11-evidence/
+          if-no-files-found: error
+          retention-days: 7

@@ -9,6 +9,7 @@ require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/includes/http.php';
 require_once __DIR__ . '/includes/owner_flow.php';
 require_once __DIR__ . '/includes/public_lifecycle.php';
+require_once __DIR__ . '/includes/portfolio_scoped_data.php';
 require_once __DIR__ . '/includes/owner_publication_presentation.php';
 require_once __DIR__ . '/includes/operational_security.php';
 
@@ -25,6 +26,7 @@ $submittedSlug = $submittedAction === 'set_slug' && is_string($_POST['public_slu
 try {
     $database = getDatabaseConnection();
     $context = requireOwnerPortfolioContext($database);
+    $ownerName = (string) ((loadAuthorizedPersonalInfo($database, $context) ?: [])['full_name'] ?? '');
 
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
@@ -112,11 +114,10 @@ if (is_array($state) && ownerPublicationStateSlug($state) !== null) {
     }
 }
 
-ownerLayoutStart('Publication', 'publication');
+ownerLayoutStart('Publication', 'publication', true, ['account_name' => $ownerName ?? '']);
 ?>
 <div class="admin-page-header">
-    <div class="admin-page-header-copy"><p class="admin-eyebrow">Publication</p><h1 class="admin-page-title">Public Portfolio</h1><p class="admin-page-description">Choose the permanent public address, then publish when your profile is ready.</p></div>
-    <div class="admin-page-header-actions"><a class="button-secondary" href="owner_preview.php">Private Preview</a></div>
+    <div class="admin-page-header-copy"><p class="admin-eyebrow"><?php echo ownerEscapeHtml(ownerText('Publication')); ?></p><h1 class="admin-page-title"><?php echo ownerEscapeHtml(ownerText('Public Portfolio')); ?></h1><p class="admin-page-description"><?php echo ownerEscapeHtml(ownerText('Choose the permanent public address, then publish when your profile is ready.')); ?></p></div>
 </div>
 <?php ownerRenderFormFeedback($message, $errors, $fieldErrors); ?>
 <?php if (is_array($state)): renderOwnerPublicationPresentation($state, $publicUrl, $fieldErrors, $submittedSlug); endif; ?>

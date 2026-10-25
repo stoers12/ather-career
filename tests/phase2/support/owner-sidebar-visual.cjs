@@ -14,6 +14,8 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     const toggle = page.locator('#evidence-hub-sidebar-toggle');
     const back = page.getByRole('link', { name: 'Back to dashboard' });
     const tooltip = page.getByRole('tooltip');
+    const account = aside.locator('.evidence-hub-account-menu');
+    const accountTrigger = account.locator(':scope > summary');
     const same = async (promise, value, label) => assert.equal(await promise, value, label);
     const metrics = () => page.evaluate(() => {
         const rect = node => { const r = node.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; };
@@ -62,9 +64,26 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     await same(aside.locator('nav a[href="/owner.php"]').count(), 0, 'dashboard is not a green navigation destination');
     await same(aside.locator('.evidence-hub-owner-context').innerText().then(x => x.replace(/\s+/g, ' ').trim()), 'Portfolio owner Private workspace', 'safe footer context only');
     await same(aside.locator('.evidence-hub-owner-context').isVisible(), true, 'owner workspace details are visible in the expanded sidebar');
-    await same(aside.getByRole('button', { name: 'Log out' }).isVisible(), true, 'Log out is visible in the expanded sidebar');
-    await same(aside.locator('.sidebar-logout-form').getAttribute('action'), '/owner_logout.php', 'existing secure sign-out destination');
-    await same(aside.locator('.sidebar-logout-form input[name="csrf_token"]').count(), 1, 'existing CSRF-protected sign-out');
+    await same(account.evaluate(n => n.open), false, 'account disclosure starts closed');
+    await same(accountTrigger.getAttribute('aria-label'), 'Account options', 'native account disclosure name');
+    await same(accountTrigger.getAttribute('aria-expanded'), null, 'native disclosure supplies expanded state');
+    await same(aside.getByRole('button', { name: 'Log out' }).isVisible(), false, 'closed disclosure hides account actions');
+    await accountTrigger.focus(); await page.keyboard.press('Enter');
+    await page.waitForFunction(() => document.querySelector('.evidence-hub-account-menu').open);
+    await same(aside.getByRole('button', { name: 'Log out' }).isVisible(), true, 'opened expanded-sidebar disclosure shows Log out');
+    await same(aside.getByRole('button', { name: 'Use another account' }).isVisible(), true, 'opened disclosure shows account selection');
+    await same(account.locator('form').count(), 2, 'both original account forms remain');
+    for (const action of ['/owner_logout.php', '/owner_switch_account.php']) {
+        const form = account.locator(`form[action="${action}"]`);
+        await same(form.count(), 1, 'existing exact account POST destination');
+        await same(form.getAttribute('method'), 'POST', 'account action remains POST');
+        await same(form.locator('input').count(), 1, 'account action accepts only its CSRF field');
+        await same(form.locator('input[name="csrf_token"]').count(), 1, 'existing CSRF-protected account action');
+        await same(form.locator('button').getAttribute('type'), 'submit', 'native account form submission');
+    }
+    await page.keyboard.press('Escape');
+    await same(account.evaluate(n => n.open), false, 'Escape closes the account disclosure');
+    await same(accountTrigger.evaluate(n => n === document.activeElement), true, 'account Escape restores summary focus');
     await same(aside.locator('.evidence-hub-sidebar-footer').innerText().then(x => /@|auth0|tenant|subject|database|account id/i.test(x)), false, 'footer contains no identity-bearing details');
     await same(aside.locator('.evidence-hub-sidebar nav svg').evaluateAll(nodes => nodes.every(n => n.getAttribute('aria-hidden') === 'true' && n.getAttribute('viewBox') === '0 0 24 24' && n.getAttribute('stroke') === 'currentColor')), true, 'Lucide SVG semantics and style');
 
@@ -128,8 +147,14 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
         await future.focus(); await same(tooltip.isVisible(), true, 'collapsed future keyboard tooltip');
     }
     await back.focus(); await same(tooltip.innerText(), 'Back to dashboard', 'collapsed dashboard tooltip');
-    await aside.locator('.evidence-hub-owner-context').focus(); await same(tooltip.innerText(), 'Portfolio owner — Private workspace', 'collapsed owner tooltip');
-    await aside.getByRole('button', { name: 'Log out' }).hover(); await same(tooltip.innerText(), 'Log out', 'collapsed log-out tooltip');
+    await accountTrigger.focus(); await same(tooltip.innerText(), 'Account options', 'collapsed account tooltip');
+    await page.keyboard.press('Space');
+    await page.waitForFunction(() => document.querySelector('.evidence-hub-account-menu').open);
+    await same(aside.getByRole('button', { name: 'Log out' }).isVisible(), true, 'collapsed sidebar disclosure exposes Log out');
+    await tooltip.waitFor({ state: 'hidden' });
+    await same(tooltip.isVisible(), false, 'open account disclosure suppresses its tooltip');
+    await page.keyboard.press('Escape');
+    await same(account.evaluate(n => n.open), false, 'collapsed account Escape restores closed state');
     await toggle.hover(); await same(tooltip.innerText(), 'Expand navigation', 'collapsed toggle tooltip');
     await page.keyboard.press('Escape'); await same(tooltip.isVisible(), false, 'Escape dismisses tooltip');
     await toggle.focus();
@@ -137,7 +162,7 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     const collapsedFooter = await aside.locator('.evidence-hub-sidebar-footer').boundingBox();
     assert.ok(collapsedFooter && collapsedFooter.y >= 0 && collapsedFooter.y + collapsedFooter.height <= 900, 'full-viewport capture includes the collapsed footer');
     await aside.locator('.evidence-hub-owner-context').focus();
-    await same(tooltip.innerText(), 'Portfolio owner — Private workspace', 'light capture shows the owner keyboard-focus tooltip');
+    await same(tooltip.innerText(), 'Account options', 'light capture shows the account keyboard-focus tooltip');
     await page.screenshot({ path: path.join(output, 'r11-collapsed-light.png') });
     await page.evaluate(() => localStorage.setItem('ather.evidenceHub.theme', 'dark'));
     await page.reload();
@@ -152,8 +177,8 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     });
     await darkPage.reload();
     await same(darkPage.locator('body').evaluate(n => n.classList.contains('evidence-hub-sidebar-collapsed') && n.getAttribute('data-evidence-hub-theme') === 'dark'), true, 'fresh dark capture uses collapsed sidebar');
-    await darkPage.getByRole('button', { name: 'Log out' }).hover();
-    await same(darkPage.getByRole('tooltip').innerText(), 'Log out', 'dark capture shows the log-out hover tooltip');
+    await darkPage.locator('.evidence-hub-account-menu > summary').hover();
+    await same(darkPage.getByRole('tooltip').innerText(), 'Account options', 'dark capture shows the account hover tooltip');
     await darkPage.waitForTimeout(200);
     await darkPage.screenshot({ path: path.join(output, 'r11-collapsed-dark.png') });
     await darkContext.close();
@@ -178,7 +203,13 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
         assert.ok(box && Math.abs(box.x) < 1, `${width}px drawer opens from physical left`);
         assert.ok(box.width <= 300 && Math.abs(box.width - Math.min(300, width - 32)) < 1, `${width}px drawer respects maximum width`);
         await same(aside.locator('.evidence-hub-owner-context').isVisible(), true, `${width}px drawer shows owner workspace details`);
-        await same(aside.getByRole('button', { name: 'Log out' }).isVisible(), true, `${width}px drawer shows Log out`);
+        await accountTrigger.focus(); await page.keyboard.press('Enter');
+        await page.waitForFunction(() => document.querySelector('.evidence-hub-account-menu').open);
+        await same(aside.getByRole('button', { name: 'Log out' }).isVisible(), true, `${width}px drawer disclosure shows Log out`);
+        await same(aside.getByRole('button', { name: 'Use another account' }).isVisible(), true, `${width}px drawer disclosure shows account selection`);
+        await page.keyboard.press('Escape');
+        await same(account.evaluate(n => n.open), false, `${width}px account Escape closes its disclosure`);
+        await same(root.evaluate(n => n.classList.contains('evidence-hub-mobile-open')), true, `${width}px account Escape preserves the drawer`);
         await same(page.locator('#main-content').evaluate(n => n.inert), true, `${width}px background is inert`);
         await same(page.locator('#evidence-hub-mobile-backdrop').isVisible(), true, `${width}px backdrop is visible and hit-testable`);
         const future = nav.getByRole('button', { name: 'Credentials' });
@@ -188,7 +219,7 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
         if (width === 390) {
             await page.screenshot({ path: path.join(output, 'r11-mobile-drawer-390.png') });
         }
-        const tabbables = aside.locator('a, button, [tabindex="0"]');
+        const tabbables = aside.locator(':is(a, button, summary, [tabindex="0"]):visible');
         await tabbables.first().focus(); await page.keyboard.press('Shift+Tab');
         await same(tabbables.last().evaluate(n => n === document.activeElement), true, `${width}px reverse focus wraps in drawer`);
         await tabbables.last().focus();

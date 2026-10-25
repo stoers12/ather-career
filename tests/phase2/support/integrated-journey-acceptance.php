@@ -22,11 +22,15 @@ function routingProjectInvitation(PDO $database, \GuzzleHttp\Client $browser, in
     routingAssert((int) $database->query('SELECT COUNT(*) FROM projects WHERE portfolio_id=' . $portfolioId)->fetchColumn() === 0, 'Completion must leave this owner with zero projects.');
     $check = static function (bool $hasProject) use ($database, $browser): void {
         $dashboard = new DOMDocument();
-        @$dashboard->loadHTML(routingProjectRead($database, $browser, '/owner.php'));
-        $links = (new DOMXPath($dashboard))->query('//a[normalize-space(.)="+ Add Project"]');
+        // This acceptance checks English labels; the shared workspace defaults to Arabic.
+        @$dashboard->loadHTML(routingProjectRead($database, $browser, '/owner.php?lang=en'));
+        routingAssert($dashboard->documentElement->getAttribute('lang') === 'en', 'Project invitation fixture must use the English workspace.');
+        $xpath = new DOMXPath($dashboard);
+        $links = $xpath->query('//a[normalize-space(.)="Add project"]');
         routingAssert($links->length === 1, 'Dashboard must expose one usable ordinary Add Project action.');
+        routingAssert($xpath->query('.//svg[@aria-hidden="true" and @focusable="false"]', $links->item(0))->length === 1, 'Dashboard Add Project icon must remain decorative.');
         $target = $links->item(0)->getAttribute('href');
-        routingAssert($target === 'owner_projects.php?add=1', 'Dashboard Add Project lost the existing local add destination.');
+        routingAssert($target === '/owner_projects.php?add=1', 'Dashboard Add Project lost the existing local add destination.');
         // Follow the rendered href, rather than requesting an independently constructed URL.
         $formPage = routingProjectRead($database, $browser, $target);
         $form = new DOMDocument();
