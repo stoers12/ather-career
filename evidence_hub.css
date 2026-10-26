@@ -296,6 +296,15 @@ body.evidence-hub-page .evidence-hub-editor-actions button { font: inherit; curs
 body.evidence-hub-page .evidence-hub-editor-actions a { display: inline-flex; align-items: center; min-height: 44px; color: var(--eh-secondary-ink); font-weight: 700; }
 body.evidence-hub-page .evidence-hub-editor .owner-error-summary { margin-bottom: 14px; }
 body.evidence-hub-page .evidence-hub-editor .field-error { color: var(--eh-danger); }
+/* Writing aids: sentence starter and non-blocking hints (evidence_writing_guidance.php). */
+body.evidence-hub-page .evidence-hub-editor-starter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 12px 0 0; }
+body.evidence-hub-page .evidence-hub-editor-field .evidence-hub-editor-starter p { flex: 1 1 260px; min-width: 0; margin: 0; color: var(--eh-ink); overflow-wrap: anywhere; }
+body.evidence-hub-page .evidence-hub-editor-field .evidence-hub-editor-starter p span { color: var(--eh-muted); font-weight: 700; }
+body.evidence-hub-page .admin-content .evidence-hub-editor-starter button { min-height: 40px; padding: 7px 12px; color: var(--eh-secondary-ink) !important; background: var(--eh-surface) !important; border: 1px solid var(--eh-border) !important; border-radius: 9px; font: inherit; font-size: .84rem; font-weight: 700; cursor: pointer; }
+body.evidence-hub-page .admin-content .evidence-hub-editor-starter button[hidden],
+body.evidence-hub-page .evidence-hub-editor-hint[hidden] { display: none !important; }
+body.evidence-hub-page .evidence-hub-editor-hints:empty { display: none; }
+body.evidence-hub-page .evidence-hub-editor-field .evidence-hub-editor-hint { margin: 8px 0 0; padding: 8px 11px; color: var(--eh-ink); background: var(--eh-primary-soft); border-radius: 8px; font-size: .84rem; }
 body.evidence-hub-page .evidence-hub-page-body { min-width: 0; }
 body.evidence-hub-page .evidence-hub-page-body :is(a,button,summary):focus-visible { outline: 3px solid var(--eh-focus); outline-offset: 3px; }
 body.evidence-hub-page .evidence-hub-page-body .evidence-hub-section { scroll-margin-top: 72px; margin-top: 30px; }

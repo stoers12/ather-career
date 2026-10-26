@@ -256,18 +256,28 @@ function evidenceHubArabicCopy(): array
         // Evidence editor
         'Edit project evidence' => 'تعديل أدلة المشروع',
         'Record what the project addressed, what you personally did, and what changed.' => 'سجّل ما عالجه المشروع، وما قمت به أنت شخصيًا، وما الذي تغيّر.',
-        'Describe the specific problem, who it affected, and why it mattered.' => 'صِف المشكلة المحددة، ومن تأثّر بها، ولماذا كانت مهمة.',
-        'Example: Manual reporting took the team six hours each week.' => 'مثال: كان إعداد التقارير يدويًا يستغرق من الفريق ست ساعات أسبوعيًا.',
-        'Explain what you personally owned, decided, or implemented.' => 'وضّح ما تولّيته أنت شخصيًا، أو قرّرته، أو نفّذته.',
-        'Example: I designed the data pipeline and implemented its validation rules.' => 'مثال: صمّمت مسار معالجة البيانات ونفّذت قواعد التحقق منه.',
-        'State the result using a number, comparison, or observable change.' => 'اذكر النتيجة برقم، أو مقارنة، أو تغيير ملموس.',
-        'Example: Reduced weekly reporting time from six hours to one.' => 'مثال: خفّضت وقت إعداد التقرير الأسبوعي من ست ساعات إلى ساعة واحدة.',
         'Save evidence' => 'حفظ الأدلة',
         'Saving evidence…' => 'جارٍ حفظ الأدلة…',
         'Cancel' => 'إلغاء',
         'Please enter text for this field.' => 'يُرجى إدخال نص في هذا الحقل.',
         'Review the highlighted fields' => 'راجع الحقول المحددة',
         'Project evidence is temporarily unavailable.' => 'أدلة المشروع غير متاحة مؤقتًا.',
+
+        // Evidence writing guidance (evidence_writing_guidance.php)
+        'Describe the specific problem, who it affected, and why it mattered.' => 'صِف المشكلة المحددة، ومن تأثّر بها، ولماذا كانت مهمة.',
+        'Manual weekly reporting took the operations team six hours and delayed decisions every Monday.' => 'كان إعداد التقارير الأسبوعية يدويًا يستغرق من فريق العمليات ست ساعات ويؤخّر القرارات كل يوم اثنين.',
+        '[Who] had [problem], which mattered because [impact].' => '[مَن] واجه [المشكلة]، وكان ذلك مهمًا لأن [الأثر].',
+        'Explain what you personally owned, decided, or implemented.' => 'وضّح ما تولّيته أنت شخصيًا، أو قرّرته، أو نفّذته.',
+        'I designed the data pipeline and implemented its validation rules.' => 'صمّمت مسار معالجة البيانات ونفّذت قواعد التحقق منه.',
+        'I [action] the [part] by [how].' => 'دوري: [ماذا فعلت] في [أي جزء] عبر [كيف].',
+        'State the result using a number, comparison, or observable change.' => 'اذكر النتيجة برقم، أو مقارنة، أو تغيير ملموس.',
+        'Cut weekly reporting time from 6 hours to 1 hour.' => 'خفّضت وقت إعداد التقرير الأسبوعي من 6 ساعات إلى ساعة واحدة.',
+        '[Metric]: [before] → [after]' => '[المقياس]: [قبل] ← [بعد]',
+        'Example: {example}' => 'مثال: {example}',
+        'Sentence starter' => 'بداية مقترحة',
+        'Use this starter' => 'استخدم هذه البداية',
+        'Replace each [bracketed] part with details from your project.' => 'استبدل كل جزء بين [قوسين] بتفاصيل من مشروعك.',
+        'No number yet. If you have one, add a count, percentage, or before-and-after value.' => 'لا يوجد رقم بعد. إن توفّر لديك، أضف عددًا أو نسبة مئوية أو قيمة قبل وبعد.',
     ];
 
     return $copy;
