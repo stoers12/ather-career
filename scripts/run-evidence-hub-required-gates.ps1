@@ -169,7 +169,8 @@ function Assert-RequiredGateRegistry([string[]]$Registry) {
         'EvidenceHubRecommendationDispositionMySqlTest',
         'EvidenceHubTimestampMySqlTest',
         'tests/phase2/support/evidence-hub-owner-visual.cjs',
-        'tests/phase2/support/evidence-hub-owner-actions-visual.cjs'
+        'tests/phase2/support/evidence-hub-owner-actions-visual.cjs',
+        'tests/phase2/support/evidence-hub-editor-writing-visual.cjs'
     )
     if (($Registry | Select-Object -Unique).Count -ne $Registry.Count) { Fail-Gate 'registration' 'duplicate required-gate identifier' }
     foreach ($identifier in $expected) {
@@ -377,6 +378,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
             $env:PLAYWRIGHT_MODULE = $Playwright.Module; $env:EVIDENCE_HUB_EDGE_EXECUTABLE = $Chromium; $env:EVIDENCE_HUB_BROWSER_PROFILE = $profile; $env:EVIDENCE_HUB_VISUAL_BASE_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_TEST_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_SESSION_COOKIE = $actionSession
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-visual.cjs'), $screenshots)
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs'))
+            Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-editor-writing-visual.cjs'))
         }
         Restore-LinuxCookieJarOwnership $Temporary 'before-editor'
         if ($IsLinux) { Invoke-Tool 'docker' @('exec', $web, 'sh', '-ec', 'uid=$(id -u); gid=$(id -g); printf "COOKIE_JAR_WRITER consumer=editor uid=%s gid=%s\n" "$uid" "$gid"') }
@@ -407,7 +409,8 @@ function Invoke-RequiredGates {
             'EvidenceHubRecommendationDispositionMySqlTest',
             'EvidenceHubTimestampMySqlTest',
             'tests/phase2/support/evidence-hub-owner-visual.cjs',
-            'tests/phase2/support/evidence-hub-owner-actions-visual.cjs'
+            'tests/phase2/support/evidence-hub-owner-actions-visual.cjs',
+            'tests/phase2/support/evidence-hub-editor-writing-visual.cjs'
         )
         Assert-RequiredGateRegistry $registry
         Invoke-RequiredGateRegistryChallenges $registry
@@ -453,7 +456,7 @@ function Invoke-FocusedTwoOwnerGate {
 }
 
 if ($IdentityChallenge -or $RegistrationChallenge) {
-    $registry = @('EvidenceHubRecommendationActionHttpMySqlTest', 'EvidenceHubRecommendationDispositionMySqlTest', 'EvidenceHubTimestampMySqlTest', 'tests/phase2/support/evidence-hub-owner-visual.cjs', 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs')
+    $registry = @('EvidenceHubRecommendationActionHttpMySqlTest', 'EvidenceHubRecommendationDispositionMySqlTest', 'EvidenceHubTimestampMySqlTest', 'tests/phase2/support/evidence-hub-owner-visual.cjs', 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs', 'tests/phase2/support/evidence-hub-editor-writing-visual.cjs')
     if ($RegistrationChallenge) { Invoke-RequiredGateRegistryChallenges $registry; Write-Host 'REGISTRATION_CHALLENGES_PASSED' }
     if ($IdentityChallenge) { Write-Host 'Identity challenge is exercised by Assert-CurrentSourceIdentity against a deliberately stale disposable image.' }
     exit 0

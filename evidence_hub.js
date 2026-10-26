@@ -429,3 +429,48 @@
     renderProjects();
     revealFragment();
 }());
+
+(function () {
+    'use strict';
+    // Evidence editor writing aids. Hint rules are rendered by
+    // evidence_writing_guidance.php; this script only re-applies them while typing.
+    var fields = Array.from(document.querySelectorAll('[data-evidence-writing-field]'));
+    if (fields.length === 0) return;
+
+    function compile(pattern) {
+        try { return new RegExp(pattern, 'u'); } catch (error) { return null; }
+    }
+    function enhance(field) {
+        var textarea = field.querySelector('textarea');
+        if (!textarea) return;
+        var insert = field.querySelector('[data-evidence-insert-starter]');
+        var hints = Array.from(field.querySelectorAll('[data-evidence-writing-hint]')).map(function (element) {
+            return { id: element.getAttribute('data-evidence-writing-hint'), element: element, pattern: compile(element.getAttribute('data-hint-pattern') || ''), whenPresent: element.getAttribute('data-hint-when') === 'present' };
+        }).filter(function (hint) { return hint.pattern !== null; });
+        var slotHint = hints.find(function (hint) { return hint.id === 'unfilled_slot'; });
+
+        function update() {
+            var value = textarea.value;
+            var empty = value.trim() === '';
+            hints.forEach(function (hint) { hint.element.hidden = empty || hint.pattern.test(value) !== hint.whenPresent; });
+            // A starter never overwrites what the Owner has written.
+            if (insert) insert.disabled = !empty;
+        }
+        if (insert) {
+            insert.hidden = false;
+            insert.addEventListener('click', function () {
+                if (textarea.value.trim() !== '') return;
+                var starter = insert.getAttribute('data-starter') || '';
+                textarea.value = starter;
+                update();
+                textarea.focus();
+                // Select the first slot so typing replaces it.
+                var slot = slotHint && slotHint.pattern.exec(starter);
+                if (slot) textarea.setSelectionRange(slot.index, slot.index + slot[0].length);
+            });
+        }
+        textarea.addEventListener('input', update);
+        update();
+    }
+    fields.forEach(enhance);
+}());

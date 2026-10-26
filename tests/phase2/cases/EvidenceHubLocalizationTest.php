@@ -49,7 +49,13 @@ final class EvidenceHubLocalizationTest
         foreach (['database', 'framework', 'language', 'library', 'platform', 'runtime', 'stylesheet', 'technique', 'tool'] as $category) {
             $literals[] = ucfirst($category);
         }
-        array_push($literals, 'Recommendation snoozed for 14 days.', 'Recommendation dismissed.', 'Problem', 'Personal role', 'Measurable outcome');
+        array_push($literals, 'Recommendation snoozed for 14 days.', 'Recommendation dismissed.');
+        foreach (evidenceWritingGuidanceFields() as $field) {
+            array_push($literals, $field['label'], $field['guidance'], $field['example'], $field['starter']);
+        }
+        foreach (evidenceWritingHintRules() as $rule) {
+            $literals[] = $rule['message'];
+        }
         $missing = array_values(array_unique(array_filter($literals, static fn (string $literal): bool => $literal !== '' && !isset($arabic[$literal]))));
         phase2AssertSame([], $missing, 'Evidence Hub interface copy is missing Arabic translations.');
         foreach ($arabic as $english => $translation) {

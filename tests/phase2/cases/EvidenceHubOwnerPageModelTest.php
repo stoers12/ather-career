@@ -36,8 +36,10 @@ final class EvidenceHubOwnerPageModelTest
         phase2Assert(str_contains($repository, "'problem' => 'problem_statement'") && !str_contains(file_get_contents($root . 'database/migrations/012_project_updated_at.sql'), 'ADD COLUMN problem'), 'Problem storage boundary is not explicit.');
         phase2Assert(!str_contains($presentation, 'problem_statement') && !str_contains($presentation, 'reason_codes'), 'Storage name or reason codes leak into owner markup.');
         phase2Assert(str_contains($model, "'key' => \$field") && str_contains($presentation, 'id="project-<?php echo (int) $project[\'id\']; ?>"'), 'Logical field key or stable project fragment is missing.');
+        // Editor anchors are defined once, by the writing guidance the editor renders.
+        $guidance = file_get_contents($root . 'includes/evidence_writing_guidance.php');
         foreach (['#problem', '#personal-role', '#measurable-outcome'] as $anchor) {
-            phase2Assert(str_contains($editPresentation . $presentation, $anchor) || str_contains($editPresentation, trim($anchor, '#')), "Evidence fragment {$anchor} is missing.");
+            phase2Assert(str_contains($editPresentation . $presentation, $anchor) || str_contains($guidance, "'anchor' => '" . trim($anchor, '#') . "'"), "Evidence fragment {$anchor} is missing.");
         }
         phase2Assert(str_contains(file_get_contents($root . 'evidence_hub.js'), 'targetCard()') && str_contains(file_get_contents($root . 'evidence_hub.js'), 'revealFragment()'), 'Targeted project reveal is missing.');
         phase2Assert(str_contains(file_get_contents($root . 'docker/apache/production-vhost.conf'), '^/owner/projects/[1-9][0-9]*/evidence/?$'), 'Clean production evidence route is missing.');
