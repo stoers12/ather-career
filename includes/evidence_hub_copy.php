@@ -266,6 +266,7 @@ function evidenceHubArabicCopy(): array
         'Saving evidence…' => 'جارٍ حفظ الأدلة…',
         'Cancel' => 'إلغاء',
         'Please enter text for this field.' => 'يُرجى إدخال نص في هذا الحقل.',
+        'Review the highlighted fields' => 'راجع الحقول المحددة',
         'Project evidence is temporarily unavailable.' => 'أدلة المشروع غير متاحة مؤقتًا.',
     ];
 

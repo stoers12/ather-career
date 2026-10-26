@@ -58,7 +58,7 @@ function ownerRenderRequiredIndicator(): void
 }
 
 /** @param list<string> $errors @param array<string, string> $fieldErrors */
-function ownerRenderFormFeedback(string $successMessage, array $errors, array $fieldErrors = []): void
+function ownerRenderFormFeedback(string $successMessage, array $errors, array $fieldErrors = [], ?string $summaryHeading = null): void
 {
     if ($successMessage !== '') {
         ?>
@@ -77,7 +77,7 @@ function ownerRenderFormFeedback(string $successMessage, array $errors, array $f
     }
     ?>
     <section class="status-message error owner-error-summary" id="owner-form-error-summary" role="alert" tabindex="-1" data-error-summary>
-        <h2><?php echo isset($GLOBALS['owner_workspace_locale']) ? ownerEscapeHtml(ownerText('Review the highlighted fields')) : 'Review the highlighted fields'; ?></h2>
+        <h2><?php echo $summaryHeading !== null ? ownerEscapeHtml($summaryHeading) : (isset($GLOBALS['owner_workspace_locale']) ? ownerEscapeHtml(ownerText('Review the highlighted fields')) : 'Review the highlighted fields'); ?></h2>
         <ul>
             <?php foreach ($messages as $error): ?>
                 <li><?php echo ownerEscapeHtml($error); ?></li>

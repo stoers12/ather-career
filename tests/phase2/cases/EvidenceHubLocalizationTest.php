@@ -152,9 +152,11 @@ final class EvidenceHubLocalizationTest
         $errors = ['personal_role' => 'Please enter text for this field.'];
         $arabic = self::capture(static fn () => renderOwnerProjectEvidenceForm($project, $values, $errors, null, 'ar'));
         $english = self::capture(static fn () => renderOwnerProjectEvidenceForm($project, $values, $errors));
-        foreach (['dir="rtl"', 'تعديل أدلة المشروع', 'النتيجة القابلة للقياس', 'حفظ الأدلة', 'يُرجى إدخال نص في هذا الحقل.', 'An owner wrote this in English.'] as $required) {
+        foreach (['dir="rtl"', 'تعديل أدلة المشروع', 'النتيجة القابلة للقياس', 'حفظ الأدلة', 'يُرجى إدخال نص في هذا الحقل.', '<h2>راجع الحقول المحددة</h2>', 'An owner wrote this in English.'] as $required) {
             phase2Assert(str_contains($arabic, $required), "Arabic evidence editor is missing {$required}.");
         }
+        phase2Assert(!str_contains($arabic, 'Review the highlighted fields'), 'Arabic evidence editor shows the English error summary heading.');
+        phase2Assert(str_contains($english, '<h2>Review the highlighted fields</h2>'), 'English evidence editor error summary changed.');
         phase2Assert(preg_match(self::ARABIC, $english) !== 1 && str_contains($english, 'Please enter text for this field.'), 'English evidence editor changed.');
     }
 
