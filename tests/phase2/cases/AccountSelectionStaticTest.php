@@ -40,12 +40,12 @@ final class AccountSelectionStaticTest
             && str_contains($oidc, "\$prompt !== 'select_account'")
             && str_contains($oidc, "\$parameters['prompt'] = \$prompt")
             && str_contains($oidc, 'unset($_SESSION[AUTH0_AUTH_TRANSACTION_KEY])'), 'Prompt allow-list or one-time transaction changed.');
-        phase2Assert(str_contains($layout, 'ownerAccountSelectionForm(false, $locale);') && str_contains($layout, 'ownerAccountSelectionForm(true);')
+        phase2Assert(str_contains($layout, 'ownerAccountSelectionForm(false, $locale);') && str_contains($layout, "ownerAccountSelectionForm(true, \$locale === 'ar' ? 'ar' : null);")
             && str_contains($layout, 'action="/owner_switch_account.php"')
             && str_contains($layout, 'method="POST"')
             && str_contains($layout, 'getCsrfToken()')
             && str_contains($layout, 'Use another account')
-            && str_contains($layout, 'lang="ar" dir="rtl"'), 'Account selection must remain keyboard-operable, with localized workspace and English Evidence Hub presentation.');
+            && str_contains($layout, 'lang="ar" dir="rtl"'), 'Account selection must remain keyboard-operable and follow the workspace and Evidence Hub locale.');
         phase2Assert(str_contains($shim, "require dirname(__DIR__) . '/app/owner_switch_account.php'")
             && str_contains($callback, 'resolveAuth0InternalUser')
             && !preg_match('/logout_uri|federated|account_link|account_merge|INSERT\s+INTO\s+users/i', $route), 'Selection must return through the existing exact binding and never federate logout or create accounts.');

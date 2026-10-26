@@ -29,6 +29,8 @@ const noOverflow = page => page.evaluate(() => {
 const shellText = page => page.evaluate(() => {
     const clone = document.body.cloneNode(true);
     clone.querySelectorAll('[dir="auto"]').forEach(node => node.remove());
+    // The language control names Arabic in its own script by design.
+    clone.querySelectorAll('.evidence-hub-language').forEach(node => node.remove());
     return clone.textContent || '';
 });
 const assertNoBrowserErrors = (errors, label) => assert.deepEqual(errors, [], `${label}: no uncaught browser errors`);
@@ -62,6 +64,10 @@ const captureBrowserErrors = page => {
             assert.equal(await page.locator('html').getAttribute('lang'), 'en', `${viewport.width}: document language`);
             assert.equal(await page.locator('html').getAttribute('dir'), 'ltr', `${viewport.width}: document direction`);
             assert.equal(/[\u0600-\u06ff]/u.test(await shellText(page)), false, `${viewport.width}: no Arabic application chrome`);
+            const languageControl = page.locator('.evidence-hub-language');
+            assert.equal(await languageControl.count(), 1, `${viewport.width}: one interface language control`);
+            assert.equal(await languageControl.getAttribute('lang'), 'ar', `${viewport.width}: Arabic control is marked as Arabic`);
+            assert.match(await languageControl.getAttribute('href'), /[?&]lang=ar$/, `${viewport.width}: Arabic control switches the Owner locale`);
             assert.equal(await page.getByRole('option', { name: /arabic/i }).count(), 0, `${viewport.width}: no Arabic language option`);
             const topbar = page.locator('.evidence-hub-topbar');
             const topbarBox = await topbar.boundingBox();

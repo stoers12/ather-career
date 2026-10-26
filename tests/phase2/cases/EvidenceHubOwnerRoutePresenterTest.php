@@ -158,10 +158,10 @@ final class EvidenceHubOwnerRoutePresenterTest
         }
         require_once PHASE2_REPOSITORY_ROOT . '/includes/owner_layout.php';
         ob_start();
-        ownerLayoutStart('Evidence Hub', 'evidence_hub', true);
+        ownerLayoutStart('Evidence Hub', 'evidence_hub', true, ['locale' => 'en']);
         ownerLayoutEnd();
         $renderedShell = (string) ob_get_clean();
-        phase2Assert(str_contains($renderedShell, '<html lang="en" dir="ltr">'), 'Evidence Hub must retain English LTR chrome when Dashboard opts into locale support.');
+        phase2Assert(str_contains($renderedShell, '<html lang="en" dir="ltr">'), 'An explicit English Owner locale must render English LTR Evidence Hub chrome.');
         $ownerTheme = self::read('owner_theme.js');
         foreach (['ather.evidenceHub.theme', "window.matchMedia('(prefers-color-scheme: dark)')", 'data-evidence-hub-theme', "addEventListener('change'", "value === 'light' || value === 'dark'"] as $required) {
             phase2Assert(str_contains($ownerTheme, $required), "Shared Owner theme resolver is missing {$required}.");
@@ -183,9 +183,9 @@ final class EvidenceHubOwnerRoutePresenterTest
         phase2Assert(!str_contains($presentation, 'evidence-hub-context-bar') && !str_contains($presentation, 'evidence-hub-project-link'), 'Evidence Hub retains duplicate breadcrumb or global intro action markup.');
         phase2Assert(str_contains($layout, 'evidence-hub-topbar') && str_contains($layout, 'evidence-hub-topbar-context') && str_contains($layout, 'evidence-hub-section-nav') && !str_contains($layout, 'evidence-hub-topbar-theme') && !str_contains($layout, 'evidence-hub-topbar-breadcrumb'), 'Owner shell is missing the unified Evidence Hub Navbar or retains the visible theme control.');
         foreach (['<html lang="en" dir="ltr">', 'Evidence Hub — My Portfolio', 'Open navigation', 'Close navigation'] as $required) {
-            phase2Assert(str_contains($renderedShell, $required), "English-only Evidence Hub shell is missing {$required}.");
+            phase2Assert(str_contains($renderedShell, $required), "English Evidence Hub shell is missing {$required}.");
         }
-        phase2Assert(!str_contains($shellWithoutAccountChooser, 'language selector') && !str_contains($shellWithoutAccountChooser, 'lang="ar"') && !str_contains($shellWithoutAccountChooser, 'dir="rtl"'), 'Owner shell retains an Arabic activation path outside the requested account chooser.');
+        phase2Assert(!str_contains($shellWithoutAccountChooser, 'lang="ar"') && !str_contains($shellWithoutAccountChooser, 'dir="rtl"'), 'Evidence Hub shell hard-codes Arabic direction instead of deriving it from the Owner locale.');
         foreach (['recommendation_key', 'evidence_fingerprint', 'opaque_target_ref', 'raw_label', 'canonical_key', 'tenant_scope_ref', 'portfolio_target_identity'] as $forbidden) {
             phase2Assert(!str_contains($presentation, $forbidden), "Production Evidence Hub presentation exposes {$forbidden}.");
         }

@@ -72,7 +72,7 @@ if ($variant === 'multiple') {
 }
 
 $_SESSION = ['csrf_token' => str_repeat('a', 64)];
-ownerLayoutStart('Evidence Hub', 'evidence_hub', true);
+ownerLayoutStart('Evidence Hub', 'evidence_hub', true, ['locale' => 'en']);
 if ($variant === 'error') {
     renderEvidenceHubOwnerSafeError();
 } else {

@@ -10,7 +10,7 @@ if (PHP_SAPI !== 'cli' || getenv('APP_ENV') !== 'test' || getenv('ATHERCAR_TEST_
 
 require_once __DIR__ . '/../config/database.php';
 
-function httpEvidenceRequest(string $method, string $path, ?array $fields = null, ?string $cookie = null, array $headers = []): array
+function httpEvidenceRequest(string $method, string $path, ?array $fields = null, ?string $cookie = null, array $headers = [], string $locale = 'en'): array
 {
     $handle = curl_init('http://127.0.0.1' . $path);
     if ($handle === false) throw new RuntimeException('HTTP client unavailable.');
@@ -21,6 +21,8 @@ function httpEvidenceRequest(string $method, string $path, ?array $fields = null
         CURLOPT_CUSTOMREQUEST => $method,
         CURLOPT_HTTPHEADER => $headers,
         CURLOPT_TIMEOUT => 10,
+        // Sent per request and never stored in the shared session jars.
+        CURLOPT_COOKIE => 'ather_owner_locale=' . $locale,
     ]);
     if ($cookie !== null) {
         curl_setopt($handle, CURLOPT_COOKIEFILE, $cookie);
@@ -125,6 +127,10 @@ try {
     $unchanged['problem'] = '  ' . $fields['problem'] . '  ';
     requireHttp(httpEvidenceRequest('POST', $route, $unchanged, $cookieA)['status'] === 303, 'Equivalent normalized POST did not use PRG.');
     requireHttp($read()['updated_at'] === $after['updated_at'], 'Equivalent normalized POST advanced updated_at.');
+    $arabic = httpEvidenceRequest('GET', $route, null, $cookieA, [], 'ar');
+    requireHttp($arabic['status'] === 200 && str_contains($arabic['body'], '<html lang="ar" dir="rtl">') && str_contains($arabic['body'], 'تعديل أدلة المشروع') && str_contains($arabic['body'], $fields['problem']), 'Arabic Owner locale did not render the localized editor with unchanged owner content.');
+    $arabicInvalid = httpEvidenceRequest('POST', $route, $invalid, $cookieA, [], 'ar');
+    requireHttp($arabicInvalid['status'] === 422 && str_contains($arabicInvalid['body'], 'راجع الحقول المحددة') && !str_contains($arabicInvalid['body'], 'Review the highlighted fields'), 'Arabic validation summary is not localized.');
     echo "PASS Evidence edit HTTP auth, tenant, CSRF, validation, atomic save, PRG, and unchanged timestamp\n";
 } finally {
     if (!$useExistingSessions) {

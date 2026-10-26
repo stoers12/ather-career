@@ -238,7 +238,7 @@ function evidenceHubOwnerPageTechnologies(array $technologyFacts): array
     $ordinal = 0;
     foreach ($unmapped as $count) {
         ++$ordinal;
-        $unknown[] = ['label' => 'Unmapped technology ' . $ordinal, 'project_count' => $count];
+        $unknown[] = ['label' => 'Unmapped technology ' . $ordinal, 'ordinal' => $ordinal, 'project_count' => $count];
     }
     return [
         'mapped' => $categories,

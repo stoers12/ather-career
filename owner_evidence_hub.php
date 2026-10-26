@@ -94,9 +94,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'HEAD') {
 
 ownerLayoutStart('Evidence Hub', 'evidence_hub', true);
 if ($error !== '' || !is_array($contract) || !is_array($pageModel)) {
-    renderEvidenceHubOwnerSafeError();
+    renderEvidenceHubOwnerSafeError(ownerLocale());
 } else {
-    renderEvidenceHubOwnerPage($contract, $pageModel, $actionTokens, $feedback, $undoFeedback);
+    renderEvidenceHubOwnerPage($contract, $pageModel, $actionTokens, $feedback, $undoFeedback, ownerLocale());
 }
 
 /** @return array{action:string, action_token:string} */

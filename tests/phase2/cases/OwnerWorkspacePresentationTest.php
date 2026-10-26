@@ -70,14 +70,16 @@ final class OwnerWorkspacePresentationTest
                 && str_contains($explicitLocale, 'href="/owner_projects.php?lang=en"'), 'The existing explicit layout locale must also drive navigation labels and destinations.');
 
             $_GET = ['lang' => 'ar'];
+            $_SERVER['REQUEST_URI'] = '/owner/evidence-hub?lang=ar';
             ob_start();
             ownerLayoutStart('Evidence Hub', 'evidence_hub', true);
             ownerLayoutEnd();
             $hub = (string) ob_get_clean();
-            phase2Assert(str_contains($hub, '<html lang="en" dir="ltr">')
+            phase2Assert(str_contains($hub, '<html lang="ar" dir="rtl">')
                 && !str_contains($hub, 'owner_workspace.css') && !str_contains($hub, 'owner-toolbar')
                 && !str_contains($hub, 'data-owner-confirm-') && str_contains($hub, 'evidence_hub.css?')
-                && !isset($GLOBALS['owner_workspace_locale']), 'Evidence Hub must remain in its own English shell, styles and behavior regardless of workspace preference.');
+                && str_contains($hub, 'class="evidence-hub-language" href="/owner/evidence-hub?lang=en"')
+                && !isset($GLOBALS['owner_workspace_locale']), 'Evidence Hub must follow the workspace locale inside its own shell, styles and behavior.');
         } finally {
             [$_GET, $_COOKIE, $_SERVER, $_SESSION, $locale] = $saved;
             if ($locale === null) {

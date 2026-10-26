@@ -5,6 +5,8 @@ const baseUrl = process.env.EVIDENCE_HUB_ACTION_TEST_URL;
 const edgeExecutable = process.env.EVIDENCE_HUB_EDGE_EXECUTABLE;
 const profile = process.env.EVIDENCE_HUB_BROWSER_PROFILE;
 const sessionCookie = process.env.EVIDENCE_HUB_ACTION_SESSION_COOKIE;
+// This gate asserts the English Owner copy; Arabic is covered by EvidenceHubLocalizationTest.
+const englishLocaleCookie = { name: 'ather_owner_locale', value: 'en', url: baseUrl };
 if (!baseUrl || !edgeExecutable || !profile || !sessionCookie) throw new Error('R4 browser test configuration is incomplete.');
 
 const routePath = '/owner/evidence-hub';
@@ -89,7 +91,7 @@ const watchdog = setTimeout(async () => {
         mark('launch');
         context = await withinStepTimeout(chromium.launchPersistentContext(profile, { headless: true, executablePath: edgeExecutable, viewport: { width: 360, height: 1000 }, reducedMotion: 'reduce' }), 'browser launch');
         context.setDefaultTimeout(stepTimeout);
-        await context.addCookies([{ name: 'portfolio_owner_session', value: sessionCookie, url: baseUrl, httpOnly: true }]);
+        await context.addCookies([{ name: 'portfolio_owner_session', value: sessionCookie, url: baseUrl, httpOnly: true }, englishLocaleCookie]);
         page = await context.newPage();
         const errors = [];
         page.on('pageerror', () => errors.push('page-error'));
@@ -110,7 +112,7 @@ const watchdog = setTimeout(async () => {
 
         mark('no-javascript');
         const noJsContext = await context.browser().newContext({ javaScriptEnabled: false });
-        await noJsContext.addCookies([{ name: 'portfolio_owner_session', value: sessionCookie, url: baseUrl, httpOnly: true }]);
+        await noJsContext.addCookies([{ name: 'portfolio_owner_session', value: sessionCookie, url: baseUrl, httpOnly: true }, englishLocaleCookie]);
         const noJs = await noJsContext.newPage();
         await noJs.goto(`${baseUrl}${routePath}`, { waitUntil: 'domcontentloaded', timeout: stepTimeout });
         expectState(await noJs.locator(`form[action="${routePath}"]`).count() > 0, 'no-javascript-forms', 'no-JavaScript action forms were unavailable');

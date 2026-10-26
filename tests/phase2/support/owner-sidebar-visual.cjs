@@ -31,7 +31,7 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     for (const icon of ['layout-dashboard', 'folder-kanban', 'blocks', 'badge-check', 'arrow-left', 'panel-left-close', 'panel-left-open', 'user-round', 'lock-keyhole', 'log-out', 'menu']) {
         assert.ok(layoutSource.includes(`'${icon}' =>`), `central Lucide renderer contains ${icon}`);
     }
-    assert.match(layoutSource, /href="<\?php echo ownerEscapeHtml\(\$dashboardHref\); \?>" aria-label="Back to dashboard"/);
+    assert.match(layoutSource, /href="<\?php echo ownerEscapeHtml\(\$dashboardHref\); \?>" aria-label="<\?php echo \$t\('Back to dashboard'\); \?>"/);
     assert.match(layoutSource, /action="\/owner_logout\.php"/);
     assert.match(layoutSource, /name="csrf_token"/);
     assert.match(layoutSource, /Copyright \(c\) 2022 Lucide Contributors/);
