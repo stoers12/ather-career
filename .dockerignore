@@ -23,3 +23,12 @@ photo-debug.txt
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local work materials: never runtime inputs.
+**/.worktrees
+**/graphify-out
+.claude
+CLAUDE.md
+CACHE-ASSESSMENT-*.csv
+CACHE-CLEANUP-OUTPUT-*.txt
+CLEANUP-EXECUTION-MANIFEST-*.md
