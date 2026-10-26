@@ -41,7 +41,9 @@
     function setPanelState(collapsed) {
         var closeIcon = desktopToggle.querySelector('[data-evidence-hub-panel-state="close"]');
         var openIcon = desktopToggle.querySelector('[data-evidence-hub-panel-state="open"]');
-        var label = collapsed ? 'Expand navigation' : 'Collapse navigation';
+        var label = collapsed
+            ? (desktopToggle.getAttribute('data-label-expand') || 'Expand navigation')
+            : (desktopToggle.getAttribute('data-label-collapse') || 'Collapse navigation');
         desktopToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
         desktopToggle.setAttribute('aria-label', label);
         desktopToggle.setAttribute('data-sidebar-tooltip', label);
@@ -328,6 +330,10 @@
     var position = 0;
     var matches = [];
     if (carousel) carousel.classList.add('is-enhanced');
+    function counterLabel(attribute, fallback, values) {
+        var template = (carousel && carousel.getAttribute(attribute)) || fallback;
+        return Object.keys(values).reduce(function (text, key) { return text.split(key).join(String(values[key])); }, template);
+    }
     function visibleCount() { return mobileCards.matches ? 1 : (tabletCards.matches ? 2 : 3); }
     function maxPosition() { return Math.max(0, matches.length - visibleCount()); }
     function scrollToPosition(animate) {
@@ -343,8 +349,8 @@
         if (previous) previous.disabled = position === 0;
         if (next) next.disabled = position >= maxPosition();
         if (counter) counter.textContent = total === 0 ? '' : (size === 1
-            ? 'Project ' + (position + 1) + ' of ' + total
-            : 'Showing projects ' + (position + 1) + '–' + Math.min(position + size, total) + ' of ' + total);
+            ? counterLabel('data-label-single', 'Project {position} of {total}', { '{position}': position + 1, '{total}': total })
+            : counterLabel('data-label-range', 'Showing projects {first}–{last} of {total}', { '{first}': position + 1, '{last}': Math.min(position + size, total), '{total}': total }));
         cards.forEach(function (card) {
             var index = matches.indexOf(card);
             card.inert = card.hidden || index < position || index >= position + size;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/evidence_hub_contract_mapper.php';
 require_once __DIR__ . '/owner_layout.php';
+require_once __DIR__ . '/evidence_hub_copy.php';
 
 /** @param array<string, mixed> $contract */
 function renderEvidenceHubOwnerPresentation(array $contract, array $actionTokens = [], string $feedback = ''): void
@@ -74,9 +75,10 @@ function renderEvidenceHubOwnerPresentation(array $contract, array $actionTokens
     <?php
 }
 
-function renderEvidenceHubOwnerSafeError(): void
+function renderEvidenceHubOwnerSafeError(string $locale = 'en'): void
 {
-    ?><div class="evidence-hub-presentation" dir="ltr"><header class="evidence-hub-hero"><div class="evidence-hub-hero-copy"><p class="evidence-hub-kicker"><?php echo evidenceHubOwnerIcon('spark'); ?> Owner workspace</p><h1>Evidence Hub</h1></div></header><section class="evidence-hub-section"><div class="evidence-hub-empty" role="alert"><span class="evidence-hub-empty-icon"><?php echo evidenceHubOwnerIcon('alert'); ?></span><strong>Evidence Hub is temporarily unavailable.</strong><span>Please try again shortly.</span></div></section></div><?php
+    $e = static fn (string $english): string => ownerEscapeHtml(evidenceHubText($english, $locale));
+    ?><div class="evidence-hub-presentation" dir="<?php echo evidenceHubDirection($locale); ?>"><header class="evidence-hub-hero"><div class="evidence-hub-hero-copy"><p class="evidence-hub-kicker"><?php echo evidenceHubOwnerIcon('spark'); ?> <?php echo $e('Owner workspace'); ?></p><h1><?php echo $e('Evidence Hub'); ?></h1></div></header><section class="evidence-hub-section"><div class="evidence-hub-empty" role="alert"><span class="evidence-hub-empty-icon"><?php echo evidenceHubOwnerIcon('alert'); ?></span><strong><?php echo $e('Evidence Hub is temporarily unavailable.'); ?></strong><span><?php echo $e('Please try again shortly.'); ?></span></div></section></div><?php
 }
 
 /** @return array{title: string, description: string, label: string, href: string, category: string, context: string, context_icon: string, icon: string, tone: string} */

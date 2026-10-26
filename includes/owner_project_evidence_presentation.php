@@ -6,10 +6,13 @@ require_once __DIR__ . '/owner_layout.php';
 require_once __DIR__ . '/project_evidence_repository.php';
 require_once __DIR__ . '/evidence_hub_owner_page_model.php';
 require_once __DIR__ . '/evidence_hub_owner_page_presentation.php';
+require_once __DIR__ . '/evidence_hub_copy.php';
 
 /** @param array{id:int,title:string,values:array<string,mixed>} $project @param array<string,mixed> $values @param array<string,string> $fieldErrors */
-function renderOwnerProjectEvidenceForm(array $project, array $values, array $fieldErrors = [], ?array $evaluations = null): void
+function renderOwnerProjectEvidenceForm(array $project, array $values, array $fieldErrors = [], ?array $evaluations = null, string $locale = 'en'): void
 {
+    $locale = evidenceHubLocale($locale);
+    $e = static fn (string $english): string => ownerEscapeHtml(evidenceHubText($english, $locale));
     $projectId = $project['id'];
     $evaluations ??= projectEvidenceLogicalEvaluations($values);
     $fields = [
@@ -17,14 +20,15 @@ function renderOwnerProjectEvidenceForm(array $project, array $values, array $fi
         'personal_role' => ['label' => 'Personal role', 'guidance' => 'Explain what you personally owned, decided, or implemented.', 'example' => 'Example: I designed the data pipeline and implemented its validation rules.', 'anchor' => 'personal-role'],
         'measurable_outcome' => ['label' => 'Measurable outcome', 'guidance' => 'State the result using a number, comparison, or observable change.', 'example' => 'Example: Reduced weekly reporting time from six hours to one.', 'anchor' => 'measurable-outcome'],
     ];
+    $localizedErrors = array_map(static fn (string $error): string => evidenceHubText($error, $locale), $fieldErrors);
     ?>
-    <div class="evidence-hub-editor" dir="ltr"><header><p class="evidence-hub-kicker">Project evidence</p><h1>Edit project evidence</h1><p class="evidence-hub-editor-project" dir="auto"><?php echo ownerEscapeHtml($project['title']); ?></p><p>Record what the project addressed, what you personally did, and what changed.</p></header>
-        <?php ownerRenderFormFeedback('', [], $fieldErrors); ?>
+    <div class="evidence-hub-editor" dir="<?php echo evidenceHubDirection($locale); ?>"><header><p class="evidence-hub-kicker"><?php echo $e('Project evidence'); ?></p><h1><?php echo $e('Edit project evidence'); ?></h1><p class="evidence-hub-editor-project" dir="auto"><?php echo ownerEscapeHtml($project['title']); ?></p><p><?php echo $e('Record what the project addressed, what you personally did, and what changed.'); ?></p></header>
+        <?php ownerRenderFormFeedback('', [], $localizedErrors); ?>
         <form method="POST" action="/owner/projects/<?php echo $projectId; ?>/evidence" novalidate data-owner-form><input type="hidden" name="csrf_token" value="<?php echo ownerEscapeHtml(getCsrfToken()); ?>">
             <?php foreach ($fields as $key => $field): $evaluation = $evaluations[$key]; $status = evidenceHubOwnerPageFieldStatus($evaluation); $helpId = 'evidence-help-' . $field['anchor']; ?>
-                <section class="evidence-hub-editor-field" id="<?php echo $field['anchor']; ?>" aria-labelledby="evidence-heading-<?php echo $field['anchor']; ?>"><div class="evidence-hub-editor-field-heading"><h2 id="evidence-heading-<?php echo $field['anchor']; ?>"><?php echo $field['label']; ?></h2><span class="evidence-hub-state evidence-hub-state--<?php echo $status; ?>"><?php echo evidenceHubOwnerPageFieldStatusLabel($status); ?></span></div><p id="<?php echo $helpId; ?>"><?php echo $field['guidance']; ?><br><span><?php echo $field['example']; ?></span></p><?php if ($status !== 'complete'): ?><p class="evidence-hub-editor-reason"><?php echo ownerEscapeHtml(evidenceHubOwnerPageFieldReason($evaluation, $field['label'])); ?></p><?php endif; ?><label for="evidence-<?php echo $field['anchor']; ?>"><?php echo $field['label']; ?></label><textarea id="evidence-<?php echo $field['anchor']; ?>" name="<?php echo $key; ?>" rows="5"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, $key, $helpId); ?>><?php echo ownerEscapeHtml(is_string($values[$key] ?? null) ? $values[$key] : ''); ?></textarea><?php ownerRenderFieldError($fieldErrors, $key); ?></section>
+                <section class="evidence-hub-editor-field" id="<?php echo $field['anchor']; ?>" aria-labelledby="evidence-heading-<?php echo $field['anchor']; ?>"><div class="evidence-hub-editor-field-heading"><h2 id="evidence-heading-<?php echo $field['anchor']; ?>"><?php echo $e($field['label']); ?></h2><span class="evidence-hub-state evidence-hub-state--<?php echo $status; ?>"><?php echo evidenceHubOwnerPageFieldStatusLabel($status, $locale); ?></span></div><p id="<?php echo $helpId; ?>"><?php echo $e($field['guidance']); ?><br><span><?php echo $e($field['example']); ?></span></p><?php if ($status !== 'complete'): ?><p class="evidence-hub-editor-reason"><?php echo $e(evidenceHubOwnerPageFieldReason($evaluation, $field['label'])); ?></p><?php endif; ?><label for="evidence-<?php echo $field['anchor']; ?>"><?php echo $e($field['label']); ?></label><textarea id="evidence-<?php echo $field['anchor']; ?>" name="<?php echo $key; ?>" rows="5"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, $key, $helpId); ?>><?php echo ownerEscapeHtml(is_string($values[$key] ?? null) ? $values[$key] : ''); ?></textarea><?php ownerRenderFieldError($localizedErrors, $key); ?></section>
             <?php endforeach; ?>
-            <div class="evidence-hub-editor-actions"><button class="evidence-hub-primary-cta" type="submit" data-pending-label="Saving evidence…">Save evidence</button><a href="/owner/evidence-hub#project-<?php echo $projectId; ?>">Cancel</a></div>
+            <div class="evidence-hub-editor-actions"><button class="evidence-hub-primary-cta" type="submit" data-pending-label="<?php echo $e('Saving evidence…'); ?>"><?php echo $e('Save evidence'); ?></button><a href="/owner/evidence-hub#project-<?php echo $projectId; ?>"><?php echo $e('Cancel'); ?></a></div>
         </form>
     </div>
     <?php

@@ -85,8 +85,9 @@ try {
 
 ownerLayoutStart('Edit project evidence', 'evidence_hub', true);
 if ($databaseError !== '' || !is_array($project)) {
-    ?><div class="evidence-hub-editor"><h1>Edit project evidence</h1><p role="alert"><?php echo ownerEscapeHtml($databaseError); ?></p></div><?php
+    $locale = ownerLocale();
+    ?><div class="evidence-hub-editor" dir="<?php echo evidenceHubDirection($locale); ?>"><h1><?php echo ownerEscapeHtml(evidenceHubText('Edit project evidence', $locale)); ?></h1><p role="alert"><?php echo ownerEscapeHtml(evidenceHubText($databaseError, $locale)); ?></p></div><?php
 } else {
-    renderOwnerProjectEvidenceForm($project, $values, $fieldErrors);
+    renderOwnerProjectEvidenceForm($project, $values, $fieldErrors, null, ownerLocale());
 }
 ownerLayoutEnd();
