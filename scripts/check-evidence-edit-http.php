@@ -9,6 +9,7 @@ if (PHP_SAPI !== 'cli' || getenv('APP_ENV') !== 'test' || getenv('ATHERCAR_TEST_
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/evidence_writing_guidance.php';
 
 function httpEvidenceRequest(string $method, string $path, ?array $fields = null, ?string $cookie = null, array $headers = [], string $locale = 'en'): array
 {
@@ -123,6 +124,8 @@ try {
     requireHttp($after['updated_at'] !== $before['updated_at'], 'Meaningful evidence edit did not advance updated_at.');
     $hub = httpEvidenceRequest('GET', '/owner/evidence-hub', null, $cookieA);
     requireHttp($hub['status'] === 200 && str_contains($hub['body'], 'Evidence saved successfully') && str_contains($hub['body'], 'Undo last evidence update') && str_contains($hub['body'], 'id="project-' . $projectId . '"'), 'Immediate Undo success panel or return card is missing.');
+    $savedEditor = httpEvidenceRequest('GET', $route, null, $cookieA);
+    requireHttp(preg_match('/data-evidence-writing-hint="outcome_without_number"[^>]*data-hint-when="absent">/', $savedEditor['body']) === 1 && str_contains($savedEditor['body'], 'data-evidence-insert-starter'), 'Saved outcome without digits did not render the non-blocking number hint and starter controls.');
     $unchanged = $fields;
     $unchanged['problem'] = '  ' . $fields['problem'] . '  ';
     requireHttp(httpEvidenceRequest('POST', $route, $unchanged, $cookieA)['status'] === 303, 'Equivalent normalized POST did not use PRG.');
@@ -131,7 +134,15 @@ try {
     requireHttp($arabic['status'] === 200 && str_contains($arabic['body'], '<html lang="ar" dir="rtl">') && str_contains($arabic['body'], 'تعديل أدلة المشروع') && str_contains($arabic['body'], $fields['problem']), 'Arabic Owner locale did not render the localized editor with unchanged owner content.');
     $arabicInvalid = httpEvidenceRequest('POST', $route, $invalid, $cookieA, [], 'ar');
     requireHttp($arabicInvalid['status'] === 422 && str_contains($arabicInvalid['body'], 'راجع الحقول المحددة') && !str_contains($arabicInvalid['body'], 'Review the highlighted fields'), 'Arabic validation summary is not localized.');
-    echo "PASS Evidence edit HTTP auth, tenant, CSRF, validation, atomic save, PRG, and unchanged timestamp\n";
+    // Last, because it replaces the evidence: unedited starters save but never count as evidence.
+    $starters = ['csrf_token' => $csrf];
+    foreach (evidenceWritingGuidanceFields() as $key => $field) {
+        $starters[$key] = $field['starter'];
+    }
+    requireHttp(httpEvidenceRequest('POST', $route, $starters, $cookieA)['status'] === 303, 'Unedited starters were not accepted as storable text.');
+    $starterEditor = httpEvidenceRequest('GET', $route, null, $cookieA);
+    requireHttp(substr_count($starterEditor['body'], 'evidence-hub-state--needs_attention') === 3 && !str_contains($starterEditor['body'], 'evidence-hub-state--complete'), 'Unedited starters were counted as complete evidence.');
+    echo "PASS Evidence edit HTTP auth, tenant, CSRF, validation, atomic save, PRG, unchanged timestamp, and writing aids\n";
 } finally {
     if (!$useExistingSessions) {
         @unlink($cookieA);
