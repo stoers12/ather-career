@@ -61,7 +61,7 @@ final class EdgeSecurityStaticTest
 
         foreach ($apacheOwnedHeaders as $header) {
             phase2Assert(str_contains($apache, "Header always set {$header}"), "Apache is not the authoritative {$header} emitter.");
-            phase2Assert(!preg_match('/(?im)^\\s*(?:header|header_remove)\\s*\\(\\s*[\\\'\"]' . preg_quote($header, '/') . '(?:\\s*:|[\\\'\"])/', self::runtimePhpSources()), "PHP runtime source emits Apache-owned {$header}.");
+            self::assertRuntimeHeaderOwnership($header, self::runtimePhpSources());
             phase2Assert(!preg_match('/(?im)^\\s*(?:header(?:_down)?\\s*\\+|\\+)\\s*' . preg_quote($header, '/') . '\\b/', $caddy), "Caddy appends a duplicate {$header} instead of replacing an upstream value.");
         }
         foreach ($apacheOwnedHeaders as $header) {
@@ -101,18 +101,27 @@ final class EdgeSecurityStaticTest
         return $value;
     }
 
-    private static function runtimePhpSources(): string
+    private static function assertRuntimeHeaderOwnership(string $header, string $sources): void
+    {
+        phase2Assert(!preg_match('/(?im)^\\s*(?:header|header_remove)\\s*\\(\\s*[\\\'\"]' . preg_quote($header, '/') . '(?:\\s*:|[\\\'\"])/', $sources), "PHP runtime source emits Apache-owned {$header}.");
+    }
+
+    private static function runtimePhpSources(string $repositoryRoot = PHASE2_REPOSITORY_ROOT): string
     {
         $sources = [];
         $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator(PHASE2_REPOSITORY_ROOT, FilesystemIterator::SKIP_DOTS),
+            new RecursiveCallbackFilterIterator(
+                new RecursiveDirectoryIterator($repositoryRoot, FilesystemIterator::SKIP_DOTS),
+                // Temporary checkout copies must be pruned before entering their trees.
+                static fn (SplFileInfo $entry): bool => !$entry->isDir() || $entry->getFilename() !== '.worktrees',
+            ),
         );
         foreach ($iterator as $file) {
             if (!$file instanceof SplFileInfo || !$file->isFile() || $file->getExtension() !== 'php') {
                 continue;
             }
             $path = str_replace('\\', '/', $file->getPathname());
-            $relative = substr($path, strlen(str_replace('\\', '/', PHASE2_REPOSITORY_ROOT)) + 1);
+            $relative = substr($path, strlen(str_replace('\\', '/', $repositoryRoot)) + 1);
             if (str_starts_with($relative, 'tests/') || str_starts_with($relative, 'vendor/')) {
                 continue;
             }

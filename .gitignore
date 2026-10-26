@@ -21,3 +21,10 @@ photo-debug.txt
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local work outputs: worktrees, graphify analysis, cleanup/cache reports.
+.worktrees/
+graphify-out/
+/CACHE-ASSESSMENT-*.csv
+/CACHE-CLEANUP-OUTPUT-*.txt
+/CLEANUP-EXECUTION-MANIFEST-*.md

@@ -29,6 +29,7 @@ require_once __DIR__ . '/../tests/phase2/cases/LibvipsImageProcessorTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OperationalSecurityStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/RuntimeObservabilityStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EdgeSecurityStaticTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EdgeSecurityDiscoveryTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/OperationalRecoveryStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/Auth0OidcStaticTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/Auth0CallbackBoundaryTest.php';
@@ -80,6 +81,7 @@ $tests = [
     'operational security static contract' => [OperationalSecurityStaticTest::class, 'run'],
     'runtime health and observability static contract' => [RuntimeObservabilityStaticTest::class, 'run'],
     'edge security and abuse-protection static contract' => [EdgeSecurityStaticTest::class, 'run'],
+    'edge security PHP discovery regression' => [EdgeSecurityDiscoveryTest::class, 'run'],
     'operational recovery and closure static contract' => [OperationalRecoveryStaticTest::class, 'run'],
     'Auth0 OIDC static contract' => [Auth0OidcStaticTest::class, 'run'],
     'Auth0 callback boundary characterization' => [Auth0CallbackBoundaryTest::class, 'run'],
