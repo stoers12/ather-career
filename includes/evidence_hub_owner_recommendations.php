@@ -39,7 +39,7 @@ function buildAuthorizedEvidenceHubOwnerRecommendationState(
     );
 
     return [
-        'contract' => mapEvidenceHubOwnerContract(buildEvidenceHubOwnerCoreFromEvaluatedProjects($projects, $publicationState, $ownerMappings), $visible),
+        'contract' => mapEvidenceHubOwnerContract(buildEvidenceHubOwnerCoreFromEvaluatedProjects($projects, $publicationState, $ownerMappings, loadAuthorizedEvidenceHubPublishedProjectCount($database, $context)), $visible),
         'current_candidates' => $candidates,
         'resource_associations' => $resourceAssociations,
     ];

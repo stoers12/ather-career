@@ -238,7 +238,7 @@ final class EvidenceHubTechnologyReviewTest
     private static function database(): PDO
     {
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL);');
+        $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, is_published INTEGER NOT NULL DEFAULT 0, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL);');
         $database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
         $database->exec("INSERT INTO portfolios VALUES (10, 1, 'owner-a', 1), (20, 2, 'owner-b', 0)");
         $database->exec("INSERT INTO projects (id, portfolio_id, technologies, created_at) VALUES (1, 10, '[\"React\", \"ReactJS\", \"Raect\"]', '2026-01-01T00:00:00Z'), (2, 20, '[\"ReactJS\"]', '2026-01-01T00:00:00Z')");

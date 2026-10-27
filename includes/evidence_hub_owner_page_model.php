@@ -333,7 +333,7 @@ function evidenceHubOwnerPageProgress(int $projectCount, int $completeCount, arr
     sort($completeActivity, SORT_NUMERIC);
     $first = $completeActivity[0] ?? null;
     $latest = $completeActivity === [] ? null : $completeActivity[count($completeActivity) - 1];
-    $trendReady = $completeCount >= 3 && count($completeActivity) >= 3
+    $trendReady = $completeCount >= EVIDENCE_HUB_RECOMMENDED_OBSERVATIONS && count($completeActivity) >= EVIDENCE_HUB_RECOMMENDED_OBSERVATIONS
         && $first !== null && $latest !== null && $latest - $first >= 30 * 24 * 60 * 60;
     $stage = evidenceHubProgressStage($projectCount, $completeCount, $trendReady);
     $labels = [

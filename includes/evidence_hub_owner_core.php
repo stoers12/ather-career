@@ -9,7 +9,7 @@ require_once __DIR__ . '/evidence_hub_contract_mapper.php';
 require_once __DIR__ . '/evidence_hub_technology_review_repository.php';
 
 /** The single contract version the private Owner Evidence Hub publishes. */
-const EVIDENCE_HUB_OWNER_CONTRACT_VERSION = 'v6';
+const EVIDENCE_HUB_OWNER_CONTRACT_VERSION = 'v7';
 
 /** @return array{taxonomy_version: string, entries: list<array<string, mixed>>, aliases: array<string, array<string, mixed>>, category_order: list<string>} */
 function loadEvidenceHubOwnerTaxonomy(): array
@@ -30,6 +30,7 @@ function buildAuthorizedEvidenceHubOwnerCore(PDO $database, AuthorizedPortfolioC
         loadAuthorizedEvidenceHubOwnerEvaluatedProjects($database, $context),
         loadAuthorizedEvidenceHubPublicationState($database, $context),
         loadAuthorizedTechnologyOwnerMappings($database, $context),
+        loadAuthorizedEvidenceHubPublishedProjectCount($database, $context),
     );
 }
 
@@ -42,7 +43,7 @@ function loadAuthorizedEvidenceHubOwnerEvaluatedProjects(PDO $database, Authoriz
 /** @param list<array<string, mixed>> $projects @param array<string, string> $ownerMappings
  * @return array{documentation_coverage: array<string, mixed>, maturity: array{state: string, version: string}, portfolio_progress: array<string, mixed>, technology_evidence_map: array<string, mixed>}
  */
-function buildEvidenceHubOwnerCoreFromEvaluatedProjects(array $projects, string $publicationState, array $ownerMappings = []): array
+function buildEvidenceHubOwnerCoreFromEvaluatedProjects(array $projects, string $publicationState, array $ownerMappings = [], ?int $publishedProjectCount = null): array
 {
     $coverage = aggregateEvidenceHubDocumentationCoverage($projects);
     $taxonomy = loadEvidenceHubOwnerTaxonomy();
@@ -50,7 +51,7 @@ function buildEvidenceHubOwnerCoreFromEvaluatedProjects(array $projects, string 
     return [
         'documentation_coverage' => $coverage,
         'maturity' => ['state' => evidenceHubMaturityState($projects), 'version' => EVIDENCE_HUB_CONTRACT_VERSION],
-        'portfolio_progress' => summarizeEvidenceHubPortfolioProgress($projects, $publicationState),
+        'portfolio_progress' => summarizeEvidenceHubPortfolioProgress($projects, $publicationState, $publishedProjectCount),
         'technology_evidence_map' => summarizeEvidenceHubTechnologies(array_map(static fn (array $project): array => [
             'storage_state' => $project['technology_storage_state'],
             'reason_codes' => $project['technology_storage_reason_codes'],

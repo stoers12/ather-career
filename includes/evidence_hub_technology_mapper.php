@@ -200,5 +200,6 @@ function evidenceHubTechnologySummary(string $status, string $confidence, array 
         'distinct_mapped_technology_count' => $distinctMappedCount,
         'distinct_unmapped_technology_count' => $distinctUnmappedCount,
         'invalid_technology_storage_project_count' => $invalidStorageProjects,
+        'mapping_coverage_bps' => $occurrences === 0 ? null : evidenceHubHalfUpBasisPoints($mappedOccurrences + $ownerMappedOccurrences, $occurrences),
     ];
 }

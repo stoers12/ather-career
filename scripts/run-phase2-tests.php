@@ -60,6 +60,7 @@ require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubUndoTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubLocalizationTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceWritingGuidanceTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubTechnologyReviewTest.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractV7Test.php';
 
 $environment = null;
 $failures = [];
@@ -116,6 +117,7 @@ $tests = [
     'Evidence Hub Owner localization and English fail-safe' => [EvidenceHubLocalizationTest::class, 'run'],
     'Evidence editor writing guidance, starters, and non-blocking hints' => [EvidenceWritingGuidanceTest::class, 'run'],
     'Evidence Hub Owner technology review, contract v5, and scoped actions' => [EvidenceHubTechnologyReviewTest::class, 'run'],
+    'Evidence Hub contract v7 evidence details and authorized publication' => [EvidenceHubContractV7Test::class, 'run'],
 ];
 
 try {
