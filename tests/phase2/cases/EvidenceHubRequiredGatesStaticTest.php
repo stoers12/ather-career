@@ -34,6 +34,7 @@ final class EvidenceHubRequiredGatesStaticTest
             'tests/phase2/support/evidence-hub-owner-visual.cjs',
             'tests/phase2/support/evidence-hub-owner-actions-visual.cjs',
             'tests/phase2/support/evidence-hub-editor-writing-visual.cjs',
+            'tests/phase2/support/evidence-hub-technology-review-visual.cjs',
             'ather.evidenceHub.required-gates',
             'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD',
             'playwright@1.58.2',
@@ -50,6 +51,7 @@ final class EvidenceHubRequiredGatesStaticTest
             preg_match('/Invoke-Tool\s+\'node\'\s+@\(\(Join-Path \$Root \'tests\/phase2\/support\/evidence-hub-owner-visual\.cjs\'\), \$screenshots\)/', $gate) === 1
             && preg_match('/Invoke-Tool\s+\'node\'\s+@\(\(Join-Path \$Root \'tests\/phase2\/support\/evidence-hub-owner-actions-visual\.cjs\'\)\)/', $gate) === 1
             && preg_match('/Invoke-Tool\s+\'node\'\s+@\(\(Join-Path \$Root \'tests\/phase2\/support\/evidence-hub-editor-writing-visual\.cjs\'\)\)/', $gate) === 1
+            && preg_match('/Invoke-Tool\s+\'node\'\s+@\(\(Join-Path \$Root \'tests\/phase2\/support\/evidence-hub-technology-review-visual\.cjs\'\)\)/', $gate) === 1
             && str_contains($gate, 'EVIDENCE_HUB_ACTION_SESSION_COOKIE'),
             'Required-gates entry point must dynamically execute every direct browser harness with the native Owner session.'
         );
@@ -64,6 +66,9 @@ final class EvidenceHubRequiredGatesStaticTest
         phase2Assert(str_contains($bootstrap, "PHP_SAPI === 'cli'") && str_contains($bootstrap, '$_SERVER[\'REQUEST_METHOD\'] !== \'POST\'') && str_contains($bootstrap, 'hash_equals') && str_contains($bootstrap, 'fopen($marker, \'x\')') && str_contains($bootstrap, 'establishVerifiedInternalUserSession') && str_contains($bootstrap, 'session_write_close') && !str_contains($bootstrap, '$_POST'), 'Web-SAPI bootstrap must be CLI-safe, POST-only, nonce-bound, atomically single-use, canonical, and request-authority-free.');
         phase2Assert(!str_contains($httpMatrix, 'session_id(') && !str_contains($httpMatrix, 'session_save_path(') && !str_contains($httpMatrix, 'Cookie:') && str_contains($httpMatrix, "'/usr/bin/curl'") && str_contains($httpMatrix, 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_') && str_contains($httpMatrix, "ownerJar('a')") && str_contains($httpMatrix, "ownerJar('b')") && str_contains($httpMatrix, 'fabricatedCookieDenial') && str_contains($httpMatrix, 'crossTenantDenial'), 'HTTP action matrix must be a two-owner native cookie-jar client with no CLI session authority.');
         phase2Assert(!str_contains($httpRunner, 'SESSION_HANDOFF') && str_contains($httpRunner, 'seedSyntheticOwners') && str_contains($httpRunner, "'--seed'"), 'HTTP action runner must allow identity-free seeding but never session handoff.');
+        $editorPosition = strpos($gate, "'scripts/check-evidence-edit-http.php'");
+        $technologyReviewPosition = strpos($gate, "'scripts/check-evidence-technology-review-http.php'");
+        phase2Assert($editorPosition !== false && $technologyReviewPosition !== false && $editorPosition < $technologyReviewPosition, 'Required-gates entry point must run the Owner technology review HTTP and MySQL check with the native Owner sessions.');
         phase2Assert(!str_contains($dockerfile, '/var/www/public/evidence-hub-web-session-bootstrap.php') && !str_contains($compose, 'EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP'), 'Production artifacts must not publish or enable the Web-SAPI bootstrap.');
     }
 
