@@ -324,13 +324,7 @@ function evidenceHubOwnerPageProgress(int $projectCount, int $completeCount, arr
     $latest = $completeActivity === [] ? null : $completeActivity[count($completeActivity) - 1];
     $trendReady = $completeCount >= 3 && count($completeActivity) >= 3
         && $first !== null && $latest !== null && $latest - $first >= 30 * 24 * 60 * 60;
-    $stage = match (true) {
-        $projectCount === 0 => 'no_projects',
-        $completeCount === 0 => 'incomplete_first_project',
-        $completeCount === 1 => 'single_project',
-        $trendReady => 'trend_ready',
-        default => 'emerging_patterns',
-    };
+    $stage = evidenceHubProgressStage($projectCount, $completeCount, $trendReady);
     $labels = [
         'no_projects' => 'Start with a project',
         'incomplete_first_project' => 'Complete your first evidence-ready project',
