@@ -682,7 +682,7 @@ jobs:
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php database/migrate.php | grep -x 'No pending migrations.'
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php scripts/check-production-security.php
 
-      - name: Verify startup on restored migrations 001-022
+      - name: Verify startup on restored migrations 001-024
         run: bash scripts/check-restored-startup-idempotence.sh
 
       - name: Seed isolated public HTTP fixture
