@@ -11,6 +11,7 @@ final class EvidenceHubAggregationTest
         requireEvidenceTextUnicodeRuntime();
         $fixtures = self::fixtures();
         self::documentationAndMaturity($fixtures);
+        self::halfUpBasisPoints();
         self::progress($fixtures);
         self::progressStage();
         self::technologyStorageAndSummary($fixtures);
@@ -92,6 +93,21 @@ final class EvidenceHubAggregationTest
                 continue;
             }
             phase2AssertSame(($fixture['project_count'] ?? 0) * 3, $fixture['expected_fields'] ?? null, "{$fixture['id']} must retain three expected fields per project.");
+        }
+    }
+
+    private static function halfUpBasisPoints(): void
+    {
+        foreach ([[0, 3, 0], [1, 3, 3333], [2, 3, 6667], [27, 30, 9000], [1, 32, 313], [3, 3, 10000]] as [$numerator, $denominator, $expected]) {
+            phase2AssertSame($expected, evidenceHubHalfUpBasisPoints($numerator, $denominator), 'Shared half-up rounding changed.');
+        }
+        foreach ([[0, 0], [1, 0], [0, -1], [-1, 3], [4, 3]] as [$numerator, $denominator]) {
+            try {
+                evidenceHubHalfUpBasisPoints($numerator, $denominator);
+                throw new RuntimeException('Invalid basis-point inputs were accepted.');
+            } catch (InvalidArgumentException) {
+                // A ratio needs a positive denominator and a bounded numerator.
+            }
         }
     }
 

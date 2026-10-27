@@ -10,6 +10,15 @@ final class EvidenceHubAggregationInvariantException extends RuntimeException
 {
 }
 
+function evidenceHubHalfUpBasisPoints(int $numerator, int $denominator): int
+{
+    if ($denominator <= 0 || $numerator < 0 || $numerator > $denominator) {
+        throw new InvalidArgumentException('Evidence Hub basis-point inputs are invalid.');
+    }
+
+    return intdiv($numerator * 10000 + intdiv($denominator, 2), $denominator);
+}
+
 function evidenceHubProgressStage(int $projectCount, int $completeProjectCount, bool $trendReady): string
 {
     if ($projectCount < 0 || $completeProjectCount < 0 || $completeProjectCount > $projectCount) {
@@ -164,7 +173,7 @@ function aggregateEvidenceHubDocumentationCoverage(array $projects): array
     if ($expected !== $projectCount * 3 || $complete < 0 || $complete > $expected) {
         throw new EvidenceHubAggregationInvariantException('Evidence Hub coverage totals are invalid.');
     }
-    $coverage = intdiv($complete * 10000 + intdiv($expected, 2), $expected);
+    $coverage = evidenceHubHalfUpBasisPoints($complete, $expected);
     if ($coverage < 0 || $coverage > 10000) {
         throw new EvidenceHubAggregationInvariantException('Evidence Hub coverage basis points are invalid.');
     }
