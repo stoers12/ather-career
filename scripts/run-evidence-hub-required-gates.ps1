@@ -143,10 +143,10 @@ function Complete-GateCleanup([string]$Temporary, [hashtable]$Playwright, [strin
 }
 
 function Get-SourceFiles([string]$Root) {
-    # Docker deliberately omits .gitignore from its build context. It is not
-    # runtime source, so the identity manifest excludes it rather than masking
-    # a real application-source mismatch.
-    $excluded = @('.git', 'vendor', 'node_modules', 'runtime', '.env', '.gitignore', '.vscode')
+    # Docker deliberately omits .gitignore and the agent guide AGENTS.md from its
+    # build context. They are not runtime source, so the identity manifest
+    # excludes them rather than masking a real application-source mismatch.
+    $excluded = @('.git', 'vendor', 'node_modules', 'runtime', '.env', '.gitignore', 'AGENTS.md', '.vscode')
     Get-ChildItem -LiteralPath $Root -Recurse -File -Force | Where-Object {
         $relative = $_.FullName.Substring($Root.Length).TrimStart('\', '/') -replace '\\', '/'
         -not ($excluded | Where-Object { $relative -eq $_ -or $relative.StartsWith("$_/") })

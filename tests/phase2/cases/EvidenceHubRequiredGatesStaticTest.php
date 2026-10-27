@@ -23,6 +23,16 @@ final class EvidenceHubRequiredGatesStaticTest
         );
         phase2Assert(!preg_match('/(?m)^\s*EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY:(?!\s*\$\{)[^\r\n]+/', $compose), 'Production Compose contains an Evidence Hub HMAC default.');
         phase2Assert(str_contains($dockerfile, '/var/www/app/evidence_hub.css') && str_contains($dockerfile, '/var/www/app/evidence_hub.js') && str_contains($dockerfile, '/var/www/app/owner_theme.js'), 'Production image does not publish the Evidence Hub and Owner theme assets.');
+        // A repository file Docker drops from the build context can never be in the image,
+        // so the source-identity manifest must exclude it too or every gate run fails.
+        preg_match('/\$excluded = @\(([^)]*)\)/', $gate, $excludedMatch);
+        preg_match_all("/'([^']+)'/", $excludedMatch[1] ?? '', $excludedNames);
+        foreach (preg_split('/\R/', self::read('.dockerignore')) ?: [] as $pattern) {
+            $pattern = trim($pattern);
+            if ($pattern !== '' && preg_match('/^[A-Za-z0-9._-]+$/', $pattern) === 1 && is_file(PHASE2_REPOSITORY_ROOT . '/' . $pattern)) {
+                phase2Assert(in_array($pattern, $excludedNames[1], true), "Required-gates source manifest must exclude {$pattern}, which .dockerignore keeps out of the image.");
+            }
+        }
         foreach (['owner_workspace.css', 'owner_dashboard.css', 'assets/images/dashboard-projects.svg'] as $asset) {
             phase2Assert(str_contains($dockerfile, '/var/www/app/' . $asset) && str_contains($gate, "'" . $asset . "'"), 'Production must publish and verify the shared Owner and Dashboard assets.');
         }
