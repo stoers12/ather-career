@@ -125,6 +125,17 @@ Taxonomy v5 retains the 38 v4 entries first and unchanged, then adds 40 common t
 
 `EVIDENCE_HUB_OWNER_CONTRACT_VERSION` now selects contract v6 (`evidence-hub-contract-v6`, schema version `6.0.0`), which publishes taxonomy v5. Existing Owner mappings stay valid because v5 is a superset of v4. A taxonomy match takes precedence: an earlier Owner mapping of `Laravel` to PHP now resolves as `mapped` to Laravel; an unknown label such as `vue 3` can still be `owner_mapped` to Vue.js. Matching remains normalized exact. Text and recommendation rules, migrations, and UI are unchanged; earlier contracts and taxonomies remain frozen.
 
+### Contract v7: evidence details
+
+The live Owner selection is contract v7 (`evidence-hub-contract-v7`, schema version `7.0.0`), still using taxonomy v5. It adds exactly four fields:
+
+- `portfolio_progress.stage` uses the pure stage rule with `trendReady = false`: `no_projects`, `incomplete_first_project`, `single_project`, or `emerging_patterns`. The contract keeps `trend_status: not_available` and never says `trend_ready`. For the same Portfolio, the page stage agrees except that its dated historical-context refinement, `trend_ready`, corresponds to the contract's `emerging_patterns`.
+- `portfolio_progress.published_project_count` counts scoped project flags equal to 1, from 0 to `project_count`, independently of the Portfolio's visibility. Authorized builders load it through the ownership-scoped repository. A pure core can carry null when the count was not supplied, but v7 rejects null.
+- `technology_evidence_map.mapping_coverage_bps` is the half-up percentage in basis points of mapped plus Owner-mapped occurrences out of all technology occurrences, or null with no occurrences. It uses the same integer rounding helper as documentation coverage. The Owner card displays the whole percent with `intdiv(bps, 100)`.
+- `documentation_coverage.evidence_confidence_detail` sits beside the unchanged `evidence_confidence` string. Its `observations` equals project count, and `recommended_observations` uses the single `EVIDENCE_HUB_RECOMMENDED_OBSERVATIONS = 3` constant also used for page historical context. The Owner card explains the sample size when observations are positive and below that recommendation.
+
+The detail's `basis_codes` are **not reason codes**. They are a closed, unique list sorted in lexicographic byte order (`SORT_STRING`): `NO_PROJECTS` for zero projects, `SINGLE_PROJECT` for one, `BELOW_RECOMMENDED_OBSERVATIONS` for two, plus `EVIDENCE_INCOMPLETE` for any positive project count with coverage below 10000. Thus one partially documented project produces `["EVIDENCE_INCOMPLETE", "SINGLE_PROJECT"]`; three fully documented projects produce an empty list. The mapper validates this exact sorted result. Existing reason codes, text and recommendation rules, taxonomies, and contract schemas v1–v6 remain frozen.
+
 ## Portfolio Progress
 
 The Owner page shows how many projects are public (`projects.is_published`). The five stages are computed by the pure `evidenceHubProgressStage()`.

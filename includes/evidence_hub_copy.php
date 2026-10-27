@@ -253,6 +253,9 @@ function evidenceHubArabicCopy(): array
         'Complete projects span at least 30 full days.' => 'تمتد المشاريع المكتملة على 30 يومًا كاملًا على الأقل.',
         'There is not enough dated, complete project evidence to show historical trend context.' => 'لا توجد أدلة مشاريع مكتملة ومؤرخة بما يكفي لعرض اتجاه زمني.',
 
+        'Based on {projects}; {recommended} give a more reliable picture.' => 'مبني على {projects}؛ {recommended} تعطي صورة أدق.',
+        'Recognized technologies: {percent}%' => 'التقنيات المعروفة: {percent}%',
+
         // Evidence editor
         'Edit project evidence' => 'تعديل أدلة المشروع',
         'Record what the project addressed, what you personally did, and what changed.' => 'سجّل ما عالجه المشروع، وما قمت به أنت شخصيًا، وما الذي تغيّر.',

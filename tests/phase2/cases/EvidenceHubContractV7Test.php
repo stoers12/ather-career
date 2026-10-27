@@ -13,6 +13,7 @@ final class EvidenceHubContractV7Test
         self::rejections();
         self::earlierVersions();
         self::authorizedPaths();
+        self::rendering();
     }
 
     private static function schema(): void
@@ -179,6 +180,44 @@ final class EvidenceHubContractV7Test
         }
         $foreign = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 20);
         phase2AssertSame(0, loadAuthorizedEvidenceHubPublishedProjectCount($database, $foreign), 'The count query failed to join portfolio ownership.');
+    }
+
+    private static function rendering(): void
+    {
+        require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_page_presentation.php';
+        require_once PHASE2_REPOSITORY_ROOT . '/includes/csrf.php';
+        foreach ([[0, '[]', null], [1, '["HTML","PHP","Private Future Tool"]', 66], [2, '["HTML","PHP","Private Future Tool"]', 66], [3, '["HTML","PHP","Private Future Tool"]', 66], [1, '["Private Future Tool"]', 0], [1, '[]', null]] as [$count, $technologies, $percent]) {
+            $database = self::database();
+            $database->exec('DELETE FROM projects WHERE portfolio_id=10 AND id>' . $count);
+            $update = $database->prepare('UPDATE projects SET technologies=:technologies WHERE portfolio_id=10');
+            $update->execute(['technologies' => $technologies]);
+            $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 10);
+            $contract = buildAuthorizedEvidenceHubOwnerContract($database, $context, []);
+            $model = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, ['contract' => ['recommendations' => []]], 'v7-test-synthetic-hmac');
+            foreach (['en', 'ar'] as $locale) {
+                ob_start();
+                renderEvidenceHubOwnerPage($contract, $model, [], '', ['kind' => 'none'], $locale);
+                $html = (string) ob_get_clean();
+                if ($count > 0 && $count < 3) {
+                    $expected = $locale === 'ar'
+                        ? 'مبني على ' . ($count === 1 ? 'مشروع واحد' : 'مشروعان') . '؛ 3 مشاريع تعطي صورة أدق.'
+                        : 'Based on ' . $count . ($count === 1 ? ' project' : ' projects') . '; 3 projects give a more reliable picture.';
+                    phase2AssertSame(1, substr_count($html, '<p>' . $expected . '</p>'), "{$locale}: the sample-size line or counted phrases are wrong.");
+                } else {
+                    phase2Assert(!str_contains($html, 'give a more reliable picture.') && !str_contains($html, 'تعطي صورة أدق.'), "{$locale}: the sample-size line must be absent outside its observation bounds.");
+                }
+                $prefix = $locale === 'ar' ? 'التقنيات المعروفة: ' : 'Recognized technologies: ';
+                phase2AssertSame($percent !== null, str_contains($html, $prefix), "{$locale}: recognition visibility must follow contract coverage nullability.");
+                if ($percent !== null) {
+                    phase2AssertSame(1, substr_count($html, '<p>' . $prefix . $percent . '%</p>'), "{$locale}: recognition must display the contract's truncated whole percent.");
+                }
+                $historical = mapEvidenceHubContractV6(buildAuthorizedEvidenceHubOwnerCore($database, $context), []);
+                ob_start();
+                renderEvidenceHubOwnerPage($historical, $model, [], '', ['kind' => 'none'], $locale);
+                $oldHtml = (string) ob_get_clean();
+                phase2Assert(!str_contains($oldHtml, $prefix) && !str_contains($oldHtml, 'give a more reliable picture.') && !str_contains($oldHtml, 'تعطي صورة أدق.'), 'The new lines must not be inferred from the page model for a historical contract.');
+            }
+        }
     }
 
     /** @param list<int> $counts @return array<string, mixed> */

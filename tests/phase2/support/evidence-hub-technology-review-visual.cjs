@@ -38,6 +38,8 @@ const feedback = page => page.locator('#evidence-hub-action-feedback').textConte
         expectState(await reviewItem(page).count() === 1, 'the seeded unknown label is not listed once with its own name');
         expectState(await reviewItem(page).locator('a[href^="/owner_projects.php?edit="]').count() >= 1, 'fix-in-project links are missing');
         expectState(await page.locator('#progress').getByText('Public projects: 0 of 3.', { exact: true }).count() === 1, 'the progress section does not show the seeded Owner project publication count');
+        expectState(await page.locator('#overview').getByText('Recognized technologies: 0%', { exact: true }).count() === 1, 'the contract recognition percentage is missing for unmapped technologies');
+        expectState(!(await page.locator('#overview').textContent()).includes('give a more reliable picture.'), 'the sample-size line appeared at the recommended observation count');
         expectState(!(await page.locator('#progress').textContent()).includes('Public projects appear to visitors only after the portfolio is published.'), 'publication help appeared without any public projects');
 
         mark('map');
@@ -49,6 +51,7 @@ const feedback = page => page.locator('#evidence-hub-action-feedback').textConte
         const ownerMapped = page.locator('.evidence-hub-technology-owner-mapped li').filter({ hasText: seededLabel });
         expectState(await ownerMapped.count() === 1 && (await ownerMapped.textContent()).includes('React'), 'the mapping is not listed under technologies you mapped');
         expectState(await page.locator('.evidence-hub-technology-pill').filter({ hasText: 'React' }).locator('.evidence-hub-technology-owner-tag').isVisible(), 'the technology map does not mark the Owner mapping');
+        expectState(await page.locator('#overview').getByText('Recognized technologies: 100%', { exact: true }).count() === 1, 'recognition coverage did not include Owner-mapped technologies');
 
         mark('reflow');
         for (const width of [390, 1280]) {
@@ -68,6 +71,7 @@ const feedback = page => page.locator('#evidence-hub-action-feedback').textConte
         await arabic.goto(`${baseUrl}/owner/evidence-hub#technologies`, { waitUntil: 'domcontentloaded' });
         expectState(await arabic.locator('html').getAttribute('dir') === 'rtl', 'the Arabic Owner page is not right-to-left');
         expectState(await arabic.locator('#progress').getByText('المشاريع المنشورة للزوار: 0 من 3.', { exact: true }).count() === 1, 'the Arabic published count wording or integer placeholders are wrong without JavaScript');
+        expectState(await arabic.locator('#overview').getByText('التقنيات المعروفة: 0%', { exact: true }).count() === 1, 'the Arabic contract recognition percentage is missing without JavaScript');
         const arabicItem = reviewItem(arabic);
         expectState(await arabicItem.getByText('اربطها بتقنية معروفة').isVisible() && await arabicItem.getByRole('button', { name: 'ربط التقنية' }).isVisible(), 'the Arabic review controls are missing without JavaScript');
         expectState(await arabicItem.locator('summary').textContent() === 'غير موجودة في القائمة؟ اقترح إضافتها', 'the Arabic proposal disclosure is missing');
