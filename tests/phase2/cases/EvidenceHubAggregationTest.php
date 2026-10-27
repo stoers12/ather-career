@@ -17,6 +17,7 @@ final class EvidenceHubAggregationTest
         self::taxonomyV2();
         self::taxonomyV3();
         self::taxonomyV4();
+        self::taxonomyV5();
         if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             self::ownerScopeIntegration();
         }
@@ -334,6 +335,94 @@ final class EvidenceHubAggregationTest
         } catch (EvidenceHubTaxonomyException) {
             // The loader rejects ambiguous labels before mapping.
         }
+    }
+
+    private static function taxonomyV5(): void
+    {
+        $v4 = loadEvidenceHubTechnologyTaxonomy('v4');
+        $v5 = loadEvidenceHubTechnologyTaxonomy('v5');
+        phase2AssertSame('v5', $v5['taxonomy_version'], 'V5 taxonomy identity is wrong.');
+        phase2AssertSame(78, count($v5['entries']), 'V5 must contain 78 entries.');
+        phase2AssertSame($v4['entries'], array_slice($v5['entries'], 0, 38), 'V5 changed a frozen v4 entry.');
+        phase2AssertSame($v4['category_order'], $v5['category_order'], 'V5 changed category ordering.');
+        $additions = [
+            ['html', 'HTML', 'language', ['HTML', 'HTML5']],
+            ['go', 'Go', 'language', ['Go', 'Golang']],
+            ['rust', 'Rust', 'language', ['Rust']],
+            ['kotlin', 'Kotlin', 'language', ['Kotlin']],
+            ['swift', 'Swift', 'language', ['Swift']],
+            ['dart', 'Dart', 'language', ['Dart']],
+            ['ruby', 'Ruby', 'language', ['Ruby']],
+            ['r', 'R', 'language', ['R']],
+            ['shell', 'Shell', 'language', ['Shell', 'Bash', 'Shell Script']],
+            ['laravel', 'Laravel', 'framework', ['Laravel']],
+            ['vue', 'Vue.js', 'framework', ['Vue.js', 'Vue', 'VueJS']],
+            ['angular', 'Angular', 'framework', ['Angular']],
+            ['django', 'Django', 'framework', ['Django']],
+            ['flask', 'Flask', 'framework', ['Flask']],
+            ['spring-boot', 'Spring Boot', 'framework', ['Spring Boot', 'SpringBoot']],
+            ['aspnet-core', 'ASP.NET Core', 'framework', ['ASP.NET Core', 'ASP.NET']],
+            ['nextjs', 'Next.js', 'framework', ['Next.js', 'NextJS']],
+            ['express', 'Express', 'framework', ['Express', 'Express.js', 'ExpressJS']],
+            ['flutter', 'Flutter', 'framework', ['Flutter']],
+            ['bootstrap', 'Bootstrap', 'stylesheet', ['Bootstrap']],
+            ['tailwind-css', 'Tailwind CSS', 'stylesheet', ['Tailwind CSS', 'Tailwind', 'TailwindCSS']],
+            ['mongodb', 'MongoDB', 'database', ['MongoDB', 'Mongo']],
+            ['sqlite', 'SQLite', 'database', ['SQLite']],
+            ['mariadb', 'MariaDB', 'database', ['MariaDB']],
+            ['tensorflow', 'TensorFlow', 'library', ['TensorFlow']],
+            ['pytorch', 'PyTorch', 'library', ['PyTorch']],
+            ['opencv', 'OpenCV', 'library', ['OpenCV']],
+            ['redux', 'Redux', 'library', ['Redux']],
+            ['dotnet', '.NET', 'runtime', ['.NET', 'dotnet']],
+            ['aws', 'AWS', 'platform', ['AWS', 'Amazon Web Services']],
+            ['azure', 'Microsoft Azure', 'platform', ['Microsoft Azure', 'Azure']],
+            ['google-cloud', 'Google Cloud', 'platform', ['Google Cloud', 'GCP', 'Google Cloud Platform']],
+            ['firebase', 'Firebase', 'platform', ['Firebase']],
+            ['linux', 'Linux', 'platform', ['Linux']],
+            ['kubernetes', 'Kubernetes', 'tool', ['Kubernetes', 'K8s']],
+            ['postman', 'Postman', 'tool', ['Postman']],
+            ['figma', 'Figma', 'tool', ['Figma']],
+            ['jira', 'Jira', 'tool', ['Jira']],
+            ['nginx', 'Nginx', 'tool', ['Nginx']],
+            ['jupyter', 'Jupyter Notebook', 'tool', ['Jupyter Notebook', 'Jupyter']],
+        ];
+        foreach ($additions as $index => [$key, $display, $category, $aliases]) {
+            $id = 'tech.' . $key;
+            phase2AssertSame([
+                'technology_id' => $id, 'canonical_key' => $key, 'display_name' => $display,
+                'category' => $category, 'aliases' => $aliases, 'deprecated' => false,
+                'merged' => false, 'replaced_by_id' => null,
+            ], $v5['entries'][38 + $index], "V5 {$id} differs from its curated entry.");
+            foreach ($aliases as $alias) {
+                $mapping = mapEvidenceHubTechnologyLabel($alias, $v5);
+                phase2AssertSame(['mapped', $id, $display, $category, 'v5'], [$mapping['mapping_state'], $mapping['canonical_id'], $mapping['display_name'], $mapping['category'], $mapping['taxonomy_version']], "V5 {$alias} alias failed.");
+            }
+        }
+        foreach (['HTML', 'Laravel', 'Vue', 'Django'] as $label) {
+            phase2AssertSame('mapped', mapEvidenceHubTechnologyLabel($label, $v5)['mapping_state'], "V5 must know {$label}.");
+            phase2AssertSame('unmapped', mapEvidenceHubTechnologyLabel($label, $v4)['mapping_state'], "V4 unexpectedly knows {$label}.");
+        }
+        foreach (['Java' => 'tech.java', 'JavaScript' => 'tech.javascript', 'React' => 'tech.react', 'React Native' => 'tech.react-native', 'SQL' => 'tech.sql', 'SQL Server' => 'tech.sql-server'] as $label => $id) {
+            phase2AssertSame($id, mapEvidenceHubTechnologyLabel($label, $v5)['canonical_id'], "V5 lost the distinct {$label} entry.");
+        }
+        foreach (['ReactJS', 'Raect', 'Nebula Tool', 'NebulaTool', 'Other Unknown', 'Future Unknown', 'Private Future Tool', 'PrivateTech', 'Excel Power BI', 'Synthetic unmapped technology', 'h1-unmapped-a', 'h1-unmapped-b', 'GitHub Actions', 'Graph RAG', 'Linear Regression', 'Spring'] as $unknown) {
+            $mapping = mapEvidenceHubTechnologyLabel($unknown, $v5);
+            phase2AssertSame(['unmapped', null], [$mapping['mapping_state'], $mapping['canonical_id']], "V5 guessed {$unknown}.");
+        }
+        $ownerMappings = [
+            evidenceHubTechnologyLabelDigest('vue 3') => 'tech.vue',
+            evidenceHubTechnologyLabelDigest('laravel') => 'tech.php',
+        ];
+        $ownerMapped = mapEvidenceHubTechnologyLabel('vue 3', $v5, $ownerMappings);
+        phase2AssertSame(['owner_mapped', 'tech.vue'], [$ownerMapped['mapping_state'], $ownerMapped['canonical_id']], 'V5 did not accept an Owner mapping to a new entry.');
+        $earlier = mapEvidenceHubTechnologyLabel('Laravel', $v4, $ownerMappings);
+        phase2AssertSame(['owner_mapped', 'tech.php'], [$earlier['mapping_state'], $earlier['canonical_id']], 'The earlier Laravel mapping fixture is invalid.');
+        $now = mapEvidenceHubTechnologyLabel('Laravel', $v5, $ownerMappings);
+        phase2AssertSame(['mapped', 'tech.laravel'], [$now['mapping_state'], $now['canonical_id']], 'A V5 taxonomy match must take precedence over an earlier Owner mapping.');
+        $source = json_decode((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/contracts/evidence-hub-taxonomy-v5.json'), true, 512, JSON_THROW_ON_ERROR);
+        $source['entries'][38]['aliases'][] = 'Docker';
+        self::assertTaxonomyInvariant(static fn (): array => parseEvidenceHubTechnologyTaxonomy(json_encode($source, JSON_THROW_ON_ERROR), 'v5'), 'V5 accepted a cross-entry alias collision.');
     }
 
     private static function ownerScopeIntegration(): void
