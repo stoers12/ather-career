@@ -154,9 +154,19 @@ function setEvidenceHubRecommendationActionFeedback(string $message): void
     $_SESSION[EVIDENCE_HUB_RECOMMENDATION_ACTION_FEEDBACK_SESSION_KEY] = $message;
 }
 
+/** The only messages an Evidence Hub action may flash; anything else in the session is ignored. */
+const EVIDENCE_HUB_ACTION_FEEDBACK_MESSAGES = [
+    'Recommendation snoozed for 14 days.',
+    'Recommendation dismissed.',
+    'Technology mapped.',
+    'Technology mapping removed.',
+    'Technology proposal sent.',
+    'Technology proposal withdrawn.',
+];
+
 function takeEvidenceHubRecommendationActionFeedback(): string
 {
     $message = $_SESSION[EVIDENCE_HUB_RECOMMENDATION_ACTION_FEEDBACK_SESSION_KEY] ?? '';
     unset($_SESSION[EVIDENCE_HUB_RECOMMENDATION_ACTION_FEEDBACK_SESSION_KEY]);
-    return is_string($message) && in_array($message, ['Recommendation snoozed for 14 days.', 'Recommendation dismissed.'], true) ? $message : '';
+    return is_string($message) && in_array($message, EVIDENCE_HUB_ACTION_FEEDBACK_MESSAGES, true) ? $message : '';
 }

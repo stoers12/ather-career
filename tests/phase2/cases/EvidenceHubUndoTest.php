@@ -28,7 +28,7 @@ final class EvidenceHubUndoTest
         phase2AssertSame('saved', $page['kind'], 'Immediate PRG page did not show Undo.');
         phase2Assert(preg_match('/\A[a-f0-9]{64}\z/D', $page['token']) === 1, 'Undo token is not cryptographically opaque.');
         $contract = self::contract();
-        $model = buildAuthorizedEvidenceHubOwnerPageModel($database, $owner, ['contract' => ['recommendations' => []]]);
+        $model = buildAuthorizedEvidenceHubOwnerPageModel($database, $owner, ['contract' => ['recommendations' => []]], 'undo-synthetic-hmac');
         ob_start();
         renderEvidenceHubOwnerPage($contract, $model, [], '', $page);
         $html = (string) ob_get_clean();
@@ -216,6 +216,7 @@ final class EvidenceHubUndoTest
     {
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL, updated_at TEXT NULL); INSERT INTO portfolios VALUES (10,1),(20,2)');
+        $database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
         $values = self::values('Original');
         $statement = $database->prepare('INSERT INTO projects (id,portfolio_id,title,description,problem_statement,personal_role,measurable_outcome,technologies,created_at,updated_at) VALUES (1,10,\'Synthetic project\',\'Private\',:problem,:personal_role,:measurable_outcome,\'["Excel"]\',\'2026-01-01T00:00:00Z\',\'2026-01-02T00:00:00Z\')');
         $statement->execute($values);

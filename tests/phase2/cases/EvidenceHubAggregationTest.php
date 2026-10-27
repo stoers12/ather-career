@@ -253,7 +253,10 @@ final class EvidenceHubAggregationTest
         $overview = evidenceHubOwnerPageTechnologies($technologyFacts);
         phase2AssertSame(['mapped_technology_count' => 18, 'unmapped_technology_count' => 2, 'unmapped_project_count' => 2], $overview['overview'], 'V2 page model totals are wrong.');
         phase2AssertSame(array_values(array_filter($v2['category_order'], static fn (string $category): bool => isset($overview['mapped'][$category]))), array_keys($overview['mapped']), 'V2 page-model category order is unstable.');
-        phase2AssertSame(['Unmapped technology 1', 'Unmapped technology 2'], array_column($overview['unmapped'], 'label'), 'V2 unknown labels exposed raw values.');
+        // Unknown labels are listed only by the Owner technology review, which can resolve them.
+        phase2Assert(!array_key_exists('unmapped', $overview), 'The technology overview must not list unknown labels.');
+        $reviewProjects = array_map(static fn (int $projectId, array $items): array => ['id' => $projectId, 'title' => 'Project ' . $projectId, 'technology_storage' => ['storage_state' => 'valid', 'labels' => $items]], array_keys($labels), array_values($labels));
+        phase2AssertSame(2, count(evidenceHubTechnologyReviewItems($reviewProjects, loadEvidenceHubOwnerTaxonomy(), [])), 'The Owner technology review must list each unknown label once.');
         phase2AssertSame(1, evidenceHubOwnerPageProgress(4, 1, [100])['complete_project_count'], 'Technology v2 changed portfolio progress.');
     }
 
@@ -292,10 +295,10 @@ final class EvidenceHubAggregationTest
         $summary = summarizeEvidenceHubTechnologies($facts, $v3);
         phase2AssertSame([25, 23, 0], [$summary['technology_occurrence_count'], $summary['distinct_mapped_technology_count'], $summary['distinct_unmapped_technology_count']], 'Future Project 19 technology totals changed.');
         $page = evidenceHubOwnerPageTechnologies($facts);
-        phase2AssertSame([], $page['unmapped'], 'V3 future portfolio exposed unknown labels.');
+        phase2AssertSame(0, $page['overview']['unmapped_technology_count'], 'V3 future portfolio still has unknown labels.');
         phase2AssertSame(array_values(array_filter($v3['category_order'], static fn (string $category): bool => isset($page['mapped'][$category]))), array_keys($page['mapped']), 'V3 category order is unstable.');
-        $unknownPage = evidenceHubOwnerPageTechnologies([['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['Future Unknown']]]);
-        phase2AssertSame(['Unmapped technology 1'], array_column($unknownPage['unmapped'], 'label'), 'V3 unknown label is not privacy-safe.');
+        $unknownItems = evidenceHubTechnologyReviewItems([['id' => 1, 'title' => 'Project', 'technology_storage' => ['storage_state' => 'valid', 'labels' => ['Future Unknown']]]], $v3, []);
+        phase2AssertSame(['Future Unknown'], array_column($unknownItems, 'raw_label'), 'The Owner review must show an unknown label exactly as the Owner wrote it.');
     }
 
     private static function taxonomyV4(): void
@@ -322,7 +325,7 @@ final class EvidenceHubAggregationTest
         phase2AssertSame(['mapped_technology_count' => 24, 'unmapped_technology_count' => 0, 'unmapped_project_count' => 0], $page['overview'], 'V4 private page totals are wrong.');
         phase2AssertSame(array_values(array_filter($v4['category_order'], static fn (string $category): bool => isset($page['mapped'][$category]))), array_keys($page['mapped']), 'V4 category order is unstable.');
         $unknown = evidenceHubOwnerPageTechnologies([['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['Private Future Tool']]]);
-        phase2AssertSame('Unmapped technology 1', $unknown['unmapped'][0]['label'], 'Unknown technology label is not privacy-safe.');
+        phase2Assert(!str_contains(json_encode($unknown, JSON_THROW_ON_ERROR), 'Private Future Tool'), 'The technology overview must not carry an unknown label; only the Owner review shows it.');
         $source = json_decode((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/contracts/evidence-hub-taxonomy-v4.json'), true, 512, JSON_THROW_ON_ERROR);
         $source['entries'][37]['aliases'][] = 'Docker';
         try {
@@ -337,6 +340,7 @@ final class EvidenceHubAggregationTest
     {
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL);');
+        $database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
         $database->exec("INSERT INTO portfolios (id, owner_user_id, public_slug, is_published) VALUES (10, 1, 'owner-a', 1), (20, 2, 'owner-b', 0);");
         $database->prepare('INSERT INTO projects (id, portfolio_id, problem_statement, personal_role, measurable_outcome, technologies, created_at) VALUES (100, 10, :problem, :role, :outcome, :technologies, :created_at)')->execute(['problem' => self::completeText('problem_statement'), 'role' => self::completeText('personal_role'), 'outcome' => self::completeText('measurable_outcome'), 'technologies' => '["JS", "jQuery"]', 'created_at' => '2026-01-01T00:00:00Z']);
         $database->prepare('INSERT INTO projects (id, portfolio_id, problem_statement, personal_role, measurable_outcome, technologies, created_at) VALUES (200, 20, :problem, NULL, NULL, :technologies, :created_at)')->execute(['problem' => 'PRIVATE_EVIDENCE_MARKER', 'technologies' => '["NebulaTool"]', 'created_at' => '2026-05-01T00:00:00Z']);

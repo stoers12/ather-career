@@ -142,6 +142,7 @@ final class EvidenceHubOwnerRecommendationOrchestrationTest
              CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL);
              CREATE TABLE recommendation_dispositions (portfolio_id INTEGER NOT NULL, recommendation_key TEXT NOT NULL, rule_version TEXT NOT NULL, evidence_fingerprint TEXT NOT NULL, disposition TEXT NOT NULL CHECK (disposition IN (\'snoozed\', \'dismissed\')), snoozed_until TEXT NULL, PRIMARY KEY (portfolio_id, recommendation_key));'
         );
+        $database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
         $database->exec("INSERT INTO portfolios (id, owner_user_id, public_slug, is_published) VALUES (10, 1, 'owner-a', 0), (20, 2, 'owner-b', 0), (30, 3, 'owner-c', 0);");
         $database->exec("INSERT INTO personal_info (portfolio_id, full_name) VALUES (10, 'Owner A'), (20, 'Owner B'), (30, 'Owner C');");
         $insert = $database->prepare('INSERT INTO projects (id, portfolio_id, problem_statement, personal_role, measurable_outcome, technologies, created_at) VALUES (:id, :portfolio_id, :problem_statement, :personal_role, :measurable_outcome, :technologies, :created_at)');

@@ -6,6 +6,22 @@ require_once __DIR__ . '/evidence_hub_project_facts.php';
 require_once __DIR__ . '/evidence_hub_aggregation.php';
 require_once __DIR__ . '/evidence_hub_technology_mapper.php';
 require_once __DIR__ . '/evidence_hub_contract_mapper.php';
+require_once __DIR__ . '/evidence_hub_technology_review_repository.php';
+
+/** The single contract version the private Owner Evidence Hub publishes. */
+const EVIDENCE_HUB_OWNER_CONTRACT_VERSION = 'v5';
+
+/** @return array{taxonomy_version: string, entries: list<array<string, mixed>>, aliases: array<string, array<string, mixed>>, category_order: list<string>} */
+function loadEvidenceHubOwnerTaxonomy(): array
+{
+    return loadEvidenceHubTechnologyTaxonomy(evidenceHubContractVersionDefinition(EVIDENCE_HUB_OWNER_CONTRACT_VERSION)['taxonomy_version']);
+}
+
+/** @param array<string, mixed> $core @param list<array<string, mixed>> $recommendations @return array<string, mixed> */
+function mapEvidenceHubOwnerContract(array $core, array $recommendations): array
+{
+    return mapEvidenceHubContractVersion($core, $recommendations, EVIDENCE_HUB_OWNER_CONTRACT_VERSION);
+}
 
 /** @return array{documentation_coverage: array<string, mixed>, maturity: array{state: string, version: string}, portfolio_progress: array<string, mixed>, technology_evidence_map: array<string, mixed>} */
 function buildAuthorizedEvidenceHubOwnerCore(PDO $database, AuthorizedPortfolioContext $context): array
@@ -13,6 +29,7 @@ function buildAuthorizedEvidenceHubOwnerCore(PDO $database, AuthorizedPortfolioC
     return buildEvidenceHubOwnerCoreFromEvaluatedProjects(
         loadAuthorizedEvidenceHubOwnerEvaluatedProjects($database, $context),
         loadAuthorizedEvidenceHubPublicationState($database, $context),
+        loadAuthorizedTechnologyOwnerMappings($database, $context),
     );
 }
 
@@ -22,13 +39,13 @@ function loadAuthorizedEvidenceHubOwnerEvaluatedProjects(PDO $database, Authoriz
     return array_map('evaluateEvidenceHubProjectDocumentation', loadAuthorizedEvidenceHubProjectFacts($database, $context));
 }
 
-/** @param list<array<string, mixed>> $projects
+/** @param list<array<string, mixed>> $projects @param array<string, string> $ownerMappings
  * @return array{documentation_coverage: array<string, mixed>, maturity: array{state: string, version: string}, portfolio_progress: array<string, mixed>, technology_evidence_map: array<string, mixed>}
  */
-function buildEvidenceHubOwnerCoreFromEvaluatedProjects(array $projects, string $publicationState): array
+function buildEvidenceHubOwnerCoreFromEvaluatedProjects(array $projects, string $publicationState, array $ownerMappings = []): array
 {
     $coverage = aggregateEvidenceHubDocumentationCoverage($projects);
-    $taxonomy = loadEvidenceHubTechnologyTaxonomy('v4');
+    $taxonomy = loadEvidenceHubOwnerTaxonomy();
 
     return [
         'documentation_coverage' => $coverage,
@@ -38,7 +55,7 @@ function buildEvidenceHubOwnerCoreFromEvaluatedProjects(array $projects, string 
             'storage_state' => $project['technology_storage_state'],
             'reason_codes' => $project['technology_storage_reason_codes'],
             'labels' => $project['technologies'],
-        ], $projects), $taxonomy),
+        ], $projects), $taxonomy, $ownerMappings),
     ];
 }
 
@@ -54,5 +71,5 @@ function buildAuthorizedEvidenceHubOwnerContract(
     AuthorizedPortfolioContext $context,
     array $recommendations,
 ): array {
-    return mapEvidenceHubContractV4(buildAuthorizedEvidenceHubOwnerCore($database, $context), $recommendations);
+    return mapEvidenceHubOwnerContract(buildAuthorizedEvidenceHubOwnerCore($database, $context), $recommendations);
 }

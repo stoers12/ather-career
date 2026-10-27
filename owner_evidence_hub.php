@@ -15,6 +15,7 @@ require_once __DIR__ . '/includes/evidence_hub_owner_recommendations.php';
 require_once __DIR__ . '/includes/evidence_hub_owner_page_model.php';
 require_once __DIR__ . '/includes/evidence_hub_recommendation_action_tokens.php';
 require_once __DIR__ . '/includes/evidence_hub_undo.php';
+require_once __DIR__ . '/includes/evidence_hub_technology_review_actions.php';
 
 startOwnerSession();
 httpRegisterExceptionBoundary('owner_evidence_hub.php');
@@ -33,11 +34,29 @@ $pageModel = null;
 $actionTokens = [];
 $feedback = '';
 $undoFeedback = ['kind' => 'none'];
+$technologyForm = null;
 $error = '';
 try {
     $database = getDatabaseConnection();
     $context = requireOwnerPortfolioContext($database);
-    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && evidenceHubIsTechnologyReviewAction($_POST['action'] ?? null)) {
+        requireValidCsrfToken($_POST['csrf_token'] ?? null);
+        $result = executeEvidenceHubTechnologyReviewAction($database, $context, evidenceHubOpaqueTargetHmacKeyFromEnvironment(), $_POST);
+        if ($result['status'] === 'unavailable') {
+            httpAbortHtml(409, 'This technology is no longer available. Reload Evidence Hub.');
+        }
+        if ($result['status'] === 'invalid') {
+            httpAbortHtml(422, 'Invalid technology action.');
+        }
+        if ($result['status'] === 'done') {
+            setEvidenceHubRecommendationActionFeedback($result['feedback']);
+            header('Cache-Control: no-store');
+            httpRedirect('/owner/evidence-hub#technologies', 303);
+        }
+        // A rejected proposal re-renders the page with its field errors and values.
+        http_response_code(422);
+        $technologyForm = $result['form'];
+    } elseif (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         if (($_POST['action'] ?? null) === 'undo_evidence') {
             requireValidCsrfToken($_POST['csrf_token'] ?? null);
             $expected = ['csrf_token', 'action', 'undo_token'];
@@ -60,7 +79,7 @@ try {
     }
     $state = buildConfiguredAuthorizedEvidenceHubOwnerRecommendationState($database, $context, time());
     $contract = $state['contract'];
-    $pageModel = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state);
+    $pageModel = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state, evidenceHubOpaqueTargetHmacKeyFromEnvironment());
     $feedback = takeEvidenceHubRecommendationActionFeedback();
     $undoFeedback = takeImmediateEvidenceHubUndoFeedback($context, time());
     foreach ($contract['recommendations'] as $recommendation) {
@@ -96,7 +115,7 @@ ownerLayoutStart('Evidence Hub', 'evidence_hub', true);
 if ($error !== '' || !is_array($contract) || !is_array($pageModel)) {
     renderEvidenceHubOwnerSafeError(ownerLocale());
 } else {
-    renderEvidenceHubOwnerPage($contract, $pageModel, $actionTokens, $feedback, $undoFeedback, ownerLocale());
+    renderEvidenceHubOwnerPage($contract, $pageModel, $actionTokens, $feedback, $undoFeedback, ownerLocale(), $technologyForm);
 }
 
 /** @return array{action:string, action_token:string} */

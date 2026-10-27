@@ -13,6 +13,8 @@ final class EvidenceHubLocalizationTest
         require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_page_model.php';
         require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_page_presentation.php';
         require_once PHASE2_REPOSITORY_ROOT . '/includes/owner_project_evidence_presentation.php';
+        require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_recommendation_action_tokens.php';
+        require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_technology_review.php';
         self::copyIsComplete();
         self::arabicCountAgreement();
         self::localeIsExplicitAndFailsSafeToEnglish();
@@ -49,7 +51,16 @@ final class EvidenceHubLocalizationTest
         foreach (['database', 'framework', 'language', 'library', 'platform', 'runtime', 'stylesheet', 'technique', 'tool'] as $category) {
             $literals[] = ucfirst($category);
         }
-        array_push($literals, 'Recommendation snoozed for 14 days.', 'Recommendation dismissed.');
+        array_push($literals, ...EVIDENCE_HUB_ACTION_FEEDBACK_MESSAGES);
+        foreach (['pending', 'withdrawn', 'accepted', 'rejected'] as $state) {
+            $literals[] = evidenceHubOwnerTechnologyProposalStateLabel($state);
+        }
+        // Every technology proposal error a rejected request can carry.
+        $taxonomy = loadEvidenceHubOwnerTaxonomy();
+        foreach ([[null, null, ['note']], [str_repeat('x', 61), 'tool', str_repeat('y', 281)], ['React', 'tool', "bad\x07note"]] as [$label, $category, $note]) {
+            array_push($literals, ...array_values(evidenceHubValidateTechnologyProposal($label, $category, $note, $taxonomy)['errors']));
+        }
+        $literals[] = 'A proposal for this technology is already pending.';
         foreach (evidenceWritingGuidanceFields() as $field) {
             array_push($literals, $field['label'], $field['guidance'], $field['example'], $field['starter']);
         }
@@ -116,13 +127,13 @@ final class EvidenceHubLocalizationTest
         phase2AssertSame($english, $unsupported, 'An unsupported locale changed the Evidence Hub page.');
         phase2Assert(preg_match(self::ARABIC, $english) !== 1, 'English Evidence Hub page contains Arabic interface text.');
         phase2Assert(str_contains($english, 'dir="ltr"') && !str_contains($english, 'dir="rtl"'), 'English Evidence Hub page is not left-to-right.');
-        foreach (['dir="rtl"', 'ابنِ بورتفوليو يثق به الآخرون.', 'الخطوات التالية المقترحة', 'تم تجاهل التوصية.', 'تقنية غير مصنّفة واحدة', 'تقنية غير مصنّفة 1', 'أُطر العمل', 'مشروعان', 'دورك الشخصي', 'أضف وصفًا محددًا لهذا الدليل.', 'data-label-single="المشروع {position} من {total}"'] as $required) {
+        foreach (['dir="rtl"', 'ابنِ بورتفوليو يثق به الآخرون.', 'الخطوات التالية المقترحة', 'تم تجاهل التوصية.', 'تقنية غير مصنّفة واحدة', 'صحّح الإملاء في مشروع:', 'اربطها بتقنية معروفة', 'ربطتها أنت', 'قيد المراجعة', 'أُطر العمل', 'مشروعان', 'دورك الشخصي', 'أضف وصفًا محددًا لهذا الدليل.', 'data-label-single="المشروع {position} من {total}"'] as $required) {
             phase2Assert(str_contains($arabic, $required) || str_contains($arabic, htmlspecialchars($required, ENT_QUOTES, 'UTF-8')), "Arabic Evidence Hub page is missing {$required}.");
         }
         foreach (['Recommended next steps', 'Needs attention', 'Project evidence', 'Add a specific account of this evidence.', 'Recommendation dismissed.'] as $english) {
             phase2Assert(!str_contains($arabic, '>' . $english . '<'), "Arabic Evidence Hub page still shows English interface text: {$english}.");
         }
-        foreach (['Owner Synthetic Project', 'React'] as $authored) {
+        foreach (['Owner Synthetic Project', 'React', '<bdi dir="auto">Raect</bdi>', 'Owner Proposed Tool'] as $authored) {
             phase2Assert(str_contains($arabic, $authored), "Owner-authored content was altered by localization: {$authored}.");
         }
         phase2Assert(str_contains($arabic, 'data-evidence-carousel-track dir="ltr"'), 'Carousel geometry must stay left-to-right for its scroll arithmetic.');
@@ -196,11 +207,17 @@ final class EvidenceHubLocalizationTest
             'portfolio_publication' => ['portfolio_published' => true, 'publication_prerequisites_met' => false],
         ], [], 1767225600, 'localization-synthetic-hmac');
         $technologies = [
-            'mapped' => ['framework' => [['label' => 'React', 'key' => 'react', 'project_count' => 2]]],
-            'unmapped' => [['label' => 'Unmapped technology 1', 'ordinal' => 1, 'project_count' => 1]],
+            'mapped' => ['framework' => [['label' => 'React', 'key' => 'react', 'project_count' => 2, 'owner_mapped' => true]]],
             'overview' => ['mapped_technology_count' => 1, 'unmapped_technology_count' => 1, 'unmapped_project_count' => 1],
         ];
-        $model = ['projects' => $pageProjects, 'technologies' => $technologies, 'progress' => evidenceHubOwnerPageProgress(2, 1, [1767225600]), 'recommendations' => array_fill(0, count($recommendations), [])];
+        $taxonomy = loadEvidenceHubOwnerTaxonomy();
+        $review = evidenceHubOwnerPageTechnologyReview(
+            evidenceHubTechnologyReviewItems([['id' => 1, 'title' => 'Owner Synthetic Project', 'technology_storage' => ['storage_state' => 'valid', 'labels' => ['Raect']]]], $taxonomy, []),
+            [['id' => 5, 'label_digest' => str_repeat('a', 64), 'proposed_label' => 'Owner Proposed Tool', 'category' => 'tool', 'note' => null, 'state' => 'pending']],
+            $taxonomy,
+            static fn (string $digest): string => 'localization-ref-' . substr($digest, 0, 8),
+        );
+        $model = ['projects' => $pageProjects, 'technologies' => $technologies, 'technology_review' => $review, 'progress' => evidenceHubOwnerPageProgress(2, 1, [1767225600]), 'recommendations' => array_fill(0, count($recommendations), [])];
 
         return [mapEvidenceHubContractV2($core, $recommendations), $model];
     }

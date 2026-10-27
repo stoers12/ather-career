@@ -231,13 +231,14 @@ final class EvidenceHubContractMapperTest
     {
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL);');
+        $database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
         $database->exec("INSERT INTO portfolios (id, owner_user_id, public_slug, is_published) VALUES (10, 1, NULL, 0), (20, 2, 'foreign', 1)");
         $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 10);
         $actual = buildAuthorizedEvidenceHubOwnerContract($database, $context, []);
         phase2AssertSame([], $actual['recommendations'], 'Owner-core contract integration changed supplied R2 output.');
-        phase2AssertSame('evidence-hub-contract-v4', $actual['contract_id'], 'Owner core did not select v4.');
-        phase2AssertSame('4.0.0', $actual['schema_version'], 'Owner core v4 schema version is wrong.');
-        phase2AssertSame($schema['required'], array_keys($actual), 'Owner core v4 envelope shape changed.');
+        phase2AssertSame('evidence-hub-contract-v5', $actual['contract_id'], 'Owner core did not select the live v5 contract.');
+        phase2AssertSame('5.0.0', $actual['schema_version'], 'Owner core v5 schema version is wrong.');
+        phase2AssertSame($schema['required'], array_keys($actual), 'Owner core v5 envelope shape changed.');
     }
 
     private static function staticDisclosureGuard(): void

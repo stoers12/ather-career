@@ -182,7 +182,7 @@ final class EvidenceHubOwnerPageModelTest
             phase2AssertSame($expectedRules, array_column($recommendations, 'rule_id'), "{$name}: recommendations changed.");
             phase2AssertSame($expectedCopy, evidenceHubOwnerPageReadinessDetail($core['maturity']['state'], $progress['project_count'], $progress['complete_project_count']), "{$name}: supporting copy changed.");
             $contract = mapEvidenceHubContractV2($core, $recommendations);
-            $model = ['projects' => $pageProjects, 'technologies' => evidenceHubOwnerPageTechnologies([]), 'progress' => $progress, 'recommendations' => array_fill(0, count($recommendations), [])];
+            $model = ['projects' => $pageProjects, 'technologies' => evidenceHubOwnerPageTechnologies([]), 'technology_review' => evidenceHubOwnerPageTechnologyReview([], [], loadEvidenceHubOwnerTaxonomy(), static fn (string $digest): string => $digest), 'progress' => $progress, 'recommendations' => array_fill(0, count($recommendations), [])];
             ob_start();
             renderEvidenceHubOwnerPage($contract, $model);
             $html = (string) ob_get_clean();
@@ -214,13 +214,14 @@ final class EvidenceHubOwnerPageModelTest
         phase2AssertSame($facts['technologies']['overview']['mapped_technology_count'], $facts['technology_metric']['distinct_mapped_technology_count'], 'Mapped overview differs from deterministic technology aggregation.');
         phase2AssertSame($facts['technologies']['overview']['unmapped_technology_count'], $facts['technology_metric']['distinct_unmapped_technology_count'], 'Unmapped overview differs from deterministic technology aggregation.');
         phase2AssertSame(5, $facts['technologies']['mapped']['language'][0]['project_count'], 'Partial JavaScript project count changed.');
-        phase2AssertSame(2, $facts['technologies']['unmapped'][0]['project_count'], 'Partial unmapped technology project count changed.');
+        phase2AssertSame(2, count($facts['technology_review']['unmapped'][0]['projects']), 'Partial unmapped technology project count changed.');
     }
 
     private static function scopedPersistenceAndPresentation(): void
     {
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL, updated_at TEXT NULL); INSERT INTO portfolios VALUES (10,1),(20,2)');
+        $database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
         $complete = [
             'problem' => 'Manual weekly reporting affected the team because six hours of reconciliation delayed operational decisions.',
             'personal_role' => 'I designed the reporting pipeline and implemented validation checks across each imported data source.',
@@ -243,15 +244,20 @@ final class EvidenceHubOwnerPageModelTest
         phase2Assert(!array_key_exists('problem_statement', $record['values']), 'Storage key escaped the read boundary.');
         $beforeEvaluation = projectEvidenceLogicalEvaluations($record['values'])['problem']['evidence_status'];
         $state = ['contract' => ['recommendations' => []]];
-        $model = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state);
+        $model = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state, 'page-model-synthetic-hmac');
         phase2AssertSame([2,1], array_column($model['projects'], 'id'), 'updated_at tie-break ordering changed.');
         phase2AssertSame(1, $model['progress']['complete_project_count'], 'Complete project count is wrong.');
         phase2AssertSame('single_project', $model['progress']['stage'], 'Progress stage is wrong.');
         phase2AssertSame('problem', $model['projects'][1]['fields'][0]['key'], 'Storage key escaped the page model.');
         phase2AssertSame(2, $model['technologies']['mapped']['language'][0]['project_count'], 'Canonical project count was not deduplicated per project.');
-        phase2AssertSame(2, $model['technologies']['unmapped'][0]['project_count'], 'Unmapped project count is wrong.');
+        // The Owner sees their own unknown labels, with the projects that contain them.
+        $unmapped = $model['technology_review']['unmapped'];
+        phase2AssertSame(['Nebula Tool', 'Other Unknown'], array_column($unmapped, 'raw_label'), 'Owner review must list each unknown label as written.');
+        phase2AssertSame([1, 2], array_column($unmapped[0]['projects'], 'id'), 'Unmapped project count is wrong.');
+        phase2AssertSame('/owner_projects.php?edit=1', $unmapped[0]['projects'][0]['edit_url'], 'Owner review must link to the project that holds the label.');
+        phase2Assert(preg_match('/^[A-Za-z0-9_-]{20,}$/', $unmapped[0]['ref']) === 1 && !str_contains($serializedRefs = json_encode(array_column($unmapped, 'ref'), JSON_THROW_ON_ERROR), hash('sha256', 'nebula tool')), 'Owner review must address a label only through an opaque reference.');
         phase2AssertSame(['mapped_technology_count' => 1, 'unmapped_technology_count' => 2, 'unmapped_project_count' => 2], $model['technologies']['overview'], 'Private technology overview did not deduplicate technologies and projects.');
-        $otherModel = buildAuthorizedEvidenceHubOwnerPageModel($database, $other, $state);
+        $otherModel = buildAuthorizedEvidenceHubOwnerPageModel($database, $other, $state, 'page-model-synthetic-hmac');
         phase2AssertSame(['mapped_technology_count' => 0, 'unmapped_technology_count' => 1, 'unmapped_project_count' => 1], $otherModel['technologies']['overview'], 'Cross-tenant technology counts leaked into another owner.');
         $serialized = json_encode($model, JSON_THROW_ON_ERROR);
         foreach (['CROSS_TENANT_TITLE','CROSS_TENANT_DESCRIPTION','PRIVATE_DESCRIPTION_MARKER','problem_statement','PrivateTech'] as $forbidden) {
@@ -296,13 +302,13 @@ final class EvidenceHubOwnerPageModelTest
         ] as [$id, $created, $updated]) {
             $insert->execute(['id'=>$id, 'portfolio'=>10, 'title'=>'Dated project ' . $id, 'description'=>'Private', 'problem'=>$complete['problem'], 'role'=>$complete['personal_role'], 'outcome'=>$complete['measurable_outcome'], 'technologies'=>null, 'created'=>$created, 'updated'=>$updated]);
         }
-        phase2AssertSame('trend_ready', buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state)['progress']['stage'], 'Three dated complete projects did not qualify history.');
+        phase2AssertSame('trend_ready', buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state, 'page-model-synthetic-hmac')['progress']['stage'], 'Three dated complete projects did not qualify history.');
         $database->exec("UPDATE projects SET updated_at='invalid' WHERE id=5");
-        phase2AssertSame('emerging_patterns', buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state)['progress']['stage'], 'Invalid updated_at incorrectly fell back to created_at for history.');
+        phase2AssertSame('emerging_patterns', buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state, 'page-model-synthetic-hmac')['progress']['stage'], 'Invalid updated_at incorrectly fell back to created_at for history.');
         $database->exec('UPDATE projects SET updated_at=NULL WHERE id=5');
-        phase2AssertSame('trend_ready', buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state)['progress']['stage'], 'Legacy null updated_at did not fall back to created_at.');
+        phase2AssertSame('trend_ready', buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state, 'page-model-synthetic-hmac')['progress']['stage'], 'Legacy null updated_at did not fall back to created_at.');
         $database->exec("UPDATE projects SET updated_at='invalid' WHERE id IN (1,3,5)");
-        $invalidActivityModel = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state);
+        $invalidActivityModel = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state, 'page-model-synthetic-hmac');
         phase2AssertSame('emerging_patterns', $invalidActivityModel['progress']['stage'], 'Invalid timestamps produced trend readiness.');
         phase2AssertSame(null, $invalidActivityModel['progress']['first_activity_at'], 'Invalid timestamps produced an activity date.');
         ob_start();

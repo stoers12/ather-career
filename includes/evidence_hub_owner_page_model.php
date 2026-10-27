@@ -6,11 +6,15 @@ require_once __DIR__ . '/evidence_hub_aggregation.php';
 require_once __DIR__ . '/evidence_hub_project_facts.php';
 require_once __DIR__ . '/evidence_hub_technology_mapper.php';
 require_once __DIR__ . '/evidence_hub_owner_recommendations.php';
+require_once __DIR__ . '/evidence_hub_technology_review.php';
+require_once __DIR__ . '/evidence_hub_technology_review_repository.php';
 require_once __DIR__ . '/project_evidence_repository.php';
 
 /**
  * Private presentation facts. Raw evidence text stays in this server-side
  * calculation and is never returned to the renderer or a client payload.
+ * Technology labels are the Owner's own project data and are shown back to
+ * them, so they can recognize and resolve the ones the taxonomy does not know.
  *
  * @param array<string, mixed> $recommendationState
  * @return array<string, mixed>
@@ -19,7 +23,11 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
     PDO $database,
     AuthorizedPortfolioContext $context,
     array $recommendationState,
+    ?string $opaqueTargetHmacMaterial = null,
 ): array {
+    $opaqueTargetHmacMaterial ??= evidenceHubOpaqueTargetHmacKeyFromEnvironment();
+    $taxonomy = loadEvidenceHubOwnerTaxonomy();
+    $ownerMappings = loadAuthorizedTechnologyOwnerMappings($database, $context);
     $driver = $database->getAttribute(PDO::ATTR_DRIVER_NAME);
     $epoch = static function (string $column) use ($driver): string {
         return match ($driver) {
@@ -45,6 +53,7 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
 
     $projects = [];
     $technologyFacts = [];
+    $reviewProjects = [];
     $activity = [];
     foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $record) {
         $id = authorizationPositiveInteger($record['id'] ?? null);
@@ -94,6 +103,7 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
             $activity[] = $activityAt;
         }
         $technologyFacts[] = $storage;
+        $reviewProjects[] = ['id' => $id, 'title' => $title, 'technology_storage' => $storage];
     }
     usort($projects, static fn (array $left, array $right): int =>
         [-(int) ($left['updated_epoch'] ?? -1), -$left['id']]
@@ -106,7 +116,13 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
 
     $model = [
         'projects' => $projects,
-        'technologies' => evidenceHubOwnerPageTechnologies($technologyFacts),
+        'technologies' => evidenceHubOwnerPageTechnologies($technologyFacts, $ownerMappings, $taxonomy),
+        'technology_review' => evidenceHubOwnerPageTechnologyReview(
+            evidenceHubTechnologyReviewItems($reviewProjects, $taxonomy, $ownerMappings),
+            listAuthorizedTechnologyProposals($database, $context),
+            $taxonomy,
+            static fn (string $digest): string => evidenceHubTechnologyReviewRef($opaqueTargetHmacMaterial, $context, $digest),
+        ),
         'progress' => evidenceHubOwnerPageProgress(count($projects), count(array_filter($projects, static fn (array $project): bool => $project['complete_count'] === 3)), $activity),
         'recommendations' => [],
     ];
@@ -127,9 +143,13 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
         }
         $model['recommendations'][] = [
             'project_title' => $associated['title'] ?? null,
-            'edit_url' => $associated === null ? null : ($recommendation['rule_id'] === 'complete_project_evidence'
-                ? '/owner/projects/' . $associated['id'] . '/evidence'
-                : $associated['edit_url']),
+            'edit_url' => match (true) {
+                // Technology review now happens on this page, where it can be resolved.
+                $recommendation['rule_id'] === 'review_unmapped_technology' => '#technologies',
+                $associated === null => null,
+                $recommendation['rule_id'] === 'complete_project_evidence' => '/owner/projects/' . $associated['id'] . '/evidence',
+                default => $associated['edit_url'],
+            },
         ];
     }
     return $model;
@@ -179,10 +199,16 @@ function evidenceHubOwnerPageFieldReason(array $evaluation, string $label): stri
     return $messages[$reasons[0]];
 }
 
-/** @param list<array<string, mixed>> $technologyFacts @return array{mapped: array<string, list<array<string, mixed>>>, unmapped: list<array<string, mixed>>, overview: array{mapped_technology_count: int, unmapped_technology_count: int, unmapped_project_count: int}} */
-function evidenceHubOwnerPageTechnologies(array $technologyFacts): array
+/**
+ * A canonical technology reached through an Owner mapping is marked, so the
+ * Owner can tell their own decisions apart from taxonomy matches.
+ *
+ * @param list<array<string, mixed>> $technologyFacts @param array<string, string> $ownerMappings
+ * @return array{mapped: array<string, list<array<string, mixed>>>, overview: array{mapped_technology_count: int, unmapped_technology_count: int, unmapped_project_count: int}}
+ */
+function evidenceHubOwnerPageTechnologies(array $technologyFacts, array $ownerMappings = [], ?array $taxonomy = null): array
 {
-    $taxonomy = loadEvidenceHubTechnologyTaxonomy('v4');
+    $taxonomy ??= loadEvidenceHubOwnerTaxonomy();
     $mapped = [];
     $unmapped = [];
     $unmappedProjectCount = 0;
@@ -193,13 +219,14 @@ function evidenceHubOwnerPageTechnologies(array $technologyFacts): array
         $projectMapped = [];
         $projectUnmapped = [];
         foreach ($fact['labels'] as $label) {
-            $entry = mapEvidenceHubTechnologyLabel($label, $taxonomy);
+            $entry = mapEvidenceHubTechnologyLabel($label, $taxonomy, $ownerMappings);
             if ($entry === null) {
                 continue;
             }
-            if ($entry['mapping_state'] === 'mapped') {
+            if ($entry['mapping_state'] !== 'unmapped') {
                 $key = $entry['canonical_key'];
-                $projectMapped[$key] = ['key' => $key, 'label' => $entry['display_name'], 'category' => $entry['category']];
+                $ownerMapped = $entry['mapping_state'] === 'owner_mapped' || ($projectMapped[$key]['owner_mapped'] ?? false);
+                $projectMapped[$key] = ['key' => $key, 'label' => $entry['display_name'], 'category' => $entry['category'], 'owner_mapped' => $ownerMapped];
             } else {
                 $normalized = normalizeEvidenceHubTechnologyLabel($label);
                 if ($normalized !== null) {
@@ -212,6 +239,7 @@ function evidenceHubOwnerPageTechnologies(array $technologyFacts): array
             if (!isset($mapped[$key])) {
                 $mapped[$key] = $entry + ['project_count' => 0];
             }
+            $mapped[$key]['owner_mapped'] = $mapped[$key]['owner_mapped'] || $entry['owner_mapped'];
             ++$mapped[$key]['project_count'];
         }
         foreach (array_keys($projectUnmapped) as $key) {
@@ -233,21 +261,58 @@ function evidenceHubOwnerPageTechnologies(array $technologyFacts): array
         usort($entries, static fn (array $a, array $b): int => [$a['label'], $a['key']] <=> [$b['label'], $b['key']]);
     }
     unset($entries);
-    ksort($unmapped, SORT_STRING);
-    $unknown = [];
-    $ordinal = 0;
-    foreach ($unmapped as $count) {
-        ++$ordinal;
-        $unknown[] = ['label' => 'Unmapped technology ' . $ordinal, 'ordinal' => $ordinal, 'project_count' => $count];
-    }
+    // Unmapped labels are listed by evidenceHubOwnerPageTechnologyReview(), where they can be resolved.
     return [
         'mapped' => $categories,
-        'unmapped' => $unknown,
         'overview' => [
             'mapped_technology_count' => $mappedTechnologyCount,
             'unmapped_technology_count' => $unmappedTechnologyCount,
             'unmapped_project_count' => $unmappedProjectCount,
         ],
+    ];
+}
+
+/**
+ * What the Owner can act on: each unmapped label with the projects that
+ * contain it, each label they mapped, their proposals, and the mapping
+ * choices. Forms address a label only through its opaque reference.
+ *
+ * @param array<string, array<string, mixed>> $items from evidenceHubTechnologyReviewItems()
+ * @param list<array<string, mixed>> $proposals
+ * @param callable(string): string $reference
+ * @return array{unmapped: list<array<string, mixed>>, owner_mapped: list<array<string, mixed>>, proposals: list<array<string, mixed>>, mapping_options: array<string, list<array{id: string, label: string}>>, categories: list<string>}
+ */
+function evidenceHubOwnerPageTechnologyReview(array $items, array $proposals, array $taxonomy, callable $reference): array
+{
+    $pendingByDigest = [];
+    foreach ($proposals as $proposal) {
+        if ($proposal['state'] === 'pending') {
+            $pendingByDigest[$proposal['label_digest']] = true;
+        }
+    }
+    $review = ['unmapped' => [], 'owner_mapped' => []];
+    foreach ($items as $item) {
+        $review[$item['mapping_state']][] = [
+            'ref' => $reference($item['digest']),
+            'raw_label' => $item['raw_label'],
+            'display_name' => $item['display_name'],
+            'category' => $item['category'],
+            'has_pending_proposal' => isset($pendingByDigest[$item['digest']]),
+            'projects' => array_map(static fn (array $project): array => $project + ['edit_url' => '/owner_projects.php?edit=' . $project['id']], $item['projects']),
+        ];
+    }
+
+    return [
+        'unmapped' => $review['unmapped'],
+        'owner_mapped' => $review['owner_mapped'],
+        'proposals' => array_map(static fn (array $proposal): array => [
+            'id' => $proposal['id'],
+            'proposed_label' => $proposal['proposed_label'],
+            'category' => $proposal['category'],
+            'state' => $proposal['state'],
+        ], $proposals),
+        'mapping_options' => evidenceHubTechnologyMappingOptions($taxonomy),
+        'categories' => $taxonomy['category_order'],
     ];
 }
 

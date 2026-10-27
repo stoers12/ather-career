@@ -35,30 +35,48 @@ function mapEvidenceHubContractV4(array $core, array $recommendations): array
     return mapEvidenceHubContractVersion($core, $recommendations, 'v4');
 }
 
+function mapEvidenceHubContractV5(array $core, array $recommendations): array
+{
+    return mapEvidenceHubContractVersion($core, $recommendations, 'v5');
+}
+
+/**
+ * Each contract version names the taxonomy it publishes. A contract and a
+ * taxonomy version move independently: v5 adds Owner mappings over taxonomy v4.
+ */
+const EVIDENCE_HUB_CONTRACT_VERSIONS = [
+    'v1' => ['schema_version' => '1.0.0', 'taxonomy_version' => 'v1', 'owner_mappings' => false],
+    'v2' => ['schema_version' => '2.0.0', 'taxonomy_version' => 'v2', 'owner_mappings' => false],
+    'v3' => ['schema_version' => '3.0.0', 'taxonomy_version' => 'v3', 'owner_mappings' => false],
+    'v4' => ['schema_version' => '4.0.0', 'taxonomy_version' => 'v4', 'owner_mappings' => false],
+    'v5' => ['schema_version' => '5.0.0', 'taxonomy_version' => 'v4', 'owner_mappings' => true],
+];
+
+/** @return array{schema_version: string, taxonomy_version: string, owner_mappings: bool} */
+function evidenceHubContractVersionDefinition(string $version): array
+{
+    return EVIDENCE_HUB_CONTRACT_VERSIONS[$version] ?? throw new EvidenceHubContractMappingException('Evidence Hub contract version is unsupported.');
+}
+
 /** @param array<string, mixed> $core @param list<array<string, mixed>> $recommendations @return array<string, mixed> */
 function mapEvidenceHubContractVersion(array $core, array $recommendations, string $version): array
 {
-    if (!in_array($version, ['v1', 'v2', 'v3', 'v4'], true)) {
-        throw new EvidenceHubContractMappingException('Evidence Hub contract version is unsupported.');
-    }
+    $definition = evidenceHubContractVersionDefinition($version);
     $maturity = evidenceHubContractMapFields($core, ['maturity'], 'core');
     $documentation = evidenceHubContractMapFields($core, ['documentation_coverage'], 'core');
     $technology = evidenceHubContractMapFields($core, ['technology_evidence_map'], 'core');
     $progress = evidenceHubContractMapFields($core, ['portfolio_progress'], 'core');
 
-    $technologyMetric = evidenceHubContractMapObject($technology['technology_evidence_map'], [
-        'status', 'version', 'evidence_confidence', 'reason_codes', 'mappings', 'technology_occurrence_count', 'mapped_occurrence_count', 'unmapped_occurrence_count', 'distinct_technology_count', 'distinct_mapped_technology_count', 'distinct_unmapped_technology_count', 'invalid_technology_storage_project_count',
-    ], 'technology_evidence_map');
+    $technologyFields = ['status', 'version', 'evidence_confidence', 'reason_codes', 'mappings', 'technology_occurrence_count', 'mapped_occurrence_count', 'unmapped_occurrence_count', 'distinct_technology_count', 'distinct_mapped_technology_count', 'distinct_unmapped_technology_count', 'invalid_technology_storage_project_count'];
+    if ($definition['owner_mappings']) {
+        array_splice($technologyFields, 7, 0, ['owner_mapped_occurrence_count']);
+    }
+    $technologyMetric = evidenceHubContractMapObject($technology['technology_evidence_map'], $technologyFields, 'technology_evidence_map');
     $technologyMetric['mappings'] = evidenceHubContractMapTechnologyMappings($technologyMetric['mappings']);
 
     $payload = [
         'contract_id' => 'evidence-hub-contract-' . $version,
-        'schema_version' => match ($version) {
-            'v1' => '1.0.0',
-            'v2' => '2.0.0',
-            'v3' => '3.0.0',
-            'v4' => '4.0.0',
-        },
+        'schema_version' => $definition['schema_version'],
         'maturity' => evidenceHubContractMapObject($maturity['maturity'], ['state', 'version'], 'maturity'),
         'metrics' => [
             'documentation_coverage' => evidenceHubContractMapObject($documentation['documentation_coverage'], [
@@ -73,16 +91,28 @@ function mapEvidenceHubContractVersion(array $core, array $recommendations, stri
     ];
     evidenceHubContractAssertFrozenV1($payload);
     if ($version !== 'v1') {
-        $categories = $version === 'v2' ? EVIDENCE_HUB_TAXONOMY_V2_CATEGORIES : EVIDENCE_HUB_TAXONOMY_V4_CATEGORIES;
+        $categories = $definition['taxonomy_version'] === 'v2' ? EVIDENCE_HUB_TAXONOMY_V2_CATEGORIES : EVIDENCE_HUB_TAXONOMY_V4_CATEGORIES;
         foreach ($technologyMetric['mappings'] as $mapping) {
-            if ($mapping['taxonomy_version'] !== $version
-                || ($mapping['mapping_state'] === 'mapped' && !in_array($mapping['category'], $categories, true))) {
+            if ($mapping['taxonomy_version'] !== $definition['taxonomy_version']
+                || ($mapping['mapping_state'] !== 'unmapped' && !in_array($mapping['category'], $categories, true))) {
                 throw new EvidenceHubContractMappingException("Evidence Hub {$version} technology mapping is invalid.");
             }
         }
     }
 
     return $payload;
+}
+
+/** Whether a contract, identified by its contract ID, may publish Owner-mapped technologies. */
+function evidenceHubContractAllowsOwnerMappings(mixed $contractId): bool
+{
+    foreach (EVIDENCE_HUB_CONTRACT_VERSIONS as $version => $definition) {
+        if ($contractId === 'evidence-hub-contract-' . $version) {
+            return $definition['owner_mappings'];
+        }
+    }
+
+    return false;
 }
 
 /** @param mixed $mappings
@@ -168,7 +198,7 @@ function evidenceHubContractAssertFrozenV1(array $payload): void
         throw new EvidenceHubContractMappingException('Evidence Hub contract maturity is invalid.');
     }
     evidenceHubContractAssertDocumentationCoverage($documentation);
-    evidenceHubContractAssertTechnologyMetric($technology);
+    evidenceHubContractAssertTechnologyMetric($technology, evidenceHubContractAllowsOwnerMappings($payload['contract_id'] ?? null));
     evidenceHubContractAssertPortfolioProgress($progress);
     if ($maturity['state'] === 'ready' && $documentation['project_count'] < 1) {
         throw new EvidenceHubContractMappingException('Evidence Hub ready maturity requires a project.');
@@ -200,7 +230,7 @@ function evidenceHubContractAssertDocumentationCoverage(mixed $metric): void
     }
 }
 
-function evidenceHubContractAssertTechnologyMetric(mixed $metric): void
+function evidenceHubContractAssertTechnologyMetric(mixed $metric, bool $ownerMappings = false): void
 {
     if (!is_array($metric)
         || !in_array($metric['status'] ?? null, ['unavailable', 'needs_attention', 'ready'], true)
@@ -211,25 +241,41 @@ function evidenceHubContractAssertTechnologyMetric(mixed $metric): void
     ) {
         throw new EvidenceHubContractMappingException('Evidence Hub technology metric is invalid.');
     }
-    foreach (['technology_occurrence_count', 'mapped_occurrence_count', 'unmapped_occurrence_count', 'distinct_technology_count', 'distinct_mapped_technology_count', 'distinct_unmapped_technology_count', 'invalid_technology_storage_project_count'] as $field) {
+    $countFields = ['technology_occurrence_count', 'mapped_occurrence_count', 'unmapped_occurrence_count', 'distinct_technology_count', 'distinct_mapped_technology_count', 'distinct_unmapped_technology_count', 'invalid_technology_storage_project_count'];
+    if ($ownerMappings) {
+        $countFields[] = 'owner_mapped_occurrence_count';
+    }
+    foreach ($countFields as $field) {
         if (!is_int($metric[$field] ?? null) || $metric[$field] < 0) {
             throw new EvidenceHubContractMappingException('Evidence Hub technology count is invalid.');
         }
     }
+    $states = $ownerMappings ? ['mapped', 'owner_mapped', 'unmapped'] : ['mapped', 'unmapped'];
+    $stateCounts = array_fill_keys($states, 0);
     foreach ($metric['mappings'] as $mapping) {
         if (!is_array($mapping) || array_is_list($mapping)) {
             throw new EvidenceHubContractMappingException('Evidence Hub technology mapping is invalid.');
         }
         $state = $mapping['mapping_state'] ?? null;
-        if (!in_array($state, ['mapped', 'unmapped'], true)) {
+        if (!in_array($state, $states, true)) {
             throw new EvidenceHubContractMappingException('Evidence Hub technology mapping state is invalid.');
         }
-        if ($state === 'mapped' && (!is_string($mapping['canonical_id'] ?? null) || !is_string($mapping['canonical_key'] ?? null) || !is_string($mapping['display_name'] ?? null) || !is_string($mapping['category'] ?? null))) {
+        ++$stateCounts[$state];
+        if ($state !== 'unmapped' && (!is_string($mapping['canonical_id'] ?? null) || !is_string($mapping['canonical_key'] ?? null) || !is_string($mapping['display_name'] ?? null) || !is_string($mapping['category'] ?? null))) {
             throw new EvidenceHubContractMappingException('Evidence Hub mapped technology is invalid.');
         }
         if ($state === 'unmapped' && (($mapping['canonical_id'] ?? null) !== null || ($mapping['canonical_key'] ?? null) !== null || ($mapping['display_name'] ?? null) !== null || ($mapping['category'] ?? null) !== null)) {
             throw new EvidenceHubContractMappingException('Evidence Hub unmapped technology is invalid.');
         }
+    }
+    // From v5 every occurrence is accounted for by exactly one mapping state.
+    if ($ownerMappings && (
+        $stateCounts['mapped'] !== $metric['mapped_occurrence_count']
+        || $stateCounts['owner_mapped'] !== $metric['owner_mapped_occurrence_count']
+        || $stateCounts['unmapped'] !== $metric['unmapped_occurrence_count']
+        || array_sum($stateCounts) !== $metric['technology_occurrence_count']
+    )) {
+        throw new EvidenceHubContractMappingException('Evidence Hub technology counts do not match their mappings.');
     }
 }
 

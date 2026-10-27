@@ -74,7 +74,7 @@ if ($count !== '0') {
     $recommendations = array_slice($recommendations, 0, (int) $count);
 }
 $contract = mapEvidenceHubContractV4($core, $recommendations);
-$model = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, ['contract' => ['recommendations' => []]]);
+$model = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, ['contract' => ['recommendations' => []]], 'visual-final-synthetic-hmac');
 foreach ($recommendations as $recommendation) {
     $model['recommendations'][] = [
         'project_title' => 'Project 2',

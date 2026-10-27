@@ -170,7 +170,8 @@ function Assert-RequiredGateRegistry([string[]]$Registry) {
         'EvidenceHubTimestampMySqlTest',
         'tests/phase2/support/evidence-hub-owner-visual.cjs',
         'tests/phase2/support/evidence-hub-owner-actions-visual.cjs',
-        'tests/phase2/support/evidence-hub-editor-writing-visual.cjs'
+        'tests/phase2/support/evidence-hub-editor-writing-visual.cjs',
+        'tests/phase2/support/evidence-hub-technology-review-visual.cjs'
     )
     if (($Registry | Select-Object -Unique).Count -ne $Registry.Count) { Fail-Gate 'registration' 'duplicate required-gate identifier' }
     foreach ($identifier in $expected) {
@@ -379,10 +380,12 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-visual.cjs'), $screenshots)
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs'))
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-editor-writing-visual.cjs'))
+            Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-technology-review-visual.cjs'))
         }
         Restore-LinuxCookieJarOwnership $Temporary 'before-editor'
         if ($IsLinux) { Invoke-Tool 'docker' @('exec', $web, 'sh', '-ec', 'uid=$(id -u); gid=$(id -g); printf "COOKIE_JAR_WRITER consumer=editor uid=%s gid=%s\n" "$uid" "$gid"') }
         Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', $web, 'php', 'scripts/check-evidence-edit-http.php'))
+        Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', $web, 'php', 'scripts/check-evidence-technology-review-http.php'))
         Restore-LinuxCookieJarOwnership $Temporary 'after-editor'
     } finally {
         & docker exec $web rm -rf $bootstrapState 2>$null | Out-Null
@@ -410,7 +413,8 @@ function Invoke-RequiredGates {
             'EvidenceHubTimestampMySqlTest',
             'tests/phase2/support/evidence-hub-owner-visual.cjs',
             'tests/phase2/support/evidence-hub-owner-actions-visual.cjs',
-            'tests/phase2/support/evidence-hub-editor-writing-visual.cjs'
+            'tests/phase2/support/evidence-hub-editor-writing-visual.cjs',
+            'tests/phase2/support/evidence-hub-technology-review-visual.cjs'
         )
         Assert-RequiredGateRegistry $registry
         Invoke-RequiredGateRegistryChallenges $registry
@@ -456,7 +460,7 @@ function Invoke-FocusedTwoOwnerGate {
 }
 
 if ($IdentityChallenge -or $RegistrationChallenge) {
-    $registry = @('EvidenceHubRecommendationActionHttpMySqlTest', 'EvidenceHubRecommendationDispositionMySqlTest', 'EvidenceHubTimestampMySqlTest', 'tests/phase2/support/evidence-hub-owner-visual.cjs', 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs', 'tests/phase2/support/evidence-hub-editor-writing-visual.cjs')
+    $registry = @('EvidenceHubRecommendationActionHttpMySqlTest', 'EvidenceHubRecommendationDispositionMySqlTest', 'EvidenceHubTimestampMySqlTest', 'tests/phase2/support/evidence-hub-owner-visual.cjs', 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs', 'tests/phase2/support/evidence-hub-editor-writing-visual.cjs', 'tests/phase2/support/evidence-hub-technology-review-visual.cjs')
     if ($RegistrationChallenge) { Invoke-RequiredGateRegistryChallenges $registry; Write-Host 'REGISTRATION_CHALLENGES_PASSED' }
     if ($IdentityChallenge) { Write-Host 'Identity challenge is exercised by Assert-CurrentSourceIdentity against a deliberately stale disposable image.' }
     exit 0

@@ -22,8 +22,9 @@ function buildAuthorizedEvidenceHubOwnerRecommendationState(
 ): array {
     $projects = loadAuthorizedEvidenceHubOwnerEvaluatedProjects($database, $context);
     $publicationState = loadAuthorizedEvidenceHubPublicationState($database, $context);
-    $taxonomy = loadEvidenceHubTechnologyTaxonomy('v4');
-    $factsAndAssociations = buildEvidenceHubOwnerRecommendationFacts($context, $projects, $taxonomy, loadAuthorizedEvidenceHubRecommendationPublicationFacts($database, $context));
+    $taxonomy = loadEvidenceHubOwnerTaxonomy();
+    $ownerMappings = loadAuthorizedTechnologyOwnerMappings($database, $context);
+    $factsAndAssociations = buildEvidenceHubOwnerRecommendationFacts($context, $projects, $taxonomy, loadAuthorizedEvidenceHubRecommendationPublicationFacts($database, $context), $ownerMappings);
     $candidates = buildEvidenceHubRecommendationCandidates($factsAndAssociations['facts'], $opaqueTargetHmacMaterial);
     $resourceAssociations = evidenceHubOwnerRecommendationResourceAssociations(
         $candidates,
@@ -38,7 +39,7 @@ function buildAuthorizedEvidenceHubOwnerRecommendationState(
     );
 
     return [
-        'contract' => mapEvidenceHubContractV4(buildEvidenceHubOwnerCoreFromEvaluatedProjects($projects, $publicationState), $visible),
+        'contract' => mapEvidenceHubOwnerContract(buildEvidenceHubOwnerCoreFromEvaluatedProjects($projects, $publicationState, $ownerMappings), $visible),
         'current_candidates' => $candidates,
         'resource_associations' => $resourceAssociations,
     ];
@@ -95,6 +96,7 @@ function resolveAuthorizedEvidenceHubOwnerRecommendation(array $state, string $r
  * @param list<array<string, mixed>> $projects
  * @param array{taxonomy_version: string, entries: list<array<string, mixed>>, aliases: array<string, array<string, mixed>>} $taxonomy
  * @param array{portfolio_published: bool, publication_prerequisites_met: bool} $publicationFacts
+ * @param array<string, string> $ownerMappings an Owner-mapped label is no longer a review candidate
  * @return array{facts: array<string, mixed>, target_associations: array<string, array{target_type: string, project_refs: list<int>}>}
  */
 function buildEvidenceHubOwnerRecommendationFacts(
@@ -102,6 +104,7 @@ function buildEvidenceHubOwnerRecommendationFacts(
     array $projects,
     array $taxonomy,
     array $publicationFacts,
+    array $ownerMappings = [],
 ): array {
     $projectFacts = [];
     $targetAssociations = [];
@@ -127,7 +130,7 @@ function buildEvidenceHubOwnerRecommendationFacts(
             continue;
         }
         foreach ($project['technologies'] as $label) {
-            $mapping = mapEvidenceHubTechnologyLabel($label, $taxonomy);
+            $mapping = mapEvidenceHubTechnologyLabel($label, $taxonomy, $ownerMappings);
             if ($mapping === null || $mapping['mapping_state'] !== 'unmapped') {
                 continue;
             }
@@ -135,7 +138,7 @@ function buildEvidenceHubOwnerRecommendationFacts(
             if ($normalized === null) {
                 continue;
             }
-            $digest = hash('sha256', $normalized);
+            $digest = evidenceHubTechnologyLabelDigest($normalized);
             $targetIdentity = evidenceHubOwnerInternalTargetIdentity('technology', $digest);
             if (!isset($technologyFacts[$targetIdentity])) {
                 $technologyFacts[$targetIdentity] = [

@@ -7,7 +7,7 @@ require_once __DIR__ . '/evidence_hub_owner_page_model.php';
 require_once __DIR__ . '/evidence_hub_copy.php';
 
 /** @param array<string, mixed> $contract @param array<string, mixed> $model */
-function renderEvidenceHubOwnerPage(array $contract, array $model, array $actionTokens = [], string $feedback = '', array $undoFeedback = ['kind' => 'none'], string $locale = 'en'): void
+function renderEvidenceHubOwnerPage(array $contract, array $model, array $actionTokens = [], string $feedback = '', array $undoFeedback = ['kind' => 'none'], string $locale = 'en', ?array $technologyForm = null): void
 {
     $locale = evidenceHubLocale($locale);
     try {
@@ -75,14 +75,73 @@ function renderEvidenceHubOwnerPage(array $contract, array $model, array $action
         <?php endif; ?>
     </section>
 
-    <section class="evidence-hub-section evidence-hub-technology" id="technologies" aria-labelledby="evidence-hub-technology-title"><div class="evidence-hub-section-heading"><div><p><?php echo $e('Technologies'); ?></p><h2 id="evidence-hub-technology-title"><?php echo $e('Technologies'); ?></h2></div><span><?php echo $e('Projects using each technology'); ?></span></div><?php if ($technologies['mapped'] === [] && $technologies['unmapped'] === []): ?><div class="evidence-hub-empty"><strong><?php echo $e('No technology evidence yet'); ?></strong><p><?php echo $e('Add technologies to a project to see them mapped here.'); ?></p></div><?php endif; ?>
-        <?php foreach ($technologies['mapped'] as $category => $entries): ?><div class="evidence-hub-technology-category"><h3><?php echo $e(ucfirst($category)); ?></h3><div class="evidence-hub-technology-pills"><?php foreach ($entries as $entry): ?><span class="evidence-hub-technology-pill"><bdi><?php echo ownerEscapeHtml($entry['label']); ?></bdi><small><?php echo ownerEscapeHtml(evidenceHubCountPhrase((int) $entry['project_count'], 'project', $locale)); ?></small></span><?php endforeach; ?></div></div><?php endforeach; ?>
-        <?php if ($technologies['unmapped'] !== []): ?><div class="evidence-hub-technology-category evidence-hub-technology-unmapped"><h3><?php echo $e('Unmapped technologies'); ?></h3><p><?php echo $e('These entries do not match the current taxonomy. Review their project records.'); ?></p><div class="evidence-hub-technology-pills"><?php foreach ($technologies['unmapped'] as $entry): ?><span class="evidence-hub-technology-pill"><span><?php echo $e('Unmapped technology {n}', ['{n}' => (int) $entry['ordinal']]); ?></span><small><?php echo ownerEscapeHtml(evidenceHubCountPhrase((int) $entry['project_count'], 'project', $locale)); ?></small></span><?php endforeach; ?></div></div><?php endif; ?>
+    <section class="evidence-hub-section evidence-hub-technology" id="technologies" aria-labelledby="evidence-hub-technology-title"><div class="evidence-hub-section-heading"><div><p><?php echo $e('Technologies'); ?></p><h2 id="evidence-hub-technology-title"><?php echo $e('Technologies'); ?></h2></div><span><?php echo $e('Projects using each technology'); ?></span></div><?php if ($technologies['mapped'] === [] && $model['technology_review']['unmapped'] === []): ?><div class="evidence-hub-empty"><strong><?php echo $e('No technology evidence yet'); ?></strong><p><?php echo $e('Add technologies to a project to see them mapped here.'); ?></p></div><?php endif; ?>
+        <?php foreach ($technologies['mapped'] as $category => $entries): ?><div class="evidence-hub-technology-category"><h3><?php echo $e(ucfirst($category)); ?></h3><div class="evidence-hub-technology-pills"><?php foreach ($entries as $entry): ?><span class="evidence-hub-technology-pill"><bdi><?php echo ownerEscapeHtml($entry['label']); ?></bdi><small><?php echo ownerEscapeHtml(evidenceHubCountPhrase((int) $entry['project_count'], 'project', $locale)); ?></small><?php if ($entry['owner_mapped'] ?? false): ?><small class="evidence-hub-technology-owner-tag"><?php echo $e('Mapped by you'); ?></small><?php endif; ?></span><?php endforeach; ?></div></div><?php endforeach; ?>
+        <?php renderEvidenceHubOwnerTechnologyReview($model['technology_review'], $locale, $technologyForm); ?>
     </section>
 
     <section class="evidence-hub-section evidence-hub-progress" id="progress" aria-labelledby="evidence-hub-progress-title"><div class="evidence-hub-section-heading"><div><p><?php echo $e('Progress'); ?></p><h2 id="evidence-hub-progress-title"><?php echo $e('Portfolio progress'); ?></h2></div></div><article class="evidence-hub-progress-card"><strong><?php echo $e($progress['label']); ?></strong><p><?php echo $e('{complete} of {total} eligible projects have all three evidence fields complete.', ['{complete}' => (int) $progress['complete_project_count'], '{total}' => (int) $progress['project_count']]); ?></p><?php if ($activityText !== null): ?><p><?php echo $e('Complete-project activity: {range}.', ['{range}' => $activityText]); ?></p><?php endif; ?><p><?php echo $e($progress['history_explanation']); ?></p></article></section>
 </div>
     <?php
+}
+
+/**
+ * Owner technology review: resolve each unmapped label by fixing it in a
+ * project, mapping it to a known technology, or proposing it; undo an own
+ * mapping; follow proposals. Every control is a plain form, so it works
+ * without JavaScript. Owner labels are shown isolated, in their own direction.
+ *
+ * @param array<string, mixed> $review @param array{ref: string, values: array<string, mixed>, errors: array<string, string>}|null $form
+ */
+function renderEvidenceHubOwnerTechnologyReview(array $review, string $locale, ?array $form = null): void
+{
+    $e = static fn (string $english, array $replacements = []): string => ownerEscapeHtml(evidenceHubText($english, $locale, $replacements));
+    $csrf = ownerEscapeHtml(getCsrfToken());
+    $separator = evidenceHubLocale($locale) === 'ar' ? '، ' : ', ';
+    $arrow = evidenceHubLocale($locale) === 'ar' ? '←' : '→';
+    $categoryOptions = static function (string $selected) use ($review, $e): string {
+        $html = '<option value="">' . $e('Choose a category') . '</option>';
+        foreach ($review['categories'] as $category) {
+            $html .= '<option value="' . ownerEscapeHtml($category) . '"' . ($category === $selected ? ' selected' : '') . '>' . $e(ucfirst($category)) . '</option>';
+        }
+        return $html;
+    };
+    ?>
+    <?php if ($review['unmapped'] !== []): ?><div class="evidence-hub-technology-category evidence-hub-technology-unmapped"><h3><?php echo $e('Unmapped technologies'); ?></h3><p><?php echo $e('These entries do not match the technology list. Fix a spelling in the project, map the entry to a known technology, or propose it.'); ?></p>
+        <div class="evidence-hub-technology-review">
+        <?php foreach ($review['unmapped'] as $index => $item): $id = 'technology-review-' . ($index + 1); $errors = ($form['ref'] ?? null) === $item['ref'] ? array_map(static fn (string $error): string => evidenceHubText($error, $locale), $form['errors']) : []; $values = $errors === [] ? [] : $form['values']; ?>
+            <article class="evidence-hub-technology-review-item" id="<?php echo $id; ?>" aria-labelledby="<?php echo $id; ?>-label">
+                <h4 id="<?php echo $id; ?>-label"><bdi dir="auto"><?php echo ownerEscapeHtml($item['raw_label']); ?></bdi> <small><?php echo ownerEscapeHtml(evidenceHubCountPhrase(count($item['projects']), 'project', $locale)); ?></small></h4>
+                <p class="evidence-hub-technology-review-projects"><?php echo $e('Fix the spelling in a project:'); ?> <?php foreach ($item['projects'] as $position => $project): ?><?php echo $position > 0 ? $separator : ''; ?><a href="<?php echo ownerEscapeHtml($project['edit_url']); ?>" dir="auto"><?php echo ownerEscapeHtml($project['title']); ?></a><?php endforeach; ?></p>
+                <form class="evidence-hub-technology-map-form" method="POST" action="/owner/evidence-hub"><input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>"><input type="hidden" name="action" value="map_technology"><input type="hidden" name="technology_ref" value="<?php echo ownerEscapeHtml($item['ref']); ?>">
+                    <label for="<?php echo $id; ?>-map"><?php echo $e('Map to a known technology'); ?></label>
+                    <div><select id="<?php echo $id; ?>-map" name="canonical_id" required><option value=""><?php echo $e('Choose a technology'); ?></option><?php foreach ($review['mapping_options'] as $category => $options): ?><optgroup label="<?php echo $e(ucfirst($category)); ?>"><?php foreach ($options as $option): ?><option value="<?php echo ownerEscapeHtml($option['id']); ?>"><?php echo ownerEscapeHtml($option['label']); ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select><button type="submit"><?php echo $e('Map technology'); ?></button></div>
+                </form>
+                <?php if ($item['has_pending_proposal']): ?><p class="evidence-hub-technology-review-note"><?php echo $e('Your proposal for this technology is pending.'); ?></p><?php else: ?>
+                <details class="evidence-hub-technology-propose"<?php echo $errors === [] ? '' : ' open'; ?>><summary><?php echo $e('Not in the list? Propose it'); ?></summary>
+                    <form method="POST" action="/owner/evidence-hub" novalidate><input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>"><input type="hidden" name="action" value="propose_technology"><input type="hidden" name="technology_ref" value="<?php echo ownerEscapeHtml($item['ref']); ?>">
+                        <?php if ($errors !== []): ?><p class="field-error" role="alert"><?php echo $e('Review the highlighted fields'); ?></p><?php endif; ?>
+                        <label for="<?php echo $id; ?>-name"><?php echo $e('Technology name'); ?></label><input id="<?php echo $id; ?>-name" name="proposed_label" maxlength="60" dir="auto" value="<?php echo ownerEscapeHtml((string) ($values['proposed_label'] ?? $item['raw_label'])); ?>"<?php echo ownerFieldAccessibilityAttributes($errors, 'proposed_label'); ?>><?php ownerRenderFieldError($errors, 'proposed_label'); ?>
+                        <label for="<?php echo $id; ?>-category"><?php echo $e('Category'); ?></label><select id="<?php echo $id; ?>-category" name="category"<?php echo ownerFieldAccessibilityAttributes($errors, 'category'); ?>><?php echo $categoryOptions((string) ($values['category'] ?? '')); ?></select><?php ownerRenderFieldError($errors, 'category'); ?>
+                        <label for="<?php echo $id; ?>-note"><?php echo $e('Note (optional)'); ?></label><textarea id="<?php echo $id; ?>-note" name="note" rows="2" maxlength="280" dir="auto"<?php echo ownerFieldAccessibilityAttributes($errors, 'note'); ?>><?php echo ownerEscapeHtml((string) ($values['note'] ?? '')); ?></textarea><?php ownerRenderFieldError($errors, 'note'); ?>
+                        <button type="submit"><?php echo $e('Send proposal'); ?></button>
+                    </form>
+                </details><?php endif; ?>
+            </article>
+        <?php endforeach; ?>
+        </div></div><?php endif; ?>
+    <?php if ($review['owner_mapped'] !== []): ?><div class="evidence-hub-technology-category evidence-hub-technology-owner-mapped"><h3><?php echo $e('Technologies you mapped'); ?></h3><ul class="evidence-hub-technology-review-list">
+        <?php foreach ($review['owner_mapped'] as $item): ?><li><span><bdi dir="auto"><?php echo ownerEscapeHtml($item['raw_label']); ?></bdi> <?php echo $arrow; ?> <bdi><?php echo ownerEscapeHtml((string) $item['display_name']); ?></bdi></span><form method="POST" action="/owner/evidence-hub"><input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>"><input type="hidden" name="action" value="unmap_technology"><input type="hidden" name="technology_ref" value="<?php echo ownerEscapeHtml($item['ref']); ?>"><button type="submit"><?php echo $e('Remove mapping'); ?></button></form></li><?php endforeach; ?>
+    </ul></div><?php endif; ?>
+    <?php if ($review['proposals'] !== []): ?><div class="evidence-hub-technology-category evidence-hub-technology-proposals"><h3><?php echo $e('Your technology proposals'); ?></h3><ul class="evidence-hub-technology-review-list">
+        <?php foreach ($review['proposals'] as $proposal): ?><li><span><bdi dir="auto"><?php echo ownerEscapeHtml($proposal['proposed_label']); ?></bdi> · <?php echo $e(ucfirst($proposal['category'])); ?> <span class="evidence-hub-state evidence-hub-state--proposal-<?php echo ownerEscapeHtml($proposal['state']); ?>"><?php echo $e(evidenceHubOwnerTechnologyProposalStateLabel($proposal['state'])); ?></span></span><?php if ($proposal['state'] === 'pending'): ?><form method="POST" action="/owner/evidence-hub"><input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>"><input type="hidden" name="action" value="withdraw_technology_proposal"><input type="hidden" name="proposal_id" value="<?php echo (int) $proposal['id']; ?>"><button type="submit"><?php echo $e('Withdraw proposal'); ?></button></form><?php endif; ?></li><?php endforeach; ?>
+    </ul></div><?php endif; ?>
+    <?php
+}
+
+function evidenceHubOwnerTechnologyProposalStateLabel(string $state): string
+{
+    return match ($state) {'pending' => 'Pending review', 'withdrawn' => 'Withdrawn', 'accepted' => 'Accepted', 'rejected' => 'Not accepted', default => 'Unavailable'};
 }
 
 function evidenceHubOwnerPageReadinessLabel(string $state, string $locale = 'en'): string { return evidenceHubText(match ($state) {'zero' => 'Zero', 'partial' => 'Partial', 'ready' => 'Ready', default => 'Unavailable'}, $locale); }
