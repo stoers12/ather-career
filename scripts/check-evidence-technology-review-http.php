@@ -11,6 +11,7 @@ if (PHP_SAPI !== 'cli' || getenv('APP_ENV') !== 'test' || getenv('ATHERCAR_TEST_
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/evidence_hub_taxonomy.php';
 require_once __DIR__ . '/../includes/evidence_hub_technology_mapper.php';
+require_once __DIR__ . '/../includes/evidence_hub_owner_core.php';
 require_once __DIR__ . '/evidence-hub-http-client.php';
 
 /*
@@ -69,7 +70,7 @@ requireHttp($rows('technology_owner_mappings', $portfolioA) === [] && $rows('tec
 $mapped = $post($cookieA, $map);
 requireHttp($mapped['status'] === 303 && str_contains($mapped['headers'], 'Location: /owner/evidence-hub#technologies'), 'A valid mapping did not use PRG back to the technologies.');
 $stored = $rows('technology_owner_mappings', $portfolioA);
-requireHttp(count($stored) === 1 && $stored[0]['label_digest'] === $digest && $stored[0]['canonical_id'] === 'tech.react' && $stored[0]['taxonomy_version'] === 'v4', 'The mapping was not stored once as a digest.');
+requireHttp(count($stored) === 1 && $stored[0]['label_digest'] === $digest && $stored[0]['canonical_id'] === 'tech.react' && $stored[0]['taxonomy_version'] === evidenceHubContractVersionDefinition(EVIDENCE_HUB_OWNER_CONTRACT_VERSION)['taxonomy_version'], 'The mapping was not stored once as a digest.');
 requireHttp($rows('technology_owner_mappings', $portfolioB) === [], 'The mapping crossed into Owner B.');
 $after = $hub($cookieA);
 requireHttp(str_contains($after['body'], 'Technology mapped.') && str_contains($after['body'], 'Mapped by you') && !str_contains($after['body'], 'value="map_technology"><input type="hidden" name="technology_ref" value="' . $reference . '"'), 'The mapped technology did not move into the Owner-mapped list.');

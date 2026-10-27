@@ -40,6 +40,11 @@ function mapEvidenceHubContractV5(array $core, array $recommendations): array
     return mapEvidenceHubContractVersion($core, $recommendations, 'v5');
 }
 
+function mapEvidenceHubContractV6(array $core, array $recommendations): array
+{
+    return mapEvidenceHubContractVersion($core, $recommendations, 'v6');
+}
+
 /**
  * Each contract version names the taxonomy it publishes. A contract and a
  * taxonomy version move independently: v5 adds Owner mappings over taxonomy v4.
@@ -50,6 +55,7 @@ const EVIDENCE_HUB_CONTRACT_VERSIONS = [
     'v3' => ['schema_version' => '3.0.0', 'taxonomy_version' => 'v3', 'owner_mappings' => false],
     'v4' => ['schema_version' => '4.0.0', 'taxonomy_version' => 'v4', 'owner_mappings' => false],
     'v5' => ['schema_version' => '5.0.0', 'taxonomy_version' => 'v4', 'owner_mappings' => true],
+    'v6' => ['schema_version' => '6.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true],
 ];
 
 /** @return array{schema_version: string, taxonomy_version: string, owner_mappings: bool} */

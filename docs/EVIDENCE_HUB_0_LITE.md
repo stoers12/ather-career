@@ -110,6 +110,21 @@ An Owner resolves an unmapped project label on the Evidence Hub page in one of t
 
 Forms address a label only through a review-only HMAC reference, bound to the Portfolio and resolved again against its current labels. It is domain-separated from recommendation target references, which are never rendered because recommendation keys derive from them. A foreign, stale or forged reference returns 409; a malformed request returns 422. Every action requires CSRF and uses PRG to `#technologies`. Mapping, unmapping and withdrawal are reversible. No matching is fuzzy, and nothing is shown to visitors.
 
+### Taxonomy v5 and contract v6
+
+Taxonomy v5 retains the 38 v4 entries first and unchanged, then adds 40 common technologies for 78 entries in the same category order:
+
+- **Language (9):** HTML, Go, Rust, Kotlin, Swift, Dart, Ruby, R, Shell.
+- **Framework (10):** Laravel, Vue.js, Angular, Django, Flask, Spring Boot, ASP.NET Core, Next.js, Express, Flutter.
+- **Stylesheet (2):** Bootstrap, Tailwind CSS.
+- **Database (3):** MongoDB, SQLite, MariaDB.
+- **Library (4):** TensorFlow, PyTorch, OpenCV, Redux.
+- **Runtime (1):** .NET.
+- **Platform (5):** AWS, Microsoft Azure, Google Cloud, Firebase, Linux.
+- **Tool (6):** Kubernetes, Postman, Figma, Jira, Nginx, Jupyter Notebook.
+
+`EVIDENCE_HUB_OWNER_CONTRACT_VERSION` now selects contract v6 (`evidence-hub-contract-v6`, schema version `6.0.0`), which publishes taxonomy v5. Existing Owner mappings stay valid because v5 is a superset of v4. A taxonomy match takes precedence: an earlier Owner mapping of `Laravel` to PHP now resolves as `mapped` to Laravel; an unknown label such as `vue 3` can still be `owner_mapped` to Vue.js. Matching remains normalized exact. Text and recommendation rules, migrations, and UI are unchanged; earlier contracts and taxonomies remain frozen.
+
 ## Portfolio Progress
 
 Portfolio Progress exposes Owner-only facts: project count, projects with complete evidence, first/latest project timestamps, recorded activity span, and Portfolio publication state. Project time is an absolute instant: the repository supplies a Unix epoch derived from the production MySQL `TIMESTAMP` using `UNIX_TIMESTAMP`, never a timezone-less string relabeled as UTC. Output timestamps are canonical UTC `Z` values. `recorded_activity_span_days` is `floor((latest_epoch_seconds - first_epoch_seconds) / 86400)`: it is elapsed complete 24-hour periods, not UTC-calendar date difference. Same instant and a cross-midnight interval under 24 hours are 0; exactly 24 hours is 1; 47:59:59 is 1; exactly 48 hours is 2. Invalid/ambiguous instants fail closed. It always reports `trend_status: not_available`, `trend_direction: null`, and `HISTORY_NOT_TRACKED`; project creation dates never prove professional improvement or a trend.
