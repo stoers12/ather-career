@@ -76,6 +76,28 @@ final class EvidenceHubRecommendationDispositionMySqlTest
         $changed = buildEvidenceHubRecommendations(self::recommendationFacts('unavailable'), $dispositions, $now, 'r3-mysql-synthetic-hmac');
         phase2AssertSame(1, count($changed), 'MySQL superseded fingerprint suppressed a current recommendation.');
         phase2AssertSame($currentRecommendation['recommendation_key'], $changed[0]['recommendation_key'], 'MySQL supersession changed recommendation identity.');
+        self::skillEvidenceLifecycle($database, $ownerA, $ownerB, $foreign, $now);
+    }
+
+    private static function skillEvidenceLifecycle(PDO $database, AuthorizedPortfolioContext $ownerA, AuthorizedPortfolioContext $ownerB, AuthorizedPortfolioContext $foreign, int $now): void
+    {
+        $facts = ['tenant_scope_ref' => 'r3_mysql_skill_tenant', 'portfolio_target_identity' => 'r3_mysql_skill_portfolio', 'projects' => [], 'technology_mappings' => [], 'portfolio_publication' => ['portfolio_published' => true, 'publication_prerequisites_met' => true], 'skill_claims' => [['target_identity' => 'r3_mysql_skill_target', 'canonical_id' => 'tech.react']]];
+        $current = array_values(array_filter(buildEvidenceHubRecommendationCandidates($facts, 'r3-mysql-skill-hmac'), static fn (array $candidate): bool => $candidate['rule_id'] === 'add_skill_evidence'));
+        phase2AssertSame(1, count($current), 'MySQL skill fixture did not produce one candidate.');
+        $candidate = $current[0];
+        $again = array_values(array_filter(buildEvidenceHubRecommendationCandidates($facts, 'r3-mysql-skill-hmac'), static fn (array $item): bool => $item['rule_id'] === 'add_skill_evidence'));
+        phase2AssertSame($candidate, $again[0], 'Skill reevaluation changed its key or fingerprint.');
+        storeAuthorizedEvidenceHubRecommendationDisposition($database, $ownerA, $candidate, 'snoozed', $now);
+        $stored = listAuthorizedEvidenceHubRecommendationDispositions($database, $ownerA);
+        phase2AssertSame([], filterEvidenceHubRecommendationCandidates($again, $stored, $now), 'The MySQL skill snooze did not survive reevaluation.');
+        phase2AssertSame(1, count(filterEvidenceHubRecommendationCandidates($again, $stored, evidenceHubRecommendationSnoozeUntil($now) + 1)), 'An expired skill snooze continued suppressing.');
+        storeAuthorizedEvidenceHubRecommendationDisposition($database, $ownerA, $candidate, 'dismissed', $now);
+        phase2AssertSame([], filterEvidenceHubRecommendationCandidates($again, listAuthorizedEvidenceHubRecommendationDispositions($database, $ownerA), $now), 'The MySQL skill dismissal did not survive reevaluation.');
+        self::assertDenied(static function () use ($database, $foreign, $candidate, $now): void { storeAuthorizedEvidenceHubRecommendationDisposition($database, $foreign, $candidate, 'dismissed', $now); }, 'A foreign Owner stored the skill disposition.');
+        foreach (listAuthorizedEvidenceHubRecommendationDispositions($database, $ownerB) as $record) {
+            phase2Assert($record['recommendation_key'] !== $candidate['recommendation_key'], 'The skill disposition crossed into Owner B.');
+        }
+        fwrite(STDOUT, "PASS Evidence Hub skill evidence MySQL lifecycle\n");
     }
 
     /** @return array{user_a:int,user_b:int,portfolio_a:int,portfolio_b:int} */

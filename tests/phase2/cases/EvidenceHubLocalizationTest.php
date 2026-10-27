@@ -36,7 +36,7 @@ final class EvidenceHubLocalizationTest
                 $literals[] = stripcslashes($literal);
             }
         }
-        foreach (['add_first_project', 'complete_project_evidence', 'review_unmapped_technology', 'complete_portfolio_publication', 'unknown_rule'] as $rule) {
+        foreach (['add_first_project', 'complete_project_evidence', 'review_unmapped_technology', 'complete_portfolio_publication', 'add_skill_evidence', 'unknown_rule'] as $rule) {
             $action = evidenceHubOwnerRecommendationPresentationAction($rule);
             array_push($literals, $action['title'], $action['description'], $action['label'], $action['category'], $action['context']);
         }

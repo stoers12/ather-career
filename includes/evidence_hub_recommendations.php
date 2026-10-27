@@ -105,6 +105,18 @@ function buildEvidenceHubRecommendationCandidates(array $scopedFacts, string $op
         );
     }
 
+    foreach ($facts['skill_claims'] ?? [] as $claim) {
+        $candidates[] = evidenceHubRecommendationCandidate(
+            $opaqueTargetHmacMaterial,
+            $facts['tenant_scope_ref'],
+            'add_skill_evidence',
+            'skill',
+            $claim['target_identity'],
+            ['canonical_id' => $claim['canonical_id'], 'has_project_evidence' => false],
+            ['SKILL_PROJECT_EVIDENCE_MISSING'],
+        );
+    }
+
     return $candidates;
 }
 
@@ -194,13 +206,11 @@ function evidenceHubRecommendationCanonicalJson(mixed $value): string
 function evidenceHubValidateRecommendationFacts(array $facts): array
 {
     evidenceHubAssertNoRecommendationPrivateFields($facts, 'private_field_forbidden');
-    evidenceHubRequireExactObjectKeys($facts, [
-        'tenant_scope_ref',
-        'portfolio_target_identity',
-        'projects',
-        'technology_mappings',
-        'portfolio_publication',
-    ], 'scoped_facts_shape');
+    $required = ['tenant_scope_ref', 'portfolio_target_identity', 'projects', 'technology_mappings', 'portfolio_publication'];
+    if (array_key_exists('skill_claims', $facts)) {
+        $required[] = 'skill_claims';
+    }
+    evidenceHubRequireExactObjectKeys($facts, $required, 'scoped_facts_shape');
     evidenceHubValidateOpaqueInputText($facts['tenant_scope_ref'], 'tenant_scope_ref');
     evidenceHubValidateOpaqueInputText($facts['portfolio_target_identity'], 'portfolio_target_identity');
     if (!is_array($facts['projects']) || !array_is_list($facts['projects'])) {
@@ -254,6 +264,29 @@ function evidenceHubValidateRecommendationFacts(array $facts): array
         ];
     }
 
+    $skillClaims = $facts['skill_claims'] ?? [];
+    if (!is_array($skillClaims) || !array_is_list($skillClaims)) {
+        evidenceHubRecommendationReject('skill_claims_must_be_list');
+    }
+    $skillTargets = [];
+    $skillIds = [];
+    $lastTarget = null;
+    foreach ($skillClaims as $claim) {
+        if (!is_array($claim) || array_is_list($claim)) {
+            evidenceHubRecommendationReject('skill_claim_shape');
+        }
+        evidenceHubRequireExactObjectKeys($claim, ['target_identity', 'canonical_id'], 'skill_claim_shape');
+        evidenceHubValidateOpaqueInputText($claim['target_identity'], 'skill_target_identity');
+        evidenceHubValidateSkillCanonicalId($claim['canonical_id']);
+        if (isset($skillTargets[$claim['target_identity']]) || isset($skillIds[$claim['canonical_id']])
+            || ($lastTarget !== null && strcmp($lastTarget, $claim['target_identity']) >= 0)) {
+            evidenceHubRecommendationReject('skill_claims_not_unique_or_sorted');
+        }
+        $skillTargets[$claim['target_identity']] = true;
+        $skillIds[$claim['canonical_id']] = true;
+        $lastTarget = $claim['target_identity'];
+    }
+
     if (!is_array($facts['portfolio_publication']) || array_is_list($facts['portfolio_publication'])) {
         evidenceHubRecommendationReject('portfolio_publication_shape');
     }
@@ -270,6 +303,7 @@ function evidenceHubValidateRecommendationFacts(array $facts): array
         'projects' => $projects,
         'technology_mappings' => $mappings,
         'portfolio_publication' => $facts['portfolio_publication'],
+        'skill_claims' => $skillClaims,
     ];
 }
 
@@ -445,6 +479,7 @@ function evidenceHubRecommendationPriority(string $ruleId): int
         'complete_project_evidence' => 2,
         'review_unmapped_technology' => 3,
         'complete_portfolio_publication' => 4,
+        'add_skill_evidence' => 5,
         default => throw new EvidenceHubRecommendationInvariantException('unsupported_rule_id'),
     };
 }
@@ -510,6 +545,7 @@ function evidenceHubValidateRecommendationFingerprintInput(mixed $input): void
         'complete_project_evidence' => ['field_completeness_states', 'reason_codes'],
         'review_unmapped_technology' => ['mapping_state', 'normalized_unmapped_label_digest'],
         'complete_portfolio_publication' => ['has_projects', 'portfolio_published', 'publication_prerequisites_met'],
+        'add_skill_evidence' => ['canonical_id', 'has_project_evidence'],
     };
     $factKeys = array_keys($facts);
     if (in_array('target_ref', $factKeys, true)) {
@@ -520,6 +556,7 @@ function evidenceHubValidateRecommendationFingerprintInput(mixed $input): void
         ['field_completeness_states', 'reason_codes'],
         ['mapping_state', 'normalized_unmapped_label_digest'],
         ['has_projects', 'portfolio_published', 'publication_prerequisites_met'],
+        ['canonical_id', 'has_project_evidence'],
     ] as $otherAllowed) {
         if ($otherAllowed !== $allowed && evidenceHubSameRecommendationKeySet($factKeys, $otherAllowed)) {
             evidenceHubRecommendationReject('predicate_facts_belong_to_different_rule');
@@ -537,6 +574,7 @@ function evidenceHubValidateRecommendationFingerprintInput(mixed $input): void
         'complete_project_evidence' => evidenceHubValidateCompleteProjectFacts($facts),
         'review_unmapped_technology' => evidenceHubValidateUnmappedTechnologyFacts($facts),
         'complete_portfolio_publication' => evidenceHubValidatePublicationFacts($facts),
+        'add_skill_evidence' => evidenceHubValidateSkillEvidenceFacts($facts),
     };
 }
 
@@ -554,7 +592,7 @@ function evidenceHubValidateRecommendationRuleId(mixed $value): void
     if (preg_match('/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/D', $value) !== 1) {
         evidenceHubRecommendationReject('malformed_rule_id');
     }
-    if (!in_array($value, ['add_first_project', 'complete_project_evidence', 'review_unmapped_technology', 'complete_portfolio_publication'], true)) {
+    if (!in_array($value, ['add_first_project', 'complete_project_evidence', 'review_unmapped_technology', 'complete_portfolio_publication', 'add_skill_evidence'], true)) {
         evidenceHubRecommendationReject('unsupported_rule_id');
     }
 }
@@ -599,7 +637,7 @@ function evidenceHubValidateRecommendationTargetType(mixed $value): void
     if ($value === '') {
         evidenceHubRecommendationReject('empty_target_type');
     }
-    if (!in_array($value, ['hub', 'project', 'technology', 'portfolio'], true)) {
+    if (!in_array($value, ['hub', 'project', 'technology', 'portfolio', 'skill'], true)) {
         evidenceHubRecommendationReject('unsupported_target_type');
     }
 }
@@ -676,6 +714,22 @@ function evidenceHubValidatePublicationFacts(array $facts): void
 {
     foreach (['has_projects', 'portfolio_published', 'publication_prerequisites_met'] as $field) {
         evidenceHubValidateBooleanFact($facts[$field]);
+    }
+}
+
+function evidenceHubValidateSkillCanonicalId(mixed $canonicalId): void
+{
+    if (!is_string($canonicalId) || preg_match('/^tech\.[a-z0-9][a-z0-9._-]*$/D', $canonicalId) !== 1) {
+        evidenceHubRecommendationReject('skill_canonical_id_invalid');
+    }
+}
+
+/** @param array<string, mixed> $facts */
+function evidenceHubValidateSkillEvidenceFacts(array $facts): void
+{
+    evidenceHubValidateSkillCanonicalId($facts['canonical_id']);
+    if ($facts['has_project_evidence'] !== false) {
+        evidenceHubRecommendationReject('skill_project_evidence_invalid');
     }
 }
 

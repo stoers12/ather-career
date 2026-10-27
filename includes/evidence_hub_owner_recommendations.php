@@ -6,13 +6,14 @@ require_once __DIR__ . '/evidence_hub_configuration.php';
 require_once __DIR__ . '/evidence_hub_owner_core.php';
 require_once __DIR__ . '/evidence_hub_recommendation_dispositions.php';
 require_once __DIR__ . '/evidence_hub_recommendations.php';
+require_once __DIR__ . '/portfolio_scoped_data.php';
 
 /**
  * Builds the complete internal current-candidate set from one authorized
  * Owner scope. The mapped contract remains the only presentation output;
  * resource associations are retained solely for a future protected action.
  *
- * @return array{contract: array<string, mixed>, current_candidates: list<array<string, mixed>>, resource_associations: array<string, array{project_refs: list<int>}>}
+ * @return array{contract: array<string, mixed>, current_candidates: list<array<string, mixed>>, resource_associations: array<string, array{project_refs: list<int>, canonical_id?: string}>}
  */
 function buildAuthorizedEvidenceHubOwnerRecommendationState(
     PDO $database,
@@ -24,7 +25,8 @@ function buildAuthorizedEvidenceHubOwnerRecommendationState(
     $publicationState = loadAuthorizedEvidenceHubPublicationState($database, $context);
     $taxonomy = loadEvidenceHubOwnerTaxonomy();
     $ownerMappings = loadAuthorizedTechnologyOwnerMappings($database, $context);
-    $factsAndAssociations = buildEvidenceHubOwnerRecommendationFacts($context, $projects, $taxonomy, loadAuthorizedEvidenceHubRecommendationPublicationFacts($database, $context), $ownerMappings);
+    $skillNames = array_column(listAuthorizedSkills($database, $context), 'skill_name');
+    $factsAndAssociations = buildEvidenceHubOwnerRecommendationFacts($context, $projects, $taxonomy, loadAuthorizedEvidenceHubRecommendationPublicationFacts($database, $context), $ownerMappings, $skillNames);
     $candidates = buildEvidenceHubRecommendationCandidates($factsAndAssociations['facts'], $opaqueTargetHmacMaterial);
     $resourceAssociations = evidenceHubOwnerRecommendationResourceAssociations(
         $candidates,
@@ -49,7 +51,7 @@ function buildAuthorizedEvidenceHubOwnerRecommendationState(
  * System-boundary convenience for a later protected route. The pure core
  * still receives decoded bytes as an explicit argument above.
  *
- * @return array{contract: array<string, mixed>, current_candidates: list<array<string, mixed>>, resource_associations: array<string, array{project_refs: list<int>}>}
+ * @return array{contract: array<string, mixed>, current_candidates: list<array<string, mixed>>, resource_associations: array<string, array{project_refs: list<int>, canonical_id?: string}>}
  */
 function buildConfiguredAuthorizedEvidenceHubOwnerRecommendationState(
     PDO $database,
@@ -69,8 +71,8 @@ function buildConfiguredAuthorizedEvidenceHubOwnerRecommendationState(
  * produced for one AuthorizedPortfolioContext, and searches all current
  * candidates before the visible cap or disposition suppression is applied.
  *
- * @param array{contract: array<string, mixed>, current_candidates: list<array<string, mixed>>, resource_associations: array<string, array{project_refs: list<int>}>} $state
- * @return array{candidate: array<string, mixed>, resource_associations: array{project_refs: list<int>}}|null
+ * @param array{contract: array<string, mixed>, current_candidates: list<array<string, mixed>>, resource_associations: array<string, array{project_refs: list<int>, canonical_id?: string}>} $state
+ * @return array{candidate: array<string, mixed>, resource_associations: array{project_refs: list<int>, canonical_id?: string}}|null
  */
 function resolveAuthorizedEvidenceHubOwnerRecommendation(array $state, string $recommendationKey): ?array
 {
@@ -97,7 +99,8 @@ function resolveAuthorizedEvidenceHubOwnerRecommendation(array $state, string $r
  * @param array{taxonomy_version: string, entries: list<array<string, mixed>>, aliases: array<string, array<string, mixed>>} $taxonomy
  * @param array{portfolio_published: bool, publication_prerequisites_met: bool} $publicationFacts
  * @param array<string, string> $ownerMappings an Owner-mapped label is no longer a review candidate
- * @return array{facts: array<string, mixed>, target_associations: array<string, array{target_type: string, project_refs: list<int>}>}
+ * @param list<string> $skillNames Owner skill labels, resolved locally and never emitted
+ * @return array{facts: array<string, mixed>, target_associations: array<string, array{target_type: string, project_refs: list<int>, canonical_id?: string}>}
  */
 function buildEvidenceHubOwnerRecommendationFacts(
     AuthorizedPortfolioContext $context,
@@ -105,7 +108,11 @@ function buildEvidenceHubOwnerRecommendationFacts(
     array $taxonomy,
     array $publicationFacts,
     array $ownerMappings = [],
+    array $skillNames = [],
 ): array {
+    if (!array_is_list($skillNames)) {
+        throw new InvalidArgumentException('Evidence Hub skill names must be a list.');
+    }
     $projectFacts = [];
     $targetAssociations = [];
     foreach ($projects as $project) {
@@ -124,6 +131,7 @@ function buildEvidenceHubOwnerRecommendationFacts(
     }
 
     $technologyFacts = [];
+    $provenTechnologies = [];
     foreach ($projects as $project) {
         $projectRef = $project['project_ref'];
         if ($project['technology_storage_state'] !== 'valid') {
@@ -131,7 +139,11 @@ function buildEvidenceHubOwnerRecommendationFacts(
         }
         foreach ($project['technologies'] as $label) {
             $mapping = mapEvidenceHubTechnologyLabel($label, $taxonomy, $ownerMappings);
-            if ($mapping === null || $mapping['mapping_state'] !== 'unmapped') {
+            if ($mapping === null) {
+                continue;
+            }
+            if ($mapping['mapping_state'] !== 'unmapped') {
+                $provenTechnologies[$mapping['canonical_id']] = true;
                 continue;
             }
             $normalized = normalizeEvidenceHubTechnologyLabel($label);
@@ -158,20 +170,43 @@ function buildEvidenceHubOwnerRecommendationFacts(
     unset($association);
     ksort($technologyFacts, SORT_STRING);
 
+    $skillFacts = [];
+    foreach ($skillNames as $skillName) {
+        if (!is_string($skillName)) {
+            throw new InvalidArgumentException('Evidence Hub skill name must be a string.');
+        }
+        try {
+            $mapping = mapEvidenceHubTechnologyLabel($skillName, $taxonomy, $ownerMappings);
+        } catch (EvidenceHubTaxonomyException) {
+            // Unnormalizable skill labels cannot establish a technology claim.
+            continue;
+        }
+        if ($mapping === null || $mapping['mapping_state'] === 'unmapped' || isset($provenTechnologies[$mapping['canonical_id']])) {
+            continue;
+        }
+        $canonicalId = $mapping['canonical_id'];
+        $identity = evidenceHubOwnerInternalTargetIdentity('skill', $canonicalId);
+        $skillFacts[$identity] = ['target_identity' => $identity, 'canonical_id' => $canonicalId];
+        $targetAssociations[$identity] = ['target_type' => 'skill', 'project_refs' => [], 'canonical_id' => $canonicalId];
+    }
+    ksort($skillFacts, SORT_STRING);
+
     $targetAssociations['hub'] = ['target_type' => 'hub', 'project_refs' => []];
     $portfolioTargetIdentity = evidenceHubOwnerInternalTargetIdentity('portfolio', (string) $context->portfolioId);
     $targetAssociations[$portfolioTargetIdentity] = ['target_type' => 'portfolio', 'project_refs' => []];
 
-    return [
-        'facts' => [
-            'tenant_scope_ref' => evidenceHubOwnerInternalTargetIdentity('tenant', (string) $context->portfolioId),
-            'portfolio_target_identity' => $portfolioTargetIdentity,
-            'projects' => $projectFacts,
-            'technology_mappings' => array_values($technologyFacts),
-            'portfolio_publication' => $publicationFacts,
-        ],
-        'target_associations' => $targetAssociations,
+    $facts = [
+        'tenant_scope_ref' => evidenceHubOwnerInternalTargetIdentity('tenant', (string) $context->portfolioId),
+        'portfolio_target_identity' => $portfolioTargetIdentity,
+        'projects' => $projectFacts,
+        'technology_mappings' => array_values($technologyFacts),
+        'portfolio_publication' => $publicationFacts,
     ];
+    if ($skillFacts !== []) {
+        $facts['skill_claims'] = array_values($skillFacts);
+    }
+
+    return ['facts' => $facts, 'target_associations' => $targetAssociations];
 }
 
 /** @param array<string, mixed> $project
@@ -198,8 +233,8 @@ function evidenceHubOwnerInternalTargetIdentity(string $type, string $identity):
 
 /**
  * @param list<array<string, mixed>> $candidates
- * @param array<string, array{target_type: string, project_refs: list<int>}> $targetAssociations
- * @return array<string, array{project_refs: list<int>}>
+ * @param array<string, array{target_type: string, project_refs: list<int>, canonical_id?: string}> $targetAssociations
+ * @return array<string, array{project_refs: list<int>, canonical_id?: string}>
  */
 function evidenceHubOwnerRecommendationResourceAssociations(
     array $candidates,
@@ -215,7 +250,9 @@ function evidenceHubOwnerRecommendationResourceAssociations(
             $tenantScopeRef,
             $association['target_type'],
             $targetIdentity,
-        )] = ['project_refs' => $association['project_refs']];
+        )] = isset($association['canonical_id'])
+            ? ['project_refs' => $association['project_refs'], 'canonical_id' => $association['canonical_id']]
+            : ['project_refs' => $association['project_refs']];
     }
     $associations = [];
     foreach ($candidates as $candidate) {

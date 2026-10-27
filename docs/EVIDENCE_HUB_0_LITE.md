@@ -136,6 +136,14 @@ The live Owner selection is contract v7 (`evidence-hub-contract-v7`, schema vers
 
 The detail's `basis_codes` are **not reason codes**. They are a closed, unique list sorted in lexicographic byte order (`SORT_STRING`): `NO_PROJECTS` for zero projects, `SINGLE_PROJECT` for one, `BELOW_RECOMMENDED_OBSERVATIONS` for two, plus `EVIDENCE_INCOMPLETE` for any positive project count with coverage below 10000. Thus one partially documented project produces `["EVIDENCE_INCOMPLETE", "SINGLE_PROJECT"]`; three fully documented projects produce an empty list. The mapper validates this exact sorted result. Existing reason codes, text and recommendation rules, taxonomies, and contract schemas v1–v6 remain frozen.
 
+### Contract v8: skill evidence rule
+
+The live Owner contract is v8. The private `add_skill_evidence` recommendation compares recognized Owner skills with technologies evidenced by any Owner project, whether published or unpublished. Both taxonomy matches and Owner mappings count. Unrecognized, empty, or unnormalizable skill labels are silent: the system cannot establish whether a project provides evidence for an unknown technology. One candidate is emitted per distinct canonical technology, regardless of how many skill labels map to it. Its priority is 5, after the four existing rules, and the three-card cap still applies.
+
+The taxonomy remains frozen: `React.js` is a native alias of React, while `ReactJS` counts only through an explicit Owner mapping. A `ReactJS` skill without that mapping is unrecognized and silent.
+
+The shared recommendation rule version remains `1.0.0`: adding a fifth rule does not change any existing rule. Bumping the shared version would alter existing fingerprints and stop stored snoozes and dismissals from suppressing the same recommendations. Canonical IDs, not raw skill labels, determine the private target and predicate facts; the Owner card displays the taxonomy's canonical name and links to add a project or review skills. Recommendation targets and action tokens remain tenant-scoped. Recommendation undo is outside this card's scope; snooze and dismissal retain the existing lifecycle.
+
 ## Portfolio Progress
 
 The Owner page shows how many projects are public (`projects.is_published`). The five stages are computed by the pure `evidenceHubProgressStage()`.

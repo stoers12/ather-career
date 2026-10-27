@@ -160,13 +160,11 @@ final class EvidenceHubContractV7Test
     private static function authorizedPaths(): void
     {
         $database = self::database();
-        phase2AssertSame('v7', EVIDENCE_HUB_OWNER_CONTRACT_VERSION, 'EH-05 must make v7 live.');
-        phase2AssertSame(['schema_version' => '7.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true], evidenceHubContractVersionDefinition(EVIDENCE_HUB_OWNER_CONTRACT_VERSION), 'The live definition is wrong.');
+        phase2AssertSame(['schema_version' => '7.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => false], evidenceHubContractVersionDefinition('v7'), 'The historical v7 definition is wrong.');
         foreach ([[1, 10, 1], [2, 20, 2], [3, 30, 0]] as [$user, $portfolio, $published]) {
             $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser($user), $portfolio);
-            $contract = buildAuthorizedEvidenceHubOwnerContract($database, $context, []);
-            phase2AssertSame('evidence-hub-contract-' . EVIDENCE_HUB_OWNER_CONTRACT_VERSION, $contract['contract_id'], 'The authorized builder must select the live contract.');
-            phase2AssertSame($contract, mapEvidenceHubContractV7(buildAuthorizedEvidenceHubOwnerCore($database, $context), []), 'The live mapper must publish v7.');
+            $contract = mapEvidenceHubContractV7(buildAuthorizedEvidenceHubOwnerCore($database, $context), []);
+            phase2AssertSame('evidence-hub-contract-v7', $contract['contract_id'], 'The historical v7 mapper identity changed.');
             $model = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, ['contract' => ['recommendations' => []]], 'v7-test-synthetic-hmac');
             $progress = $contract['metrics']['portfolio_progress'];
             phase2AssertSame($published, $progress['published_project_count'], 'A published count crossed tenant scope.');
@@ -242,6 +240,7 @@ final class EvidenceHubContractV7Test
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL DEFAULT 0);
             CREATE TABLE personal_info (portfolio_id INTEGER PRIMARY KEY, full_name TEXT NULL);
+            CREATE TABLE skills (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, skill_name TEXT NOT NULL, created_at TEXT NOT NULL);
             CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT NOT NULL, is_published INTEGER NOT NULL DEFAULT 0, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
             CREATE TABLE recommendation_dispositions (portfolio_id INTEGER NOT NULL, recommendation_key TEXT NOT NULL, rule_version TEXT NOT NULL, evidence_fingerprint TEXT NOT NULL, disposition TEXT NOT NULL, snoozed_until TEXT NULL, PRIMARY KEY (portfolio_id, recommendation_key));');
         $database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
