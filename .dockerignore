@@ -29,6 +29,7 @@ Thumbs.db
 **/graphify-out
 .claude
 CLAUDE.md
+AGENTS.md
 CACHE-ASSESSMENT-*.csv
 CACHE-CLEANUP-OUTPUT-*.txt
 CLEANUP-EXECUTION-MANIFEST-*.md
