@@ -236,9 +236,10 @@ final class EvidenceHubContractMapperTest
         $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 10);
         $actual = buildAuthorizedEvidenceHubOwnerContract($database, $context, []);
         phase2AssertSame([], $actual['recommendations'], 'Owner-core contract integration changed supplied R2 output.');
-        phase2AssertSame('evidence-hub-contract-v5', $actual['contract_id'], 'Owner core did not select the live v5 contract.');
-        phase2AssertSame('5.0.0', $actual['schema_version'], 'Owner core v5 schema version is wrong.');
-        phase2AssertSame($schema['required'], array_keys($actual), 'Owner core v5 envelope shape changed.');
+        $definition = evidenceHubContractVersionDefinition(EVIDENCE_HUB_OWNER_CONTRACT_VERSION);
+        phase2AssertSame('evidence-hub-contract-' . EVIDENCE_HUB_OWNER_CONTRACT_VERSION, $actual['contract_id'], 'Owner core did not select the live contract.');
+        phase2AssertSame($definition['schema_version'], $actual['schema_version'], 'Owner core live schema version is wrong.');
+        phase2AssertSame($schema['required'], array_keys($actual), 'Owner core envelope shape changed.');
     }
 
     private static function staticDisclosureGuard(): void

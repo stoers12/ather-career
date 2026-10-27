@@ -9,7 +9,7 @@ require_once __DIR__ . '/evidence_hub_contract_mapper.php';
 require_once __DIR__ . '/evidence_hub_technology_review_repository.php';
 
 /** The single contract version the private Owner Evidence Hub publishes. */
-const EVIDENCE_HUB_OWNER_CONTRACT_VERSION = 'v5';
+const EVIDENCE_HUB_OWNER_CONTRACT_VERSION = 'v6';
 
 /** @return array{taxonomy_version: string, entries: list<array<string, mixed>>, aliases: array<string, array<string, mixed>>, category_order: list<string>} */
 function loadEvidenceHubOwnerTaxonomy(): array

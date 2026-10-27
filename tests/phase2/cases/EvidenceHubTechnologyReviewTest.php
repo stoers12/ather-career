@@ -71,13 +71,17 @@ final class EvidenceHubTechnologyReviewTest
 
     private static function contractVersionFive(): void
     {
-        $taxonomy = loadEvidenceHubOwnerTaxonomy();
+        $taxonomy = loadEvidenceHubTechnologyTaxonomy('v4');
         $core = buildEvidenceHubOwnerCoreFromEvaluatedProjects([[
             'project_ref' => 1, 'recorded_at_epoch_seconds' => 1767225600, 'technology_storage_state' => 'valid', 'technology_storage_reason_codes' => [],
             'technologies' => ['React', 'ReactJS', 'Raect'], 'field_evaluations' => self::completeEvaluations(), 'expected_evidence_fields' => 3, 'complete_evidence_fields' => 3, 'project_has_complete_evidence' => true,
         ]], 'published', [evidenceHubTechnologyLabelDigest('reactjs') => 'tech.react']);
-        $contract = mapEvidenceHubOwnerContract($core, []);
-        phase2AssertSame(['evidence-hub-contract-v5', '5.0.0'], [$contract['contract_id'], $contract['schema_version']], 'The live Owner contract must be v5.');
+        // V5 semantics are frozen over v4, independently of the live Owner selection.
+        $core['technology_evidence_map'] = summarizeEvidenceHubTechnologies([
+            ['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['React', 'ReactJS', 'Raect']],
+        ], $taxonomy, [evidenceHubTechnologyLabelDigest('reactjs') => 'tech.react']);
+        $contract = mapEvidenceHubContractV5($core, []);
+        phase2AssertSame(['evidence-hub-contract-v5', '5.0.0'], [$contract['contract_id'], $contract['schema_version']], 'The v5 mapper must keep the frozen v5 identity.');
         phase2AssertSame('v4', $taxonomy['taxonomy_version'], 'Contract v5 publishes taxonomy v4.');
         $metric = $contract['metrics']['technology_evidence_map'];
         $schema = json_decode((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/contracts/evidence-hub-contract-v5.schema.json'), true, 512, JSON_THROW_ON_ERROR);
@@ -94,13 +98,13 @@ final class EvidenceHubTechnologyReviewTest
         $tampered = $core;
         ++$tampered['technology_evidence_map']['owner_mapped_occurrence_count'];
         try {
-            mapEvidenceHubOwnerContract($tampered, []);
+            mapEvidenceHubContractV5($tampered, []);
             throw new RuntimeException('Contract v5 accepted counts that disagree with its mappings.');
         } catch (EvidenceHubContractMappingException) {
             // Every occurrence is accounted for by exactly one state.
         }
         try {
-            mapEvidenceHubContractVersion($core, [], 'v6');
+            mapEvidenceHubContractVersion($core, [], 'v999');
             throw new RuntimeException('An undefined contract version was accepted.');
         } catch (EvidenceHubContractMappingException) {
             // Versions are an explicit table.
@@ -137,7 +141,7 @@ final class EvidenceHubTechnologyReviewTest
         phase2Assert(!evidenceHubTechnologyMappingTargetIsValid($taxonomy, 'tech.unknown') && !evidenceHubTechnologyMappingTargetIsValid($taxonomy, ['tech.react']) && evidenceHubTechnologyMappingTargetIsValid($taxonomy, 'tech.react'), 'Mapping targets must be current taxonomy entries.');
         $options = evidenceHubTechnologyMappingOptions($taxonomy);
         phase2AssertSame(array_values(array_filter($taxonomy['category_order'], static fn (string $category): bool => isset($options[$category]))), array_keys($options), 'Mapping choices must follow taxonomy category order.');
-        phase2AssertSame(38, array_sum(array_map('count', $options)), 'Every current taxonomy entry must be a mapping choice.');
+        phase2AssertSame(count(array_filter($taxonomy['entries'], static fn (array $entry): bool => !$entry['deprecated'] && !$entry['merged'])), array_sum(array_map('count', $options)), 'Every current taxonomy entry must be a mapping choice.');
     }
 
     private static function scopedActions(): void

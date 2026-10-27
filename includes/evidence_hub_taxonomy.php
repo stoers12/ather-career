@@ -8,10 +8,12 @@ const EVIDENCE_HUB_TAXONOMY_V1_ENTRY_COUNT = 17;
 const EVIDENCE_HUB_TAXONOMY_V2_ENTRY_COUNT = 31;
 const EVIDENCE_HUB_TAXONOMY_V3_ENTRY_COUNT = 37;
 const EVIDENCE_HUB_TAXONOMY_V4_ENTRY_COUNT = 38;
+const EVIDENCE_HUB_TAXONOMY_V5_ENTRY_COUNT = 78;
 const EVIDENCE_HUB_TAXONOMY_V1_CATEGORIES = ['database', 'framework', 'language', 'library', 'runtime', 'tool'];
 const EVIDENCE_HUB_TAXONOMY_V2_CATEGORIES = ['database', 'framework', 'language', 'library', 'platform', 'runtime', 'stylesheet', 'technique', 'tool'];
 const EVIDENCE_HUB_TAXONOMY_V3_CATEGORIES = EVIDENCE_HUB_TAXONOMY_V2_CATEGORIES;
 const EVIDENCE_HUB_TAXONOMY_V4_CATEGORIES = EVIDENCE_HUB_TAXONOMY_V3_CATEGORIES;
+const EVIDENCE_HUB_TAXONOMY_V5_CATEGORIES = EVIDENCE_HUB_TAXONOMY_V4_CATEGORIES;
 
 final class EvidenceHubTaxonomyException extends RuntimeException
 {
@@ -20,7 +22,7 @@ final class EvidenceHubTaxonomyException extends RuntimeException
 /** @return array{taxonomy_version: string, entries: list<array<string, mixed>>, aliases: array<string, array<string, mixed>>} */
 function loadEvidenceHubTechnologyTaxonomy(string $version = 'v1'): array
 {
-    if (!in_array($version, ['v1', 'v2', 'v3', 'v4'], true)) {
+    if (!in_array($version, ['v1', 'v2', 'v3', 'v4', 'v5'], true)) {
         throw new EvidenceHubTaxonomyException('Evidence Hub taxonomy version is unsupported.');
     }
     $contents = file_get_contents(dirname(__DIR__) . '/contracts/evidence-hub-taxonomy-' . $version . '.json');
@@ -43,7 +45,7 @@ function parseEvidenceHubTechnologyTaxonomy(string $contents, string $version = 
         throw new EvidenceHubTaxonomyException('Evidence Hub taxonomy is malformed.');
     }
 
-    if (!in_array($version, ['v1', 'v2', 'v3', 'v4'], true)) {
+    if (!in_array($version, ['v1', 'v2', 'v3', 'v4', 'v5'], true)) {
         throw new EvidenceHubTaxonomyException('Evidence Hub taxonomy version is unsupported.');
     }
     evidenceHubTaxonomyClosedKeys($taxonomy, $version === 'v1'
@@ -55,6 +57,7 @@ function parseEvidenceHubTechnologyTaxonomy(string $contents, string $version = 
         'v2' => EVIDENCE_HUB_TAXONOMY_V2_ENTRY_COUNT,
         'v3' => EVIDENCE_HUB_TAXONOMY_V3_ENTRY_COUNT,
         'v4' => EVIDENCE_HUB_TAXONOMY_V4_ENTRY_COUNT,
+        'v5' => EVIDENCE_HUB_TAXONOMY_V5_ENTRY_COUNT,
     };
     if (($taxonomy['taxonomy_id'] ?? null) !== 'evidence-hub-technology-taxonomy'
         || ($taxonomy['taxonomy_version'] ?? null) !== $version

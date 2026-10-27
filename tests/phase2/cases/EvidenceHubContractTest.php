@@ -18,6 +18,7 @@ final class EvidenceHubContractTest
         self::versionTwo(self::json('contracts/evidence-hub-contract-v2.schema.json'), self::json('contracts/evidence-hub-taxonomy-v2.json'), $schema, $taxonomy);
         self::versionThree(self::json('contracts/evidence-hub-contract-v3.schema.json'), self::json('contracts/evidence-hub-taxonomy-v3.json'));
         self::versionFour(self::json('contracts/evidence-hub-contract-v4.schema.json'), self::json('contracts/evidence-hub-taxonomy-v4.json'));
+        self::versionSix();
         self::fixtures($fixtures, $schema);
         self::privacyAndScope($document, $fixtures);
     }
@@ -73,6 +74,65 @@ final class EvidenceHubContractTest
         phase2AssertSame($v3Taxonomy['category_order'], $taxonomy['category_order'], 'V4 category order changed.');
         phase2AssertSame(['technology_id' => 'tech.excel', 'canonical_key' => 'excel', 'display_name' => 'Excel', 'category' => 'tool', 'aliases' => ['Excel', 'Microsoft Excel', 'MS Excel'], 'deprecated' => false, 'merged' => false, 'replaced_by_id' => null], $taxonomy['entries'][37], 'V4 Excel entry changed.');
         self::closed($schema, 'v4');
+    }
+
+    private static function versionSix(): void
+    {
+        require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_core.php';
+        $v5 = self::json('contracts/evidence-hub-contract-v5.schema.json');
+        $v6 = self::json('contracts/evidence-hub-contract-v6.schema.json');
+        phase2AssertSame(str_replace('contract-v5', 'contract-v6', $v5['$id']), $v6['$id'], 'V6 schema ID is wrong.');
+        phase2AssertSame('evidence-hub-contract-v6', $v6['properties']['contract_id']['const'], 'V6 contract ID is wrong.');
+        phase2AssertSame('6.0.0', $v6['properties']['schema_version']['const'], 'V6 schema version is wrong.');
+        phase2AssertSame('v5', $v6['$defs']['technology_mapping']['properties']['taxonomy_version']['const'], 'V6 must publish taxonomy v5.');
+        $restored = $v6;
+        $restored['$id'] = $v5['$id'];
+        $restored['properties']['contract_id']['const'] = $v5['properties']['contract_id']['const'];
+        $restored['properties']['schema_version']['const'] = $v5['properties']['schema_version']['const'];
+        $restored['$defs']['technology_mapping']['properties']['taxonomy_version']['const'] = $v5['$defs']['technology_mapping']['properties']['taxonomy_version']['const'];
+        phase2AssertSame($v5, $restored, 'V6 may differ from v5 only in the four identity fields.');
+        self::closed($v6, 'v6');
+
+        phase2AssertSame('v6', EVIDENCE_HUB_OWNER_CONTRACT_VERSION, 'The live Owner contract must be v6.');
+        phase2AssertSame(['schema_version' => '6.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true], evidenceHubContractVersionDefinition(EVIDENCE_HUB_OWNER_CONTRACT_VERSION), 'The live contract definition is wrong.');
+        $taxonomy = loadEvidenceHubOwnerTaxonomy();
+        phase2AssertSame('v5', $taxonomy['taxonomy_version'], 'The live Owner taxonomy must follow contract v6.');
+        $projects = [[
+            'project_ref' => 1, 'recorded_at_epoch_seconds' => 1767225600,
+            'technology_storage_state' => 'valid', 'technology_storage_reason_codes' => [],
+            'technologies' => ['HTML', 'vue 3', 'Private Future Tool'],
+            'field_evaluations' => array_combine(evidenceTextFieldNames(), array_map(static fn (string $field): array => [
+                'evidence_field' => $field, 'evidence_status' => 'complete', 'reason_codes' => ['TEXT_COMPLETE'],
+            ], evidenceTextFieldNames())),
+            'expected_evidence_fields' => 3, 'complete_evidence_fields' => 3, 'project_has_complete_evidence' => true,
+        ]];
+        $core = buildEvidenceHubOwnerCoreFromEvaluatedProjects($projects, 'published', [evidenceHubTechnologyLabelDigest('vue 3') => 'tech.vue']);
+        $contract = mapEvidenceHubOwnerContract($core, []);
+        phase2AssertSame($contract, mapEvidenceHubContractV6($core, []), 'The live mapper must use v6.');
+        phase2AssertSame(['evidence-hub-contract-v6', '6.0.0'], [$contract['contract_id'], $contract['schema_version']], 'The live Owner contract identity is wrong.');
+        $metric = $contract['metrics']['technology_evidence_map'];
+        phase2AssertSame($v6['required'], array_keys($contract), 'V6 envelope fields differ from the schema.');
+        phase2AssertSame($v6['$defs']['technology_metric']['required'], array_keys($metric), 'V6 technology fields differ from the schema.');
+        phase2AssertSame(['mapped', 'owner_mapped', 'unmapped'], array_column($metric['mappings'], 'mapping_state'), 'V6 must retain all Owner mapping states.');
+        phase2AssertSame(['v5', 'v5', 'v5'], array_column($metric['mappings'], 'taxonomy_version'), 'V6 must publish taxonomy v5 on every mapping.');
+        phase2AssertSame([1, 1, 1], [$metric['mapped_occurrence_count'], $metric['owner_mapped_occurrence_count'], $metric['unmapped_occurrence_count']], 'V6 occurrence counts are wrong.');
+        try {
+            mapEvidenceHubContractV5($core, []);
+            throw new RuntimeException('Contract v5 accepted a v5-taxonomy mapping.');
+        } catch (EvidenceHubContractMappingException) {
+            // Each contract rejects mappings from the wrong taxonomy version.
+        }
+        $core['technology_evidence_map'] = summarizeEvidenceHubTechnologies([
+            ['storage_state' => 'valid', 'reason_codes' => [], 'labels' => ['React']],
+        ], loadEvidenceHubTechnologyTaxonomy('v4'));
+        // Establish that the historical payload itself is valid before rejection by v6.
+        phase2AssertSame('evidence-hub-contract-v5', mapEvidenceHubContractV5($core, [])['contract_id'], 'The v4-taxonomy control must remain valid for contract v5.');
+        try {
+            mapEvidenceHubContractV6($core, []);
+            throw new RuntimeException('Contract v6 accepted a v4-taxonomy mapping.');
+        } catch (EvidenceHubContractMappingException) {
+            // V6 publishes only taxonomy v5, even for a label both versions know.
+        }
     }
 
     /** @return array<string, mixed> */
