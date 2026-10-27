@@ -37,6 +37,8 @@ const feedback = page => page.locator('#evidence-hub-action-feedback').textConte
         expectState(response?.status() === 200, `hub returned ${response?.status() ?? 'none'}`);
         expectState(await reviewItem(page).count() === 1, 'the seeded unknown label is not listed once with its own name');
         expectState(await reviewItem(page).locator('a[href^="/owner_projects.php?edit="]').count() >= 1, 'fix-in-project links are missing');
+        expectState(await page.locator('#progress').getByText('0 of 3 projects are public.', { exact: true }).count() === 1, 'the progress section does not show the seeded Owner project publication count');
+        expectState(!(await page.locator('#progress').textContent()).includes('Public projects appear to visitors only after the portfolio is published.'), 'publication help appeared without any public projects');
 
         mark('map');
         await reviewItem(page).locator('select[name="canonical_id"]').selectOption({ label: 'React' });
@@ -65,6 +67,7 @@ const feedback = page => page.locator('#evidence-hub-action-feedback').textConte
         const arabic = await arabicContext.newPage();
         await arabic.goto(`${baseUrl}/owner/evidence-hub#technologies`, { waitUntil: 'domcontentloaded' });
         expectState(await arabic.locator('html').getAttribute('dir') === 'rtl', 'the Arabic Owner page is not right-to-left');
+        expectState(await arabic.locator('#progress').getByText('0 من أصل 3 مشاريع منشورة للزوار.', { exact: true }).count() === 1, 'the Arabic published count or number agreement is wrong without JavaScript');
         const arabicItem = reviewItem(arabic);
         expectState(await arabicItem.getByText('اربطها بتقنية معروفة').isVisible() && await arabicItem.getByRole('button', { name: 'ربط التقنية' }).isVisible(), 'the Arabic review controls are missing without JavaScript');
         expectState(await arabicItem.locator('summary').textContent() === 'غير موجودة في القائمة؟ اقترح إضافتها', 'the Arabic proposal disclosure is missing');

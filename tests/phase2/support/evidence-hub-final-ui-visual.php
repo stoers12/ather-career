@@ -25,7 +25,7 @@ if (!in_array($scenario, ['complete', 'mixed'], true)
 }
 
 $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL); INSERT INTO portfolios VALUES (10,1)');
+$database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL DEFAULT 0); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, is_published INTEGER NOT NULL DEFAULT 0, title TEXT NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL); INSERT INTO portfolios (id,owner_user_id) VALUES (10,1)');
 $complete = [
     'problem_statement' => 'Manual weekly reporting delayed operational decisions because the team reconciled multiple sources by hand.',
     'personal_role' => 'I designed the reporting pipeline and implemented validation checks across each imported data source.',

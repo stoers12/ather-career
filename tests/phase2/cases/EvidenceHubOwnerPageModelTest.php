@@ -11,6 +11,7 @@ final class EvidenceHubOwnerPageModelTest
         self::staticContracts();
         self::fractionalEpochParsing();
         self::progressStages();
+        self::publishedProgressCounts();
         self::readinessCopy();
         self::partialVisualFacts();
         if (evidenceTextUnicodeRuntimeIsAvailable() && in_array('sqlite', PDO::getAvailableDrivers(), true)) {
@@ -94,6 +95,22 @@ final class EvidenceHubOwnerPageModelTest
             phase2AssertSame($count . ' mapped ' . ($count === 1 ? 'technology' : 'technologies'), evidenceHubOwnerCountPhrase($count, 'mapped technology', 'mapped technologies'), 'Mapped technology grammar is wrong.');
             phase2AssertSame($count . ' unmapped ' . ($count === 1 ? 'technology' : 'technologies'), evidenceHubOwnerCountPhrase($count, 'unmapped technology', 'unmapped technologies'), 'Unmapped technology grammar is wrong.');
             phase2AssertSame($count . ' ' . ($count === 1 ? 'project' : 'projects'), evidenceHubOwnerCountPhrase($count, 'project', 'projects'), 'Project grammar is wrong.');
+        }
+    }
+
+    private static function publishedProgressCounts(): void
+    {
+        phase2AssertSame(null, evidenceHubOwnerPageProgress(3, 1, [])['published_project_count'], 'Three-argument callers must retain an unknown published count.');
+        foreach ([[0, 0], [3, 0], [3, 1], [3, 3]] as [$total, $published]) {
+            phase2AssertSame($published, evidenceHubOwnerPageProgress($total, 0, [], $published)['published_project_count'], 'The supplied published count was not retained.');
+        }
+        foreach ([[0, -1], [0, 1], [3, -1], [3, 4]] as [$total, $published]) {
+            try {
+                evidenceHubOwnerPageProgress($total, 0, [], $published);
+                throw new RuntimeException('An impossible published project count was accepted.');
+            } catch (InvalidArgumentException) {
+                // Published projects must be a subset of the Owner's projects.
+            }
         }
     }
 
@@ -220,7 +237,7 @@ final class EvidenceHubOwnerPageModelTest
     private static function scopedPersistenceAndPresentation(): void
     {
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL, updated_at TEXT NULL); INSERT INTO portfolios VALUES (10,1),(20,2)');
+        $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL DEFAULT 0); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, is_published INTEGER NOT NULL DEFAULT 0, title TEXT NOT NULL, description TEXT NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL, updated_at TEXT NULL); INSERT INTO portfolios (id,owner_user_id) VALUES (10,1),(20,2)');
         $database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
         $complete = [
             'problem' => 'Manual weekly reporting affected the team because six hours of reconciliation delayed operational decisions.',
@@ -237,6 +254,7 @@ final class EvidenceHubOwnerPageModelTest
         }
         $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 10);
         $other = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(2), 20);
+        $database->exec('UPDATE projects SET is_published=1 WHERE id IN (1,9)');
         phase2AssertSame(null, findAuthorizedProjectEvidenceForEdit($database, $context, 9), 'Cross-tenant edit read was allowed.');
         phase2AssertSame(null, findAuthorizedProjectEvidenceForEdit($database, $other, 1), 'Cross-tenant edit read was allowed in reverse.');
         $record = findAuthorizedProjectEvidenceForEdit($database, $context, 1);
@@ -245,6 +263,8 @@ final class EvidenceHubOwnerPageModelTest
         $beforeEvaluation = projectEvidenceLogicalEvaluations($record['values'])['problem']['evidence_status'];
         $state = ['contract' => ['recommendations' => []]];
         $model = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state, 'page-model-synthetic-hmac');
+        phase2AssertSame(1, $model['progress']['published_project_count'], 'Owner A must count only their one published project.');
+        phase2AssertSame('not_configured', $model['progress']['portfolio_publication_state'], 'Default fixture portfolios must remain not configured.');
         phase2AssertSame([2,1], array_column($model['projects'], 'id'), 'updated_at tie-break ordering changed.');
         phase2AssertSame(1, $model['progress']['complete_project_count'], 'Complete project count is wrong.');
         phase2AssertSame('single_project', $model['progress']['stage'], 'Progress stage is wrong.');
@@ -258,6 +278,7 @@ final class EvidenceHubOwnerPageModelTest
         phase2Assert(preg_match('/^[A-Za-z0-9_-]{20,}$/', $unmapped[0]['ref']) === 1 && !str_contains($serializedRefs = json_encode(array_column($unmapped, 'ref'), JSON_THROW_ON_ERROR), hash('sha256', 'nebula tool')), 'Owner review must address a label only through an opaque reference.');
         phase2AssertSame(['mapped_technology_count' => 1, 'unmapped_technology_count' => 2, 'unmapped_project_count' => 2], $model['technologies']['overview'], 'Private technology overview did not deduplicate technologies and projects.');
         $otherModel = buildAuthorizedEvidenceHubOwnerPageModel($database, $other, $state, 'page-model-synthetic-hmac');
+        phase2AssertSame(1, $otherModel['progress']['published_project_count'], 'Owner B must count only their own published project.');
         phase2AssertSame(['mapped_technology_count' => 0, 'unmapped_technology_count' => 1, 'unmapped_project_count' => 1], $otherModel['technologies']['overview'], 'Cross-tenant technology counts leaked into another owner.');
         $serialized = json_encode($model, JSON_THROW_ON_ERROR);
         foreach (['CROSS_TENANT_TITLE','CROSS_TENANT_DESCRIPTION','PRIVATE_DESCRIPTION_MARKER','problem_statement','PrivateTech'] as $forbidden) {
@@ -295,6 +316,7 @@ final class EvidenceHubOwnerPageModelTest
         phase2Assert(str_contains($html, '1 mapped technology') && str_contains($html, '2 unmapped technologies across 2 projects'), 'Overview technology units or grammar are wrong.');
         phase2Assert(str_contains($html, 'Review &amp; edit evidence') && str_contains($html, 'href="/owner/projects/2/evidence"'), 'Permanent project Evidence editor action is missing.');
         phase2Assert(!str_contains($html, 'FIELD_NOT_AVAILABLE') && !str_contains($html, 'problem_statement'), 'Raw evidence internals leaked to markup.');
+        self::publishedProgressRendering($contract, $model);
 
         foreach ([
             [3, '2026-03-05T00:00:00Z', '2026-03-05T00:00:00Z'],
@@ -316,5 +338,64 @@ final class EvidenceHubOwnerPageModelTest
         $invalidActivityHtml = (string) ob_get_clean();
         phase2Assert(!str_contains($invalidActivityHtml, 'Complete-project activity:'), 'Invalid activity date leaked into presentation.');
         phase2Assert(str_contains($invalidActivityHtml, 'There is not enough dated, complete project evidence'), 'Insufficient history explanation is missing.');
+        self::publishedProjectStorage($database, $context, $state);
+    }
+
+    /** @param array<string, mixed> $contract @param array<string, mixed> $model */
+    private static function publishedProgressRendering(array $contract, array $model): void
+    {
+        foreach ([
+            [0, 0, 'unpublished', null, null, false],
+            [3, null, 'unpublished', null, null, false],
+            [3, 0, 'unpublished', '0 of 3 projects are public.', '0 من أصل 3 مشاريع منشورة للزوار.', false],
+            [3, 1, 'unpublished', '1 of 3 projects are public.', '1 من أصل 3 مشاريع منشورة للزوار.', true],
+            [3, 1, 'published', '1 of 3 projects are public.', '1 من أصل 3 مشاريع منشورة للزوار.', false],
+            [3, 1, 'not_configured', '1 of 3 projects are public.', '1 من أصل 3 مشاريع منشورة للزوار.', false],
+            [1, 1, 'unpublished', '1 of 1 projects are public.', '1 من أصل مشروع واحد منشورة للزوار.', true],
+            [2, 2, 'unpublished', '2 of 2 projects are public.', '2 من أصل مشروعان منشورة للزوار.', true],
+            [3, 3, 'unpublished', '3 of 3 projects are public.', '3 من أصل 3 مشاريع منشورة للزوار.', true],
+        ] as [$total, $published, $state, $english, $arabic, $showHelp]) {
+            $model['progress'] = evidenceHubOwnerPageProgress($total, 0, [], $published);
+            $model['progress']['portfolio_publication_state'] = $state;
+            foreach (['en' => $english, 'ar' => $arabic] as $locale => $expected) {
+                ob_start();
+                renderEvidenceHubOwnerPage($contract, $model, [], '', ['kind' => 'none'], $locale);
+                $html = (string) ob_get_clean();
+                phase2Assert(preg_match('/<section\b[^>]*\bid="progress".*?<\/section>/s', $html, $matches) === 1, 'The progress section is missing.');
+                $section = $matches[0];
+                if ($expected === null) {
+                    phase2Assert(!str_contains($section, 'projects are public.') && !str_contains($section, 'منشورة للزوار.'), "{$locale}: an unavailable or empty published count rendered.");
+                } else {
+                    phase2Assert(str_contains($section, '<p>' . $expected . '</p>'), "{$locale}: the published count or number agreement is wrong.");
+                    phase2AssertSame(1, substr_count($html, $expected), "{$locale}: the published count must appear only in the progress section.");
+                }
+                $help = $locale === 'ar' ? 'تظهر المشاريع العامة للزوار فقط بعد نشر البورتفوليو.' : 'Public projects appear to visitors only after the portfolio is published.';
+                phase2AssertSame($showHelp, str_contains($section, $help), "{$locale}: publication help must appear only for unpublished portfolios with public projects.");
+            }
+        }
+    }
+
+    /** @param array<string, mixed> $state */
+    private static function publishedProjectStorage(PDO $database, AuthorizedPortfolioContext $context, array $state): void
+    {
+        $update = $database->prepare('UPDATE projects SET is_published=:published WHERE id=1');
+        foreach ([-1, 2, 'invalid', 1.5] as $invalid) {
+            $update->execute(['published' => $invalid]);
+            $rejected = false;
+            try {
+                buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state, 'page-model-synthetic-hmac');
+            } catch (RuntimeException $exception) {
+                $rejected = $exception->getMessage() === 'Evidence Hub project publication storage is invalid.';
+            } finally {
+                $update->execute(['published' => 1]);
+            }
+            phase2Assert($rejected, 'Malformed project publication storage was not rejected.');
+        }
+        $database->exec("UPDATE portfolios SET public_slug='owner-a', is_published=0 WHERE id=10");
+        $model = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state, 'page-model-synthetic-hmac');
+        phase2AssertSame('unpublished', $model['progress']['portfolio_publication_state'], 'The configured unpublished state did not reach progress.');
+        phase2AssertSame(1, $model['progress']['published_project_count'], 'An unpublished portfolio must retain its project publication flags.');
+        $database->exec('UPDATE portfolios SET is_published=1 WHERE id=10');
+        phase2AssertSame('published', buildAuthorizedEvidenceHubOwnerPageModel($database, $context, $state, 'page-model-synthetic-hmac')['progress']['portfolio_publication_state'], 'The configured published state did not reach progress.');
     }
 }

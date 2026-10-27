@@ -248,6 +248,8 @@ function evidenceHubArabicCopy(): array
         'One evidence-ready project' => 'مشروع واحد جاهز بالأدلة',
         'Evidence across projects' => 'أدلة عبر عدة مشاريع',
         'Historical context available' => 'يتوفر سياق زمني',
+        '{published} of {total} projects are public.' => '{published} من أصل {total} منشورة للزوار.',
+        'Public projects appear to visitors only after the portfolio is published.' => 'تظهر المشاريع العامة للزوار فقط بعد نشر البورتفوليو.',
         'Complete projects span at least 30 full days.' => 'تمتد المشاريع المكتملة على 30 يومًا كاملًا على الأقل.',
         'There is not enough dated, complete project evidence to show historical trend context.' => 'لا توجد أدلة مشاريع مكتملة ومؤرخة بما يكفي لعرض اتجاه زمني.',
 
