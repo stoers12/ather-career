@@ -93,10 +93,8 @@ final class EvidenceHubContractTest
         phase2AssertSame($v5, $restored, 'V6 may differ from v5 only in the four identity fields.');
         self::closed($v6, 'v6');
 
-        phase2AssertSame('v6', EVIDENCE_HUB_OWNER_CONTRACT_VERSION, 'The live Owner contract must be v6.');
-        phase2AssertSame(['schema_version' => '6.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true], evidenceHubContractVersionDefinition(EVIDENCE_HUB_OWNER_CONTRACT_VERSION), 'The live contract definition is wrong.');
-        $taxonomy = loadEvidenceHubOwnerTaxonomy();
-        phase2AssertSame('v5', $taxonomy['taxonomy_version'], 'The live Owner taxonomy must follow contract v6.');
+        $taxonomy = loadEvidenceHubTechnologyTaxonomy('v5');
+        phase2AssertSame('v5', $taxonomy['taxonomy_version'], 'Contract v6 must publish taxonomy v5.');
         $projects = [[
             'project_ref' => 1, 'recorded_at_epoch_seconds' => 1767225600,
             'technology_storage_state' => 'valid', 'technology_storage_reason_codes' => [],
@@ -107,9 +105,8 @@ final class EvidenceHubContractTest
             'expected_evidence_fields' => 3, 'complete_evidence_fields' => 3, 'project_has_complete_evidence' => true,
         ]];
         $core = buildEvidenceHubOwnerCoreFromEvaluatedProjects($projects, 'published', [evidenceHubTechnologyLabelDigest('vue 3') => 'tech.vue']);
-        $contract = mapEvidenceHubOwnerContract($core, []);
-        phase2AssertSame($contract, mapEvidenceHubContractV6($core, []), 'The live mapper must use v6.');
-        phase2AssertSame(['evidence-hub-contract-v6', '6.0.0'], [$contract['contract_id'], $contract['schema_version']], 'The live Owner contract identity is wrong.');
+        $contract = mapEvidenceHubContractV6($core, []);
+        phase2AssertSame(['evidence-hub-contract-v6', '6.0.0'], [$contract['contract_id'], $contract['schema_version']], 'The historical v6 contract identity is wrong.');
         $metric = $contract['metrics']['technology_evidence_map'];
         phase2AssertSame($v6['required'], array_keys($contract), 'V6 envelope fields differ from the schema.');
         phase2AssertSame($v6['$defs']['technology_metric']['required'], array_keys($metric), 'V6 technology fields differ from the schema.');

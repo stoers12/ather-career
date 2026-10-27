@@ -77,6 +77,24 @@ function evidenceHubProjectRecordedAtEpochSeconds(mixed $value): ?int
     return (int) $seconds;
 }
 
+function loadAuthorizedEvidenceHubPublishedProjectCount(PDO $database, AuthorizedPortfolioContext $context): int
+{
+    $statement = $database->prepare(
+        'SELECT COUNT(*)
+         FROM projects
+         JOIN portfolios ON portfolios.id = projects.portfolio_id
+         WHERE projects.portfolio_id = :authorized_portfolio_id
+           AND portfolios.owner_user_id = :authorized_user_id
+           AND projects.is_published = 1'
+    );
+    $statement->execute([
+        'authorized_portfolio_id' => $context->portfolioId,
+        'authorized_user_id' => $context->userId,
+    ]);
+
+    return (int) $statement->fetchColumn();
+}
+
 function loadAuthorizedEvidenceHubPublicationState(PDO $database, AuthorizedPortfolioContext $context): string
 {
     $statement = $database->prepare(

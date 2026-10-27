@@ -11,6 +11,7 @@ final class EvidenceHubAggregationTest
         requireEvidenceTextUnicodeRuntime();
         $fixtures = self::fixtures();
         self::documentationAndMaturity($fixtures);
+        self::halfUpBasisPoints();
         self::progress($fixtures);
         self::progressStage();
         self::technologyStorageAndSummary($fixtures);
@@ -92,6 +93,21 @@ final class EvidenceHubAggregationTest
                 continue;
             }
             phase2AssertSame(($fixture['project_count'] ?? 0) * 3, $fixture['expected_fields'] ?? null, "{$fixture['id']} must retain three expected fields per project.");
+        }
+    }
+
+    private static function halfUpBasisPoints(): void
+    {
+        foreach ([[0, 3, 0], [1, 3, 3333], [2, 3, 6667], [27, 30, 9000], [1, 32, 313], [3, 3, 10000]] as [$numerator, $denominator, $expected]) {
+            phase2AssertSame($expected, evidenceHubHalfUpBasisPoints($numerator, $denominator), 'Shared half-up rounding changed.');
+        }
+        foreach ([[0, 0], [1, 0], [0, -1], [-1, 3], [4, 3]] as [$numerator, $denominator]) {
+            try {
+                evidenceHubHalfUpBasisPoints($numerator, $denominator);
+                throw new RuntimeException('Invalid basis-point inputs were accepted.');
+            } catch (InvalidArgumentException) {
+                // A ratio needs a positive denominator and a bounded numerator.
+            }
         }
     }
 
@@ -455,7 +471,7 @@ final class EvidenceHubAggregationTest
     private static function ownerScopeIntegration(): void
     {
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL);');
+        $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, is_published INTEGER NOT NULL DEFAULT 0, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL);');
         $database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
         $database->exec("INSERT INTO portfolios (id, owner_user_id, public_slug, is_published) VALUES (10, 1, 'owner-a', 1), (20, 2, 'owner-b', 0);");
         $database->prepare('INSERT INTO projects (id, portfolio_id, problem_statement, personal_role, measurable_outcome, technologies, created_at) VALUES (100, 10, :problem, :role, :outcome, :technologies, :created_at)')->execute(['problem' => self::completeText('problem_statement'), 'role' => self::completeText('personal_role'), 'outcome' => self::completeText('measurable_outcome'), 'technologies' => '["JS", "jQuery"]', 'created_at' => '2026-01-01T00:00:00Z']);

@@ -5,9 +5,38 @@ declare(strict_types=1);
 require_once __DIR__ . '/evidence_text_evaluator.php';
 
 const EVIDENCE_HUB_CONTRACT_VERSION = '1.0.0';
+const EVIDENCE_HUB_RECOMMENDED_OBSERVATIONS = 3;
 
 final class EvidenceHubAggregationInvariantException extends RuntimeException
 {
+}
+
+function evidenceHubHalfUpBasisPoints(int $numerator, int $denominator): int
+{
+    if ($denominator <= 0 || $numerator < 0 || $numerator > $denominator) {
+        throw new InvalidArgumentException('Evidence Hub basis-point inputs are invalid.');
+    }
+
+    return intdiv($numerator * 10000 + intdiv($denominator, 2), $denominator);
+}
+
+/** @return array{observations: int, recommended_observations: int, basis_codes: list<string>} */
+function evidenceHubConfidenceDetail(int $projectCount, ?int $coverageBps): array
+{
+    $codes = [];
+    if ($projectCount === 0) {
+        $codes[] = 'NO_PROJECTS';
+    } elseif ($projectCount === 1) {
+        $codes[] = 'SINGLE_PROJECT';
+    } elseif ($projectCount < EVIDENCE_HUB_RECOMMENDED_OBSERVATIONS) {
+        $codes[] = 'BELOW_RECOMMENDED_OBSERVATIONS';
+    }
+    if ($projectCount > 0 && $coverageBps < 10000) {
+        $codes[] = 'EVIDENCE_INCOMPLETE';
+    }
+    sort($codes, SORT_STRING);
+
+    return ['observations' => $projectCount, 'recommended_observations' => EVIDENCE_HUB_RECOMMENDED_OBSERVATIONS, 'basis_codes' => $codes];
 }
 
 function evidenceHubProgressStage(int $projectCount, int $completeProjectCount, bool $trendReady): string
@@ -122,7 +151,7 @@ function validateEvidenceHubProjectDocumentationFacts(array $project): array
 }
 
 /** @param list<array<string, mixed>> $projects
- * @return array{status: string, version: string, project_count: int, expected_evidence_field_count: int, complete_evidence_field_count: int, projects_with_complete_evidence: int, coverage_bps: int|null, evidence_confidence: string, reason_codes: list<string>}
+ * @return array{status: string, version: string, project_count: int, expected_evidence_field_count: int, complete_evidence_field_count: int, projects_with_complete_evidence: int, coverage_bps: int|null, evidence_confidence: string, evidence_confidence_detail: array{observations: int, recommended_observations: int, basis_codes: list<string>}, reason_codes: list<string>}
  */
 function aggregateEvidenceHubDocumentationCoverage(array $projects): array
 {
@@ -140,6 +169,7 @@ function aggregateEvidenceHubDocumentationCoverage(array $projects): array
             'projects_with_complete_evidence' => 0,
             'coverage_bps' => null,
             'evidence_confidence' => 'unavailable',
+            'evidence_confidence_detail' => evidenceHubConfidenceDetail(0, null),
             'reason_codes' => ['NO_PROJECTS'],
         ];
     }
@@ -164,7 +194,7 @@ function aggregateEvidenceHubDocumentationCoverage(array $projects): array
     if ($expected !== $projectCount * 3 || $complete < 0 || $complete > $expected) {
         throw new EvidenceHubAggregationInvariantException('Evidence Hub coverage totals are invalid.');
     }
-    $coverage = intdiv($complete * 10000 + intdiv($expected, 2), $expected);
+    $coverage = evidenceHubHalfUpBasisPoints($complete, $expected);
     if ($coverage < 0 || $coverage > 10000) {
         throw new EvidenceHubAggregationInvariantException('Evidence Hub coverage basis points are invalid.');
     }
@@ -179,6 +209,7 @@ function aggregateEvidenceHubDocumentationCoverage(array $projects): array
         'projects_with_complete_evidence' => $completeProjects,
         'coverage_bps' => $coverage,
         'evidence_confidence' => $coverage === 10000 ? 'high' : 'low',
+        'evidence_confidence_detail' => evidenceHubConfidenceDetail($projectCount, $coverage),
         'reason_codes' => array_keys($reasonCodes),
     ];
 }
@@ -205,9 +236,9 @@ function evidenceHubMaturityState(array $projects): string
 }
 
 /** @param list<array<string, mixed>> $projects
- * @return array{status: string, version: string, project_count: int, projects_with_complete_evidence: int, first_project_recorded_at: string|null, latest_project_recorded_at: string|null, recorded_activity_span_days: int|null, portfolio_publication_state: string, trend_status: string, trend_direction: null, reason_codes: list<string>}
+ * @return array{status: string, version: string, project_count: int, projects_with_complete_evidence: int, stage: string, published_project_count: int|null, first_project_recorded_at: string|null, latest_project_recorded_at: string|null, recorded_activity_span_days: int|null, portfolio_publication_state: string, trend_status: string, trend_direction: null, reason_codes: list<string>}
  */
-function summarizeEvidenceHubPortfolioProgress(array $projects, string $publicationState): array
+function summarizeEvidenceHubPortfolioProgress(array $projects, string $publicationState, ?int $publishedProjectCount = null): array
 {
     if (!in_array($publicationState, ['published', 'unpublished', 'not_configured'], true)) {
         throw new InvalidArgumentException('Evidence Hub publication state is invalid.');
@@ -215,12 +246,17 @@ function summarizeEvidenceHubPortfolioProgress(array $projects, string $publicat
     if (!array_is_list($projects)) {
         throw new EvidenceHubAggregationInvariantException('Evidence Hub project facts must be a list.');
     }
+    if ($publishedProjectCount !== null && ($publishedProjectCount < 0 || $publishedProjectCount > count($projects))) {
+        throw new InvalidArgumentException('Evidence Hub published project count is invalid.');
+    }
     if ($projects === []) {
         return [
             'status' => 'unavailable',
             'version' => EVIDENCE_HUB_CONTRACT_VERSION,
             'project_count' => 0,
             'projects_with_complete_evidence' => 0,
+            'stage' => evidenceHubProgressStage(0, 0, false),
+            'published_project_count' => $publishedProjectCount,
             'first_project_recorded_at' => null,
             'latest_project_recorded_at' => null,
             'recorded_activity_span_days' => null,
@@ -259,6 +295,8 @@ function summarizeEvidenceHubPortfolioProgress(array $projects, string $publicat
         'version' => EVIDENCE_HUB_CONTRACT_VERSION,
         'project_count' => count($projects),
         'projects_with_complete_evidence' => $completeProjects,
+        'stage' => evidenceHubProgressStage(count($projects), $completeProjects, false),
+        'published_project_count' => $publishedProjectCount,
         'first_project_recorded_at' => evidenceHubUtcTimestamp($firstEpoch),
         'latest_project_recorded_at' => evidenceHubUtcTimestamp($latestEpoch),
         'recorded_activity_span_days' => evidenceHubRecordedActivitySpanDays($firstEpoch, $latestEpoch),
