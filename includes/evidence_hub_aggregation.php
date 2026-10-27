@@ -10,6 +10,21 @@ final class EvidenceHubAggregationInvariantException extends RuntimeException
 {
 }
 
+function evidenceHubProgressStage(int $projectCount, int $completeProjectCount, bool $trendReady): string
+{
+    if ($projectCount < 0 || $completeProjectCount < 0 || $completeProjectCount > $projectCount) {
+        throw new InvalidArgumentException('Evidence Hub progress project counts are invalid.');
+    }
+
+    return match (true) {
+        $projectCount === 0 => 'no_projects',
+        $completeProjectCount === 0 => 'incomplete_first_project',
+        $completeProjectCount === 1 => 'single_project',
+        $trendReady => 'trend_ready',
+        default => 'emerging_patterns',
+    };
+}
+
 /**
  * @param array{project_ref: int, problem_statement: mixed, personal_role: mixed, measurable_outcome: mixed, recorded_at_epoch_seconds: int, technology_storage_state: string, technology_storage_reason_codes: list<string>, technologies: list<string>} $project
  * @return array<string, mixed>

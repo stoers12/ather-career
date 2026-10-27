@@ -12,6 +12,7 @@ final class EvidenceHubAggregationTest
         $fixtures = self::fixtures();
         self::documentationAndMaturity($fixtures);
         self::progress($fixtures);
+        self::progressStage();
         self::technologyStorageAndSummary($fixtures);
         self::taxonomyAndMapping();
         self::taxonomyV2();
@@ -126,6 +127,32 @@ final class EvidenceHubAggregationTest
         self::assertInvariant(static fn (): array => summarizeEvidenceHubPortfolioProgress(['project_a' => self::projectDocumentation(0)], 'unpublished'), 'Associative project facts influenced progress.');
         self::assertInvariant(static function (): array { $project = self::projectDocumentation(0); $project['recorded_at_epoch_seconds'] = -1; return summarizeEvidenceHubPortfolioProgress([$project], 'unpublished'); }, 'Negative project instant was accepted.');
         self::assertInvariant(static function (): array { $project = self::projectDocumentation(0); $project['recorded_at_epoch_seconds'] = '1767225600'; return summarizeEvidenceHubPortfolioProgress([$project], 'unpublished'); }, 'String project instant was accepted.');
+    }
+
+    private static function progressStage(): void
+    {
+        foreach ([
+            [0, 0, 'no_projects', 'no_projects'],
+            [1, 0, 'incomplete_first_project', 'incomplete_first_project'],
+            [1, 1, 'single_project', 'single_project'],
+            [3, 0, 'incomplete_first_project', 'incomplete_first_project'],
+            [3, 1, 'single_project', 'single_project'],
+            [3, 2, 'emerging_patterns', 'trend_ready'],
+            [3, 3, 'emerging_patterns', 'trend_ready'],
+        ] as [$projects, $complete, $withoutTrend, $withTrend]) {
+            phase2AssertSame($withoutTrend, evidenceHubProgressStage($projects, $complete, false), "Stage without trend readiness is wrong for {$complete}/{$projects}.");
+            phase2AssertSame($withTrend, evidenceHubProgressStage($projects, $complete, true), "Stage with trend readiness is wrong for {$complete}/{$projects}.");
+        }
+        foreach ([[-1, 0], [0, -1], [-1, -1], [0, 1], [1, 2], [3, 4]] as [$projects, $complete]) {
+            foreach ([false, true] as $trendReady) {
+                try {
+                    evidenceHubProgressStage($projects, $complete, $trendReady);
+                    throw new RuntimeException('The progress stage accepted invalid counts.');
+                } catch (InvalidArgumentException) {
+                    // Counts must describe a possible collection of projects.
+                }
+            }
+        }
     }
 
     /** @param array<string, mixed> $fixtures */

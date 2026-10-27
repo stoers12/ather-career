@@ -127,6 +127,8 @@ Taxonomy v5 retains the 38 v4 entries first and unchanged, then adds 40 common t
 
 ## Portfolio Progress
 
+The Owner page shows how many projects are public (`projects.is_published`). The five stages are computed by the pure `evidenceHubProgressStage()`.
+
 Portfolio Progress exposes Owner-only facts: project count, projects with complete evidence, first/latest project timestamps, recorded activity span, and Portfolio publication state. Project time is an absolute instant: the repository supplies a Unix epoch derived from the production MySQL `TIMESTAMP` using `UNIX_TIMESTAMP`, never a timezone-less string relabeled as UTC. Output timestamps are canonical UTC `Z` values. `recorded_activity_span_days` is `floor((latest_epoch_seconds - first_epoch_seconds) / 86400)`: it is elapsed complete 24-hour periods, not UTC-calendar date difference. Same instant and a cross-midnight interval under 24 hours are 0; exactly 24 hours is 1; 47:59:59 is 1; exactly 48 hours is 2. Invalid/ambiguous instants fail closed. It always reports `trend_status: not_available`, `trend_direction: null`, and `HISTORY_NOT_TRACKED`; project creation dates never prove professional improvement or a trend.
 
 ## Recommendations

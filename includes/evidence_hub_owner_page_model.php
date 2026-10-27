@@ -38,7 +38,7 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
     };
     $statement = $database->prepare(
         'SELECT projects.id, projects.title, projects.problem_statement, projects.personal_role,
-                projects.measurable_outcome, projects.technologies, projects.updated_at AS updated_storage,
+                projects.measurable_outcome, projects.technologies, projects.is_published, projects.updated_at AS updated_storage,
                 ' . $epoch('created_at') . ' AS created_epoch,
                 ' . $epoch('updated_at') . ' AS updated_epoch
          FROM projects
@@ -55,11 +55,18 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
     $technologyFacts = [];
     $reviewProjects = [];
     $activity = [];
+    $publishedProjectCount = 0;
     foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $record) {
         $id = authorizationPositiveInteger($record['id'] ?? null);
         $title = $record['title'] ?? null;
         if ($id === null || !is_string($title)) {
             throw new RuntimeException('Evidence Hub project presentation facts are invalid.');
+        }
+        if (!in_array($record['is_published'] ?? null, [0, 1, '0', '1'], true)) {
+            throw new RuntimeException('Evidence Hub project publication storage is invalid.');
+        }
+        if ((int) $record['is_published'] === 1) {
+            ++$publishedProjectCount;
         }
         $created = evidenceHubProjectRecordedAtEpochSeconds($record['created_epoch'] ?? null);
         $updated = evidenceHubProjectRecordedAtEpochSeconds($record['updated_epoch'] ?? null);
@@ -123,9 +130,10 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
             $taxonomy,
             static fn (string $digest): string => evidenceHubTechnologyReviewRef($opaqueTargetHmacMaterial, $context, $digest),
         ),
-        'progress' => evidenceHubOwnerPageProgress(count($projects), count(array_filter($projects, static fn (array $project): bool => $project['complete_count'] === 3)), $activity),
+        'progress' => evidenceHubOwnerPageProgress(count($projects), count(array_filter($projects, static fn (array $project): bool => $project['complete_count'] === 3)), $activity, $publishedProjectCount),
         'recommendations' => [],
     ];
+    $model['progress']['portfolio_publication_state'] = loadAuthorizedEvidenceHubPublicationState($database, $context);
     foreach ($recommendationState['contract']['recommendations'] as $recommendation) {
         $resolved = resolveAuthorizedEvidenceHubOwnerRecommendation($recommendationState, $recommendation['recommendation_key']);
         if ($resolved === null) {
@@ -317,20 +325,17 @@ function evidenceHubOwnerPageTechnologyReview(array $items, array $proposals, ar
 }
 
 /** @param list<int> $completeActivity @return array<string, mixed> */
-function evidenceHubOwnerPageProgress(int $projectCount, int $completeCount, array $completeActivity): array
+function evidenceHubOwnerPageProgress(int $projectCount, int $completeCount, array $completeActivity, ?int $publishedProjectCount = null): array
 {
+    if ($publishedProjectCount !== null && ($publishedProjectCount < 0 || $publishedProjectCount > $projectCount)) {
+        throw new InvalidArgumentException('Evidence Hub published project count is invalid.');
+    }
     sort($completeActivity, SORT_NUMERIC);
     $first = $completeActivity[0] ?? null;
     $latest = $completeActivity === [] ? null : $completeActivity[count($completeActivity) - 1];
     $trendReady = $completeCount >= 3 && count($completeActivity) >= 3
         && $first !== null && $latest !== null && $latest - $first >= 30 * 24 * 60 * 60;
-    $stage = match (true) {
-        $projectCount === 0 => 'no_projects',
-        $completeCount === 0 => 'incomplete_first_project',
-        $completeCount === 1 => 'single_project',
-        $trendReady => 'trend_ready',
-        default => 'emerging_patterns',
-    };
+    $stage = evidenceHubProgressStage($projectCount, $completeCount, $trendReady);
     $labels = [
         'no_projects' => 'Start with a project',
         'incomplete_first_project' => 'Complete your first evidence-ready project',
@@ -343,7 +348,7 @@ function evidenceHubOwnerPageProgress(int $projectCount, int $completeCount, arr
         'label' => $labels[$stage],
         'project_count' => $projectCount,
         'complete_project_count' => $completeCount,
-        'published_project_count' => null,
+        'published_project_count' => $publishedProjectCount,
         'first_activity_at' => $first === null ? null : gmdate('Y-m-d', $first),
         'latest_activity_at' => $latest === null ? null : gmdate('Y-m-d', $latest),
         'trend_status' => $trendReady ? 'available' : ($projectCount === 0 ? 'not_available' : 'insufficient_history'),

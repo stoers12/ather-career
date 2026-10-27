@@ -80,7 +80,14 @@ function renderEvidenceHubOwnerPage(array $contract, array $model, array $action
         <?php renderEvidenceHubOwnerTechnologyReview($model['technology_review'], $locale, $technologyForm); ?>
     </section>
 
-    <section class="evidence-hub-section evidence-hub-progress" id="progress" aria-labelledby="evidence-hub-progress-title"><div class="evidence-hub-section-heading"><div><p><?php echo $e('Progress'); ?></p><h2 id="evidence-hub-progress-title"><?php echo $e('Portfolio progress'); ?></h2></div></div><article class="evidence-hub-progress-card"><strong><?php echo $e($progress['label']); ?></strong><p><?php echo $e('{complete} of {total} eligible projects have all three evidence fields complete.', ['{complete}' => (int) $progress['complete_project_count'], '{total}' => (int) $progress['project_count']]); ?></p><?php if ($activityText !== null): ?><p><?php echo $e('Complete-project activity: {range}.', ['{range}' => $activityText]); ?></p><?php endif; ?><p><?php echo $e($progress['history_explanation']); ?></p></article></section>
+    <section class="evidence-hub-section evidence-hub-progress" id="progress" aria-labelledby="evidence-hub-progress-title"><div class="evidence-hub-section-heading"><div><p><?php echo $e('Progress'); ?></p><h2 id="evidence-hub-progress-title"><?php echo $e('Portfolio progress'); ?></h2></div></div><article class="evidence-hub-progress-card"><strong><?php echo $e($progress['label']); ?></strong>
+        <?php if ($progress['published_project_count'] !== null && $progress['project_count'] > 0): ?>
+            <p><?php echo $e('Public projects: {published} of {total}.', ['{published}' => (int) $progress['published_project_count'], '{total}' => (int) $progress['project_count']]); ?></p>
+            <?php if ($progress['published_project_count'] > 0 && in_array($progress['portfolio_publication_state'] ?? null, ['unpublished', 'not_configured'], true)): ?>
+                <p><?php echo $e('Public projects appear to visitors only after the portfolio is published.'); ?></p>
+            <?php endif; ?>
+        <?php endif; ?>
+        <p><?php echo $e('{complete} of {total} eligible projects have all three evidence fields complete.', ['{complete}' => (int) $progress['complete_project_count'], '{total}' => (int) $progress['project_count']]); ?></p><?php if ($activityText !== null): ?><p><?php echo $e('Complete-project activity: {range}.', ['{range}' => $activityText]); ?></p><?php endif; ?><p><?php echo $e($progress['history_explanation']); ?></p></article></section>
 </div>
     <?php
 }
