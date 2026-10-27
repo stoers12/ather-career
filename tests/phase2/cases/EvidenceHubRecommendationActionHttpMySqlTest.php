@@ -52,6 +52,7 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
         $test->wrongContextRejection();
         $test->crossTenantDenial();
         $test->contextualDisclosure();
+        $test->skillEvidenceLifecycle();
         fwrite(STDOUT, "HTTP_POSITIVE_ASSERTIONS={$test->positiveAssertions}\n");
         fwrite(STDOUT, "HTTP_NEGATIVE_ASSERTIONS={$test->negativeAssertions}\n");
         fwrite(STDOUT, "HTTP_DISCLOSURE_ASSERTIONS={$test->disclosureAssertions}\n");
@@ -320,6 +321,106 @@ final class EvidenceHubRecommendationActionHttpMySqlTest
         }
         $this->disclosureAssertions += count($forms) + count($this->privateMarkers) + 6;
         $this->pass('contextual disclosure');
+    }
+
+    private function skillEvidenceLifecycle(): void
+    {
+        $contextA = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser($this->fixture['user_a']), $this->fixture['portfolio_a']);
+        $snapshot = $this->database->prepare('SELECT recommendation_key, rule_version, evidence_fingerprint, disposition, snoozed_until FROM recommendation_dispositions WHERE portfolio_id = :portfolio_id');
+        $snapshot->execute(['portfolio_id' => $contextA->portfolioId]);
+        $prior = $snapshot->fetchAll(PDO::FETCH_ASSOC);
+        $skillId = null;
+        $localeJars = [];
+        try {
+            // Locale switches must not alter the native jars used by later HTTP gates.
+            foreach (['a', 'b'] as $owner) {
+                $jar = tempnam(sys_get_temp_dir(), 'evidence-hub-skill-locale-');
+                if ($jar === false) throw new RuntimeException('Skill HTTP cookie jar is unavailable.');
+                $localeJars[$owner] = $jar;
+                if (!copy($this->ownerJar($owner), $jar)) throw new RuntimeException('Skill HTTP cookie jar could not be initialized.');
+            }
+            $ownerA = $localeJars['a'];
+            $ownerB = $localeJars['b'];
+            $initial = buildConfiguredAuthorizedEvidenceHubOwnerRecommendationState($this->database, $contextA, time());
+            foreach ($initial['current_candidates'] as $candidate) {
+                storeAuthorizedEvidenceHubRecommendationDisposition($this->database, $contextA, $candidate, 'dismissed', time());
+            }
+            $insert = $this->database->prepare('INSERT INTO skills (portfolio_id, skill_name) VALUES (:portfolio_id, :skill_name)');
+            $insert->execute(['portfolio_id' => $contextA->portfolioId, 'skill_name' => 'React.js']);
+            $skillId = (int) $this->database->lastInsertId();
+            $state = buildConfiguredAuthorizedEvidenceHubOwnerRecommendationState($this->database, $contextA, time());
+            $skills = array_values(array_filter($state['contract']['recommendations'], static fn (array $candidate): bool => $candidate['rule_id'] === 'add_skill_evidence'));
+            self::assertSame(1, count($skills), 'the synthetic skill candidate is not visible');
+            $candidate = $skills[0];
+            $english = $this->request('GET', self::ROUTE . '?lang=en', [], $ownerA);
+            $this->assertPrivate($english, 200);
+            self::assert(str_contains($english['body'], '<bdi dir="auto">React</bdi>') && str_contains($english['body'], 'href="/owner_projects.php?add=1"') && str_contains($english['body'], 'href="/owner_profile.php#skills">Review skills</a>'), 'the English skill card is incomplete');
+            self::assert(!str_contains($english['body'], 'React.js'), 'the page rendered a raw skill label');
+            $arabic = $this->request('GET', self::ROUTE . '?lang=ar', [], $ownerA);
+            $this->assertPrivate($arabic, 200);
+            self::assert(str_contains($arabic['body'], 'أثبت مهارة بمشروع') && str_contains($arabic['body'], '<bdi dir="auto">React</bdi>') && str_contains($arabic['body'], 'راجع المهارات'), 'the Arabic skill card is incomplete');
+            $english = $this->request('GET', self::ROUTE . '?lang=en', [], $ownerA);
+            $formA = $this->skillForm($english['body'], 'snooze');
+            $foreignPage = $this->request('GET', self::ROUTE . '?lang=en', [], $ownerB);
+            $this->assertPrivate($foreignPage, 200);
+            self::assert(!str_contains($foreignPage['body'], 'Show evidence for a skill'), 'Owner A skill appeared for Owner B');
+            foreach ([$candidate['target']['opaque_target_ref'], $candidate['recommendation_key'], $candidate['evidence_fingerprint']] as $private) {
+                self::assert(!str_contains($english['body'], $private) && !str_contains($foreignPage['body'], $private), 'a private skill recommendation identity was disclosed');
+            }
+            $foreignFields = $formA;
+            $foreignFields['csrf_token'] = $this->form($foreignPage['body'], 'snooze')['fields']['csrf_token'];
+            $beforeA = $this->tenantRowCount('a');
+            $beforeB = $this->tenantRowCount('b');
+            $this->assertRejection($this->request('POST', self::ROUTE, $foreignFields, $ownerB), 409);
+            self::assertSame($beforeA, $this->tenantRowCount('a'), 'foreign skill action changed Owner A');
+            self::assertSame($beforeB, $this->tenantRowCount('b'), 'foreign skill action changed Owner B');
+            $this->assertPrg($this->request('POST', self::ROUTE, $formA, $ownerA));
+            self::assertSame('snoozed', $this->row($candidate)['disposition'], 'skill snooze was not stored');
+            $reevaluated = buildConfiguredAuthorizedEvidenceHubOwnerRecommendationState($this->database, $contextA, time());
+            $current = array_values(array_filter($reevaluated['current_candidates'], static fn (array $item): bool => $item['rule_id'] === 'add_skill_evidence'));
+            self::assertSame($candidate['evidence_fingerprint'], $current[0]['evidence_fingerprint'] ?? null, 'skill fingerprint changed on reevaluation');
+            self::assert(!in_array('add_skill_evidence', array_column($reevaluated['contract']['recommendations'], 'rule_id'), true), 'skill snooze was not respected');
+            $reset = $this->database->prepare('DELETE FROM recommendation_dispositions WHERE portfolio_id=:portfolio_id AND recommendation_key=:recommendation_key');
+            $reset->execute(['portfolio_id' => $contextA->portfolioId, 'recommendation_key' => $candidate['recommendation_key']]);
+            $dismiss = $this->skillForm($this->request('GET', self::ROUTE . '?lang=en', [], $ownerA)['body'], 'dismiss');
+            $this->assertPrg($this->request('POST', self::ROUTE, $dismiss, $ownerA));
+            self::assertSame('dismissed', $this->row($candidate)['disposition'], 'skill dismissal was not stored');
+            $reevaluated = buildConfiguredAuthorizedEvidenceHubOwnerRecommendationState($this->database, $contextA, time());
+            $current = array_values(array_filter($reevaluated['current_candidates'], static fn (array $item): bool => $item['rule_id'] === 'add_skill_evidence'));
+            self::assertSame($candidate['evidence_fingerprint'], $current[0]['evidence_fingerprint'] ?? null, 'dismissed skill fingerprint changed on reevaluation');
+            self::assert(!in_array('add_skill_evidence', array_column($reevaluated['contract']['recommendations'], 'rule_id'), true), 'skill dismissal was not respected');
+            $this->pass('skill evidence HTTP lifecycle, translation, and tenant isolation');
+        } finally {
+            foreach ($localeJars as $jar) @unlink($jar);
+            if ($skillId !== null) {
+                $deleteSkill = $this->database->prepare('DELETE FROM skills WHERE id=:id AND portfolio_id=:portfolio_id');
+                $deleteSkill->execute(['id' => $skillId, 'portfolio_id' => $contextA->portfolioId]);
+            }
+            $clear = $this->database->prepare('DELETE FROM recommendation_dispositions WHERE portfolio_id=:portfolio_id');
+            $clear->execute(['portfolio_id' => $contextA->portfolioId]);
+            $restore = $this->database->prepare('INSERT INTO recommendation_dispositions (portfolio_id,recommendation_key,rule_version,evidence_fingerprint,disposition,snoozed_until) VALUES (:portfolio_id,:recommendation_key,:rule_version,:evidence_fingerprint,:disposition,:snoozed_until)');
+            foreach ($prior as $record) {
+                $restore->execute(['portfolio_id' => $contextA->portfolioId] + $record);
+            }
+        }
+    }
+
+    /** @return array{csrf_token:string,action:string,action_token:string} */
+    private function skillForm(string $html, string $action): array
+    {
+        $document = new DOMDocument();
+        $previous = libxml_use_internal_errors(true);
+        try { $document->loadHTML($html, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING); } finally { libxml_clear_errors(); libxml_use_internal_errors($previous); }
+        $xpath = new DOMXPath($document);
+        $form = $xpath->query('//article[contains(@class,"evidence-hub-recommendation-card")][.//h3[normalize-space()="Show evidence for a skill"]]//form[input[@name="action" and @value="' . $action . '"]]')->item(0);
+        if (!$form instanceof DOMElement) throw new RuntimeException('skill action form is unavailable');
+        $fields = [];
+        foreach ($xpath->query('.//input[@type="hidden"]', $form) ?: [] as $input) {
+            $name = $input->getAttribute('name');
+            if (in_array($name, ['csrf_token', 'action', 'action_token'], true)) $fields[$name] = $input->getAttribute('value');
+        }
+        if (array_keys($fields) !== ['csrf_token', 'action', 'action_token']) throw new RuntimeException('skill action form is invalid');
+        return $fields;
     }
 
     /** @return array{status:int,headers:array<string,string>,body:string} */

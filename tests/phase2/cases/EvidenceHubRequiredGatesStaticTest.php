@@ -16,6 +16,8 @@ final class EvidenceHubRequiredGatesStaticTest
         $bootstrap = self::read('tests/phase2/support/evidence-hub-web-session-bootstrap.php');
         $httpMatrix = self::read('tests/phase2/cases/EvidenceHubRecommendationActionHttpMySqlTest.php');
         $httpRunner = self::read('scripts/run-evidence-hub-http-action-test.php');
+        $mysqlMatrix = self::read('tests/phase2/cases/EvidenceHubRecommendationDispositionMySqlTest.php');
+        $phase2Runner = self::read('scripts/run-phase2-tests.php');
 
         phase2Assert(
             str_contains($compose, 'EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY: ${EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY:?EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY is required}'),
@@ -41,6 +43,11 @@ final class EvidenceHubRequiredGatesStaticTest
             'EvidenceHubRecommendationActionHttpMySqlTest',
             'EvidenceHubRecommendationDispositionMySqlTest',
             'EvidenceHubTimestampMySqlTest',
+            'EvidenceHubSkillEvidenceTest',
+            'EvidenceHubContractV8Test',
+            'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle',
+            'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle',
+            'tests/phase2/support/evidence-hub-skill-evidence-visual.cjs',
             'tests/phase2/support/evidence-hub-owner-visual.cjs',
             'tests/phase2/support/evidence-hub-owner-actions-visual.cjs',
             'tests/phase2/support/evidence-hub-editor-writing-visual.cjs',
@@ -75,6 +82,7 @@ final class EvidenceHubRequiredGatesStaticTest
             'Synthetic legacy owners must have a guarded exact-database cutover after seeding and before Apache starts, without changing session authentication.');
         phase2Assert(str_contains($bootstrap, "PHP_SAPI === 'cli'") && str_contains($bootstrap, '$_SERVER[\'REQUEST_METHOD\'] !== \'POST\'') && str_contains($bootstrap, 'hash_equals') && str_contains($bootstrap, 'fopen($marker, \'x\')') && str_contains($bootstrap, 'establishVerifiedInternalUserSession') && str_contains($bootstrap, 'session_write_close') && !str_contains($bootstrap, '$_POST'), 'Web-SAPI bootstrap must be CLI-safe, POST-only, nonce-bound, atomically single-use, canonical, and request-authority-free.');
         phase2Assert(!str_contains($httpMatrix, 'session_id(') && !str_contains($httpMatrix, 'session_save_path(') && !str_contains($httpMatrix, 'Cookie:') && str_contains($httpMatrix, "'/usr/bin/curl'") && str_contains($httpMatrix, 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_') && str_contains($httpMatrix, "ownerJar('a')") && str_contains($httpMatrix, "ownerJar('b')") && str_contains($httpMatrix, 'fabricatedCookieDenial') && str_contains($httpMatrix, 'crossTenantDenial'), 'HTTP action matrix must be a two-owner native cookie-jar client with no CLI session authority.');
+        phase2Assert(str_contains($phase2Runner, 'EvidenceHubSkillEvidenceTest::class') && str_contains($phase2Runner, 'EvidenceHubContractV8Test::class') && str_contains($mysqlMatrix, 'self::skillEvidenceLifecycle(') && str_contains($httpMatrix, '$test->skillEvidenceLifecycle()') && str_contains($gate, "Invoke-Tool 'node' @((Join-Path \$Root 'tests/phase2/support/evidence-hub-skill-evidence-visual.cjs'))"), 'Every registered skill-evidence gate must execute.');
         phase2Assert(!str_contains($httpRunner, 'SESSION_HANDOFF') && str_contains($httpRunner, 'seedSyntheticOwners') && str_contains($httpRunner, "'--seed'"), 'HTTP action runner must allow identity-free seeding but never session handoff.');
         $editorPosition = strpos($gate, "'scripts/check-evidence-edit-http.php'");
         $technologyReviewPosition = strpos($gate, "'scripts/check-evidence-technology-review-http.php'");

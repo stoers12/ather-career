@@ -149,16 +149,26 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
                 }
             }
         }
-        $model['recommendations'][] = [
+        $recommendationContext = [
             'project_title' => $associated['title'] ?? null,
             'edit_url' => match (true) {
                 // Technology review now happens on this page, where it can be resolved.
                 $recommendation['rule_id'] === 'review_unmapped_technology' => '#technologies',
+                $recommendation['rule_id'] === 'add_skill_evidence' => null,
                 $associated === null => null,
                 $recommendation['rule_id'] === 'complete_project_evidence' => '/owner/projects/' . $associated['id'] . '/evidence',
                 default => $associated['edit_url'],
             },
         ];
+        if ($recommendation['rule_id'] === 'add_skill_evidence') {
+            $canonicalId = $resolved['resource_associations']['canonical_id'] ?? null;
+            $entry = is_string($canonicalId) ? evidenceHubTaxonomyEntryById($taxonomy, $canonicalId) : null;
+            if (!is_array($entry) || !is_string($entry['display_name'] ?? null)) {
+                throw new RuntimeException('Evidence Hub skill recommendation association is invalid.');
+            }
+            $recommendationContext['skill_display_name'] = $entry['display_name'];
+        }
+        $model['recommendations'][] = $recommendationContext;
     }
     return $model;
 }
