@@ -139,6 +139,7 @@ final class EvidenceHubOwnerRecommendationOrchestrationTest
         $database->exec(
             'CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL);
              CREATE TABLE personal_info (portfolio_id INTEGER PRIMARY KEY, full_name TEXT NULL);
+            CREATE TABLE skills (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, skill_name TEXT NOT NULL, created_at TEXT NOT NULL);
              CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, is_published INTEGER NOT NULL DEFAULT 0, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL);
              CREATE TABLE recommendation_dispositions (portfolio_id INTEGER NOT NULL, recommendation_key TEXT NOT NULL, rule_version TEXT NOT NULL, evidence_fingerprint TEXT NOT NULL, disposition TEXT NOT NULL CHECK (disposition IN (\'snoozed\', \'dismissed\')), snoozed_until TEXT NULL, PRIMARY KEY (portfolio_id, recommendation_key));'
         );

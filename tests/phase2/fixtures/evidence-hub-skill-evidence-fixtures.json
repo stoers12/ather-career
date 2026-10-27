@@ -1,0 +1,13 @@
+{
+  "cases": [
+    {"id": "unproven", "skills": ["React"], "project_labels": [], "storage": "none", "owner_mappings": {}, "expected_skill_candidates": 1},
+    {"id": "project-match", "skills": ["React"], "project_labels": ["React"], "storage": "valid", "owner_mappings": {}, "expected_skill_candidates": 0},
+    {"id": "project-alias", "skills": ["React"], "project_labels": ["React.js"], "storage": "valid", "owner_mappings": {}, "expected_skill_candidates": 0},
+    {"id": "project-owner-mapping", "skills": ["React"], "project_labels": ["Private React Label"], "storage": "valid", "owner_mappings": {"Private React Label": "tech.react"}, "expected_skill_candidates": 0},
+    {"id": "canonical-deduplication", "skills": ["React", "React.js"], "project_labels": [], "storage": "none", "owner_mappings": {}, "expected_skill_candidates": 1},
+    {"id": "invalid-project-storage", "skills": ["React"], "project_labels": ["React"], "storage": "invalid", "owner_mappings": {}, "expected_skill_candidates": 1},
+    {"id": "unrecognized-claim", "skills": ["Problem solving"], "project_labels": [], "storage": "none", "owner_mappings": {}, "expected_skill_candidates": 0},
+    {"id": "unnormalizable-claim", "skills": [" \t\n "], "project_labels": [], "storage": "none", "owner_mappings": {}, "expected_skill_candidates": 0},
+    {"id": "owner-mapped-claim", "skills": ["Private React Label"], "project_labels": [], "storage": "none", "owner_mappings": {"Private React Label": "tech.react"}, "expected_skill_candidates": 1}
+  ]
+}

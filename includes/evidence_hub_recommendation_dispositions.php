@@ -161,7 +161,7 @@ function evidenceHubValidateCurrentRecommendationForDisposition(array $recommend
     }
     $ruleId = $recommendation['rule_id'];
     if (!is_string($ruleId) || !in_array($ruleId, [
-        'add_first_project', 'complete_project_evidence', 'review_unmapped_technology', 'complete_portfolio_publication',
+        'add_first_project', 'complete_project_evidence', 'review_unmapped_technology', 'complete_portfolio_publication', 'add_skill_evidence',
     ], true)) {
         throw new EvidenceHubRecommendationDispositionException('Current recommendation rule is invalid.');
     }

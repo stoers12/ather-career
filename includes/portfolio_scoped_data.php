@@ -159,12 +159,14 @@ function updateAuthorizedPersonalInfo(PDO $database, AuthorizedPortfolioContext 
 function listAuthorizedSkills(PDO $database, AuthorizedPortfolioContext $context): array
 {
     $statement = $database->prepare(
-        'SELECT id, skill_name, created_at
+        'SELECT skills.id, skills.skill_name, skills.created_at
          FROM skills
-         WHERE portfolio_id = :authorized_portfolio_id
-         ORDER BY created_at ASC, id ASC'
+         JOIN portfolios ON portfolios.id = skills.portfolio_id
+         WHERE skills.portfolio_id = :authorized_portfolio_id
+           AND portfolios.owner_user_id = :authorized_user_id
+         ORDER BY skills.created_at ASC, skills.id ASC'
     );
-    $statement->execute(['authorized_portfolio_id' => $context->portfolioId]);
+    $statement->execute(['authorized_portfolio_id' => $context->portfolioId, 'authorized_user_id' => $context->userId]);
 
     return $statement->fetchAll(PDO::FETCH_ASSOC);
 }
