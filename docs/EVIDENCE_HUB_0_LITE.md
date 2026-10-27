@@ -89,6 +89,27 @@ Exact NFC, Unicode whitespace normalization, and Latin case folding still determ
 
 The private Owner Evidence Hub now selects taxonomy v3 and contract v3 (`evidence-hub-contract-v3`, schema version `3.0.0`). V3 retains all 31 v2 entries and their category order, then adds FastAPI (framework), pgvector (database extension), SentenceTransformers (library), Redis (database), Celery (framework), and Groq (platform). Exact normalized aliases include `Fast API`, `pg vector`, and `Sentence Transformers`; case folding already covers capitalization. GitHub Actions remains outside this project technology taxonomy. Unknown values remain privacy-safe and combined labels are not split. Evidence, coverage, progress, and recommendation rules retain their existing semantics.
 
+### Owner technology review and contract v5
+
+The private Owner Evidence Hub now publishes contract v5 (`evidence-hub-contract-v5`, schema version `5.0.0`) over taxonomy v4. `EVIDENCE_HUB_CONTRACT_VERSIONS` in `includes/evidence_hub_contract_mapper.php` binds each contract to the taxonomy it publishes, and `EVIDENCE_HUB_OWNER_CONTRACT_VERSION` in `includes/evidence_hub_owner_core.php` is the single live selection. Contracts v1–v4 remain byte-for-byte frozen and reject the new state.
+
+An Owner resolves an unmapped project label on the Evidence Hub page in one of three ways:
+
+- **Fix the project.** Each unknown label is shown to its Owner exactly as written, with links to the projects that contain it. This is the path for a misspelling.
+- **Map it to a current taxonomy entry.** The decision is stored per Portfolio in `technology_owner_mappings` (migration 023), keyed by the SHA-256 of the normalized label. The label text itself is never stored.
+  - A taxonomy alias always wins over an Owner mapping.
+  - A mapping whose entry is absent from the live taxonomy is ignored, and the label is unmapped again.
+  - A mapped label is published as `owner_mapped`, carrying the canonical entry. The metric gains `owner_mapped_occurrence_count` and the reason code `TECHNOLOGY_OWNER_MAPPED`.
+  - From v5, `mapped + owner_mapped + unmapped` occurrences must equal the technology occurrence count.
+  - A canonical technology is one distinct technology, however it was recognized.
+  - An `owner_mapped` label is no longer a `review_unmapped_technology` candidate. The rule version stays `1.0.0`, so existing dispositions and fingerprints keep their meaning.
+- **Propose it.** The proposal goes into `technology_proposals` (migration 024): a label of at most 60 characters, one taxonomy category, and an optional note of at most 280 characters.
+  - A generated pending-label column makes the database allow at most one pending proposal per label.
+  - The Owner can withdraw a pending proposal.
+  - Nothing accepts proposals yet. The queue is the interface for a future curator.
+
+Forms address a label only through a review-only HMAC reference, bound to the Portfolio and resolved again against its current labels. It is domain-separated from recommendation target references, which are never rendered because recommendation keys derive from them. A foreign, stale or forged reference returns 409; a malformed request returns 422. Every action requires CSRF and uses PRG to `#technologies`. Mapping, unmapping and withdrawal are reversible. No matching is fuzzy, and nothing is shown to visitors.
+
 ## Portfolio Progress
 
 Portfolio Progress exposes Owner-only facts: project count, projects with complete evidence, first/latest project timestamps, recorded activity span, and Portfolio publication state. Project time is an absolute instant: the repository supplies a Unix epoch derived from the production MySQL `TIMESTAMP` using `UNIX_TIMESTAMP`, never a timezone-less string relabeled as UTC. Output timestamps are canonical UTC `Z` values. `recorded_activity_span_days` is `floor((latest_epoch_seconds - first_epoch_seconds) / 86400)`: it is elapsed complete 24-hour periods, not UTC-calendar date difference. Same instant and a cross-midnight interval under 24 hours are 0; exactly 24 hours is 1; 47:59:59 is 1; exactly 48 hours is 2. Invalid/ambiguous instants fail closed. It always reports `trend_status: not_available`, `trend_direction: null`, and `HISTORY_NOT_TRACKED`; project creation dates never prove professional improvement or a trend.

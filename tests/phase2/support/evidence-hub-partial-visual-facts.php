@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../../includes/evidence_hub_owner_page_model.php';
  * Technology labels stay in this server-side fixture builder. Field states are
  * synthetic evaluator outputs; the shared aggregator validates their totals.
  *
- * @return array{projects: list<array<string, mixed>>, technologies: array<string, mixed>, progress: array<string, mixed>, documentation: array<string, mixed>, technology_metric: array<string, mixed>, analytics_progress: array<string, mixed>}
+ * @return array{projects: list<array<string, mixed>>, technologies: array<string, mixed>, technology_review: array<string, mixed>, progress: array<string, mixed>, documentation: array<string, mixed>, technology_metric: array<string, mixed>, analytics_progress: array<string, mixed>}
  */
 function buildEvidenceHubPartialVisualFacts(): array
 {
@@ -17,6 +17,7 @@ function buildEvidenceHubPartialVisualFacts(): array
     $projects = [];
     $evaluatedProjects = [];
     $technologyFacts = [];
+    $reviewProjects = [];
     $completeActivity = [];
 
     for ($id = 8; $id >= 1; --$id) {
@@ -70,12 +71,20 @@ function buildEvidenceHubPartialVisualFacts(): array
         ];
         $evaluatedProjects[] = $evaluated;
         $technologyFacts[] = $technologyFact;
+        $reviewProjects[] = ['id' => $id, 'title' => $projects[count($projects) - 1]['title'], 'technology_storage' => $technologyFact];
     }
 
     $completeProjectCount = count($completeActivity);
+    $taxonomy = loadEvidenceHubOwnerTaxonomy();
     return [
         'projects' => $projects,
         'technologies' => evidenceHubOwnerPageTechnologies($technologyFacts),
+        'technology_review' => evidenceHubOwnerPageTechnologyReview(
+            evidenceHubTechnologyReviewItems($reviewProjects, $taxonomy, []),
+            [],
+            $taxonomy,
+            static fn (string $digest): string => 'partial-visual-ref-' . substr($digest, 0, 12),
+        ),
         'progress' => evidenceHubOwnerPageProgress(count($projects), $completeProjectCount, $completeActivity),
         'documentation' => aggregateEvidenceHubDocumentationCoverage($evaluatedProjects),
         'technology_metric' => summarizeEvidenceHubTechnologies($technologyFacts, loadEvidenceHubTechnologyTaxonomy()),
