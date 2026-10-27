@@ -82,8 +82,8 @@ function renderEvidenceHubOwnerPage(array $contract, array $model, array $action
 
     <section class="evidence-hub-section evidence-hub-progress" id="progress" aria-labelledby="evidence-hub-progress-title"><div class="evidence-hub-section-heading"><div><p><?php echo $e('Progress'); ?></p><h2 id="evidence-hub-progress-title"><?php echo $e('Portfolio progress'); ?></h2></div></div><article class="evidence-hub-progress-card"><strong><?php echo $e($progress['label']); ?></strong>
         <?php if ($progress['published_project_count'] !== null && $progress['project_count'] > 0): ?>
-            <p><?php echo $e('{published} of {total} projects are public.', ['{published}' => (int) $progress['published_project_count'], '{total}' => $locale === 'ar' ? evidenceHubCountPhrase((int) $progress['project_count'], 'project', $locale) : (int) $progress['project_count']]); ?></p>
-            <?php if ($progress['published_project_count'] > 0 && ($progress['portfolio_publication_state'] ?? null) === 'unpublished'): ?>
+            <p><?php echo $e('Public projects: {published} of {total}.', ['{published}' => (int) $progress['published_project_count'], '{total}' => (int) $progress['project_count']]); ?></p>
+            <?php if ($progress['published_project_count'] > 0 && in_array($progress['portfolio_publication_state'] ?? null, ['unpublished', 'not_configured'], true)): ?>
                 <p><?php echo $e('Public projects appear to visitors only after the portfolio is published.'); ?></p>
             <?php endif; ?>
         <?php endif; ?>

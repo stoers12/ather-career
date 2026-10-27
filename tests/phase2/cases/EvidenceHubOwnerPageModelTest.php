@@ -347,13 +347,14 @@ final class EvidenceHubOwnerPageModelTest
         foreach ([
             [0, 0, 'unpublished', null, null, false],
             [3, null, 'unpublished', null, null, false],
-            [3, 0, 'unpublished', '0 of 3 projects are public.', '0 من أصل 3 مشاريع منشورة للزوار.', false],
-            [3, 1, 'unpublished', '1 of 3 projects are public.', '1 من أصل 3 مشاريع منشورة للزوار.', true],
-            [3, 1, 'published', '1 of 3 projects are public.', '1 من أصل 3 مشاريع منشورة للزوار.', false],
-            [3, 1, 'not_configured', '1 of 3 projects are public.', '1 من أصل 3 مشاريع منشورة للزوار.', false],
-            [1, 1, 'unpublished', '1 of 1 projects are public.', '1 من أصل مشروع واحد منشورة للزوار.', true],
-            [2, 2, 'unpublished', '2 of 2 projects are public.', '2 من أصل مشروعان منشورة للزوار.', true],
-            [3, 3, 'unpublished', '3 of 3 projects are public.', '3 من أصل 3 مشاريع منشورة للزوار.', true],
+            [3, 0, 'unpublished', 'Public projects: 0 of 3.', 'المشاريع المنشورة للزوار: 0 من 3.', false],
+            [3, 0, 'not_configured', 'Public projects: 0 of 3.', 'المشاريع المنشورة للزوار: 0 من 3.', false],
+            [3, 1, 'unpublished', 'Public projects: 1 of 3.', 'المشاريع المنشورة للزوار: 1 من 3.', true],
+            [3, 1, 'published', 'Public projects: 1 of 3.', 'المشاريع المنشورة للزوار: 1 من 3.', false],
+            [3, 1, 'not_configured', 'Public projects: 1 of 3.', 'المشاريع المنشورة للزوار: 1 من 3.', true],
+            [1, 1, 'unpublished', 'Public projects: 1 of 1.', 'المشاريع المنشورة للزوار: 1 من 1.', true],
+            [2, 2, 'unpublished', 'Public projects: 2 of 2.', 'المشاريع المنشورة للزوار: 2 من 2.', true],
+            [3, 3, 'unpublished', 'Public projects: 3 of 3.', 'المشاريع المنشورة للزوار: 3 من 3.', true],
         ] as [$total, $published, $state, $english, $arabic, $showHelp]) {
             $model['progress'] = evidenceHubOwnerPageProgress($total, 0, [], $published);
             $model['progress']['portfolio_publication_state'] = $state;
@@ -364,13 +365,13 @@ final class EvidenceHubOwnerPageModelTest
                 phase2Assert(preg_match('/<section\b[^>]*\bid="progress".*?<\/section>/s', $html, $matches) === 1, 'The progress section is missing.');
                 $section = $matches[0];
                 if ($expected === null) {
-                    phase2Assert(!str_contains($section, 'projects are public.') && !str_contains($section, 'منشورة للزوار.'), "{$locale}: an unavailable or empty published count rendered.");
+                    phase2Assert(!str_contains($section, 'Public projects:') && !str_contains($section, 'المشاريع المنشورة للزوار:'), "{$locale}: an unavailable or empty published count rendered.");
                 } else {
-                    phase2Assert(str_contains($section, '<p>' . $expected . '</p>'), "{$locale}: the published count or number agreement is wrong.");
+                    phase2Assert(str_contains($section, '<p>' . $expected . '</p>'), "{$locale}: the published count wording or integer placeholders are wrong.");
                     phase2AssertSame(1, substr_count($html, $expected), "{$locale}: the published count must appear only in the progress section.");
                 }
                 $help = $locale === 'ar' ? 'تظهر المشاريع العامة للزوار فقط بعد نشر البورتفوليو.' : 'Public projects appear to visitors only after the portfolio is published.';
-                phase2AssertSame($showHelp, str_contains($section, $help), "{$locale}: publication help must appear only for unpublished portfolios with public projects.");
+                phase2AssertSame($showHelp, str_contains($section, $help), "{$locale}: publication help must appear only for unpublished or unconfigured portfolios with public projects.");
             }
         }
     }
