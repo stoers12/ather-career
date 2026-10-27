@@ -160,13 +160,11 @@ final class EvidenceHubContractV7Test
     private static function authorizedPaths(): void
     {
         $database = self::database();
-        phase2AssertSame('v7', EVIDENCE_HUB_OWNER_CONTRACT_VERSION, 'EH-05 must make v7 live.');
-        phase2AssertSame(['schema_version' => '7.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true], evidenceHubContractVersionDefinition(EVIDENCE_HUB_OWNER_CONTRACT_VERSION), 'The live definition is wrong.');
+        phase2AssertSame(['schema_version' => '7.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => false], evidenceHubContractVersionDefinition('v7'), 'The historical v7 definition is wrong.');
         foreach ([[1, 10, 1], [2, 20, 2], [3, 30, 0]] as [$user, $portfolio, $published]) {
             $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser($user), $portfolio);
-            $contract = buildAuthorizedEvidenceHubOwnerContract($database, $context, []);
-            phase2AssertSame('evidence-hub-contract-' . EVIDENCE_HUB_OWNER_CONTRACT_VERSION, $contract['contract_id'], 'The authorized builder must select the live contract.');
-            phase2AssertSame($contract, mapEvidenceHubContractV7(buildAuthorizedEvidenceHubOwnerCore($database, $context), []), 'The live mapper must publish v7.');
+            $contract = mapEvidenceHubContractV7(buildAuthorizedEvidenceHubOwnerCore($database, $context), []);
+            phase2AssertSame('evidence-hub-contract-v7', $contract['contract_id'], 'The historical v7 mapper identity changed.');
             $model = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, ['contract' => ['recommendations' => []]], 'v7-test-synthetic-hmac');
             $progress = $contract['metrics']['portfolio_progress'];
             phase2AssertSame($published, $progress['published_project_count'], 'A published count crossed tenant scope.');
