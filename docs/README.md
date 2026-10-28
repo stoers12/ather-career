@@ -10,6 +10,7 @@ Documents marked “classification review” mix current guidance with older sco
 
 ## Living reference
 
+- [LOCAL_RELEASE.md](LOCAL_RELEASE.md) — Owner local release automation, dry-run, rollback and isolated verification.
 - [EVIDENCE_HUB_0_LITE.md](EVIDENCE_HUB_0_LITE.md) — Authoritative Evidence Hub rules, versioned contracts and private Owner boundary. (kept in place — referenced from `tests/phase2/cases/EvidenceHubContractTest.php`, `AGENTS.md`)
 - [HTTP_CONTRACTS.md](HTTP_CONTRACTS.md) — Active HTTP methods, validation, redirects and public JSON contracts. (kept in place — referenced from `tests/phase2/cases/PublicProjectJsonContractTest.php`)
 - [P2J09_AUTH0_SETUP.md](P2J09_AUTH0_SETUP.md) — Auth0 application configuration and real-provider verification prerequisites.

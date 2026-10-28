@@ -5,6 +5,14 @@ on:
   pull_request:
 
 jobs:
+  release-script-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release script safety (no Docker)
+        shell: pwsh
+        run: ./scripts/test/test-release-local.ps1
+
   production-smoke:
     runs-on: ubuntu-latest
     env:

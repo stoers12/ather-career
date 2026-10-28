@@ -1,0 +1,38 @@
+services:
+  web:
+    image: '{{IMAGE}}'
+    # Build context alone is excluded from Compose's recreate decision. This
+    # makes same-commit releases refresh config_files for label-based rollback.
+    labels:
+      org.ather-career.release-source: '{{SOURCE}}'
+    entrypoint: ["/usr/local/bin/portfolio-maintenance-entrypoint"]
+    command: ["apache2-foreground"]
+    build:
+      context: '{{SOURCE}}'
+      dockerfile: Dockerfile
+      target: production
+      args:
+        APP_VERSION: '{{FULL_SHA}}'
+    environment:
+      APP_VERSION: '{{FULL_SHA}}'
+      ATHERCAR_REGISTRATION_ENABLED: '0'
+      ATHERCAR_ONBOARDING_DRAFT_HTTP_ENABLED: '0'
+      ATHERCAR_ONBOARDING_ATTESTATION_HTTP_ENABLED: '0'
+      ATHERCAR_ONBOARDING_COMPLETION_HTTP_ENABLED: '0'
+      RATE_LIMIT_STATE_DIR: /var/www/app/runtime/rate-limit
+    volumes: !override
+      - portfolio_private_storage:/var/www/private-storage
+      - type: bind
+        source: '{{RATE_LIMIT_DIR}}'
+        target: /var/www/app/runtime/rate-limit
+  owner_https:
+    volumes: !override
+      - caddy_data:/data
+      - type: bind
+        source: '{{SOURCE}}/docker/Caddyfile.owner-local'
+        target: /etc/caddy/Caddyfile
+        read_only: true
+      - type: bind
+        source: '{{SOURCE}}/docker/validate-oidc-issuer.sh'
+        target: /etc/caddy/validate-oidc-issuer.sh
+        read_only: true
