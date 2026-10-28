@@ -37,6 +37,7 @@ Documents marked “classification review” mix current guidance with older sco
 
 ## Architecture decision / contract
 
+- [RUNTIME_TOPOLOGY.md](RUNTIME_TOPOLOGY.md) — ENG-04 Phase A proposal: unified runtime layout, public assets and local release/rollback design; awaiting approval.
 - [auth-onboarding/02-ARCHITECTURE-DECISIONS.md](auth-onboarding/02-ARCHITECTURE-DECISIONS.md) — Owner-approved authentication/onboarding ADRs and explicit non-goals.
 - [auth-onboarding/22-ONBOARDING-COMPLETION-CONTRACT.md](auth-onboarding/22-ONBOARDING-COMPLETION-CONTRACT.md) — Accepted bounded completion overlay, receipt and Profile lifecycle contract.
 - [auth-onboarding/26-LAUNCH-COUNTRY-CATALOG.md](auth-onboarding/26-LAUNCH-COUNTRY-CATALOG.md) — Approved ordered launch-country subset and historical-choice compatibility. (kept in place — referenced from `data/profile-catalog/README.md`)
