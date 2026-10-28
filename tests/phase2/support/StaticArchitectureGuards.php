@@ -56,7 +56,7 @@ final class StaticArchitectureGuards
     private static function productionPhpFiles(string $repositoryRoot): array
     {
         $paths = [];
-        foreach (['includes', 'config', 'classes', 'api', 'public'] as $directory) {
+        foreach (['includes', 'src', 'config', 'classes', 'api', 'public'] as $directory) {
             $root = $repositoryRoot . DIRECTORY_SEPARATOR . $directory;
             if (!is_dir($root)) {
                 continue;
