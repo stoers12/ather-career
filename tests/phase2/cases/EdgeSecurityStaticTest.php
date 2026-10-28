@@ -11,9 +11,9 @@ final class EdgeSecurityStaticTest
         $rate = self::read('includes/rate_limit.php');
         $apache = self::read('docker/apache/security-headers.conf');
         $dockerfile = self::read('Dockerfile');
-        $productionDockerfile = self::read('Dockerfile.production');
-        $development = self::read('docker/apache/development-vhost.conf');
-        $production = self::read('docker/apache/production-vhost.conf');
+        $productionDockerfile = self::read('Dockerfile');
+        $development = self::read('docker/apache/vhost.conf');
+        $production = self::read('docker/apache/vhost.conf');
         $caddy = self::read('docker/Caddyfile.owner-local');
         $httpsCompose = self::read('docker-compose.owner-https.yml');
         $issuerGuard = self::read('docker/validate-oidc-issuer.sh');
@@ -48,7 +48,7 @@ final class EdgeSecurityStaticTest
         phase2Assert(str_contains($apache, 'Header always set') && str_contains($apache, 'ather_oidc_callback') && str_contains($caddy, 'Content-Security-Policy'), 'Server/proxy error and callback header protection is incomplete.');
         phase2Assert(str_contains($development, 'LimitRequestBody 16777216') && str_contains($production, 'LimitRequestBody 16777216'), 'Apache request-size boundary is missing.');
         phase2Assert(preg_match('#<Directory\s+"/var/www/public">[\s\S]*?LimitRequestBody\s+16777216#', $production) === 1, 'Production request-size enforcement is not scoped to the public document root.');
-        phase2Assert(str_contains($dockerfile, 'a2enmod unique_id') && str_contains($productionDockerfile, 'a2enmod headers rewrite unique_id'), 'Apache must enable unique request IDs for generated 413 responses.');
+        phase2Assert(str_contains($productionDockerfile, 'a2enmod headers rewrite unique_id'), 'Apache must enable unique request IDs for generated 413 responses.');
         phase2Assert(substr_count($apache, 'Header always set X-Request-ID "%{UNIQUE_ID}e"') === 1
             && str_contains($apache, "Header always set Cache-Control \"no-store\" \"expr=%{REQUEST_STATUS} >= 400 && resp('Cache-Control') == ''\""), 'Apache-generated errors must retain a correlation and safe-cache fallback without competing with PHP response IDs.');
         phase2Assert(!preg_match('/<script>|onerror=|style=/', $portfolio), 'Public Portfolio retains an inline CSP dependency.');

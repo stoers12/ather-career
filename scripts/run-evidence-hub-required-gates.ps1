@@ -199,17 +199,13 @@ function Invoke-RequiredGateRegistryChallenges([string[]]$Registry) {
 
 function Assert-CurrentSourceIdentity([string]$Root, [string]$Image, [string]$Layout, [string]$Manifest) {
     if (-not (Test-Path -LiteralPath (Join-Path $Root 'database/migrations/011_recommendation_dispositions.sql'))) { Fail-Gate 'source identity' 'migration 011 is absent from verification source' }
-    foreach ($path in @('owner_evidence_hub.php', 'evidence_hub.css', 'evidence_hub.js', 'owner_theme.js', 'database/migrate.php')) {
+    foreach ($path in @('owner_evidence_hub.php', 'public/assets/css/evidence_hub.css', 'public/assets/js/evidence_hub.js', 'public/assets/js/owner_theme.js', 'database/migrate.php')) {
         if (-not (Test-Path -LiteralPath (Join-Path $Root $path))) { Fail-Gate 'source identity' "required source path $path is absent" }
     }
-    $containerRoot = if ($Layout -eq 'production') { '/var/www/app' } else { '/var/www/html' }
-    $check = "set -eu; cd $containerRoot; sha256sum -c /audit/source.manifest; test -f database/migrations/011_recommendation_dispositions.sql; test -f owner_evidence_hub.php; test -f evidence_hub.css; test -f evidence_hub.js; test -f owner_theme.js"
-    if ($Layout -eq 'development') { $check += '; test "$(readlink -f /var/www/app)" = /var/www/html' }
-    if ($Layout -eq 'production') {
-        foreach ($asset in @('style.css', 'admin.css', 'owner_workspace.css', 'owner_dashboard.css', 'admin.js', 'owner_theme.js', 'evidence_hub.css', 'evidence_hub.js', 'assets/fonts/OFL.txt', 'assets/fonts/noto-sans-arabic-400.ttf', 'assets/fonts/noto-sans-arabic-500.ttf', 'assets/images/ather-navbar-logo.png', 'assets/images/dashboard-projects.svg')) {
-            $check += "; test -s /var/www/public/$asset; cmp /var/www/app/$asset /var/www/public/$asset"
-        }
-    }
+    # Every target shares one layout: code in /var/www/app, and the document
+    # root is an exact copy of the repository public/ tree.
+    $check = "set -eu; cd /var/www/app; sha256sum -c /audit/source.manifest; diff -r /var/www/app/public /var/www/public; test -f database/migrations/011_recommendation_dispositions.sql; test -f owner_evidence_hub.php; test -f evidence_hub.css; test -f evidence_hub.js; test -f owner_theme.js"
+    if ($Layout -eq 'production') { $check += '; test "${PORTFOLIO_PRODUCTION_SECURITY_CHECK:-}" = 1; test -f /usr/local/etc/php/conf.d/portfolio-production.ini' }
     & docker run --rm --entrypoint sh -v "${Root}:/verification-source:ro" -v "${Manifest}:/audit/source.manifest:ro" $Image -lc $check
     if ($LASTEXITCODE -ne 0) { Fail-Gate 'source identity' 'container-visible application source differs from the intended verification source' }
 }
@@ -279,6 +275,42 @@ function Invoke-DisposableHttpStatus([string]$Url, [string]$Method = 'GET', [has
     return ($status -join '').Trim()
 }
 
+# The document root is the repository public/ tree only (docs/RUNTIME_TOPOLOGY.md).
+# Probe real internal files that exist in the image: each must be refused, while
+# every kind of published asset and the liveness probe must be served directly.
+function Assert-PublicBoundary([string]$BaseUrl, [string]$Label) {
+    foreach ($path in @('/tests/phase2/cases/AccountSelectionStaticTest.php', '/scripts/README.md', '/scripts/check-production-security.php', '/docs/README.md', '/vendor/autoload.php', '/vendor/composer/installed.json', '/composer.json', '/composer.lock', '/phpstan.neon.dist', '/contracts/evidence-hub-contract-v1.schema.json', '/data/profile-catalog/catalog.json', '/config/database.php', '/includes/presentation.php', '/database/portfolio_db.sql', '/docker/production-entrypoint.sh', '/Dockerfile', '/docker-compose.yml', '/.env', '/.git/HEAD', '/public/index.php', '/app/index.php', '/tests/', '/vendor/', '/includes/')) {
+        $status = Invoke-DisposableHttpStatus "$BaseUrl$path"
+        if ($status -notin @('403', '404')) { Fail-Gate 'public boundary' "$Label served internal path $path with status $status" }
+    }
+    foreach ($path in @('/assets/css/evidence_hub.css', '/assets/js/evidence_hub.js', '/assets/js/owner_theme.js', '/assets/fonts/noto-sans-arabic-400.ttf', '/assets/images/ather-navbar-logo.png', '/assets/images/legacy-professional-portfolio.png', '/health.php')) {
+        $status = Invoke-DisposableHttpStatus "$BaseUrl$path"
+        if ($status -ne '200') { Fail-Gate 'public boundary' "$Label did not serve public path $path directly (status $status)" }
+    }
+    foreach ($path in @('/evidence_hub.css', '/style.css', '/admin.js', '/ChatGPT-Image-Apr-14-2025-065043-PM.png')) {
+        $status = Invoke-DisposableHttpStatus "$BaseUrl$path"
+        if ($status -ne '404') { Fail-Gate 'public boundary' "$Label still serves retired root asset $path (status $status)" }
+    }
+    Write-Host "PASS public boundary ($Label)"
+}
+
+# Serve the packaged production image without a database: enough to prove what
+# its document root exposes, with the image's own Apache configuration.
+function Invoke-ProductionBoundaryGate([string]$Image) {
+    $container = "ather-evidence-hub-boundary-$([guid]::NewGuid().ToString('N'))"
+    $port = Get-FreeLoopbackPort
+    try {
+        Invoke-Tool 'docker' @('run', '--detach', '--name', $container, '-p', "127.0.0.1:${port}:80", '--entrypoint', 'docker-php-entrypoint', $Image, 'apache2-foreground')
+        for ($attempt = 0; $attempt -lt 30; $attempt++) {
+            if ((Invoke-DisposableHttpStatus "http://127.0.0.1:$port/health.php") -eq '200') { break }
+            Start-Sleep -Milliseconds 500
+        }
+        Assert-PublicBoundary "http://127.0.0.1:$port" 'production image'
+    } finally {
+        Remove-DisposableDockerResources 'container' @($container)
+    }
+}
+
 function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [hashtable]$Playwright, [string]$Chromium, [string]$Temporary) {
     $run = [guid]::NewGuid().ToString('N')
     $network = "ather-evidence-hub-gates-$run"
@@ -332,7 +364,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         # These fixtures model existing owners. Seal their legacy ownership while no Apache/writers are running.
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @($Image, 'database/capture-owner-journey-cutover.php', '--confirm-exclusive-maintenance', "--database=$databaseName"))
         $webBootstrapEnvironment = @('-e', 'EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP=1', '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_NONCE_A=$bootstrapNonceA", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_SUBJECT_A=$bootstrapSubjectA", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_NONCE_B=$bootstrapNonceB", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_SUBJECT_B=$bootstrapSubjectB", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_STATE_DIR=$bootstrapState")
-        Invoke-Tool 'docker' (@('run', '--detach', '--name', $web, '--network', $network, '-p', "127.0.0.1:${port}:80", '-v', "${bridge}:/tmp/bridge", '-e', 'EVIDENCE_HUB_VISUAL_TEST=1') + $webBootstrapEnvironment + $baseEnvironment + @($Image))
+        Invoke-Tool 'docker' (@('run', '--detach', '--name', $web, '--network', $network, '-p', "127.0.0.1:${port}:80", '-v', "${bridge}:/tmp/bridge", '-v', "$(Join-Path $Root 'tests/phase2/support/apache-gate-fixtures.conf'):/etc/apache2/conf-enabled/zzzz-gate-fixtures.conf:ro", '-e', 'EVIDENCE_HUB_VISUAL_TEST=1') + $webBootstrapEnvironment + $baseEnvironment + @($Image))
         for ($attempt = 0; $attempt -lt 60; $attempt++) {
             try { $health = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "http://127.0.0.1:$port/ready.php"; if ($health.StatusCode -eq 200) { break } } catch { }
             Start-Sleep -Milliseconds 1000
@@ -343,8 +375,14 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
             Fail-Gate 'protected-route topology' ("disposable Apache did not become reachable: " + $diagnostic)
         }
         if ($health.StatusCode -ne 200) { Fail-Gate 'protected-route topology' 'disposable Apache health route did not return 200' }
+        Assert-PublicBoundary "http://127.0.0.1:$port" 'development image'
         Invoke-Tool 'docker' @('exec', $web, 'install', '-d', '-m', '0700', '-o', 'www-data', '-g', 'www-data', $bootstrapState)
-        Invoke-Tool 'docker' @('cp', (Join-Path $Root 'tests/phase2/support/evidence-hub-web-session-bootstrap.php'), "${web}:/var/www/html/$bootstrapPath")
+        # The bootstrap handler lives with the application code; a one-line
+        # front controller (the public/ shim pattern) exposes it temporarily.
+        Invoke-Tool 'docker' @('cp', (Join-Path $Root 'tests/phase2/support/evidence-hub-web-session-bootstrap.php'), "${web}:/var/www/app/$bootstrapPath")
+        $bootstrapShim = Join-Path $Temporary 'bootstrap-front-controller.php'
+        [IO.File]::WriteAllText($bootstrapShim, "<?php`nrequire dirname(__DIR__) . '/app/$bootstrapPath';`n", [Text.UTF8Encoding]::new($false))
+        Invoke-Tool 'docker' @('cp', $bootstrapShim, "${web}:/var/www/public/$bootstrapPath")
         $baseUrl = "http://127.0.0.1:$port"
         if ((Invoke-DisposableHttpStatus "$baseUrl/owner/evidence-hub") -ne '303') { Fail-Gate 'web bootstrap' 'anonymous protected route did not redirect' }
         if ((Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath") -ne '405') { Fail-Gate 'web bootstrap' 'GET bootstrap was not rejected' }
@@ -362,7 +400,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         if ($ownerBBootstrapStatus -ne '204') { Fail-Gate 'web bootstrap' 'Owner B Apache bootstrap did not establish a session' }
         if ((Get-Item -LiteralPath $ownerBJar).Length -eq 0 -or (Get-FileHash -Algorithm SHA256 $ownerAJar).Hash -eq (Get-FileHash -Algorithm SHA256 $ownerBJar).Hash) { Fail-Gate 'web bootstrap' 'two independent Apache cookie jars were not established' }
         if ((Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath" 'POST' @{ 'X-Evidence-Hub-Bootstrap-Nonce' = $bootstrapNonceB } $ownerBJar) -ne '404') { Fail-Gate 'web bootstrap' 'Owner B bootstrap nonce replay was accepted' }
-        Invoke-Tool 'docker' @('exec', $web, 'rm', '-f', "/var/www/html/$bootstrapPath")
+        Invoke-Tool 'docker' @('exec', $web, 'rm', '-f', "/var/www/public/$bootstrapPath", "/var/www/app/$bootstrapPath")
         if ((Invoke-DisposableHttpStatus "$baseUrl/$bootstrapPath") -ne '404') { Fail-Gate 'web bootstrap' 'bootstrap endpoint remained reachable after removal' }
         if ((Invoke-DisposableHttpStatus "$baseUrl/owner/evidence-hub" 'GET' @{} $ownerAJar) -ne '200' -or (Invoke-DisposableHttpStatus "$baseUrl/owner/evidence-hub" 'GET' @{} $ownerBJar) -ne '200') { Fail-Gate 'web bootstrap' 'Apache-issued cookie jar did not authenticate both owners' }
         $invalidLines = Get-Content -LiteralPath $ownerAJar
@@ -422,10 +460,11 @@ function Invoke-RequiredGates {
         )
         Assert-RequiredGateRegistry $registry
         Invoke-RequiredGateRegistryChallenges $registry
-        Invoke-Tool 'docker' @('build', '--pull=false', '-f', (Join-Path $resolvedRoot 'Dockerfile'), '-t', $devImage, $resolvedRoot)
+        Invoke-Tool 'docker' @('build', '--pull=false', '-f', (Join-Path $resolvedRoot 'Dockerfile'), '--target', 'development', '-t', $devImage, $resolvedRoot)
         Assert-CurrentSourceIdentity $resolvedRoot $devImage 'development' $manifest
-        Invoke-Tool 'docker' @('build', '--pull=false', '-f', (Join-Path $resolvedRoot 'Dockerfile.production'), '-t', $productionImage, $resolvedRoot)
+        Invoke-Tool 'docker' @('build', '--pull=false', '-f', (Join-Path $resolvedRoot 'Dockerfile'), '--target', 'production', '-t', $productionImage, $resolvedRoot)
         Assert-CurrentSourceIdentity $resolvedRoot $productionImage 'production' $manifest
+        Invoke-ProductionBoundaryGate $productionImage
         & docker run --rm --entrypoint php $devImage -r 'foreach (["pdo_mysql","gd","intl","mbstring"] as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, $extension . " unavailable\\n"); exit(1); } } if (!function_exists("grapheme_strlen")) { exit(1); } echo "PHP_CAPABILITIES_OK\\n";'
         if ($LASTEXITCODE -ne 0) { Fail-Gate 'PHP capabilities' 'required verification capability is unavailable' }
         & docker run --rm --entrypoint php -v "${resolvedRoot}:/var/www/html:ro" -w /var/www/html -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 $devImage scripts/run-phase2-tests.php
@@ -452,7 +491,7 @@ function Invoke-FocusedTwoOwnerGate {
     New-Item -ItemType Directory -Path $temporary | Out-Null
     try {
         New-SourceManifest $resolvedRoot $manifest | Out-Null
-        Invoke-Tool 'docker' @('build', '--pull=false', '-f', (Join-Path $resolvedRoot 'Dockerfile'), '-t', $image, $resolvedRoot)
+        Invoke-Tool 'docker' @('build', '--pull=false', '-f', (Join-Path $resolvedRoot 'Dockerfile'), '--target', 'development', '-t', $image, $resolvedRoot)
         Assert-CurrentSourceIdentity $resolvedRoot $image 'development' $manifest
         $playwright = New-TemporaryPlaywright $resolvedRoot
         $chromium = Get-Chromium1208Executable $playwright

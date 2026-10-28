@@ -7,7 +7,7 @@ final class FooterPresentationStaticTest
     public static function run(TestEnvironment $environment): void
     {
         $presentation = self::read('includes/portfolio_presentation.php');
-        $stylesheet = self::read('portfolio.css');
+        $stylesheet = self::read('public/assets/css/portfolio.css');
         $public = self::read('public_portfolio.php');
         $preview = self::read('owner_preview.php');
 

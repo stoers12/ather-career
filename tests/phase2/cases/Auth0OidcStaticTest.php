@@ -13,9 +13,9 @@ final class Auth0OidcStaticTest
         $guard = self::read('scripts/check-production-security.php');
         $safeAccessLog = self::read('docker/apache/safe-access-log.conf');
         $developmentDockerfile = self::read('Dockerfile');
-        $productionDockerfile = self::read('Dockerfile.production');
-        $developmentVhost = self::read('docker/apache/development-vhost.conf');
-        $productionVhost = self::read('docker/apache/production-vhost.conf');
+        $productionDockerfile = self::read('Dockerfile');
+        $developmentVhost = self::read('docker/apache/vhost.conf');
+        $productionVhost = self::read('docker/apache/vhost.conf');
 
         phase2Assert(str_contains($oidc, "'code_challenge_method' => 'S256'") && str_contains($oidc, 'random_bytes(64)'), 'Auth0 PKCE S256 transaction is missing.');
         phase2Assert(str_contains($oidc, 'AUTH0_AUTH_TRANSACTION_TTL_SECONDS') && str_contains($oidc, 'unset($_SESSION[AUTH0_AUTH_TRANSACTION_KEY])'), 'Auth0 callback transaction is not bounded and one-time.');

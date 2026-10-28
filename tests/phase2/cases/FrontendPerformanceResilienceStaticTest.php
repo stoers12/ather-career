@@ -8,8 +8,8 @@ final class FrontendPerformanceResilienceStaticTest
     {
         $presentation = self::read('includes/portfolio_presentation.php');
         $public = self::read('public_portfolio.php');
-        $stylesheet = self::read('portfolio.css');
-        $javascript = self::read('portfolio.js');
+        $stylesheet = self::read('public/assets/css/portfolio.css');
+        $javascript = self::read('public/assets/js/portfolio.js');
         $ownerLayout = self::read('includes/owner_layout.php');
 
         phase2Assert(

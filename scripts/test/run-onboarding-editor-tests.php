@@ -41,10 +41,10 @@ foreach (['ar','en'] as $locale) {
 }
 $source=file_get_contents(__DIR__.'/../../owner_onboarding_editor.php');
 phase2Assert(!str_contains($source,'tests/') && !str_contains($source,'createOwnedPortfolio') && str_contains($source,'onboardingDraftHttpEnabled()'),'Editor production boundary');
-$js=file_get_contents(__DIR__.'/../../onboarding_editor.js');
+$js=file_get_contents(__DIR__.'/../../public/assets/js/onboarding_editor.js');
 foreach (['localStorage','sessionStorage','console.','sendBeacon','window.name','document.cookie'] as $term) { phase2Assert(!str_contains($js,$term),'Private editor persistence/telemetry boundary'); }
-$docker=file_get_contents(__DIR__.'/../../Dockerfile.production');
-foreach (['onboarding.css','onboarding_editor.js'] as $asset) { phase2Assert(str_contains($docker,'/var/www/app/'.$asset),'Production packaging asset missing'); }
+$docker=file_get_contents(__DIR__.'/../../Dockerfile');
+foreach (['css/onboarding.css','js/onboarding_editor.js'] as $asset) { phase2Assert(is_file(__DIR__.'/../../public/assets/'.$asset) && str_contains($docker,'cp -a /var/www/app/public/. /var/www/public/'),'Production packaging asset missing'); }
 echo 'PASS editor shared rendering, disabled boundaries and accessible AR/EN: '.$checks." checks\n";
 echo "PASS editor private script and production packaging contracts\n";
 

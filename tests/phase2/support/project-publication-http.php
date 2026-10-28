@@ -58,7 +58,7 @@ projectPublicationHttp($owner,'GET','/owner_media.php?type=project&id='.$hidden,
 projectPublicationHttp($owner,'GET','/owner_preview.php',200);
 $upload=['action'=>'update','csrf_token'=>$csrf,'id'=>(string)$alpha,'title'=>'Project Alpha','category'=>'Testing','description'=>'Image edit keeps publication','github_url'=>'','technologies'=>'PHP'];
 $parts=[]; foreach ($upload as $name=>$value) { $parts[]=['name'=>$name,'contents'=>$value]; }
-$parts[]=['name'=>'project_image','contents'=>fopen($app.'/assets/images/ather-navbar-logo.png','rb'),'filename'=>'existing-valid.png'];
+$parts[]=['name'=>'project_image','contents'=>fopen($app.'/public/assets/images/ather-navbar-logo.png','rb'),'filename'=>'existing-valid.png'];
 projectPublicationHttp($owner,'POST','/owner_projects.php',303,['multipart'=>$parts]);
 completionAssert($flag($alpha)===1,'Image edit reset project publication.'); $checkPublic(true);
 echo "PASS project-publication actual HTML JSON contact-error and existing valid PNG public GET/HEAD200 versus private404; authorized owner preview/media preserved\n";

@@ -23,8 +23,8 @@ final class EvidenceHubOwnerRoutePresenterTest
     {
         $route = self::read('owner_evidence_hub.php');
         $wrapper = self::read('public/owner_evidence_hub.php');
-        $productionVhost = self::read('docker/apache/production-vhost.conf');
-        $developmentVhost = self::read('docker/apache/development-vhost.conf');
+        $productionVhost = self::read('docker/apache/vhost.conf');
+        $developmentVhost = self::read('docker/apache/vhost.conf');
         $canonical = $fixtures['canonical_path'];
         phase2Assert(is_string($canonical), 'Owner page fixture canonical path is invalid.');
 
@@ -149,7 +149,7 @@ final class EvidenceHubOwnerRoutePresenterTest
     {
         $layout = self::read('includes/owner_layout.php');
         $presentation = self::read('includes/evidence_hub_owner_presentation.php');
-        $javascript = self::read('evidence_hub.js');
+        $javascript = self::read('public/assets/js/evidence_hub.js');
         foreach (['WORKSPACE', 'Overview', 'Projects', 'Evidence Hub', 'Credentials', 'Coming soon', 'Portfolio owner', 'Private workspace', '/owner.php', '/owner_logout.php', 'evidence-hub-sidebar-toggle', 'evidence-hub-mobile-toggle', 'evidence-hub-mobile-drawer', 'evidence-hub-section-nav', 'data-sidebar-tooltip', 'evidence_hub.css', 'evidence_hub.js'] as $required) {
             phase2Assert(str_contains($layout . $presentation, $required), "Production Evidence Hub shell is missing {$required}.");
         }
@@ -162,12 +162,12 @@ final class EvidenceHubOwnerRoutePresenterTest
         ownerLayoutEnd();
         $renderedShell = (string) ob_get_clean();
         phase2Assert(str_contains($renderedShell, '<html lang="en" dir="ltr">'), 'An explicit English Owner locale must render English LTR Evidence Hub chrome.');
-        $ownerTheme = self::read('owner_theme.js');
+        $ownerTheme = self::read('public/assets/js/owner_theme.js');
         foreach (['ather.evidenceHub.theme', "window.matchMedia('(prefers-color-scheme: dark)')", 'data-evidence-hub-theme', "addEventListener('change'", "value === 'light' || value === 'dark'"] as $required) {
             phase2Assert(str_contains($ownerTheme, $required), "Shared Owner theme resolver is missing {$required}.");
         }
-        phase2Assert(str_contains($layout, 'bool $themeCapable = false') && str_contains($layout, 'if ($themeCapable)') && str_contains($layout, "versionedAssetUrl('owner_theme.js')") && str_contains($layout, "versionedAssetUrl('admin.js')"), 'Shared Owner layout must load its theme resolver only for explicit theme-capable pages.');
-        phase2Assert(strpos($layout, "versionedAssetUrl('owner_theme.js')") > strpos($layout, '<body') && strpos($layout, "versionedAssetUrl('owner_theme.js')") < strpos($layout, '<div class="admin-layout'), 'Owner theme must resolve before workspace content.');
+        phase2Assert(str_contains($layout, 'bool $themeCapable = false') && str_contains($layout, 'if ($themeCapable)') && str_contains($layout, "versionedAssetUrl('assets/js/owner_theme.js')") && str_contains($layout, "versionedAssetUrl('assets/js/admin.js')"), 'Shared Owner layout must load its theme resolver only for explicit theme-capable pages.');
+        phase2Assert(strpos($layout, "versionedAssetUrl('assets/js/owner_theme.js')") > strpos($layout, '<body') && strpos($layout, "versionedAssetUrl('assets/js/owner_theme.js')") < strpos($layout, '<div class="admin-layout'), 'Owner theme must resolve before workspace content.');
         phase2Assert(str_contains(self::read('owner_evidence_hub.php'), "ownerLayoutStart('Evidence Hub', 'evidence_hub', true)") && str_contains(self::read('owner_project_evidence.php'), "ownerLayoutStart('Edit project evidence', 'evidence_hub', true)"), 'Evidence Hub and its editor must explicitly opt in to dark theme capability.');
         foreach (['owner_profile.php' => ['Personal Info', 'profile'], 'owner_projects.php' => ['Projects', 'projects'], 'owner_experiences.php' => ['Experience', 'experiences'], 'owner_messages.php' => ['Messages', 'messages'], 'owner_publication.php' => ['Publication', 'publication']] as $route => [$title, $active]) {
             phase2Assert(str_contains(self::read($route), "ownerLayoutStart('{$title}', '{$active}', true, ['account_name' =>"), 'Portfolio workspace routes must explicitly opt into the shared theme with their own active page.');
@@ -189,10 +189,10 @@ final class EvidenceHubOwnerRoutePresenterTest
         foreach (['recommendation_key', 'evidence_fingerprint', 'opaque_target_ref', 'raw_label', 'canonical_key', 'tenant_scope_ref', 'portfolio_target_identity'] as $forbidden) {
             phase2Assert(!str_contains($presentation, $forbidden), "Production Evidence Hub presentation exposes {$forbidden}.");
         }
-        foreach (['evidence_hub.css', 'evidence_hub.js', 'owner_theme.js'] as $asset) {
+        foreach (['public/assets/css/evidence_hub.css', 'public/assets/js/evidence_hub.js', 'public/assets/js/owner_theme.js'] as $asset) {
             phase2Assert(is_file(PHASE2_REPOSITORY_ROOT . '/' . $asset), "Production-local Evidence Hub asset {$asset} is missing.");
         }
-        $css = self::read('evidence_hub.css');
+        $css = self::read('public/assets/css/evidence_hub.css');
         phase2Assert(str_contains($css, 'unicode-bidi:isolate'), 'Evidence Hub numeric bidi isolation is missing.');
         foreach (['--eh-canvas', '--eh-primary', '--eh-danger', '232px', '78px', 'evidence-hub-topbar', '@media (max-width: 1100px)', 'prefers-reduced-motion', '[data-bidi-number]', '44px', 'data-evidence-hub-theme="dark"', 'data-sidebar-tooltip', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock', 'grid-template-columns: 1fr;', 'evidence-hub-recommendation-accent', 'evidence-hub-technology-grid--count-1'] as $required) {
             phase2Assert(str_contains($css, $required), "Evidence Hub presentation CSS is missing {$required}.");

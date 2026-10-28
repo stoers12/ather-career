@@ -42,9 +42,8 @@ final class EvidenceHubOwnerPageModelTest
         foreach (['#problem', '#personal-role', '#measurable-outcome'] as $anchor) {
             phase2Assert(str_contains($editPresentation . $presentation, $anchor) || str_contains($guidance, "'anchor' => '" . trim($anchor, '#') . "'"), "Evidence fragment {$anchor} is missing.");
         }
-        phase2Assert(str_contains(file_get_contents($root . 'evidence_hub.js'), 'targetCard()') && str_contains(file_get_contents($root . 'evidence_hub.js'), 'revealFragment()'), 'Targeted project reveal is missing.');
-        phase2Assert(str_contains(file_get_contents($root . 'docker/apache/production-vhost.conf'), '^/owner/projects/[1-9][0-9]*/evidence/?$'), 'Clean production evidence route is missing.');
-        phase2Assert(str_contains(file_get_contents($root . 'docker/apache/development-vhost.conf'), '^/owner/projects/[1-9][0-9]*/evidence/?$'), 'Clean development evidence route is missing.');
+        phase2Assert(str_contains(file_get_contents($root . 'public/assets/js/evidence_hub.js'), 'targetCard()') && str_contains(file_get_contents($root . 'public/assets/js/evidence_hub.js'), 'revealFragment()'), 'Targeted project reveal is missing.');
+        phase2Assert(str_contains(file_get_contents($root . 'docker/apache/vhost.conf'), '^/owner/projects/[1-9][0-9]*/evidence/?$'), 'Clean evidence route is missing.');
     }
 
     private static function fractionalEpochParsing(): void

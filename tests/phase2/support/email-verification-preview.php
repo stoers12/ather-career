@@ -53,8 +53,8 @@ header('X-Robots-Tag: noindex, nofollow');
     <meta name="color-scheme" content="light dark">
     <meta name="robots" content="noindex, nofollow">
     <title><?php echo emailVerificationCopy('title', $locale); ?></title>
-    <script src="<?php echo versionedAssetUrl('landing.js'); ?>"></script>
-    <link rel="stylesheet" href="<?php echo versionedAssetUrl('email_verification.css'); ?>">
+    <script src="<?php echo versionedAssetUrl('assets/js/landing.js'); ?>"></script>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/email_verification.css'); ?>">
 </head>
 <body>
 <a class="es-skip" href="#verification-fixture"><?php echo emailVerificationCopy('skip', $locale); ?></a>

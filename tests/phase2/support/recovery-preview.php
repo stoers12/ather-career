@@ -34,8 +34,8 @@ header('X-Robots-Tag: noindex, nofollow');
     <meta name="color-scheme" content="light dark">
     <meta name="robots" content="noindex, nofollow">
     <title><?php echo recoveryCopy($isReset ? 'title_reset' : 'title_forgot', $locale); ?></title>
-    <script src="<?php echo versionedAssetUrl('landing.js'); ?>"></script>
-    <link rel="stylesheet" href="<?php echo versionedAssetUrl('recovery.css'); ?>">
+    <script src="<?php echo versionedAssetUrl('assets/js/landing.js'); ?>"></script>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/recovery.css'); ?>">
 </head>
 <body>
 <a class="ap-skip" href="#recovery-card"><?php echo recoveryCopy('skip', $locale); ?></a>

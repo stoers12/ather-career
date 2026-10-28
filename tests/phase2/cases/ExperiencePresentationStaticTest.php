@@ -7,8 +7,8 @@ final class ExperiencePresentationStaticTest
     public static function run(TestEnvironment $environment): void
     {
         $presentation = self::read('includes/portfolio_presentation.php');
-        $stylesheet = self::read('portfolio.css');
-        $script = self::read('portfolio.js');
+        $stylesheet = self::read('public/assets/css/portfolio.css');
+        $script = self::read('public/assets/js/portfolio.js');
 
         foreach ([
             'portfolioPresentationExperienceTypeLabel',

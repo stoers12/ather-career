@@ -27,7 +27,7 @@ final class OwnerWorkspacePresentationTest
                     && $xpath->query('//aside//nav/a[@aria-current="page" and @href="/owner_projects.php?lang=' . $locale . '"]')->length === 1
                     && $xpath->query('//aside//nav/a[@href="/owner/evidence-hub"]')->length === 1, 'Workspace navigation must expose the seven real routes, one correct active page and unchanged Evidence Hub URL.');
                 phase2Assert(str_contains($rendered, 'owner_workspace.css?') && !str_contains($rendered, 'owner_dashboard.css?')
-                    && !str_contains($rendered, 'href="/admin.css?') && !str_contains($rendered, 'href="/style.css?'), 'Shared pages must not load Dashboard content CSS or the frozen legacy cascade.');
+                    && !str_contains($rendered, 'href="/assets/css/admin.css?') && !str_contains($rendered, 'href="/assets/css/style.css?'), 'Shared pages must not load Dashboard content CSS or the frozen legacy cascade.');
                 phase2Assert(str_contains($rendered, '&lt;script&gt;untrusted owner&lt;/script&gt;') && $xpath->query('//bdi/script')->length === 0, 'Workspace identity must escape owner-entered data.');
                 foreach (['/owner_switch_account.php', '/owner_logout.php'] as $action) {
                     $form = '//form[@action="' . $action . '" and @method="POST"]';

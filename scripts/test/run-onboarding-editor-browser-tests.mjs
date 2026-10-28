@@ -41,7 +41,7 @@ try {
     check((await anonymous.request.get(base+'/owner_onboarding_editor.php')).status()===401,'Anonymous page');
     check((await c.request.post(base+'/owner_onboarding_editor.php')).status()===405,'Page method');
     check((await c.request.get(base+'/owner_onboarding_editor.php?user_id=1')).status()===400,'Page selector');
-    for (const asset of ['onboarding.css','onboarding_editor.js','landing.js']) check((await c.request.get(base+'/'+asset)).status()===200,'Packaged asset');
+    for (const asset of ['css/onboarding.css','js/onboarding_editor.js','js/landing.js']) check((await c.request.get(base+'/assets/'+asset)).status()===200,'Packaged asset');
     const emptyContext=await context('b');const emptyPage=await open(emptyContext);check((await emptyPage.locator('[data-save-status]').textContent()).includes('No saved draft yet')&&(await draft(emptyContext)).version===0,'Honest absent draft without row creation');await emptyPage.close();
     const p=await open(c);
     let errors=0; p.on('pageerror',()=>errors++);

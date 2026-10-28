@@ -19,8 +19,8 @@ fs.mkdirSync(output, { recursive: true });
                 await page.route('http://profile.test/**', route => {
                     const url = new URL(route.request().url());
                     if (url.pathname === '/') return route.fulfill({ contentType: 'text/html', body: html });
-                    if (url.pathname === '/portfolio.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'portfolio.css')) });
-                    if (url.pathname === '/assets/images/ather-navbar-logo.png') return route.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'assets/images/ather-navbar-logo.png')) });
+                    if (url.pathname === '/assets/css/portfolio.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'public/assets/css/portfolio.css')) });
+                    if (url.pathname === '/assets/images/ather-navbar-logo.png') return route.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'public/assets/images/ather-navbar-logo.png')) });
                     if (url.pathname === '/synthetic-portrait.svg') return route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="800"><rect width="640" height="800" fill="#284666"/><circle cx="320" cy="270" r="110" fill="#b7c7d6"/><path d="M80 800V660a240 240 0 0 1 480 0v140" fill="#718ba5"/></svg>' });
                     return route.fulfill({ status: 204, body: '' });
                 });

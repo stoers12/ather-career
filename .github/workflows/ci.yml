@@ -755,12 +755,12 @@ jobs:
           curl --fail http://127.0.0.1:8098/
           curl --fail http://127.0.0.1:8098/signin.php | grep 'lang="ar" dir="rtl"'
           curl --fail 'http://127.0.0.1:8098/signin.php?lang=en' | grep 'lang="en" dir="ltr"'
-          curl --fail http://127.0.0.1:8098/signin.css >/dev/null
-          curl --fail http://127.0.0.1:8098/onboarding.css >/dev/null
-          curl --fail http://127.0.0.1:8098/onboarding_editor.js >/dev/null
+          curl --fail http://127.0.0.1:8098/assets/css/signin.css >/dev/null
+          curl --fail http://127.0.0.1:8098/assets/css/onboarding.css >/dev/null
+          curl --fail http://127.0.0.1:8098/assets/js/onboarding_editor.js >/dev/null
           curl --fail http://127.0.0.1:8098/signup.php | grep 'lang="ar" dir="rtl"'
           curl --fail 'http://127.0.0.1:8098/signup.php?lang=en' | grep 'lang="en" dir="ltr"'
-          curl --fail http://127.0.0.1:8098/signup.css >/dev/null
+          curl --fail http://127.0.0.1:8098/assets/css/signup.css >/dev/null
           test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/signup.php)" = 405
           test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8098/owner_register.php)" = 404
           for method in GET POST; do test "$(curl -sS -o /dev/null -w '%{http_code}' -X "$method" http://127.0.0.1:8098/owner_onboarding_draft.php)" = 404; done

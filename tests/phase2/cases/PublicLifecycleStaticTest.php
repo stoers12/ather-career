@@ -13,8 +13,8 @@ final class PublicLifecycleStaticTest
         $publicJson = self::read('public_projects_json.php');
         $root = self::read('index.php');
         $developmentDockerfile = self::read('Dockerfile');
-        $developmentVhost = self::read('docker/apache/development-vhost.conf');
-        $productionVhost = self::read('docker/apache/production-vhost.conf');
+        $developmentVhost = self::read('docker/apache/vhost.conf');
+        $productionVhost = self::read('docker/apache/vhost.conf');
 
         phase2Assert(str_contains($migration, "PUBLIC_LIFECYCLE_MIGRATION_VERSION = '005'"), 'P2J-05 Migration C is missing.');
         phase2Assert(str_contains($migration, 'public_slug VARCHAR(64)') && str_contains($migration, 'is_published TINYINT(1) NOT NULL DEFAULT 0') && str_contains($migration, 'published_at TIMESTAMP NULL DEFAULT NULL'), 'P2J-05 additive lifecycle columns are incomplete.');
@@ -39,14 +39,11 @@ final class PublicLifecycleStaticTest
         phase2Assert(!str_contains($publicRoute, 'requireOwnerPortfolioContext'), 'P2J-05 public route must remain independent of owner authority.');
         phase2Assert(str_contains($publicJson, 'resolvePublicReadContext') && str_contains($publicJson, 'listPublicProjectJsonPayload') && str_contains($publicJson, 'httpJsonResponse'), 'P2J-05 public projects JSON is incomplete.');
         phase2Assert(!str_contains($root, 'FROM projects') && !str_contains($root, 'FROM personal_info') && !str_contains($root, '<form'), 'P2J-05 root must not retain a global Portfolio fallback or contact action.');
-        phase2Assert(str_contains($developmentDockerfile, 'a2enmod rewrite'), 'P2J-05 Owner development image must enable mod_rewrite.');
-        self::assertPublicRouteContract($developmentVhost, [
-            '/public_media.php?slug=$1&type=profile',
-            '/public_media.php?slug=$1&type=project&id=$2',
-            '/public_projects_json.php?slug=$1',
-            '/public_contact.php?slug=$1',
-            '/public_portfolio.php?slug=$1',
-        ], 'Owner development');
+        phase2Assert(str_contains($developmentDockerfile, 'a2enmod headers rewrite unique_id'), 'P2J-05 Owner development image must enable mod_rewrite.');
+        // Development and production share one vhost (docs/RUNTIME_TOPOLOGY.md), so the
+        // production public-route contract below is also the development contract.
+        phase2Assert(substr_count($developmentDockerfile, 'COPY docker/apache/vhost.conf /etc/apache2/sites-available/000-default.conf') === 1
+            && str_contains($developmentDockerfile, 'FROM runtime-base AS development') && str_contains($developmentDockerfile, 'FROM runtime-base AS production'), 'P2J-05 development and production must share one vhost.');
         self::assertPublicRouteContract($productionVhost, [
             '/p_media.php?slug=$1&type=profile',
             '/p_media.php?slug=$1&type=project&id=$2',

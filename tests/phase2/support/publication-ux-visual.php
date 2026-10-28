@@ -24,5 +24,5 @@ $state = match ($variant) {
 
 $_SESSION = [];
 ?><!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/admin.css"><script src="/admin.js" defer></script></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/assets/css/style.css"><link rel="stylesheet" href="/assets/css/admin.css"><script src="/assets/js/admin.js" defer></script></head>
 <body><div class="admin-layout"><main class="admin-content"><section><?php renderOwnerPublicationPresentation($state, ownerPublicationPublicUrl($state)); ?></section></main></div></body></html>

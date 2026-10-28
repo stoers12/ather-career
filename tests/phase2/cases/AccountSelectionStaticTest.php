@@ -17,7 +17,7 @@ final class AccountSelectionStaticTest
         $retry = (string) file_get_contents($root . 'owner_auth_retry.php');
         $recovery = (string) file_get_contents($root . 'includes/owner_auth_recovery.php');
         $retryShim = (string) file_get_contents($root . 'public/owner_auth_retry.php');
-        $stylesheet = (string) file_get_contents($root . 'style.css');
+        $stylesheet = (string) file_get_contents($root . 'public/assets/css/style.css');
 
         phase2Assert(str_contains($route, "httpRequireMethod(['POST'])")
             && str_contains($route, "\$_GET !== [] || \$_FILES !== [] || array_keys(\$_POST) !== ['csrf_token']")
@@ -109,7 +109,7 @@ final class AccountSelectionStaticTest
             phase2Assert($xpath->query($disclosure . '[not(@open)]/*[1][self::summary and not(@aria-expanded) and not(@role)]')->length === 1
                 && $xpath->query($disclosure . '/summary/span[@class="evidence-hub-account-indicator" and @aria-hidden="true" and not(@tabindex)]')->length === 1,
                 'Account disclosure must start closed with its native summary first and an unfocusable decorative indicator.');
-            $hubScript = (string) file_get_contents($root . 'evidence_hub.js');
+            $hubScript = (string) file_get_contents($root . 'public/assets/js/evidence_hub.js');
             phase2Assert(!str_contains($hubScript, "accountTrigger.setAttribute('aria-expanded'")
                 && str_contains($hubScript, 'accountMenu.open'), 'Account disclosure state must come only from details.open.');
             foreach (['/owner_switch_account.php', '/owner_logout.php'] as $action) {

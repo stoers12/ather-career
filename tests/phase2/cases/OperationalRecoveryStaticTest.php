@@ -16,7 +16,7 @@ final class OperationalRecoveryStaticTest
         $productionCompose = self::read('docker-compose.production.yml');
         $developmentCompose = self::read('docker-compose.yml');
         $ownerCompose = self::read('docker-compose.owner-https.yml');
-        $productionDockerfile = self::read('Dockerfile.production');
+        $productionDockerfile = self::read('Dockerfile');
         $dockerignore = self::read('.dockerignore');
 
         phase2Assert(str_contains($recovery, "const STAGE4C_BACKUP_FORMAT = 'ather-career-stage4c-backup'")

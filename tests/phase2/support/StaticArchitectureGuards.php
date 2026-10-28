@@ -30,7 +30,7 @@ final class StaticArchitectureGuards
             }
         }
 
-        foreach (['.env.example', 'docker-compose.production.yml', 'Dockerfile.production'] as $relativePath) {
+        foreach (['.env.example', 'docker-compose.production.yml', 'Dockerfile'] as $relativePath) {
             $contents = self::read($repositoryRoot, $relativePath, $failures);
             if ($contents !== null && str_contains($contents, 'ATHERCAR_TEST_')) {
                 $failures[] = "{$relativePath} must not enable test-only configuration.";
@@ -44,7 +44,7 @@ final class StaticArchitectureGuards
             }
         }
 
-        $vhost = self::read($repositoryRoot, 'docker/apache/production-vhost.conf', $failures);
+        $vhost = self::read($repositoryRoot, 'docker/apache/vhost.conf', $failures);
         if ($vhost !== null && preg_match('/Alias\s+\/(?:uploads|tenant-media|media)\/|Alias\s+\S*ATHERCAR_STORAGE_ROOT/i', $vhost)) {
             $failures[] = 'production vhost maps tenant media storage directly.';
         }

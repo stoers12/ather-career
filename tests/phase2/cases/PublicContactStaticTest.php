@@ -10,7 +10,7 @@ final class PublicContactStaticTest
         $route = self::read('public_contact.php');
         $portfolio = self::read('public_portfolio.php');
         $presentation = self::read('includes/portfolio_presentation.php');
-        $vhost = self::read('docker/apache/production-vhost.conf');
+        $vhost = self::read('docker/apache/vhost.conf');
 
         phase2Assert(str_contains($contact, 'preparePublicContactSubmission') && str_contains($contact, 'resolvePublicReadContext($database, $slug)'), 'P2J-06 must resolve the public slug for every contact submission.');
         phase2Assert(str_contains($contact, 'publicContactFormState') && str_contains($contact, 'field_errors'), 'Contact validation must expose transient field-specific recovery state.');

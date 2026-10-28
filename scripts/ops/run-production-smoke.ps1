@@ -656,8 +656,8 @@ function Invoke-ProductionSmokeRun([int]$Number, [string]$Head) {
         Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/p/not--a-slug") @(404) 'malformed Portfolio route'
         Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/p/%2e%2e%2fconfig") @(400, 404) 'traversal route'
 
-        Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/portfolio.css") @(200) 'Portfolio CSS asset'
-        Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/portfolio.js") @(200) 'Portfolio JavaScript asset'
+        Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/assets/css/portfolio.css") @(200) 'Portfolio CSS asset'
+        Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/assets/js/portfolio.js") @(200) 'Portfolio JavaScript asset'
         $profileMedia = Invoke-SmokeHttp -Url "$baseUrl/p/$slug/media/profile"
         Assert-HttpStatus $profileMedia @(200) 'profile media'
         Assert-Smoke ($profileMedia.Headers -match '(?im)^Content-Type:\s*image/(jpeg|png|webp)' -and $profileMedia.Bytes.Length -gt 32) 'Profile media is not a real image response.'

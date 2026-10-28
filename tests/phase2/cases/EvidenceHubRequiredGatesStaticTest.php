@@ -11,7 +11,7 @@ final class EvidenceHubRequiredGatesStaticTest
     public static function run(TestEnvironment $environment): void
     {
         $compose = self::read('docker-compose.production.yml');
-        $dockerfile = self::read('Dockerfile.production');
+        $dockerfile = self::read('Dockerfile');
         $gate = self::read('scripts/run-evidence-hub-required-gates.ps1');
         $bootstrap = self::read('tests/phase2/support/evidence-hub-web-session-bootstrap.php');
         $httpMatrix = self::read('tests/phase2/cases/EvidenceHubRecommendationActionHttpMySqlTest.php');
@@ -24,7 +24,11 @@ final class EvidenceHubRequiredGatesStaticTest
             'Production Compose must require the externally supplied Evidence Hub opaque-target HMAC key.'
         );
         phase2Assert(!preg_match('/(?m)^\s*EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY:(?!\s*\$\{)[^\r\n]+/', $compose), 'Production Compose contains an Evidence Hub HMAC default.');
-        phase2Assert(str_contains($dockerfile, '/var/www/app/evidence_hub.css') && str_contains($dockerfile, '/var/www/app/evidence_hub.js') && str_contains($dockerfile, '/var/www/app/owner_theme.js'), 'Production image does not publish the Evidence Hub and Owner theme assets.');
+        // Every image publishes the whole repository public/ tree; nothing is copied by name.
+        phase2Assert(substr_count($dockerfile, 'cp -a /var/www/app/public/. /var/www/public/') === 2 && !preg_match('/\bcp\b[^\n]*\.(?:css|js)\b/', $dockerfile), 'Both images must publish exactly the repository public/ tree.');
+        foreach (['public/assets/css/evidence_hub.css', 'public/assets/js/evidence_hub.js', 'public/assets/js/owner_theme.js'] as $asset) {
+            phase2Assert(is_file(PHASE2_REPOSITORY_ROOT . '/' . $asset), 'Production image does not publish the Evidence Hub and Owner theme assets.');
+        }
         // A repository file Docker drops from the build context can never be in the image,
         // so the source-identity manifest must exclude it too or every gate run fails.
         preg_match('/\$excluded = @\(([^)]*)\)/', $gate, $excludedMatch);
@@ -35,8 +39,9 @@ final class EvidenceHubRequiredGatesStaticTest
                 phase2Assert(in_array($pattern, $excludedNames[1], true), "Required-gates source manifest must exclude {$pattern}, which .dockerignore keeps out of the image.");
             }
         }
-        foreach (['owner_workspace.css', 'owner_dashboard.css', 'assets/images/dashboard-projects.svg'] as $asset) {
-            phase2Assert(str_contains($dockerfile, '/var/www/app/' . $asset) && str_contains($gate, "'" . $asset . "'"), 'Production must publish and verify the shared Owner and Dashboard assets.');
+        phase2Assert(str_contains($gate, 'diff -r /var/www/app/public /var/www/public'), 'Required gates must verify the published public tree in every image.');
+        foreach (['public/assets/css/owner_workspace.css', 'public/assets/css/owner_dashboard.css', 'public/assets/images/dashboard-projects.svg'] as $asset) {
+            phase2Assert(is_file(PHASE2_REPOSITORY_ROOT . '/' . $asset), 'Production must publish and verify the shared Owner and Dashboard assets.');
         }
 
         foreach ([

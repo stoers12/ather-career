@@ -11,7 +11,7 @@ if(!output)throw new Error('Set ATHER_VISUAL_OUT to an isolated evidence directo
 fs.mkdirSync(output,{recursive:true});
 const baseline=process.argv.includes('--baseline');
 const group=process.env.ATHER_FORM_TEST_GROUP || 'all';
-const script=baseline?execFileSync('git',['show','07e65bd0380da695a1cd7da1fbc2bfdb69645d41:admin.js'],{cwd:root}):fs.readFileSync(path.join(root,'admin.js'));
+const script=baseline?execFileSync('git',['show','07e65bd0380da695a1cd7da1fbc2bfdb69645d41:admin.js'],{cwd:root}):fs.readFileSync(path.join(root,'public/assets/js/admin.js'));
 const html=new Map();
 for(const locale of ['ar','en'])for(const page of ['dashboard','profile','projects','experiences','messages','publication','evidence_hub']){
  html.set(locale+'/'+page,execFileSync(process.env.ATHER_PHP_BINARY || 'php',[path.join(__dirname,'owner-form-state-visual.php'),locale,page]));

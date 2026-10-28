@@ -66,17 +66,17 @@ final class PublicProjectJsonContractTest
 
             $lifecycle = self::read('includes/public_lifecycle.php');
             $jsonRoute = self::read('public_projects_json.php');
-            $developmentVhost = self::read('docker/apache/development-vhost.conf');
-            $productionVhost = self::read('docker/apache/production-vhost.conf');
+            $developmentVhost = self::read('docker/apache/vhost.conf');
+            $productionVhost = self::read('docker/apache/vhost.conf');
             $documentation = self::read('docs/HTTP_CONTRACTS.md');
-            $frontend = self::read('portfolio.js');
+            $frontend = self::read('public/assets/js/portfolio.js');
 
             phase2Assert(str_contains($jsonRoute, 'listPublicProjectJsonPayload') && !str_contains($jsonRoute, 'listPublicProjects($database, $context)'), 'Public JSON route still serializes the presentation row mapping.');
             phase2Assert(!preg_match('/function listPublicProjectJsonPayload.*?SELECT\s+\*/s', $lifecycle), 'Public JSON mapper uses SELECT * instead of an allow-list query.');
             phase2Assert(str_contains($lifecycle, "\$project['image_url'] = publicProjectMediaUrl(\$normalizedSlug, \$projectId);") && str_contains($lifecycle, 'publicProjectPresentationIsReadable'), 'Public JSON mapper does not build its image URL through the approved readable-media helper.');
             phase2Assert(str_contains($lifecycle, "return '/p/' . rawurlencode(\$slug) . '/media/project/' . \$projectId;"), 'Public image URLs are not restricted to the public Project media route.');
             phase2Assert(!str_contains($frontend, 'projects.json') && !str_contains($frontend, 'image_path'), 'A browser JSON consumer still depends on a raw Project media path.');
-            phase2Assert(str_contains($developmentVhost, '/projects\\.json$ /public_projects_json.php?slug=$1 [END,NE]') && str_contains($productionVhost, '/projects\\.json$ /p_projects.php?slug=$1 [END,NE]'), 'Canonical Project JSON route is missing.');
+            phase2Assert(str_contains($productionVhost, '/projects\\.json$ /p_projects.php?slug=$1 [END,NE]'), 'Canonical Project JSON route is missing.');
             phase2Assert(!str_contains($developmentVhost, 'projects\\.json.*') && !str_contains($productionVhost, 'projects\\.json.*'), 'A broad Project JSON catch-all rewrite was introduced.');
             phase2Assert(str_contains($documentation, 'non-matching path') && str_contains($documentation, 'managed-media paths'), 'HTTP documentation does not state JSON route and media disclosure boundaries.');
         } finally {

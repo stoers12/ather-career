@@ -64,7 +64,7 @@ async function savedValue(page) {
 }
 
 function missingMediaFallback() {
-    const source = fs.readFileSync(path.join(__dirname, '../../../owner_theme.js'), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '../../../public/assets/js/owner_theme.js'), 'utf8');
     const root = { attributes: {}, setAttribute(name, value) { this.attributes[name] = value; } };
     const sandbox = { document: { body: root }, window: { localStorage: { getItem() { return null; } } } };
     vm.runInNewContext(source, sandbox);

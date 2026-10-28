@@ -17,11 +17,11 @@ if ($path === '/onboarding-preview.php') {
 }
 
 $assets = [
-    '/landing.js' => ['landing.js', 'text/javascript; charset=utf-8'],
-    '/onboarding.js' => ['onboarding.js', 'text/javascript; charset=utf-8'],
-    '/onboarding.css' => ['onboarding.css', 'text/css; charset=utf-8'],
-    '/assets/fonts/noto-sans-arabic-400.ttf' => ['assets/fonts/noto-sans-arabic-400.ttf', 'font/ttf'],
-    '/assets/fonts/noto-sans-arabic-500.ttf' => ['assets/fonts/noto-sans-arabic-500.ttf', 'font/ttf'],
+    '/assets/js/landing.js' => ['public/assets/js/landing.js', 'text/javascript; charset=utf-8'],
+    '/assets/js/onboarding.js' => ['public/assets/js/onboarding.js', 'text/javascript; charset=utf-8'],
+    '/assets/css/onboarding.css' => ['public/assets/css/onboarding.css', 'text/css; charset=utf-8'],
+    '/assets/fonts/noto-sans-arabic-400.ttf' => ['public/assets/fonts/noto-sans-arabic-400.ttf', 'font/ttf'],
+    '/assets/fonts/noto-sans-arabic-500.ttf' => ['public/assets/fonts/noto-sans-arabic-500.ttf', 'font/ttf'],
 ];
 if ($path === '/favicon.ico') {
     http_response_code(204);
