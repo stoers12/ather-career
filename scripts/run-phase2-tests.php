@@ -63,6 +63,7 @@ require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubTechnologyReviewTest.p
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractV7Test.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubSkillEvidenceTest.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractV8Test.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceTextRules110Test.php';
 
 $environment = null;
 $failures = [];
@@ -122,6 +123,7 @@ $tests = [
     'Evidence Hub contract v7 evidence details and authorized publication' => [EvidenceHubContractV7Test::class, 'run'],
     'Evidence Hub canonical skill evidence recommendation' => [EvidenceHubSkillEvidenceTest::class, 'run'],
     'Evidence Hub contract v8 skill evidence isolation' => [EvidenceHubContractV8Test::class, 'run'],
+    'Evidence text rules 1.1.0 calibration and frozen baseline' => [EvidenceTextRules110Test::class, 'run'],
 ];
 
 try {

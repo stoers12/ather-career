@@ -1,0 +1,3968 @@
+{
+    "false_positives": 0,
+    "adversarial_catches": 6,
+    "adversarial_total": 6,
+    "containment_mismatches": 0,
+    "ratios": {
+        "3000\/10": {
+            "false_positives": 0,
+            "catches": 2
+        },
+        "3000\/12": {
+            "false_positives": 0,
+            "catches": 2
+        },
+        "3000\/16": {
+            "false_positives": 0,
+            "catches": 2
+        },
+        "3500\/10": {
+            "false_positives": 0,
+            "catches": 2
+        },
+        "3500\/12": {
+            "false_positives": 0,
+            "catches": 2
+        },
+        "3500\/16": {
+            "false_positives": 0,
+            "catches": 2
+        },
+        "4000\/10": {
+            "false_positives": 0,
+            "catches": 2
+        },
+        "4000\/12": {
+            "false_positives": 0,
+            "catches": 2
+        },
+        "4000\/16": {
+            "false_positives": 0,
+            "catches": 2
+        },
+        "4500\/10": {
+            "false_positives": 0,
+            "catches": 2
+        },
+        "4500\/12": {
+            "false_positives": 0,
+            "catches": 2
+        },
+        "4500\/16": {
+            "false_positives": 0,
+            "catches": 2
+        }
+    },
+    "rows": [
+        {
+            "id": "TEXT-EN-PROBLEM-GRAPHEME-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 52,
+            "distinct_ratio": "4\/7",
+            "scalars": 66,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-PROBLEM-GRAPHEME-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "4\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-PROBLEM-GRAPHEME-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 54,
+            "distinct_ratio": "4\/7",
+            "scalars": 68,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-PROBLEM-TOKENS-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 54,
+            "distinct_ratio": "4\/6",
+            "scalars": 66,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 6,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-PROBLEM-TOKENS-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "4\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-PROBLEM-TOKENS-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 52,
+            "distinct_ratio": "4\/8",
+            "scalars": 68,
+            "counts": {
+                "content_graphemes": 9,
+                "useful_token_count": 8,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-PROBLEM-DISTINCT-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "3\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 3,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "TEXT-EN-PROBLEM-DISTINCT-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "4\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-PROBLEM-DISTINCT-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "5\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 5,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-PROBLEM-GRAPHEME-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 52,
+            "distinct_ratio": "4\/7",
+            "scalars": 66,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-PROBLEM-GRAPHEME-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "4\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-PROBLEM-GRAPHEME-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 54,
+            "distinct_ratio": "4\/7",
+            "scalars": 68,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-PROBLEM-TOKENS-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 54,
+            "distinct_ratio": "4\/6",
+            "scalars": 66,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 6,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-PROBLEM-TOKENS-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "4\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-PROBLEM-TOKENS-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 52,
+            "distinct_ratio": "4\/8",
+            "scalars": 68,
+            "counts": {
+                "content_graphemes": 9,
+                "useful_token_count": 8,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-PROBLEM-DISTINCT-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "3\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 3,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "TEXT-AR-PROBLEM-DISTINCT-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "4\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 4,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-PROBLEM-DISTINCT-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "5\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 5,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-ROLE-GRAPHEME-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 25,
+            "distinct_ratio": "3\/4",
+            "scalars": 33,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-ROLE-GRAPHEME-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "3\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-ROLE-GRAPHEME-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 27,
+            "distinct_ratio": "3\/4",
+            "scalars": 35,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-ROLE-TOKENS-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 27,
+            "distinct_ratio": "3\/3",
+            "scalars": 33,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-EN-ROLE-TOKENS-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "3\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-ROLE-TOKENS-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 25,
+            "distinct_ratio": "3\/5",
+            "scalars": 35,
+            "counts": {
+                "content_graphemes": 6,
+                "useful_token_count": 5,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-ROLE-DISTINCT-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "2\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-ROLE-DISTINCT-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "3\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-ROLE-DISTINCT-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "4\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-AR-ROLE-GRAPHEME-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 25,
+            "distinct_ratio": "3\/4",
+            "scalars": 33,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-ROLE-GRAPHEME-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "3\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-ROLE-GRAPHEME-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 27,
+            "distinct_ratio": "3\/4",
+            "scalars": 35,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-ROLE-TOKENS-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 27,
+            "distinct_ratio": "3\/3",
+            "scalars": 33,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-AR-ROLE-TOKENS-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "3\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-ROLE-TOKENS-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 25,
+            "distinct_ratio": "3\/5",
+            "scalars": 35,
+            "counts": {
+                "content_graphemes": 6,
+                "useful_token_count": 5,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-ROLE-DISTINCT-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "2\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-ROLE-DISTINCT-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "3\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 3,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-ROLE-DISTINCT-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "4\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-EN-OUTCOME-GRAPHEME-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 16,
+            "distinct_ratio": "2\/3",
+            "scalars": 22,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-OUTCOME-GRAPHEME-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "2\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-OUTCOME-GRAPHEME-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 18,
+            "distinct_ratio": "2\/3",
+            "scalars": 24,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-OUTCOME-TOKENS-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 18,
+            "distinct_ratio": "2\/2",
+            "scalars": 22,
+            "counts": {
+                "content_graphemes": 3,
+                "useful_token_count": 2,
+                "distinct_token_count": 2,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-EN-OUTCOME-TOKENS-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "2\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-OUTCOME-TOKENS-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 16,
+            "distinct_ratio": "2\/4",
+            "scalars": 24,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-OUTCOME-DISTINCT-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "1\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 1,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "TEXT-EN-OUTCOME-DISTINCT-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "2\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-EN-OUTCOME-DISTINCT-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "3\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-AR-OUTCOME-GRAPHEME-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 16,
+            "distinct_ratio": "2\/3",
+            "scalars": 22,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-OUTCOME-GRAPHEME-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "2\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-OUTCOME-GRAPHEME-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 18,
+            "distinct_ratio": "2\/3",
+            "scalars": 24,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-OUTCOME-TOKENS-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 18,
+            "distinct_ratio": "2\/2",
+            "scalars": 22,
+            "counts": {
+                "content_graphemes": 3,
+                "useful_token_count": 2,
+                "distinct_token_count": 2,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-AR-OUTCOME-TOKENS-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "2\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-OUTCOME-TOKENS-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 16,
+            "distinct_ratio": "2\/4",
+            "scalars": 24,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-OUTCOME-DISTINCT-BELOW",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "1\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 1,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "TEXT-AR-OUTCOME-DISTINCT-AT",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "2\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 2,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "TEXT-AR-OUTCOME-DISTINCT-ABOVE",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "3\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-EMPTY",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "EMPTY_NORMALIZED_VALUE"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-NON-SCALAR",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "NON_SCALAR_INPUT"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": null,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-INVALID-UTF8",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "INVALID_UTF8"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": null,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-CONCISE-OUTCOME-EN",
+            "group": "existing policy",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "8\/8",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 26,
+                "useful_token_count": 8,
+                "distinct_token_count": 8,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-CONCISE-OUTCOME-AR",
+            "group": "existing policy",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "8\/8",
+            "scalars": 39,
+            "counts": {
+                "content_graphemes": 31,
+                "useful_token_count": 8,
+                "distinct_token_count": 8,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-MIXED-DIGITS",
+            "group": "existing policy",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "8\/8",
+            "scalars": 36,
+            "counts": {
+                "content_graphemes": 28,
+                "useful_token_count": 8,
+                "distinct_token_count": 8,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-ARABIC-PUNCTUATION",
+            "group": "existing policy",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "8\/8",
+            "scalars": 42,
+            "counts": {
+                "content_graphemes": 31,
+                "useful_token_count": 8,
+                "distinct_token_count": 8,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-EMOJI-PADDING",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 9,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-PUNCTUATION-PADDING",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 13,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-NFC-COMPOSED",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 4,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-NFC-DECOMPOSED",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 5,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-TATWEEL-REMOVED",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 9,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-DIACRITIC-TOKEN-IDENTITY",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/4",
+            "scalars": 17,
+            "counts": {
+                "content_graphemes": 12,
+                "useful_token_count": 4,
+                "distinct_token_count": 1,
+                "dominant_token_count": 4
+            }
+        },
+        {
+            "id": "TEXT-WHITESPACE-NORMALIZED",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 2,
+            "distinct_ratio": "4\/4",
+            "scalars": 27,
+            "counts": {
+                "content_graphemes": 24,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-ALLOW-TAB-LF-CR",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "4\/4",
+            "scalars": 26,
+            "counts": {
+                "content_graphemes": 23,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-REJECT-C0",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "PROHIBITED_CONTROL_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 12,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-REJECT-C1",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "PROHIBITED_CONTROL_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 12,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-REJECT-ZWSP",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "ZERO_WIDTH_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 10,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-REJECT-WORD-JOINER",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "ZERO_WIDTH_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 10,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-REJECT-BOM",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "ZERO_WIDTH_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 10,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-REJECT-BIDI-OVERRIDE",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "PROHIBITED_DIRECTIONALITY_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 10,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-REJECT-BIDI-ISOLATE",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "PROHIBITED_DIRECTIONALITY_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 10,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-ALLOW-ZWNJ",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 8,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-ALLOW-ZWJ",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 8,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-PLACEHOLDER-EN-NORMALIZED",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "PLACEHOLDER_CONFIRMED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 7,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-PLACEHOLDER-EN-EXACT",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "PLACEHOLDER_CONFIRMED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 4,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-PLACEHOLDER-AR",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "PLACEHOLDER_CONFIRMED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 10,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-PLACEHOLDER-AR-EXACT",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "PLACEHOLDER_CONFIRMED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 6,
+            "counts": {
+                "content_graphemes": 6,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-PLACEHOLDER-EMBEDDED",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "6\/6",
+            "scalars": 46,
+            "counts": {
+                "content_graphemes": 41,
+                "useful_token_count": 6,
+                "distinct_token_count": 6,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-MAX-PROBLEM",
+            "group": "storage only",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 2000,
+            "distinct_ratio": "n\/a",
+            "scalars": 2000,
+            "counts": {
+                "content_graphemes": 1,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-MAX-PLUS-ONE-PROBLEM",
+            "group": "storage only",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "MAXIMUM_LENGTH_EXCEEDED"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 2001,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-MAX-ROLE",
+            "group": "storage only",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1500,
+            "distinct_ratio": "n\/a",
+            "scalars": 1500,
+            "counts": {
+                "content_graphemes": 1,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-MAX-PLUS-ONE-ROLE",
+            "group": "storage only",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "MAXIMUM_LENGTH_EXCEEDED"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 1501,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-MAX-OUTCOME",
+            "group": "storage only",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1000,
+            "distinct_ratio": "n\/a",
+            "scalars": 1000,
+            "counts": {
+                "content_graphemes": 1,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-MAX-PLUS-ONE-OUTCOME",
+            "group": "storage only",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "MAXIMUM_LENGTH_EXCEEDED"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 1001,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "TEXT-DIVERSE-FILLER",
+            "group": "existing policy",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 2,
+            "distinct_ratio": "14\/14",
+            "scalars": 93,
+            "counts": {
+                "content_graphemes": 80,
+                "useful_token_count": 14,
+                "distinct_token_count": 14,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "TEXT-REPETITION-5900-BPS",
+            "group": "existing policy",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "42\/100",
+            "scalars": 731,
+            "counts": {
+                "content_graphemes": 632,
+                "useful_token_count": 100,
+                "distinct_token_count": 42,
+                "dominant_token_count": 59
+            }
+        },
+        {
+            "id": "TEXT-REPETITION-6000-BPS",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "REPETITION_SUSPECTED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "3\/5",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 30,
+                "useful_token_count": 5,
+                "distinct_token_count": 3,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "TEXT-REPETITION-6100-BPS",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "REPETITION_SUSPECTED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "40\/100",
+            "scalars": 729,
+            "counts": {
+                "content_graphemes": 630,
+                "useful_token_count": 100,
+                "distinct_token_count": 40,
+                "dominant_token_count": 61
+            }
+        },
+        {
+            "id": "TEXT-REPETITION-AR",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "REPETITION_SUSPECTED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "3\/5",
+            "scalars": 27,
+            "counts": {
+                "content_graphemes": 23,
+                "useful_token_count": 5,
+                "distinct_token_count": 3,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "TEXT-REPETITION-TATWEEL",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "REPETITION_SUSPECTED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "3\/5",
+            "scalars": 31,
+            "counts": {
+                "content_graphemes": 23,
+                "useful_token_count": 5,
+                "distinct_token_count": 3,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "TEXT-REPETITION-CASEFOLD",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "REPETITION_SUSPECTED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "3\/5",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 30,
+                "useful_token_count": 5,
+                "distinct_token_count": 3,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "TEXT-REPETITION-DIACRITIC",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "REPETITION_SUSPECTED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "3\/5",
+            "scalars": 25,
+            "counts": {
+                "content_graphemes": 17,
+                "useful_token_count": 5,
+                "distinct_token_count": 3,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-en-graphemes--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 52,
+            "distinct_ratio": "7\/7",
+            "scalars": 66,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 7,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-en-tokens--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 66,
+            "distinct_ratio": "6\/6",
+            "scalars": 78,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 6,
+                "distinct_token_count": 6,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-en-distinct--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 103,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-en-graphemes-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "7\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 7,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-en-tokens-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 65,
+            "distinct_ratio": "7\/7",
+            "scalars": 79,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 7,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-en-distinct-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 103,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-en-graphemes-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 54,
+            "distinct_ratio": "7\/7",
+            "scalars": 68,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 7,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-en-tokens-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 64,
+            "distinct_ratio": "8\/8",
+            "scalars": 80,
+            "counts": {
+                "content_graphemes": 9,
+                "useful_token_count": 8,
+                "distinct_token_count": 8,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-en-distinct-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 103,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-ar-graphemes--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 52,
+            "distinct_ratio": "7\/7",
+            "scalars": 66,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 7,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-ar-tokens--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 66,
+            "distinct_ratio": "6\/6",
+            "scalars": 78,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 6,
+                "distinct_token_count": 6,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-ar-distinct--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 103,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-ar-graphemes-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 53,
+            "distinct_ratio": "7\/7",
+            "scalars": 67,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 7,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-ar-tokens-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 65,
+            "distinct_ratio": "7\/7",
+            "scalars": 79,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 7,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-ar-distinct-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 103,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-ar-graphemes-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 54,
+            "distinct_ratio": "7\/7",
+            "scalars": 68,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 7,
+                "distinct_token_count": 7,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-ar-tokens-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 64,
+            "distinct_ratio": "8\/8",
+            "scalars": 80,
+            "counts": {
+                "content_graphemes": 9,
+                "useful_token_count": 8,
+                "distinct_token_count": 8,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-ar-distinct-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 103,
+            "counts": {
+                "content_graphemes": 8,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-max-0",
+            "group": "storage only",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 2000,
+            "distinct_ratio": "n\/a",
+            "scalars": 2000,
+            "counts": {
+                "content_graphemes": 1,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-problem_statement-max-1",
+            "group": "storage only",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "MAXIMUM_LENGTH_EXCEEDED"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 2001,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-personal_role-en-graphemes--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 25,
+            "distinct_ratio": "4\/4",
+            "scalars": 33,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-en-tokens--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 39,
+            "distinct_ratio": "3\/3",
+            "scalars": 45,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-en-distinct--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 90,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-personal_role-en-graphemes-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "4\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-en-tokens-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 38,
+            "distinct_ratio": "4\/4",
+            "scalars": 46,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-en-distinct-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 90,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-personal_role-en-graphemes-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 27,
+            "distinct_ratio": "4\/4",
+            "scalars": 35,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-en-tokens-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 37,
+            "distinct_ratio": "5\/5",
+            "scalars": 47,
+            "counts": {
+                "content_graphemes": 6,
+                "useful_token_count": 5,
+                "distinct_token_count": 5,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-en-distinct-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 90,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-personal_role-ar-graphemes--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 25,
+            "distinct_ratio": "4\/4",
+            "scalars": 33,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-ar-tokens--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 39,
+            "distinct_ratio": "3\/3",
+            "scalars": 45,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-ar-distinct--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 90,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-personal_role-ar-graphemes-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 26,
+            "distinct_ratio": "4\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-ar-tokens-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 38,
+            "distinct_ratio": "4\/4",
+            "scalars": 46,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-ar-distinct-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 90,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-personal_role-ar-graphemes-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 27,
+            "distinct_ratio": "4\/4",
+            "scalars": 35,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-ar-tokens-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 37,
+            "distinct_ratio": "5\/5",
+            "scalars": 47,
+            "counts": {
+                "content_graphemes": 6,
+                "useful_token_count": 5,
+                "distinct_token_count": 5,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-personal_role-ar-distinct-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 90,
+            "counts": {
+                "content_graphemes": 7,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-personal_role-max-0",
+            "group": "storage only",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1500,
+            "distinct_ratio": "n\/a",
+            "scalars": 1500,
+            "counts": {
+                "content_graphemes": 1,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-personal_role-max-1",
+            "group": "storage only",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "MAXIMUM_LENGTH_EXCEEDED"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 1501,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-en-graphemes--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 16,
+            "distinct_ratio": "3\/3",
+            "scalars": 22,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-en-tokens--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 30,
+            "distinct_ratio": "2\/2",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 3,
+                "useful_token_count": 2,
+                "distinct_token_count": 2,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-en-distinct--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 77,
+            "counts": {
+                "content_graphemes": 6,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-en-graphemes-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "3\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-en-tokens-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 29,
+            "distinct_ratio": "3\/3",
+            "scalars": 35,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-en-distinct-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 77,
+            "counts": {
+                "content_graphemes": 6,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-en-graphemes-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 18,
+            "distinct_ratio": "3\/3",
+            "scalars": 24,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-en-tokens-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 28,
+            "distinct_ratio": "4\/4",
+            "scalars": 36,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-en-distinct-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 77,
+            "counts": {
+                "content_graphemes": 6,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-ar-graphemes--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 16,
+            "distinct_ratio": "3\/3",
+            "scalars": 22,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-ar-tokens--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 30,
+            "distinct_ratio": "2\/2",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 3,
+                "useful_token_count": 2,
+                "distinct_token_count": 2,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-ar-distinct--1",
+            "group": "existing synthetic boundary",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 77,
+            "counts": {
+                "content_graphemes": 6,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-ar-graphemes-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 17,
+            "distinct_ratio": "3\/3",
+            "scalars": 23,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-ar-tokens-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 29,
+            "distinct_ratio": "3\/3",
+            "scalars": 35,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-ar-distinct-0",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 77,
+            "counts": {
+                "content_graphemes": 6,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-ar-graphemes-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 18,
+            "distinct_ratio": "3\/3",
+            "scalars": 24,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-ar-tokens-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 28,
+            "distinct_ratio": "4\/4",
+            "scalars": 36,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-ar-distinct-1",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 12,
+            "distinct_ratio": "n\/a",
+            "scalars": 77,
+            "counts": {
+                "content_graphemes": 6,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-max-0",
+            "group": "storage only",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1000,
+            "distinct_ratio": "n\/a",
+            "scalars": 1000,
+            "counts": {
+                "content_graphemes": 1,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-measurable_outcome-max-1",
+            "group": "storage only",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "MAXIMUM_LENGTH_EXCEEDED"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 1001,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-non-scalar",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "NON_SCALAR_INPUT"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": null,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-invalid-utf8",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "INVALID_UTF8"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": null,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-null",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "FIELD_NOT_AVAILABLE"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": null,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-empty",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "EMPTY_NORMALIZED_VALUE"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 5,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-composed",
+            "group": "existing policy",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "8\/8",
+            "scalars": 48,
+            "counts": {
+                "content_graphemes": 41,
+                "useful_token_count": 8,
+                "distinct_token_count": 8,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-decomposed",
+            "group": "existing policy",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "8\/8",
+            "scalars": 49,
+            "counts": {
+                "content_graphemes": 41,
+                "useful_token_count": 8,
+                "distinct_token_count": 8,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-tatweel",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 9,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-arabic-diacritics",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 6,
+            "counts": {
+                "content_graphemes": 3,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-arabic-bare",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 3,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-arabic-digits",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "1\/1",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 3,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-digits",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "1\/1",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 3,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-emoji-punctuation",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 5,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-whitespace",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 2,
+            "distinct_ratio": "3\/3",
+            "scalars": 19,
+            "counts": {
+                "content_graphemes": 14,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-zwnj",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 6,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-zwj",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 2,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-zero-width",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "ZERO_WIDTH_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-word-joiner",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "ZERO_WIDTH_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-bom",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "ZERO_WIDTH_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-control",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "PROHIBITED_CONTROL_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-control85",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "PROHIBITED_CONTROL_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-bidi",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "PROHIBITED_DIRECTIONALITY_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-isolate",
+            "group": "existing policy",
+            "baseline": "unavailable",
+            "proposed": "unavailable",
+            "reasons": [
+                "PROHIBITED_DIRECTIONALITY_CHARACTER"
+            ],
+            "longest_run": 0,
+            "distinct_ratio": "n\/a",
+            "scalars": 3,
+            "counts": {
+                "content_graphemes": 0,
+                "useful_token_count": 0,
+                "distinct_token_count": 0,
+                "dominant_token_count": 0
+            }
+        },
+        {
+            "id": "INLINE-placeholder-en",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "PLACEHOLDER_CONFIRMED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 7,
+            "counts": {
+                "content_graphemes": 4,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-placeholder-ar",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "PLACEHOLDER_CONFIRMED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "1\/1",
+            "scalars": 6,
+            "counts": {
+                "content_graphemes": 5,
+                "useful_token_count": 1,
+                "distinct_token_count": 1,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-placeholder-substring",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "6\/6",
+            "scalars": 46,
+            "counts": {
+                "content_graphemes": 41,
+                "useful_token_count": 6,
+                "distinct_token_count": 6,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-repetition-ar",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET",
+                "REPETITION_SUSPECTED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "3\/5",
+            "scalars": 27,
+            "counts": {
+                "content_graphemes": 23,
+                "useful_token_count": 5,
+                "distinct_token_count": 3,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "INLINE-repetition-case",
+            "group": "existing policy",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET",
+                "REPETITION_SUSPECTED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "3\/5",
+            "scalars": 31,
+            "counts": {
+                "content_graphemes": 27,
+                "useful_token_count": 5,
+                "distinct_token_count": 3,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "INLINE-outcome-ar",
+            "group": "existing policy",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "10\/10",
+            "scalars": 60,
+            "counts": {
+                "content_graphemes": 51,
+                "useful_token_count": 10,
+                "distinct_token_count": 10,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-outcome-en",
+            "group": "existing policy",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 2,
+            "distinct_ratio": "10\/10",
+            "scalars": 62,
+            "counts": {
+                "content_graphemes": 53,
+                "useful_token_count": 10,
+                "distinct_token_count": 10,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-diverse-nonsense",
+            "group": "existing policy",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "11\/11",
+            "scalars": 73,
+            "counts": {
+                "content_graphemes": 63,
+                "useful_token_count": 11,
+                "distinct_token_count": 11,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "INLINE-repetition-59-100",
+            "group": "existing repetition",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET",
+                "LOW_DISTINCT_TOKEN_RATIO"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "2\/100",
+            "scalars": 540,
+            "counts": {
+                "content_graphemes": 441,
+                "useful_token_count": 100,
+                "distinct_token_count": 2,
+                "dominant_token_count": 59
+            }
+        },
+        {
+            "id": "INLINE-repetition-3-5",
+            "group": "existing repetition",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET",
+                "USEFUL_TOKEN_THRESHOLD_NOT_MET",
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET",
+                "REPETITION_SUSPECTED"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "2\/5",
+            "scalars": 26,
+            "counts": {
+                "content_graphemes": 22,
+                "useful_token_count": 5,
+                "distinct_token_count": 2,
+                "dominant_token_count": 3
+            }
+        },
+        {
+            "id": "INLINE-repetition-61-100",
+            "group": "existing repetition",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "DISTINCT_TOKEN_THRESHOLD_NOT_MET",
+                "REPETITION_SUSPECTED",
+                "LOW_DISTINCT_TOKEN_RATIO"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "2\/100",
+            "scalars": 538,
+            "counts": {
+                "content_graphemes": 439,
+                "useful_token_count": 100,
+                "distinct_token_count": 2,
+                "dominant_token_count": 61
+            }
+        },
+        {
+            "id": "NATURAL-long-en",
+            "group": "natural",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 2,
+            "distinct_ratio": "202\/236",
+            "scalars": 1948,
+            "counts": {
+                "content_graphemes": 1673,
+                "useful_token_count": 236,
+                "distinct_token_count": 202,
+                "dominant_token_count": 12
+            }
+        },
+        {
+            "id": "NATURAL-long-ar",
+            "group": "natural",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 2,
+            "distinct_ratio": "254\/276",
+            "scalars": 1943,
+            "counts": {
+                "content_graphemes": 1649,
+                "useful_token_count": 276,
+                "distinct_token_count": 254,
+                "dominant_token_count": 4
+            }
+        },
+        {
+            "id": "NATURAL-special",
+            "group": "natural",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 3,
+            "distinct_ratio": "23\/24",
+            "scalars": 184,
+            "counts": {
+                "content_graphemes": 144,
+                "useful_token_count": 24,
+                "distinct_token_count": 23,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "NATURAL-stretch-en",
+            "group": "natural",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 5,
+            "distinct_ratio": "18\/18",
+            "scalars": 133,
+            "counts": {
+                "content_graphemes": 111,
+                "useful_token_count": 18,
+                "distinct_token_count": 18,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "NATURAL-stretch-ar",
+            "group": "natural",
+            "baseline": "complete",
+            "proposed": "complete",
+            "reasons": [
+                "TEXT_COMPLETE"
+            ],
+            "longest_run": 5,
+            "distinct_ratio": "19\/20",
+            "scalars": 124,
+            "counts": {
+                "content_graphemes": 101,
+                "useful_token_count": 20,
+                "distinct_token_count": 19,
+                "dominant_token_count": 2
+            }
+        },
+        {
+            "id": "ADVERSARIAL-stretch-ar",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 14,
+            "distinct_ratio": "4\/4",
+            "scalars": 34,
+            "counts": {
+                "content_graphemes": 17,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "ADVERSARIAL-stretch-en",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 13,
+            "distinct_ratio": "5\/5",
+            "scalars": 31,
+            "counts": {
+                "content_graphemes": 15,
+                "useful_token_count": 5,
+                "distinct_token_count": 5,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "ADVERSARIAL-run-only-ar",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 16,
+            "distinct_ratio": "3\/3",
+            "scalars": 37,
+            "counts": {
+                "content_graphemes": 13,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "ADVERSARIAL-run-only-en",
+            "group": "synthetic padding (intended)",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "CHARACTER_RUN_SUSPECTED"
+            ],
+            "longest_run": 16,
+            "distinct_ratio": "3\/3",
+            "scalars": 40,
+            "counts": {
+                "content_graphemes": 15,
+                "useful_token_count": 3,
+                "distinct_token_count": 3,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "ADVERSARIAL-rotation-en",
+            "group": "adversarial",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "LOW_DISTINCT_TOKEN_RATIO"
+            ],
+            "longest_run": 2,
+            "distinct_ratio": "5\/25",
+            "scalars": 114,
+            "counts": {
+                "content_graphemes": 90,
+                "useful_token_count": 25,
+                "distinct_token_count": 5,
+                "dominant_token_count": 5
+            }
+        },
+        {
+            "id": "ADVERSARIAL-rotation-ar",
+            "group": "adversarial",
+            "baseline": "complete",
+            "proposed": "needs_attention",
+            "reasons": [
+                "LOW_DISTINCT_TOKEN_RATIO"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "5\/25",
+            "scalars": 139,
+            "counts": {
+                "content_graphemes": 115,
+                "useful_token_count": 25,
+                "distinct_token_count": 5,
+                "dominant_token_count": 5
+            }
+        },
+        {
+            "id": "ADVERSARIAL-tatweel",
+            "group": "already harmless",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "4\/4",
+            "scalars": 37,
+            "counts": {
+                "content_graphemes": 17,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "ADVERSARIAL-punctuation",
+            "group": "already harmless",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "4\/4",
+            "scalars": 42,
+            "counts": {
+                "content_graphemes": 17,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        },
+        {
+            "id": "ADVERSARIAL-emoji",
+            "group": "already harmless",
+            "baseline": "needs_attention",
+            "proposed": "needs_attention",
+            "reasons": [
+                "GRAPHEME_THRESHOLD_NOT_MET"
+            ],
+            "longest_run": 1,
+            "distinct_ratio": "4\/4",
+            "scalars": 32,
+            "counts": {
+                "content_graphemes": 17,
+                "useful_token_count": 4,
+                "distinct_token_count": 4,
+                "dominant_token_count": 1
+            }
+        }
+    ],
+    "projects": {
+        "exact-en": {
+            "6000": [
+                "personal_role",
+                "measurable_outcome"
+            ],
+            "7000": [
+                "personal_role",
+                "measurable_outcome"
+            ],
+            "8000": [
+                "personal_role",
+                "measurable_outcome"
+            ],
+            "9000": [
+                "personal_role",
+                "measurable_outcome"
+            ]
+        },
+        "exact-ar": {
+            "6000": [
+                "personal_role",
+                "measurable_outcome"
+            ],
+            "7000": [
+                "personal_role",
+                "measurable_outcome"
+            ],
+            "8000": [
+                "personal_role",
+                "measurable_outcome"
+            ],
+            "9000": [
+                "personal_role",
+                "measurable_outcome"
+            ]
+        },
+        "contained-outcome": {
+            "6000": [
+                "measurable_outcome"
+            ],
+            "7000": [
+                "measurable_outcome"
+            ],
+            "8000": [
+                "measurable_outcome"
+            ],
+            "9000": [
+                "measurable_outcome"
+            ]
+        },
+        "shared-phrase-en": {
+            "6000": [],
+            "7000": [],
+            "8000": [],
+            "9000": []
+        },
+        "shared-phrase-ar": {
+            "6000": [],
+            "7000": [],
+            "8000": [],
+            "9000": []
+        },
+        "few-shingles-contained": {
+            "6000": [],
+            "7000": [],
+            "8000": [],
+            "9000": []
+        },
+        "few-shingles-exact": {
+            "6000": [
+                "measurable_outcome"
+            ],
+            "7000": [
+                "measurable_outcome"
+            ],
+            "8000": [
+                "measurable_outcome"
+            ],
+            "9000": [
+                "measurable_outcome"
+            ]
+        }
+    }
+}
