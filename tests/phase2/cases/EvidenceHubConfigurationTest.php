@@ -100,9 +100,11 @@ final class EvidenceHubConfigurationTest
 
     private static function recommendationCoreHasNoEnvironmentAccess(): void
     {
-        $source = file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_recommendations.php');
-        phase2Assert(is_string($source), 'Recommendation core source is unreadable.');
-        phase2Assert(!preg_match('/\bgetenv\s*\(|\$_ENV\b|\$_SERVER\b|\btime\s*\(|new\s+PDO\b|file_get_contents\s*\(/i', $source), 'Pure recommendation core gained environment, clock, storage, or database access.');
+        foreach (['evidence_hub_recommendations', 'evidence_hub_recommendation_facts', 'evidence_hub_recommendation_key_inputs', 'evidence_hub_recommendation_canonical'] as $file) {
+            $source = file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/' . $file . '.php');
+            phase2Assert(is_string($source), 'Recommendation core source is unreadable.');
+            phase2Assert(!preg_match('/\bgetenv\s*\(|\$_ENV\b|\$_SERVER\b|\btime\s*\(|new\s+PDO\b|file_get_contents\s*\(/i', $source), 'Pure recommendation core gained environment, clock, storage, or database access.');
+        }
     }
 
     private static function configurationBoundaryHasNoOutputSideEffects(): void
