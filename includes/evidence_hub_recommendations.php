@@ -362,6 +362,9 @@ function evidenceHubProjectRecommendationReasonCodes(array $states, array $factR
         'USEFUL_TOKEN_THRESHOLD_NOT_MET',
         'DISTINCT_TOKEN_THRESHOLD_NOT_MET',
         'REPETITION_SUSPECTED',
+        'CHARACTER_RUN_SUSPECTED',
+        'LOW_DISTINCT_TOKEN_RATIO',
+        'DUPLICATED_ACROSS_FIELDS',
         'PLACEHOLDER_CONFIRMED',
     ];
     $selected = [];
@@ -676,6 +679,9 @@ function evidenceHubValidateProjectFactReasonCodes(mixed $reasonCodes): array
         'USEFUL_TOKEN_THRESHOLD_NOT_MET',
         'DISTINCT_TOKEN_THRESHOLD_NOT_MET',
         'REPETITION_SUSPECTED',
+        'CHARACTER_RUN_SUSPECTED',
+        'LOW_DISTINCT_TOKEN_RATIO',
+        'DUPLICATED_ACROSS_FIELDS',
         'PLACEHOLDER_CONFIRMED',
         'TEXT_COMPLETE',
     ];
@@ -751,6 +757,9 @@ function evidenceHubValidateRecommendationReasonCodes(mixed $value): void
         'USEFUL_TOKEN_THRESHOLD_NOT_MET',
         'DISTINCT_TOKEN_THRESHOLD_NOT_MET',
         'REPETITION_SUSPECTED',
+        'CHARACTER_RUN_SUSPECTED',
+        'LOW_DISTINCT_TOKEN_RATIO',
+        'DUPLICATED_ACROSS_FIELDS',
         'PLACEHOLDER_CONFIRMED',
     ];
     foreach ($value as $reasonCode) {

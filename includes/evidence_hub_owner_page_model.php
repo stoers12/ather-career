@@ -81,7 +81,7 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
             'technology_storage_state' => $storage['storage_state'],
             'technology_storage_reason_codes' => $storage['reason_codes'],
             'technologies' => $storage['labels'],
-        ]);
+        ], evidenceHubContractVersionDefinition(EVIDENCE_HUB_OWNER_CONTRACT_VERSION)['text_rule_version']);
         $fields = [];
         foreach (['problem' => 'Problem', 'personal_role' => 'Personal role', 'measurable_outcome' => 'Measurable outcome'] as $field => $label) {
             $evaluation = $logicalEvaluations[$field];
