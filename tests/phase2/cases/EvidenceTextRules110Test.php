@@ -88,6 +88,8 @@ final class EvidenceTextRules110Test
         foreach (['10000','2020-2024','coffee','keep'] as $value) {
             phase2AssertSame(evaluateEvidenceText('personal_role',$value,'1.0.0')['content_graphemes'], evaluateEvidenceText('personal_role',$value,'1.1.0')['content_graphemes'], 'Digits or two-letter runs were discounted.');
         }
+        phase2AssertSame(1,evaluateEvidenceText('personal_role','aAa','1.1.0')['content_graphemes'],'Run comparison must fold Latin case.');
+        phase2AssertSame(0,evaluateEvidenceText('personal_role','aAa','1.1.0')['useful_token_count'],'A case-folded run-only token remained useful.');
         foreach (['زاد الأداء كثيــــــــراً جدا','زاد الأداء كثيراً جدا !!!!!!!!!','زاد الأداء كثيراً جدا 😀😀😀😀'] as $value) {
             $old = evaluateEvidenceText('measurable_outcome',$value,'1.0.0');
             $new = evaluateEvidenceText('measurable_outcome',$value,'1.1.0');

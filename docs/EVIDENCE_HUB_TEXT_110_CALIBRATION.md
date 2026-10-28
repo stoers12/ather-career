@@ -8,20 +8,20 @@ The selected defaults remain distinct ratio **4000 / minimum 12 tokens** and con
 
 ## Ratio candidates
 
-| Ratio bps | Minimum tokens | Natural false positives | Rotations caught |
-|---|---:|---:|---:|
-| 3000 | 10 | 0 | 2/2 |
-| 3000 | 12 | 0 | 2/2 |
-| 3000 | 16 | 0 | 2/2 |
-| 3500 | 10 | 0 | 2/2 |
-| 3500 | 12 | 0 | 2/2 |
-| 3500 | 16 | 0 | 2/2 |
-| 4000 | 10 | 0 | 2/2 |
-| 4000 | 12 | 0 | 2/2 |
-| 4000 | 16 | 0 | 2/2 |
-| 4500 | 10 | 0 | 2/2 |
-| 4500 | 12 | 0 | 2/2 |
-| 4500 | 16 | 0 | 2/2 |
+| Ratio bps | Minimum tokens | Natural false positives | Protected fixture false positives | Rotations caught |
+|---|---:|---:|---:|---:|
+| 3000 | 10 | 0 | 0 | 2/2 |
+| 3000 | 12 | 0 | 0 | 2/2 |
+| 3000 | 16 | 0 | 0 | 2/2 |
+| 3500 | 10 | 0 | 0 | 2/2 |
+| 3500 | 12 | 0 | 0 | 2/2 |
+| 3500 | 16 | 0 | 0 | 2/2 |
+| 4000 | 10 | 0 | 0 | 2/2 |
+| 4000 | 12 | 0 | 0 | 2/2 |
+| 4000 | 16 | 0 | 0 | 2/2 |
+| 4500 | 10 | 0 | 1 | 2/2 |
+| 4500 | 12 | 0 | 1 | 2/2 |
+| 4500 | 16 | 0 | 1 | 2/2 |
 
 ## Cross-field containment candidates
 

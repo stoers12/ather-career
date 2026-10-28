@@ -103,6 +103,7 @@ try {
     requireHttp($arabic['status'] === 200 && str_contains($arabic['body'], '<html lang="ar" dir="rtl">') && str_contains($arabic['body'], 'تعديل أدلة المشروع') && str_contains($arabic['body'], $fields['problem']), 'Arabic Owner locale did not render the localized editor with unchanged owner content.');
     $arabicInvalid = httpEvidenceRequest('POST', $route, $invalid, $cookieA, [], 'ar');
     requireHttp($arabicInvalid['status'] === 422 && str_contains($arabicInvalid['body'], 'راجع الحقول المحددة') && !str_contains($arabicInvalid['body'], 'Review the highlighted fields'), 'Arabic validation summary is not localized.');
+    verifyTextRules110Http($fields, $route, $cookieA);
     // Last, because it replaces the evidence: unedited starters save but never count as evidence.
     $starters = ['csrf_token' => $csrf];
     foreach (evidenceWritingGuidanceFields() as $key => $field) {
@@ -117,4 +118,26 @@ try {
         @unlink($cookieA);
         @unlink($cookieB);
     }
+}
+
+/** Exercise storable synthetic text through the real editor and Owner Hub. */
+function verifyTextRules110Http(array $fields, string $route, string $cookieJar): void
+{
+    $paragraph = 'Readers could not locate available books because inconsistent catalogue labels and disconnected reservation records made the library portal difficult to navigate.';
+    $cases = [
+        ['changes' => ['measurable_outcome' => 'زاد الأداء كثيراً جداااااااااااااا'], 'en' => "Stretched letters don't count. Add real details instead.", 'ar' => 'الحروف المكررة لا تُحتسب. أضف تفاصيل حقيقية بدلاً منها.'],
+        ['changes' => ['problem' => implode(' ',array_fill(0,5,'The app was slow today'))], 'en' => 'The same few words repeat. Describe it in more varied, specific words.', 'ar' => 'تتكرر الكلمات نفسها كثيراً. صِف بكلمات أكثر تنوعاً وتحديداً.'],
+        ['changes' => ['problem' => $paragraph,'personal_role' => $paragraph,'measurable_outcome' => $paragraph], 'en' => 'This repeats another field of the same project. Write what is specific to this field.', 'ar' => 'هذا النص يكرر حقلاً آخر في المشروع نفسه. اكتب ما يخص هذا الحقل تحديداً.'],
+    ];
+    foreach ($cases as $case) {
+        requireHttp(httpEvidenceRequest('POST',$route,array_replace($fields,$case['changes']),$cookieJar)['status'] === 303,'Text-rule attention rejected valid storage or failed PRG.');
+        foreach (['en','ar'] as $locale) {
+            $page = httpEvidenceRequest('GET','/owner/evidence-hub',null,$cookieJar,[],$locale);
+            requireHttp($page['status'] === 200 && str_contains(html_entity_decode($page['body'],ENT_QUOTES|ENT_HTML5,'UTF-8'),$case[$locale]),'The live Owner Hub did not render its localized text-rule hint.');
+            foreach ($case['changes'] as $raw) requireHttp(!str_contains($page['body'],$raw),'The Hub disclosed raw project evidence.');
+        }
+        $editor = httpEvidenceRequest('GET',$route,null,$cookieJar);
+        requireHttp($editor['status'] === 200 && str_contains($editor['body'],'evidence-hub-state--needs_attention'),'Editor and Hub text-rule statuses disagree.');
+    }
+    echo "EVIDENCE_TEXT_RULES_110_HTTP_PASSED\n";
 }

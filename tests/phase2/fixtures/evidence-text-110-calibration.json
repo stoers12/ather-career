@@ -4,53 +4,65 @@
     "adversarial_total": 6,
     "containment_mismatches": 0,
     "ratios": {
-        "3000\/10": {
+        "3000/10": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 0
         },
-        "3000\/12": {
+        "3000/12": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 0
         },
-        "3000\/16": {
+        "3000/16": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 0
         },
-        "3500\/10": {
+        "3500/10": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 0
         },
-        "3500\/12": {
+        "3500/12": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 0
         },
-        "3500\/16": {
+        "3500/16": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 0
         },
-        "4000\/10": {
+        "4000/10": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 0
         },
-        "4000\/12": {
+        "4000/12": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 0
         },
-        "4000\/16": {
+        "4000/16": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 0
         },
-        "4500\/10": {
+        "4500/10": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 1
         },
-        "4500\/12": {
+        "4500/12": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 1
         },
-        "4500\/16": {
+        "4500/16": {
             "false_positives": 0,
-            "catches": 2
+            "catches": 2,
+            "protected_fixture_false_positives": 1
         }
     },
     "rows": [
@@ -65,7 +77,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 52,
-            "distinct_ratio": "4\/7",
+            "distinct_ratio": "4/7",
             "scalars": 66,
             "counts": {
                 "content_graphemes": 8,
@@ -84,7 +96,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 53,
-            "distinct_ratio": "4\/7",
+            "distinct_ratio": "4/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -103,7 +115,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 54,
-            "distinct_ratio": "4\/7",
+            "distinct_ratio": "4/7",
             "scalars": 68,
             "counts": {
                 "content_graphemes": 8,
@@ -123,7 +135,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 54,
-            "distinct_ratio": "4\/6",
+            "distinct_ratio": "4/6",
             "scalars": 66,
             "counts": {
                 "content_graphemes": 7,
@@ -142,7 +154,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 53,
-            "distinct_ratio": "4\/7",
+            "distinct_ratio": "4/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -161,7 +173,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 52,
-            "distinct_ratio": "4\/8",
+            "distinct_ratio": "4/8",
             "scalars": 68,
             "counts": {
                 "content_graphemes": 9,
@@ -180,7 +192,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 53,
-            "distinct_ratio": "3\/7",
+            "distinct_ratio": "3/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -199,7 +211,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 53,
-            "distinct_ratio": "4\/7",
+            "distinct_ratio": "4/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -217,7 +229,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 53,
-            "distinct_ratio": "5\/7",
+            "distinct_ratio": "5/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -237,7 +249,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 52,
-            "distinct_ratio": "4\/7",
+            "distinct_ratio": "4/7",
             "scalars": 66,
             "counts": {
                 "content_graphemes": 8,
@@ -256,7 +268,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 53,
-            "distinct_ratio": "4\/7",
+            "distinct_ratio": "4/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -275,7 +287,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 54,
-            "distinct_ratio": "4\/7",
+            "distinct_ratio": "4/7",
             "scalars": 68,
             "counts": {
                 "content_graphemes": 8,
@@ -295,7 +307,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 54,
-            "distinct_ratio": "4\/6",
+            "distinct_ratio": "4/6",
             "scalars": 66,
             "counts": {
                 "content_graphemes": 7,
@@ -314,7 +326,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 53,
-            "distinct_ratio": "4\/7",
+            "distinct_ratio": "4/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -333,7 +345,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 52,
-            "distinct_ratio": "4\/8",
+            "distinct_ratio": "4/8",
             "scalars": 68,
             "counts": {
                 "content_graphemes": 9,
@@ -352,7 +364,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 53,
-            "distinct_ratio": "3\/7",
+            "distinct_ratio": "3/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -371,7 +383,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 53,
-            "distinct_ratio": "4\/7",
+            "distinct_ratio": "4/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -389,7 +401,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 53,
-            "distinct_ratio": "5\/7",
+            "distinct_ratio": "5/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -409,7 +421,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 25,
-            "distinct_ratio": "3\/4",
+            "distinct_ratio": "3/4",
             "scalars": 33,
             "counts": {
                 "content_graphemes": 5,
@@ -428,7 +440,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 26,
-            "distinct_ratio": "3\/4",
+            "distinct_ratio": "3/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -447,7 +459,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 27,
-            "distinct_ratio": "3\/4",
+            "distinct_ratio": "3/4",
             "scalars": 35,
             "counts": {
                 "content_graphemes": 5,
@@ -467,7 +479,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 27,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 33,
             "counts": {
                 "content_graphemes": 4,
@@ -486,7 +498,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 26,
-            "distinct_ratio": "3\/4",
+            "distinct_ratio": "3/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -505,7 +517,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 25,
-            "distinct_ratio": "3\/5",
+            "distinct_ratio": "3/5",
             "scalars": 35,
             "counts": {
                 "content_graphemes": 6,
@@ -524,7 +536,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 26,
-            "distinct_ratio": "2\/4",
+            "distinct_ratio": "2/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -543,7 +555,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 26,
-            "distinct_ratio": "3\/4",
+            "distinct_ratio": "3/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -561,7 +573,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 26,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -581,7 +593,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 25,
-            "distinct_ratio": "3\/4",
+            "distinct_ratio": "3/4",
             "scalars": 33,
             "counts": {
                 "content_graphemes": 5,
@@ -600,7 +612,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 26,
-            "distinct_ratio": "3\/4",
+            "distinct_ratio": "3/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -619,7 +631,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 27,
-            "distinct_ratio": "3\/4",
+            "distinct_ratio": "3/4",
             "scalars": 35,
             "counts": {
                 "content_graphemes": 5,
@@ -639,7 +651,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 27,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 33,
             "counts": {
                 "content_graphemes": 4,
@@ -658,7 +670,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 26,
-            "distinct_ratio": "3\/4",
+            "distinct_ratio": "3/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -677,7 +689,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 25,
-            "distinct_ratio": "3\/5",
+            "distinct_ratio": "3/5",
             "scalars": 35,
             "counts": {
                 "content_graphemes": 6,
@@ -696,7 +708,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 26,
-            "distinct_ratio": "2\/4",
+            "distinct_ratio": "2/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -715,7 +727,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 26,
-            "distinct_ratio": "3\/4",
+            "distinct_ratio": "3/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -733,7 +745,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 26,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -753,7 +765,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 16,
-            "distinct_ratio": "2\/3",
+            "distinct_ratio": "2/3",
             "scalars": 22,
             "counts": {
                 "content_graphemes": 4,
@@ -772,7 +784,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 17,
-            "distinct_ratio": "2\/3",
+            "distinct_ratio": "2/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -791,7 +803,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 18,
-            "distinct_ratio": "2\/3",
+            "distinct_ratio": "2/3",
             "scalars": 24,
             "counts": {
                 "content_graphemes": 4,
@@ -811,7 +823,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 18,
-            "distinct_ratio": "2\/2",
+            "distinct_ratio": "2/2",
             "scalars": 22,
             "counts": {
                 "content_graphemes": 3,
@@ -830,7 +842,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 17,
-            "distinct_ratio": "2\/3",
+            "distinct_ratio": "2/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -849,7 +861,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 16,
-            "distinct_ratio": "2\/4",
+            "distinct_ratio": "2/4",
             "scalars": 24,
             "counts": {
                 "content_graphemes": 5,
@@ -868,7 +880,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 17,
-            "distinct_ratio": "1\/3",
+            "distinct_ratio": "1/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -887,7 +899,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 17,
-            "distinct_ratio": "2\/3",
+            "distinct_ratio": "2/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -905,7 +917,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 17,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -925,7 +937,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 16,
-            "distinct_ratio": "2\/3",
+            "distinct_ratio": "2/3",
             "scalars": 22,
             "counts": {
                 "content_graphemes": 4,
@@ -944,7 +956,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 17,
-            "distinct_ratio": "2\/3",
+            "distinct_ratio": "2/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -963,7 +975,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 18,
-            "distinct_ratio": "2\/3",
+            "distinct_ratio": "2/3",
             "scalars": 24,
             "counts": {
                 "content_graphemes": 4,
@@ -983,7 +995,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 18,
-            "distinct_ratio": "2\/2",
+            "distinct_ratio": "2/2",
             "scalars": 22,
             "counts": {
                 "content_graphemes": 3,
@@ -1002,7 +1014,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 17,
-            "distinct_ratio": "2\/3",
+            "distinct_ratio": "2/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -1021,7 +1033,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 16,
-            "distinct_ratio": "2\/4",
+            "distinct_ratio": "2/4",
             "scalars": 24,
             "counts": {
                 "content_graphemes": 5,
@@ -1040,7 +1052,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 17,
-            "distinct_ratio": "1\/3",
+            "distinct_ratio": "1/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -1059,7 +1071,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 17,
-            "distinct_ratio": "2\/3",
+            "distinct_ratio": "2/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -1077,7 +1089,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 17,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -1095,7 +1107,7 @@
                 "EMPTY_NORMALIZED_VALUE"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 0,
@@ -1113,7 +1125,7 @@
                 "NON_SCALAR_INPUT"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": null,
             "counts": {
                 "content_graphemes": 0,
@@ -1131,7 +1143,7 @@
                 "INVALID_UTF8"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": null,
             "counts": {
                 "content_graphemes": 0,
@@ -1149,7 +1161,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 1,
-            "distinct_ratio": "8\/8",
+            "distinct_ratio": "8/8",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 26,
@@ -1167,7 +1179,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 1,
-            "distinct_ratio": "8\/8",
+            "distinct_ratio": "8/8",
             "scalars": 39,
             "counts": {
                 "content_graphemes": 31,
@@ -1185,7 +1197,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 1,
-            "distinct_ratio": "8\/8",
+            "distinct_ratio": "8/8",
             "scalars": 36,
             "counts": {
                 "content_graphemes": 28,
@@ -1203,7 +1215,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 1,
-            "distinct_ratio": "8\/8",
+            "distinct_ratio": "8/8",
             "scalars": 42,
             "counts": {
                 "content_graphemes": 31,
@@ -1223,7 +1235,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 9,
             "counts": {
                 "content_graphemes": 5,
@@ -1243,7 +1255,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 13,
             "counts": {
                 "content_graphemes": 5,
@@ -1263,7 +1275,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 4,
             "counts": {
                 "content_graphemes": 4,
@@ -1283,7 +1295,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 5,
             "counts": {
                 "content_graphemes": 4,
@@ -1303,7 +1315,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 9,
             "counts": {
                 "content_graphemes": 5,
@@ -1323,7 +1335,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/4",
+            "distinct_ratio": "1/4",
             "scalars": 17,
             "counts": {
                 "content_graphemes": 12,
@@ -1342,7 +1354,7 @@
                 "USEFUL_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 2,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 27,
             "counts": {
                 "content_graphemes": 24,
@@ -1361,7 +1373,7 @@
                 "USEFUL_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 26,
             "counts": {
                 "content_graphemes": 23,
@@ -1379,7 +1391,7 @@
                 "PROHIBITED_CONTROL_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 12,
             "counts": {
                 "content_graphemes": 0,
@@ -1397,7 +1409,7 @@
                 "PROHIBITED_CONTROL_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 12,
             "counts": {
                 "content_graphemes": 0,
@@ -1415,7 +1427,7 @@
                 "ZERO_WIDTH_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 10,
             "counts": {
                 "content_graphemes": 0,
@@ -1433,7 +1445,7 @@
                 "ZERO_WIDTH_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 10,
             "counts": {
                 "content_graphemes": 0,
@@ -1451,7 +1463,7 @@
                 "ZERO_WIDTH_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 10,
             "counts": {
                 "content_graphemes": 0,
@@ -1469,7 +1481,7 @@
                 "PROHIBITED_DIRECTIONALITY_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 10,
             "counts": {
                 "content_graphemes": 0,
@@ -1487,7 +1499,7 @@
                 "PROHIBITED_DIRECTIONALITY_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 10,
             "counts": {
                 "content_graphemes": 0,
@@ -1507,7 +1519,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 8,
             "counts": {
                 "content_graphemes": 7,
@@ -1527,7 +1539,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 8,
             "counts": {
                 "content_graphemes": 7,
@@ -1545,7 +1557,7 @@
                 "PLACEHOLDER_CONFIRMED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 7,
             "counts": {
                 "content_graphemes": 4,
@@ -1563,7 +1575,7 @@
                 "PLACEHOLDER_CONFIRMED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 4,
             "counts": {
                 "content_graphemes": 4,
@@ -1581,7 +1593,7 @@
                 "PLACEHOLDER_CONFIRMED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 10,
             "counts": {
                 "content_graphemes": 5,
@@ -1599,7 +1611,7 @@
                 "PLACEHOLDER_CONFIRMED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 6,
             "counts": {
                 "content_graphemes": 6,
@@ -1618,7 +1630,7 @@
                 "USEFUL_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "6\/6",
+            "distinct_ratio": "6/6",
             "scalars": 46,
             "counts": {
                 "content_graphemes": 41,
@@ -1638,7 +1650,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 2000,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 2000,
             "counts": {
                 "content_graphemes": 1,
@@ -1656,7 +1668,7 @@
                 "MAXIMUM_LENGTH_EXCEEDED"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 2001,
             "counts": {
                 "content_graphemes": 0,
@@ -1676,7 +1688,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1500,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 1500,
             "counts": {
                 "content_graphemes": 1,
@@ -1694,7 +1706,7 @@
                 "MAXIMUM_LENGTH_EXCEEDED"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 1501,
             "counts": {
                 "content_graphemes": 0,
@@ -1714,7 +1726,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1000,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 1000,
             "counts": {
                 "content_graphemes": 1,
@@ -1732,7 +1744,7 @@
                 "MAXIMUM_LENGTH_EXCEEDED"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 1001,
             "counts": {
                 "content_graphemes": 0,
@@ -1750,7 +1762,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 2,
-            "distinct_ratio": "14\/14",
+            "distinct_ratio": "14/14",
             "scalars": 93,
             "counts": {
                 "content_graphemes": 80,
@@ -1768,7 +1780,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 1,
-            "distinct_ratio": "42\/100",
+            "distinct_ratio": "42/100",
             "scalars": 731,
             "counts": {
                 "content_graphemes": 632,
@@ -1786,7 +1798,7 @@
                 "REPETITION_SUSPECTED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "3\/5",
+            "distinct_ratio": "3/5",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 30,
@@ -1804,7 +1816,7 @@
                 "REPETITION_SUSPECTED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "40\/100",
+            "distinct_ratio": "40/100",
             "scalars": 729,
             "counts": {
                 "content_graphemes": 630,
@@ -1822,7 +1834,7 @@
                 "REPETITION_SUSPECTED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "3\/5",
+            "distinct_ratio": "3/5",
             "scalars": 27,
             "counts": {
                 "content_graphemes": 23,
@@ -1840,7 +1852,7 @@
                 "REPETITION_SUSPECTED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "3\/5",
+            "distinct_ratio": "3/5",
             "scalars": 31,
             "counts": {
                 "content_graphemes": 23,
@@ -1858,7 +1870,7 @@
                 "REPETITION_SUSPECTED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "3\/5",
+            "distinct_ratio": "3/5",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 30,
@@ -1877,7 +1889,7 @@
                 "REPETITION_SUSPECTED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "3\/5",
+            "distinct_ratio": "3/5",
             "scalars": 25,
             "counts": {
                 "content_graphemes": 17,
@@ -1896,7 +1908,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 52,
-            "distinct_ratio": "7\/7",
+            "distinct_ratio": "7/7",
             "scalars": 66,
             "counts": {
                 "content_graphemes": 8,
@@ -1915,7 +1927,7 @@
                 "USEFUL_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 66,
-            "distinct_ratio": "6\/6",
+            "distinct_ratio": "6/6",
             "scalars": 78,
             "counts": {
                 "content_graphemes": 7,
@@ -1934,7 +1946,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 103,
             "counts": {
                 "content_graphemes": 8,
@@ -1952,7 +1964,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 53,
-            "distinct_ratio": "7\/7",
+            "distinct_ratio": "7/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -1970,7 +1982,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 65,
-            "distinct_ratio": "7\/7",
+            "distinct_ratio": "7/7",
             "scalars": 79,
             "counts": {
                 "content_graphemes": 8,
@@ -1989,7 +2001,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 103,
             "counts": {
                 "content_graphemes": 8,
@@ -2007,7 +2019,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 54,
-            "distinct_ratio": "7\/7",
+            "distinct_ratio": "7/7",
             "scalars": 68,
             "counts": {
                 "content_graphemes": 8,
@@ -2025,7 +2037,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 64,
-            "distinct_ratio": "8\/8",
+            "distinct_ratio": "8/8",
             "scalars": 80,
             "counts": {
                 "content_graphemes": 9,
@@ -2044,7 +2056,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 103,
             "counts": {
                 "content_graphemes": 8,
@@ -2063,7 +2075,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 52,
-            "distinct_ratio": "7\/7",
+            "distinct_ratio": "7/7",
             "scalars": 66,
             "counts": {
                 "content_graphemes": 8,
@@ -2082,7 +2094,7 @@
                 "USEFUL_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 66,
-            "distinct_ratio": "6\/6",
+            "distinct_ratio": "6/6",
             "scalars": 78,
             "counts": {
                 "content_graphemes": 7,
@@ -2101,7 +2113,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 103,
             "counts": {
                 "content_graphemes": 8,
@@ -2119,7 +2131,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 53,
-            "distinct_ratio": "7\/7",
+            "distinct_ratio": "7/7",
             "scalars": 67,
             "counts": {
                 "content_graphemes": 8,
@@ -2137,7 +2149,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 65,
-            "distinct_ratio": "7\/7",
+            "distinct_ratio": "7/7",
             "scalars": 79,
             "counts": {
                 "content_graphemes": 8,
@@ -2156,7 +2168,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 103,
             "counts": {
                 "content_graphemes": 8,
@@ -2174,7 +2186,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 54,
-            "distinct_ratio": "7\/7",
+            "distinct_ratio": "7/7",
             "scalars": 68,
             "counts": {
                 "content_graphemes": 8,
@@ -2192,7 +2204,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 64,
-            "distinct_ratio": "8\/8",
+            "distinct_ratio": "8/8",
             "scalars": 80,
             "counts": {
                 "content_graphemes": 9,
@@ -2211,7 +2223,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 103,
             "counts": {
                 "content_graphemes": 8,
@@ -2231,7 +2243,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 2000,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 2000,
             "counts": {
                 "content_graphemes": 1,
@@ -2249,7 +2261,7 @@
                 "MAXIMUM_LENGTH_EXCEEDED"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 2001,
             "counts": {
                 "content_graphemes": 0,
@@ -2268,7 +2280,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 25,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 33,
             "counts": {
                 "content_graphemes": 5,
@@ -2288,7 +2300,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 39,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 45,
             "counts": {
                 "content_graphemes": 4,
@@ -2307,7 +2319,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 90,
             "counts": {
                 "content_graphemes": 7,
@@ -2325,7 +2337,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 26,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -2343,7 +2355,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 38,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 46,
             "counts": {
                 "content_graphemes": 5,
@@ -2362,7 +2374,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 90,
             "counts": {
                 "content_graphemes": 7,
@@ -2380,7 +2392,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 27,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 35,
             "counts": {
                 "content_graphemes": 5,
@@ -2398,7 +2410,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 37,
-            "distinct_ratio": "5\/5",
+            "distinct_ratio": "5/5",
             "scalars": 47,
             "counts": {
                 "content_graphemes": 6,
@@ -2417,7 +2429,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 90,
             "counts": {
                 "content_graphemes": 7,
@@ -2436,7 +2448,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 25,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 33,
             "counts": {
                 "content_graphemes": 5,
@@ -2456,7 +2468,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 39,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 45,
             "counts": {
                 "content_graphemes": 4,
@@ -2475,7 +2487,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 90,
             "counts": {
                 "content_graphemes": 7,
@@ -2493,7 +2505,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 26,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 5,
@@ -2511,7 +2523,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 38,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 46,
             "counts": {
                 "content_graphemes": 5,
@@ -2530,7 +2542,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 90,
             "counts": {
                 "content_graphemes": 7,
@@ -2548,7 +2560,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 27,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 35,
             "counts": {
                 "content_graphemes": 5,
@@ -2566,7 +2578,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 37,
-            "distinct_ratio": "5\/5",
+            "distinct_ratio": "5/5",
             "scalars": 47,
             "counts": {
                 "content_graphemes": 6,
@@ -2585,7 +2597,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 90,
             "counts": {
                 "content_graphemes": 7,
@@ -2605,7 +2617,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1500,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 1500,
             "counts": {
                 "content_graphemes": 1,
@@ -2623,7 +2635,7 @@
                 "MAXIMUM_LENGTH_EXCEEDED"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 1501,
             "counts": {
                 "content_graphemes": 0,
@@ -2642,7 +2654,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 16,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 22,
             "counts": {
                 "content_graphemes": 4,
@@ -2662,7 +2674,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 30,
-            "distinct_ratio": "2\/2",
+            "distinct_ratio": "2/2",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 3,
@@ -2681,7 +2693,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 77,
             "counts": {
                 "content_graphemes": 6,
@@ -2699,7 +2711,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 17,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -2717,7 +2729,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 29,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 35,
             "counts": {
                 "content_graphemes": 4,
@@ -2736,7 +2748,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 77,
             "counts": {
                 "content_graphemes": 6,
@@ -2754,7 +2766,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 18,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 24,
             "counts": {
                 "content_graphemes": 4,
@@ -2772,7 +2784,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 28,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 36,
             "counts": {
                 "content_graphemes": 5,
@@ -2791,7 +2803,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 77,
             "counts": {
                 "content_graphemes": 6,
@@ -2810,7 +2822,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 16,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 22,
             "counts": {
                 "content_graphemes": 4,
@@ -2830,7 +2842,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 30,
-            "distinct_ratio": "2\/2",
+            "distinct_ratio": "2/2",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 3,
@@ -2849,7 +2861,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 77,
             "counts": {
                 "content_graphemes": 6,
@@ -2867,7 +2879,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 17,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 23,
             "counts": {
                 "content_graphemes": 4,
@@ -2885,7 +2897,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 29,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 35,
             "counts": {
                 "content_graphemes": 4,
@@ -2904,7 +2916,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 77,
             "counts": {
                 "content_graphemes": 6,
@@ -2922,7 +2934,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 18,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 24,
             "counts": {
                 "content_graphemes": 4,
@@ -2940,7 +2952,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 28,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 36,
             "counts": {
                 "content_graphemes": 5,
@@ -2959,7 +2971,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 12,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 77,
             "counts": {
                 "content_graphemes": 6,
@@ -2979,7 +2991,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1000,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 1000,
             "counts": {
                 "content_graphemes": 1,
@@ -2997,7 +3009,7 @@
                 "MAXIMUM_LENGTH_EXCEEDED"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 1001,
             "counts": {
                 "content_graphemes": 0,
@@ -3015,7 +3027,7 @@
                 "NON_SCALAR_INPUT"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": null,
             "counts": {
                 "content_graphemes": 0,
@@ -3033,7 +3045,7 @@
                 "INVALID_UTF8"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": null,
             "counts": {
                 "content_graphemes": 0,
@@ -3051,7 +3063,7 @@
                 "FIELD_NOT_AVAILABLE"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": null,
             "counts": {
                 "content_graphemes": 0,
@@ -3069,7 +3081,7 @@
                 "EMPTY_NORMALIZED_VALUE"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 5,
             "counts": {
                 "content_graphemes": 0,
@@ -3087,7 +3099,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 1,
-            "distinct_ratio": "8\/8",
+            "distinct_ratio": "8/8",
             "scalars": 48,
             "counts": {
                 "content_graphemes": 41,
@@ -3105,7 +3117,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 1,
-            "distinct_ratio": "8\/8",
+            "distinct_ratio": "8/8",
             "scalars": 49,
             "counts": {
                 "content_graphemes": 41,
@@ -3125,7 +3137,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 9,
             "counts": {
                 "content_graphemes": 5,
@@ -3145,7 +3157,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 6,
             "counts": {
                 "content_graphemes": 3,
@@ -3165,7 +3177,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 3,
@@ -3185,7 +3197,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 0,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 3,
@@ -3205,7 +3217,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 0,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 3,
@@ -3225,7 +3237,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 5,
             "counts": {
                 "content_graphemes": 0,
@@ -3244,7 +3256,7 @@
                 "USEFUL_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 2,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 19,
             "counts": {
                 "content_graphemes": 14,
@@ -3264,7 +3276,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 6,
             "counts": {
                 "content_graphemes": 5,
@@ -3284,7 +3296,7 @@
                 "DISTINCT_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 2,
@@ -3302,7 +3314,7 @@
                 "ZERO_WIDTH_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 0,
@@ -3320,7 +3332,7 @@
                 "ZERO_WIDTH_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 0,
@@ -3338,7 +3350,7 @@
                 "ZERO_WIDTH_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 0,
@@ -3356,7 +3368,7 @@
                 "PROHIBITED_CONTROL_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 0,
@@ -3374,7 +3386,7 @@
                 "PROHIBITED_CONTROL_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 0,
@@ -3392,7 +3404,7 @@
                 "PROHIBITED_DIRECTIONALITY_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 0,
@@ -3410,7 +3422,7 @@
                 "PROHIBITED_DIRECTIONALITY_CHARACTER"
             ],
             "longest_run": 0,
-            "distinct_ratio": "n\/a",
+            "distinct_ratio": "n/a",
             "scalars": 3,
             "counts": {
                 "content_graphemes": 0,
@@ -3428,7 +3440,7 @@
                 "PLACEHOLDER_CONFIRMED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 7,
             "counts": {
                 "content_graphemes": 4,
@@ -3446,7 +3458,7 @@
                 "PLACEHOLDER_CONFIRMED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "1\/1",
+            "distinct_ratio": "1/1",
             "scalars": 6,
             "counts": {
                 "content_graphemes": 5,
@@ -3465,7 +3477,7 @@
                 "USEFUL_TOKEN_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "6\/6",
+            "distinct_ratio": "6/6",
             "scalars": 46,
             "counts": {
                 "content_graphemes": 41,
@@ -3485,7 +3497,7 @@
                 "REPETITION_SUSPECTED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "3\/5",
+            "distinct_ratio": "3/5",
             "scalars": 27,
             "counts": {
                 "content_graphemes": 23,
@@ -3505,7 +3517,7 @@
                 "REPETITION_SUSPECTED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "3\/5",
+            "distinct_ratio": "3/5",
             "scalars": 31,
             "counts": {
                 "content_graphemes": 27,
@@ -3523,7 +3535,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 1,
-            "distinct_ratio": "10\/10",
+            "distinct_ratio": "10/10",
             "scalars": 60,
             "counts": {
                 "content_graphemes": 51,
@@ -3541,7 +3553,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 2,
-            "distinct_ratio": "10\/10",
+            "distinct_ratio": "10/10",
             "scalars": 62,
             "counts": {
                 "content_graphemes": 53,
@@ -3559,7 +3571,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 1,
-            "distinct_ratio": "11\/11",
+            "distinct_ratio": "11/11",
             "scalars": 73,
             "counts": {
                 "content_graphemes": 63,
@@ -3578,7 +3590,7 @@
                 "LOW_DISTINCT_TOKEN_RATIO"
             ],
             "longest_run": 1,
-            "distinct_ratio": "2\/100",
+            "distinct_ratio": "2/100",
             "scalars": 540,
             "counts": {
                 "content_graphemes": 441,
@@ -3599,7 +3611,7 @@
                 "REPETITION_SUSPECTED"
             ],
             "longest_run": 1,
-            "distinct_ratio": "2\/5",
+            "distinct_ratio": "2/5",
             "scalars": 26,
             "counts": {
                 "content_graphemes": 22,
@@ -3619,7 +3631,7 @@
                 "LOW_DISTINCT_TOKEN_RATIO"
             ],
             "longest_run": 1,
-            "distinct_ratio": "2\/100",
+            "distinct_ratio": "2/100",
             "scalars": 538,
             "counts": {
                 "content_graphemes": 439,
@@ -3637,7 +3649,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 2,
-            "distinct_ratio": "202\/236",
+            "distinct_ratio": "202/236",
             "scalars": 1948,
             "counts": {
                 "content_graphemes": 1673,
@@ -3655,7 +3667,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 2,
-            "distinct_ratio": "254\/276",
+            "distinct_ratio": "254/276",
             "scalars": 1943,
             "counts": {
                 "content_graphemes": 1649,
@@ -3673,7 +3685,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 3,
-            "distinct_ratio": "23\/24",
+            "distinct_ratio": "23/24",
             "scalars": 184,
             "counts": {
                 "content_graphemes": 144,
@@ -3691,7 +3703,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 5,
-            "distinct_ratio": "18\/18",
+            "distinct_ratio": "18/18",
             "scalars": 133,
             "counts": {
                 "content_graphemes": 111,
@@ -3709,7 +3721,7 @@
                 "TEXT_COMPLETE"
             ],
             "longest_run": 5,
-            "distinct_ratio": "19\/20",
+            "distinct_ratio": "19/20",
             "scalars": 124,
             "counts": {
                 "content_graphemes": 101,
@@ -3727,7 +3739,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 14,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 34,
             "counts": {
                 "content_graphemes": 17,
@@ -3745,7 +3757,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 13,
-            "distinct_ratio": "5\/5",
+            "distinct_ratio": "5/5",
             "scalars": 31,
             "counts": {
                 "content_graphemes": 15,
@@ -3763,7 +3775,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 16,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 37,
             "counts": {
                 "content_graphemes": 13,
@@ -3781,7 +3793,7 @@
                 "CHARACTER_RUN_SUSPECTED"
             ],
             "longest_run": 16,
-            "distinct_ratio": "3\/3",
+            "distinct_ratio": "3/3",
             "scalars": 40,
             "counts": {
                 "content_graphemes": 15,
@@ -3799,7 +3811,7 @@
                 "LOW_DISTINCT_TOKEN_RATIO"
             ],
             "longest_run": 2,
-            "distinct_ratio": "5\/25",
+            "distinct_ratio": "5/25",
             "scalars": 114,
             "counts": {
                 "content_graphemes": 90,
@@ -3817,7 +3829,7 @@
                 "LOW_DISTINCT_TOKEN_RATIO"
             ],
             "longest_run": 1,
-            "distinct_ratio": "5\/25",
+            "distinct_ratio": "5/25",
             "scalars": 139,
             "counts": {
                 "content_graphemes": 115,
@@ -3835,7 +3847,7 @@
                 "GRAPHEME_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 37,
             "counts": {
                 "content_graphemes": 17,
@@ -3853,7 +3865,7 @@
                 "GRAPHEME_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 42,
             "counts": {
                 "content_graphemes": 17,
@@ -3871,7 +3883,7 @@
                 "GRAPHEME_THRESHOLD_NOT_MET"
             ],
             "longest_run": 1,
-            "distinct_ratio": "4\/4",
+            "distinct_ratio": "4/4",
             "scalars": 32,
             "counts": {
                 "content_graphemes": 17,

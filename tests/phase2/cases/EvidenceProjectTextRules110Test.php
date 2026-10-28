@@ -38,5 +38,12 @@ final class EvidenceProjectTextRules110Test
         }
         $empty = evaluateEvidenceProjectTexts(array_fill_keys(evidenceTextFieldNames(),''));
         foreach ($empty as $result) phase2AssertSame('unavailable',$result['evidence_status'],'Empty equality must not create duplication.');
+        $prefix = ['architecture','development','deployment','migration','observation','validation'];
+        $role = implode(' ',array_merge($prefix,['maintenance']));
+        foreach ([6 => true, 5 => false] as $common => $expected) {
+            $problem = implode(' ',array_merge(array_slice($prefix,0,$common),['delivery','operation','documentation']));
+            $result = evaluateEvidenceProjectTexts(['problem_statement'=>$problem,'personal_role'=>$role,'measurable_outcome'=>null]);
+            phase2AssertSame($expected,in_array('DUPLICATED_ACROSS_FIELDS',$result['personal_role']['reason_codes'],true),'Containment must include exactly four of five shingles and exclude three of five.');
+        }
     }
 }

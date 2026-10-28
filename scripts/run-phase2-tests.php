@@ -66,6 +66,7 @@ require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractV8Test.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceTextRules110Test.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceProjectTextRules110Test.php';
 require_once __DIR__ . '/../tests/phase2/cases/EvidenceHubContractV9Test.php';
+require_once __DIR__ . '/../tests/phase2/cases/EvidenceTextOwnerHintsTest.php';
 
 $environment = null;
 $failures = [];
@@ -128,6 +129,7 @@ $tests = [
     'Evidence text rules 1.1.0 calibration and frozen baseline' => [EvidenceTextRules110Test::class, 'run'],
     'Evidence project cross-field text rules 1.1.0' => [EvidenceProjectTextRules110Test::class, 'run'],
     'Evidence Hub contract v9 and explicit text rule versions' => [EvidenceHubContractV9Test::class, 'run'],
+    'Evidence Hub text rules localized Owner hints' => [EvidenceTextOwnerHintsTest::class, 'run'],
 ];
 
 try {
