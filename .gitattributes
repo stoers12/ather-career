@@ -7,3 +7,5 @@ docker/Caddyfile* text eol=lf
 docker-compose*.yml text eol=lf
 tests/phase2/support/*.conf text eol=lf
 contracts/evidence-hub-contract-v1.schema.json text eol=lf
+# All PHP is LF in the repository; normalize so a Windows editor cannot commit CRLF.
+*.php text eol=lf

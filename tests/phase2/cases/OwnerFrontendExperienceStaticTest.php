@@ -17,7 +17,7 @@ final class OwnerFrontendExperienceStaticTest
         $messages = self::read('owner_messages.php');
         $dashboard = self::read('owner.php');
         $javascript = self::read('public/assets/js/admin.js');
-        $scopedData = self::read('includes/portfolio_scoped_data.php');
+        $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
 
         phase2Assert(str_contains($layout, "require_once __DIR__ . '/owner_form_feedback.php';"), 'Owner pages do not consistently load the shared feedback helper.');
         foreach (['ownerFieldAccessibilityAttributes', 'ownerRenderFieldError', 'ownerRenderFormFeedback', 'ownerRenderRequiredIndicator'] as $helper) {

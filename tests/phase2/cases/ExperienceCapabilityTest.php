@@ -8,7 +8,7 @@ final class ExperienceCapabilityTest
     {
         $migration = self::read('database/migrations/007_experiences.sql');
         $experience = self::read('includes/experience.php');
-        $scopedData = self::read('includes/portfolio_scoped_data.php');
+        $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
         $ownerActions = self::read('includes/owner_actions.php');
         $ownerRoute = self::read('owner_experiences.php');
         $publicLifecycle = self::read('includes/public_lifecycle.php');

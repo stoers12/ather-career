@@ -9,7 +9,7 @@ final class PortfolioPresentationStaticTest
         $public = self::read('public_portfolio.php');
         $preview = self::read('owner_preview.php');
         $presentation = self::read('includes/portfolio_presentation.php');
-        $scopedData = self::read('includes/portfolio_scoped_data.php');
+        $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
         $lifecycle = self::read('includes/public_lifecycle.php');
         $stylesheet = self::read('public/assets/css/portfolio.css');
         $script = self::read('public/assets/js/portfolio.js');

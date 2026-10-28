@@ -10,7 +10,7 @@ final class HeroPersonalInfoCapabilityTest
         $validation = self::read('includes/validation.php');
         $ownerRoute = self::read('owner_profile.php');
         $ownerActions = self::read('includes/profile_form_actions.php');
-        $scopedData = self::read('includes/portfolio_scoped_data.php');
+        $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
         $publicData = self::read('includes/public_lifecycle.php');
         $presentation = self::read('includes/portfolio_presentation.php');
 

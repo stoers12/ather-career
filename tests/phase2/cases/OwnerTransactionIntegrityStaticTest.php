@@ -9,7 +9,7 @@ final class OwnerTransactionIntegrityStaticTest
         $transaction = self::read('includes/transaction.php');
         $ownerActions = self::read('includes/owner_actions.php') . self::read('includes/profile_writes.php') . self::read('includes/profile_form_actions.php');
         $lifecycle = self::read('includes/public_lifecycle.php');
-        $scopedData = self::read('includes/portfolio_scoped_data.php');
+        $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
         $profileActions = self::read('includes/profile_actions.php');
         $projectActions = self::read('includes/project_actions.php');
 
