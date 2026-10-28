@@ -4,47 +4,21 @@ includes:
 parameters:
     level: 3
     phpVersion: 80300
-    paths:
-        - includes
-        - public
-        - index.php
-        - owner.php
-        - owner_auth_retry.php
-        - owner_evidence_hub.php
-        - owner_experiences.php
-        - owner_login.php
-        - owner_logout.php
-        - owner_media.php
-        - owner_messages.php
-        - owner_oidc_callback.php
-        - owner_onboarding.php
-        - owner_onboarding_attestation.php
-        - owner_onboarding_completion.php
-        - owner_onboarding_draft.php
-        - owner_onboarding_editor.php
-        - owner_preview.php
-        - owner_profile.php
-        - owner_project_evidence.php
-        - owner_projects.php
-        - owner_publication.php
-        - owner_register.php
-        - owner_switch_account.php
-        - public_contact.php
-        - public_media.php
-        - public_portfolio.php
-        - public_projects_json.php
-        - ready.php
-        - signin.php
-        - signup.php
-        - config
-        - database
-        - scripts
-        - tests
+    paths: [.]
     excludePaths:
         - vendor/*
         - runtime/*
         - uploads/*
-        - docs/archive/*
+        - docs/*
         - graphify-out/*
         - .worktrees/*
         - backups/*
+        - node_modules/*
+        - .git/*
+        - .github/*
+        - .vscode/*
+        - .claude/*
+        - assets/*
+        - contracts/*
+        - data/*
+        - docker/*
