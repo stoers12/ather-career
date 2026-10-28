@@ -1,6 +1,6 @@
 # Runtime topology and public-assets design
 
-Status: ENG-04 Phase A proposal, awaiting reviewer and Owner approval; supersedes no approved runtime decision yet. Verified on 2026-10-28 against `origin/main` at `3817dbf`. This document describes Phase B; it implements no runtime changes and authorizes no deployment. Phase A changes only this file and the documentation index.
+Status: ENG-04 Phase A design, **approved with the amendments in section 9**. Section 9 is binding where it differs from sections 1–8. Verified on 2026-10-28 against `origin/main` at `3817dbf`. This document describes Phase B; it implements no runtime changes and authorizes no deployment. Phase A changes only this file and the documentation index.
 
 ## 1. Current state
 
@@ -406,3 +406,34 @@ Rollback: stop the attempted rollout; reapply the **entire previous** known-good
 4. Who owns the Phase B maintenance window, real-provider smoke and rollback decision, and what rollback artifact-retention period is required? Reconfirm the active image/mounts then; Phase A does not schedule or authorize cutover.
 
 No implementation is blocked on inferring a new identity, enabling a capability, or accessing Owner data. These are approval questions for Phase B; the current stack remains unchanged.
+
+## 9. Review decisions (2026-10-28)
+
+The reviewer (Claude Code, who owns ENG-04 Phase B) recorded these decisions. The Owner approved the local-stack cut-over on the same date, because there are no Ather users yet. Where this section differs from sections 1–8, it wins.
+
+1. **Filesystem layout.** The design's sibling layout is accepted: code at `/var/www/app` and DocumentRoot at `/var/www/public`. This replaces the handoff's earlier `/var/www/app/public` proposal.
+   - Production already uses this layout, so the production vhost and the `public/` front controllers stay unchanged. Only dev and the local stack move to it, which is the smaller and safer change.
+   - Isolation is equivalent: nothing outside `public/` is in the document root.
+2. **One shipping image instead of a separate `local` target.**
+   - The owner's local stack runs the **same `production` image** (same digest) that the gates and CI test.
+   - Maintenance startup is a repo-owned entrypoint script, `docker/maintenance-entrypoint.sh`, shipped inside that image. The **local release overlay selects it explicitly** (`entrypoint:`), as the current overlay already overrides the entrypoint.
+   - That script performs the read-only validation, including `scripts/check-production-security.php` with the owner HTTPS configuration. It never migrates, bootstraps or repairs storage.
+   - The default production entrypoint is unchanged.
+   - This keeps byte-identical dev/prod parity, and it avoids a second image whose only difference is its configuration.
+3. **No old-URL redirects.**
+   - There are no users and no external consumers. Every asset URL is server-emitted and content-versioned. The only browser with cached HTML is the Owner's, which the cut-over smoke reloads.
+   - The 308 compatibility layer, its test and its removal schedule are therefore dropped. Old root CSS/JS/PNG URLs return 404 after the change.
+4. **Assets and versioning.**
+   - Accepted as designed: the move map, `versionedAssetUrl()` with public-relative paths and a 16-hex SHA-256 content token, failing loudly on a missing file, and CSS fonts at `../fonts/…`.
+   - The PNG is renamed to `legacy-professional-portfolio.png`.
+   - `cache-policy.conf` additionally covers `ttf|woff2?` with the same policy.
+5. **Production defect fixed by this card.** `Dockerfile.production` today omits `onboarding.js` and `recovery.css`, which return 404 in production. Whole-tree `public/` packaging fixes this.
+6. **Mounts.**
+   - Accepted: remove the `owner-local-health.conf` alias mount, because health and readiness are native in `public/`.
+   - Accepted: Caddy's read-only binds move to the new immutable release's `docker/` files, keeping the Caddy image digest and the `caddy_data` volume.
+   - Accepted: the private-storage volume and the rate-limit bind keep their identities.
+7. **Phase B ownership.**
+   - Claude Code implements Phase B as one PR with the ordered commits from section 7 (minus the redirect work), runs the full gates, and performs the isolated rehearsal and the cut-over.
+   - The Owner performs the real Auth0 sign-in smoke after the cut-over.
+   - Maintenance window: any time, since there are no users.
+   - Rollback artifacts (the old image `79ee34af5355`, the old release folder and the descriptor) are kept until the Owner accepts stability, at least 14 days.
