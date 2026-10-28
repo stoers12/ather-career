@@ -50,6 +50,7 @@ Use the image-based Phase 2 command and capability requirements in [AGENTS.md â€
 
 | Level | Command | Success marker |
 | --- | --- | --- |
+| Static analysis | `composer analyse` (in the PHP image) | `[OK] No errors` |
 | Phase 2 foundation | Image-based command in [AGENTS.md](AGENTS.md#running-tests), mounting this checkout read-only | `Phase 2 test foundation passed.` |
 | Gate registration | `pwsh -NoProfile -File scripts/run-evidence-hub-required-gates.ps1 -RegistrationChallenge` | `REGISTRATION_CHALLENGES_PASSED` |
 | Full required gates | `pwsh -NoProfile -File scripts/run-evidence-hub-required-gates.ps1` | `REQUIRED_GATES_PASSED` |

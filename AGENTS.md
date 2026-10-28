@@ -53,6 +53,7 @@ There are three levels of check:
 The full gates use disposable MySQL, Apache with two synthetic Owners, the HTTP checks, Playwright 1.58.2 with Chromium 1208, and the production security check.
 
 Additional checks:
+- `composer analyse` (in the PHP image, after `composer install`) for PHP changes; new code must not add baseline entries.
 - `node --check <file>` for any edited JavaScript.
 - `php -l` (inside the image) for new PHP files.
 

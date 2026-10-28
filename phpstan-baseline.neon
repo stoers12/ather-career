@@ -1,0 +1,529 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: database/backfill-v1-ownership.php
+
+		-
+			message: '#^Variable \$argc might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: database/capture-owner-journey-cutover.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: database/capture-owner-journey-cutover.php
+
+		-
+			message: '#^Function loadEvidenceHubOwnerTaxonomy\(\) should return array\{taxonomy_version\: string, entries\: list\<array\<string, mixed\>\>, aliases\: array\<string, array\<string, mixed\>\>, category_order\: list\<string\>\} but returns array\{taxonomy_version\: string, entries\: list\<array\<string, mixed\>\>, aliases\: array\<string, array\<string, mixed\>\>\}\.$#'
+			identifier: return.type
+			count: 1
+			path: includes/evidence_hub_owner_core.php
+
+		-
+			message: '#^PHPDoc tag @var above a function has no effect\.$#'
+			identifier: varTag.misplaced
+			count: 1
+			path: includes/observability.php
+
+		-
+			message: '#^Variable \$reason on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: includes/profile_presentation.php
+
+		-
+			message: '#^Variable \$reason on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: includes/project_presentation.php
+
+		-
+			message: '#^Variable \$ownerName on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: owner_experiences.php
+
+		-
+			message: '#^Variable \$ownerName on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: owner_projects.php
+
+		-
+			message: '#^Variable \$context in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.variable
+			count: 1
+			path: owner_publication.php
+
+		-
+			message: '#^Variable \$database in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.variable
+			count: 1
+			path: owner_publication.php
+
+		-
+			message: '#^Variable \$ownerName on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: owner_publication.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/migrate-phase2-private-media.php
+
+		-
+			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:getAttribute\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: scripts/run-account-entry-tests.php
+
+		-
+			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:hasAttribute\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: scripts/run-account-entry-tests.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-account-entry-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$fault\.$#'
+			identifier: property.notFound
+			count: 2
+			path: scripts/run-contact-visibility-tests.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-evidence-hub-http-action-test.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-onboarding-attestation-race-worker.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-onboarding-completion-race-worker.php
+
+		-
+			message: '#^Anonymous function has an unused use \$noDraft\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: scripts/run-onboarding-completion-route-tests.php
+
+		-
+			message: '#^Anonymous function has an unused use \$userA\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: scripts/run-onboarding-completion-route-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$commitMode\.$#'
+			identifier: property.notFound
+			count: 1
+			path: scripts/run-onboarding-completion-synthetic-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$failRollback\.$#'
+			identifier: property.notFound
+			count: 1
+			path: scripts/run-onboarding-completion-synthetic-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$point\.$#'
+			identifier: property.notFound
+			count: 2
+			path: scripts/run-onboarding-completion-synthetic-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$revokeUser\.$#'
+			identifier: property.notFound
+			count: 1
+			path: scripts/run-onboarding-completion-synthetic-tests.php
+
+		-
+			message: '#^Call to an undefined method PDO\:\:confirmedTestRollback\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: scripts/run-onboarding-completion-synthetic-tests.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-onboarding-draft-race-worker.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$expectedUser\.$#'
+			identifier: property.notFound
+			count: 1
+			path: scripts/run-onboarding-draft-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$expectedVersion\.$#'
+			identifier: property.notFound
+			count: 1
+			path: scripts/run-onboarding-draft-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$fault\.$#'
+			identifier: property.notFound
+			count: 1
+			path: scripts/run-onboarding-draft-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$sawWrite\.$#'
+			identifier: property.notFound
+			count: 2
+			path: scripts/run-onboarding-draft-tests.php
+
+		-
+			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:getAttribute\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: scripts/run-onboarding-editor-tests.php
+
+		-
+			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:getAttribute\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: scripts/run-onboarding-presentation-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$after\.$#'
+			identifier: property.notFound
+			count: 1
+			path: scripts/run-owner-journey-route-tests.php
+
+		-
+			message: '#^Variable \$http_response_header on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: scripts/run-owner-logout-tests.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-phase2-auth0-identity-worker.php
+
+		-
+			message: '#^Variable \$argc might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-phase2-ownership-race-worker.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 5
+			path: scripts/run-phase2-ownership-race-worker.php
+
+		-
+			message: '#^Variable \$argc might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-phase2-public-slug-race-worker.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-phase2-public-slug-race-worker.php
+
+		-
+			message: '#^Variable \$http_response_header on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: scripts/run-phase2-publication-lifecycle-e2e.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-phase2-quota-worker.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-phase2-rate-worker.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-profile-version-race-worker.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$fault\.$#'
+			identifier: property.notFound
+			count: 2
+			path: scripts/run-profile-version-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$fault\.$#'
+			identifier: property.notFound
+			count: 1
+			path: scripts/run-project-publication-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$fault\.$#'
+			identifier: property.notFound
+			count: 1
+			path: scripts/run-publication-mutation-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$pause\.$#'
+			identifier: property.notFound
+			count: 1
+			path: scripts/run-publication-mutation-tests.php
+
+		-
+			message: '#^Access to an undefined property PDO\:\:\$snapshot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: scripts/run-publication-mutation-tests.php
+
+		-
+			message: '#^Call to an undefined method PDO\:\:barrier\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: scripts/run-publication-mutation-tests.php
+
+		-
+			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:getAttribute\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: scripts/run-recovery-presentation-tests.php
+
+		-
+			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:hasAttribute\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: scripts/run-recovery-presentation-tests.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-registration-core-race-worker.php
+
+		-
+			message: '#^Variable \$m might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-registration-routing-tests.php
+
+		-
+			message: '#^Variable \$matches might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/run-registration-routing-tests.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: scripts/stage4c-recovery.php
+
+		-
+			message: '#^Offset ''category_order'' does not exist on array\{taxonomy_version\: string, entries\: list\<array\<string, mixed\>\>, aliases\: array\<string, array\<string, mixed\>\>\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 10
+			path: tests/phase2/cases/EvidenceHubAggregationTest.php
+
+		-
+			message: '#^Parameter &\$ids by\-ref type of method EvidenceHubContractTest\:\:uniqueId\(\) expects array\<string, bool\>, array\<bool\> given\.$#'
+			identifier: parameterByRef.type
+			count: 1
+			path: tests/phase2/cases/EvidenceHubContractTest.php
+
+		-
+			message: '#^PHPDoc tag @return with type array\<string, mixed\> is incompatible with native type PDO\.$#'
+			identifier: return.phpDocType
+			count: 1
+			path: tests/phase2/cases/EvidenceHubOwnerRecommendationOrchestrationTest.php
+
+		-
+			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:getAttribute\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: tests/phase2/cases/EvidenceHubRecommendationActionHttpMySqlTest.php
+
+		-
+			message: '#^Property EvidenceHubRecommendationActionHttpMySqlTest\:\:\$cookieJars \(array\{a\: string, b\: string, invalid\: string\}\) does not accept array\{\}\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/phase2/cases/EvidenceHubRecommendationActionHttpMySqlTest.php
+
+		-
+			message: '#^Parameter &\$fixtureIds by\-ref type of method EvidenceTextEvaluationTest\:\:validateTextFixture\(\) expects array\<string, bool\>, array given\.$#'
+			identifier: parameterByRef.type
+			count: 1
+			path: tests/phase2/cases/EvidenceTextEvaluationTest.php
+
+		-
+			message: '#^Constant __BARRIER__ not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: tests/phase2/support/attestation-http-runtime.php
+
+		-
+			message: '#^Constant __CONTROL__ not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: tests/phase2/support/attestation-http-runtime.php
+
+		-
+			message: '#^Constant __BARRIER__ not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: tests/phase2/support/completion-http-runtime.php
+
+		-
+			message: '#^Constant __CONTROL__ not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: tests/phase2/support/completion-http-runtime.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: tests/phase2/support/evidence-hub-final-ui-visual.php
+
+		-
+			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:getAttribute\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/phase2/support/integrated-journey-acceptance.php
+
+		-
+			message: '#^Variable \$a might not be defined\.$#'
+			identifier: variable.undefined
+			count: 8
+			path: tests/phase2/support/project-publication-http.php
+
+		-
+			message: '#^Variable \$alpha might not be defined\.$#'
+			identifier: variable.undefined
+			count: 12
+			path: tests/phase2/support/project-publication-http.php
+
+		-
+			message: '#^Variable \$b might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: tests/phase2/support/project-publication-http.php
+
+		-
+			message: '#^Variable \$beta might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: tests/phase2/support/project-publication-http.php
+
+		-
+			message: '#^Variable \$browserEvidence might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: tests/phase2/support/project-publication-http.php
+
+		-
+			message: '#^Variable \$db might not be defined\.$#'
+			identifier: variable.undefined
+			count: 17
+			path: tests/phase2/support/project-publication-http.php
+
+		-
+			message: '#^Variable \$flag might not be defined\.$#'
+			identifier: variable.undefined
+			count: 4
+			path: tests/phase2/support/project-publication-http.php
+
+		-
+			message: '#^Variable \$hidden might not be defined\.$#'
+			identifier: variable.undefined
+			count: 4
+			path: tests/phase2/support/project-publication-http.php
+
+		-
+			message: '#^Variable \$root might not be defined\.$#'
+			identifier: variable.undefined
+			count: 11
+			path: tests/phase2/support/project-publication-http.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: tests/phase2/support/publication-http-client.php
+
+		-
+			message: '#^Variable \$a might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: tests/phase2/support/publication-mutation-http.php
+
+		-
+			message: '#^Variable \$b might not be defined\.$#'
+			identifier: variable.undefined
+			count: 4
+			path: tests/phase2/support/publication-mutation-http.php
+
+		-
+			message: '#^Variable \$bare might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: tests/phase2/support/publication-mutation-http.php
+
+		-
+			message: '#^Variable \$completed might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: tests/phase2/support/publication-mutation-http.php
+
+		-
+			message: '#^Variable \$db might not be defined\.$#'
+			identifier: variable.undefined
+			count: 22
+			path: tests/phase2/support/publication-mutation-http.php
+
+		-
+			message: '#^Variable \$fresh might not be defined\.$#'
+			identifier: variable.undefined
+			count: 10
+			path: tests/phase2/support/publication-mutation-http.php
+
+		-
+			message: '#^Variable \$newOwner might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: tests/phase2/support/publication-mutation-http.php
+
+		-
+			message: '#^Variable \$root might not be defined\.$#'
+			identifier: variable.undefined
+			count: 18
+			path: tests/phase2/support/publication-mutation-http.php
+
+		-
+			message: '#^Variable \$argv might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: tests/phase2/support/registration-oidc-mock.php
