@@ -17,6 +17,7 @@ function journeyFixtureCopy(string $root): void
     }
     foreach (glob($app.'/*.php') as $file) { copy($file,$root.'/'.basename($file)); chmod($root.'/'.basename($file),0600); }
     symlink($app.'/vendor',$root.'/vendor');
+    symlink($app.'/public',$root.'/public');
     $control=var_export(dirname($root).'/documents.json',true);
     foreach (['onboarding_attestations.php'=>'?OnboardingAttestationBundle','onboarding_attestation_presentation.php'=>'?array'] as $name=>$type) {
         $function=$type==='?array' ? 'currentOnboardingAttestationDocuments' : 'currentOnboardingAttestationBundle';

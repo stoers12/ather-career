@@ -3,9 +3,9 @@ declare(strict_types=1);
 // Guarded disposable suite only. Reuse the publication suite's private PDO fault
 // constructor; application routes/includes/policy resolvers are otherwise exact.
 $app=realpath(__DIR__.'/../../..'); $privateApp=$root.'/http-app'; mkdir($privateApp,0700); mkdir($privateApp.'/config',0700); mkdir($root.'/control',0700);
-foreach (['includes','vendor','data','assets'] as $directory) { symlink($app.'/'.$directory,$privateApp.'/'.$directory); }
+foreach (['includes','vendor','data','public'] as $directory) { symlink($app.'/'.$directory,$privateApp.'/'.$directory); }
+symlink($app.'/public/assets',$privateApp.'/assets');
 foreach (glob($app.'/*.php') as $file) { copy($file,$privateApp.'/'.basename($file)); }
-foreach ([...glob($app.'/*.css'),...glob($app.'/*.js')] as $file) { symlink($file,$privateApp.'/'.basename($file)); }
 foreach (glob($app.'/config/*.php') as $file) { copy($file,$privateApp.'/config/'.basename($file)); }
 $configuration=file_get_contents($app.'/config/database.php'); completionAssert(substr_count($configuration,'new PDO(')===1,'PDO fixture seam changed.');
 file_put_contents($privateApp.'/config/database.php',str_replace('new PDO(','new PublicationHttpDatabase(',$configuration)."\nrequire_once ".var_export(__DIR__.'/publication-http-database.php',true).";\n");
