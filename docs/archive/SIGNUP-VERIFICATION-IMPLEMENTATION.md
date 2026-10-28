@@ -51,7 +51,7 @@ Sign Up reuses merged `signin.css`, local Noto Sans Arabic 400/500, bilingual co
 - `signup.php`, `public/signup.php`, `includes/signup_copy.php`, `signup.css`: inactive public `GET`/`HEAD` Sign Up, Arabic default or exact scalar `lang=en`; other/structured language input safely falls back. Unsupported methods receive shared `405`/Allow behavior. Static copy escaped, no request content reflected.
 - `includes/account_entry_icons.php`: six static reference icon shapes, falling back to existing icon helpers.
 - `includes/email_verification_copy.php`, `email_verification.css`, `tests/phase2/support/email-verification-preview.php`: bilingual preview presentation. Fixture requires an explicit isolated-router/CLI constant, CLI/CLI-server SAPI and a server-selected fixed fixture. No public shim or endpoint exists. Direct fixture requests are denied; query/cookie/local-storage values cannot establish status. Theme storage only changes appearance.
-- `scripts/run-account-entry-tests.php`: meaningful no-auth/mutation/session/client-state contracts. CI invokes it alongside unchanged Sign In tests.
+- `scripts/test/run-account-entry-tests.php`: meaningful no-auth/mutation/session/client-state contracts. CI invokes it alongside unchanged Sign In tests.
 - `Dockerfile.production`: static stylesheet copy mapping only; `public/signup.php` uses the established production shim convention. Verification fixture routes are absent from the public document root.
 - `.github/workflows/ci.yml`: adds contracts and production smoke assertions for inactive Sign Up and missing verification fixture routes; no existing gate removed or exception reused.
 - This record and `HTTP_CONTRACTS.md`: scope, contracts, action map, provenance, adaptations and acceptance limits.

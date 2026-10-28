@@ -75,10 +75,10 @@ unproven, never adopted or repaired. Card05/full journey is not declared launch-
 
 Existing CI calls remain:21 CLI rehearsals, migration ordering, scoped credentials,
 all old browser assertions and private-carrier cleanup. Additions live in the existing
-[journey HTTP suite](../../../scripts/run-owner-journey-route-tests.php),
-[registration/OIDC suite](../../../scripts/run-registration-routing-tests.php), and
-[completion browser fixture](../../../scripts/run-onboarding-completion-browser-fixture.php)/
-[browser suite](../../../scripts/run-onboarding-completion-browser-tests.mjs).
+[journey HTTP suite](../../../scripts/test/run-owner-journey-route-tests.php),
+[registration/OIDC suite](../../../scripts/test/run-registration-routing-tests.php), and
+[completion browser fixture](../../../scripts/test/run-onboarding-completion-browser-fixture.php)/
+[browser suite](../../../scripts/test/run-onboarding-completion-browser-tests.mjs).
 Workflow changes are two explanatory comments; these already-invoked suites run the
 new checks unconditionally. No assertions, traps, credentials or calls removed.
 

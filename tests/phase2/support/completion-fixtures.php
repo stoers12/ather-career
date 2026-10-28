@@ -122,7 +122,7 @@ function completionRace(array $inputs): array
     $workers=[];
     try {
         foreach ($inputs as $input) {
-            $p=proc_open([PHP_BINARY,__DIR__.'/../../../scripts/run-onboarding-completion-race-worker.php',base64_encode(json_encode($input,JSON_THROW_ON_ERROR))],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);
+            $p=proc_open([PHP_BINARY,__DIR__.'/../../../scripts/test/run-onboarding-completion-race-worker.php',base64_encode(json_encode($input,JSON_THROW_ON_ERROR))],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);
             completionAssert(is_resource($p),'Completion worker unavailable'); stream_set_timeout($pipes[1],30); $workers[]=[$p,$pipes];
         }
         foreach ($workers as [$p,$pipes]) { completionAssert(fgets($pipes[1])==="READY\n",'Completion worker barrier failed'); }

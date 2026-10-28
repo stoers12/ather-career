@@ -82,259 +82,259 @@ parameters:
 			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:getAttribute\(\)\.$#'
 			identifier: method.notFound
 			count: 5
-			path: scripts/run-account-entry-tests.php
+			path: scripts/test/run-account-entry-tests.php
 
 		-
 			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:hasAttribute\(\)\.$#'
 			identifier: method.notFound
 			count: 3
-			path: scripts/run-account-entry-tests.php
+			path: scripts/test/run-account-entry-tests.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-account-entry-tests.php
+			path: scripts/test/run-account-entry-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$fault\.$#'
 			identifier: property.notFound
 			count: 2
-			path: scripts/run-contact-visibility-tests.php
+			path: scripts/test/run-contact-visibility-tests.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-evidence-hub-http-action-test.php
+			path: scripts/test/run-evidence-hub-http-action-test.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-onboarding-attestation-race-worker.php
+			path: scripts/test/run-onboarding-attestation-race-worker.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-onboarding-completion-race-worker.php
+			path: scripts/test/run-onboarding-completion-race-worker.php
 
 		-
 			message: '#^Anonymous function has an unused use \$noDraft\.$#'
 			identifier: closure.unusedUse
 			count: 1
-			path: scripts/run-onboarding-completion-route-tests.php
+			path: scripts/test/run-onboarding-completion-route-tests.php
 
 		-
 			message: '#^Anonymous function has an unused use \$userA\.$#'
 			identifier: closure.unusedUse
 			count: 1
-			path: scripts/run-onboarding-completion-route-tests.php
+			path: scripts/test/run-onboarding-completion-route-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$commitMode\.$#'
 			identifier: property.notFound
 			count: 1
-			path: scripts/run-onboarding-completion-synthetic-tests.php
+			path: scripts/test/run-onboarding-completion-synthetic-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$failRollback\.$#'
 			identifier: property.notFound
 			count: 1
-			path: scripts/run-onboarding-completion-synthetic-tests.php
+			path: scripts/test/run-onboarding-completion-synthetic-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$point\.$#'
 			identifier: property.notFound
 			count: 2
-			path: scripts/run-onboarding-completion-synthetic-tests.php
+			path: scripts/test/run-onboarding-completion-synthetic-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$revokeUser\.$#'
 			identifier: property.notFound
 			count: 1
-			path: scripts/run-onboarding-completion-synthetic-tests.php
+			path: scripts/test/run-onboarding-completion-synthetic-tests.php
 
 		-
 			message: '#^Call to an undefined method PDO\:\:confirmedTestRollback\(\)\.$#'
 			identifier: method.notFound
 			count: 1
-			path: scripts/run-onboarding-completion-synthetic-tests.php
+			path: scripts/test/run-onboarding-completion-synthetic-tests.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-onboarding-draft-race-worker.php
+			path: scripts/test/run-onboarding-draft-race-worker.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$expectedUser\.$#'
 			identifier: property.notFound
 			count: 1
-			path: scripts/run-onboarding-draft-tests.php
+			path: scripts/test/run-onboarding-draft-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$expectedVersion\.$#'
 			identifier: property.notFound
 			count: 1
-			path: scripts/run-onboarding-draft-tests.php
+			path: scripts/test/run-onboarding-draft-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$fault\.$#'
 			identifier: property.notFound
 			count: 1
-			path: scripts/run-onboarding-draft-tests.php
+			path: scripts/test/run-onboarding-draft-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$sawWrite\.$#'
 			identifier: property.notFound
 			count: 2
-			path: scripts/run-onboarding-draft-tests.php
+			path: scripts/test/run-onboarding-draft-tests.php
 
 		-
 			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:getAttribute\(\)\.$#'
 			identifier: method.notFound
 			count: 3
-			path: scripts/run-onboarding-editor-tests.php
+			path: scripts/test/run-onboarding-editor-tests.php
 
 		-
 			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:getAttribute\(\)\.$#'
 			identifier: method.notFound
 			count: 1
-			path: scripts/run-onboarding-presentation-tests.php
+			path: scripts/test/run-onboarding-presentation-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$after\.$#'
 			identifier: property.notFound
 			count: 1
-			path: scripts/run-owner-journey-route-tests.php
+			path: scripts/test/run-owner-journey-route-tests.php
 
 		-
 			message: '#^Variable \$http_response_header on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.variable
 			count: 1
-			path: scripts/run-owner-logout-tests.php
+			path: scripts/test/run-owner-logout-tests.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-phase2-auth0-identity-worker.php
+			path: scripts/test/run-phase2-auth0-identity-worker.php
 
 		-
 			message: '#^Variable \$argc might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-phase2-ownership-race-worker.php
+			path: scripts/test/run-phase2-ownership-race-worker.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 5
-			path: scripts/run-phase2-ownership-race-worker.php
+			path: scripts/test/run-phase2-ownership-race-worker.php
 
 		-
 			message: '#^Variable \$argc might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-phase2-public-slug-race-worker.php
+			path: scripts/test/run-phase2-public-slug-race-worker.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-phase2-public-slug-race-worker.php
+			path: scripts/test/run-phase2-public-slug-race-worker.php
 
 		-
 			message: '#^Variable \$http_response_header on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.variable
 			count: 1
-			path: scripts/run-phase2-publication-lifecycle-e2e.php
+			path: scripts/test/run-phase2-publication-lifecycle-e2e.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-phase2-quota-worker.php
+			path: scripts/test/run-phase2-quota-worker.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-phase2-rate-worker.php
+			path: scripts/test/run-phase2-rate-worker.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-profile-version-race-worker.php
+			path: scripts/test/run-profile-version-race-worker.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$fault\.$#'
 			identifier: property.notFound
 			count: 2
-			path: scripts/run-profile-version-tests.php
+			path: scripts/test/run-profile-version-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$fault\.$#'
 			identifier: property.notFound
 			count: 1
-			path: scripts/run-project-publication-tests.php
+			path: scripts/test/run-project-publication-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$fault\.$#'
 			identifier: property.notFound
 			count: 1
-			path: scripts/run-publication-mutation-tests.php
+			path: scripts/test/run-publication-mutation-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$pause\.$#'
 			identifier: property.notFound
 			count: 1
-			path: scripts/run-publication-mutation-tests.php
+			path: scripts/test/run-publication-mutation-tests.php
 
 		-
 			message: '#^Access to an undefined property PDO\:\:\$snapshot\.$#'
 			identifier: property.notFound
 			count: 1
-			path: scripts/run-publication-mutation-tests.php
+			path: scripts/test/run-publication-mutation-tests.php
 
 		-
 			message: '#^Call to an undefined method PDO\:\:barrier\(\)\.$#'
 			identifier: method.notFound
 			count: 1
-			path: scripts/run-publication-mutation-tests.php
+			path: scripts/test/run-publication-mutation-tests.php
 
 		-
 			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:getAttribute\(\)\.$#'
 			identifier: method.notFound
 			count: 3
-			path: scripts/run-recovery-presentation-tests.php
+			path: scripts/test/run-recovery-presentation-tests.php
 
 		-
 			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:hasAttribute\(\)\.$#'
 			identifier: method.notFound
 			count: 2
-			path: scripts/run-recovery-presentation-tests.php
+			path: scripts/test/run-recovery-presentation-tests.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-registration-core-race-worker.php
+			path: scripts/test/run-registration-core-race-worker.php
 
 		-
 			message: '#^Variable \$m might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-registration-routing-tests.php
+			path: scripts/test/run-registration-routing-tests.php
 
 		-
 			message: '#^Variable \$matches might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/run-registration-routing-tests.php
+			path: scripts/test/run-registration-routing-tests.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'

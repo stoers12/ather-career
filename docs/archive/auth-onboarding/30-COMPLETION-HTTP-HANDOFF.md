@@ -83,7 +83,7 @@ Error payload contains only success=false, stable code and safe error string.
 
 ## Tests and evidence
 
-[Focused route suite](../../../scripts/run-onboarding-completion-route-tests.php) uses
+[Focused route suite](../../../scripts/test/run-onboarding-completion-route-tests.php) uses
 real HTTP to two independent PHP servers, persisted synthetic PHP sessions,
 disposable fully migrated MySQL, and guarded private source copies. Its test-only
 builder reversibly checks source include/resolver substitutions; no production

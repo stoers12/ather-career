@@ -67,7 +67,7 @@ try {
     $_SERVER['HTTP_FORWARDED'] = 'for=203.0.113.10';
     phase2AssertSame('198.51.100.41', rateLimitClientIp(), 'Forwarded headers changed limiter authority.');
     $rateArguments = array_fill(0, 30, ['p2j08_concurrent', 'shared-worker', 20, 900]);
-    $rateResults = operationalConcurrentWorkers(__DIR__ . '/run-phase2-rate-worker.php', $rateArguments);
+    $rateResults = operationalConcurrentWorkers(__DIR__ . '/test/run-phase2-rate-worker.php', $rateArguments);
     phase2AssertSame(20, count(array_filter($rateResults, fn ($value) => $value === 'allowed')), 'Concurrent limiter bypassed or undercounted the threshold: ' . json_encode(array_count_values($rateResults)));
     phase2AssertSame(10, count(array_filter($rateResults, fn ($value) => $value === 'denied')), 'Concurrent limiter denial count is incorrect: ' . json_encode(array_count_values($rateResults)));
     $corruptDirectory = rateLimitDirectory();
@@ -109,7 +109,7 @@ try {
     $passed[] = 'T-OPS-AUTHORIZED-NUMERIC-POLICY';
 
     $quotaArgs = [[$portfolioA, 62914560, 'race-a.bin'], [$portfolioA, 62914560, 'race-b.bin']];
-    $quotaResults = operationalConcurrentWorkers(__DIR__ . '/run-phase2-quota-worker.php', $quotaArgs);
+    $quotaResults = operationalConcurrentWorkers(__DIR__ . '/test/run-phase2-quota-worker.php', $quotaArgs);
     phase2AssertSame(1, count(array_filter($quotaResults, fn ($value) => $value === 'allowed')), 'Same-Portfolio quota race admitted more than one reservation.');
     phase2AssertSame(1, count(array_filter($quotaResults, fn ($value) => $value === 'denied')), 'Same-Portfolio quota race did not deny excess capacity.');
     phase2Assert(portfolioStorageUsageBytes($portfolioA) <= PORTFOLIO_STORAGE_QUOTA_BYTES, 'Quota race exceeded aggregate capacity.');

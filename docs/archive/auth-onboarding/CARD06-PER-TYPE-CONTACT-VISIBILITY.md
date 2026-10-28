@@ -99,7 +99,7 @@ plan. This change provides no down migration or old-binary compatibility promise
 
 ## Verification integration and limits
 
-`scripts/run-contact-visibility-tests.php` exercises real MySQL schema recovery,
+`scripts/test/run-contact-visibility-tests.php` exercises real MySQL schema recovery,
 four-combination SQL/HTML/mailto/tel/contact-error projection, private defaults,
 readiness, malformed/retired forms, explicit off/omission, account isolation,
 genuine two-worker Profile CAS and definite/uncertain transaction outcomes. It

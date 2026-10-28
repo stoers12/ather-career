@@ -111,7 +111,7 @@ the runner copies it into container-local scratch and uses the cached image's
 vendor tree. Generated credentials, fixture databases, PHP sessions and
 container storage are removed. No canonical credentials/services are used.
 
-`scripts/run-onboarding-attestation-tests.php` requires CLI, exact test mode and
+`scripts/test/run-onboarding-attestation-tests.php` requires CLI, exact test mode and
 the matching generated database namespace. It covers the populated 001–014
 upgrade, interrupted DDL/repeat migration, partial/incompatible shapes, strict
 affirmations, bounded exact descriptors, UTC time under a non-UTC connection,

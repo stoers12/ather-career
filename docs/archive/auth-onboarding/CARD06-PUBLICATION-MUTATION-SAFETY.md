@@ -76,7 +76,7 @@ project timestamp refreshes and public projections retain their existing rules.
 
 ## Verification and fixture changes
 
-Run `php scripts/run-publication-mutation-tests.php` in the existing migrated,
+Run `php scripts/test/run-publication-mutation-tests.php` in the existing migrated,
 disposable Docker test namespace after the migration/ownership prerequisites.
 CI runs it using the existing scoped rehearsal database account, after the
 Profile upgrade checks and routing fixtures. It checks real helpers, the real

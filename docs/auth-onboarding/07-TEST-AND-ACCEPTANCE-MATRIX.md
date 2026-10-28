@@ -130,7 +130,7 @@ these checks do not establish completion/publication readiness or launch approva
 
 ### Phase 1 isolated evidence, 2026-10-04
 
-Commit `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e` added the guarded 014 migration, read-only compatibility lookup and disposable rehearsal harness. The Phase 2 foundation suite, static architecture checks, PHP and PowerShell syntax, and Git whitespace check passed locally. `scripts/run-phase1-isolated-rehearsals.ps1` passed:
+Commit `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e` added the guarded 014 migration, read-only compatibility lookup and disposable rehearsal harness. The Phase 2 foundation suite, static architecture checks, PHP and PowerShell syntax, and Git whitespace check passed locally. `scripts/test/run-phase1-isolated-rehearsals.ps1` passed:
 
 | Stable ID / scope | Verified result | Remaining boundary |
 | --- | --- | --- |

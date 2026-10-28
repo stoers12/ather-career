@@ -55,7 +55,7 @@ try {
     Invoke-Php @('database/migrate.php','--through=003')
     Invoke-Php @('database/backfill-v1-ownership.php','--issuer','https://phase2a-fixture.invalid/','--subject',"fixture-$runId")
     Invoke-Php @('database/migrate.php','--through=014')
-    Invoke-Php @('scripts/run-phase2-auth0-rehearsal.php')
+    Invoke-Php @('scripts/test/run-phase2-auth0-rehearsal.php')
     Write-Output 'PASS PHASE2A-ISOLATED-CALLBACK-REHEARSAL'
 } finally {
     if ($containerCreated) {

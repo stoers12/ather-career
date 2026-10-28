@@ -114,8 +114,8 @@ Focused CI integration uses the existing generated database-scoped user for:
 
 ```sh
 python3 scripts/build-profile-catalog.py --check
-php scripts/run-final-profile-tests.php
-php scripts/run-final-profile-route-tests.php
+php scripts/test/run-final-profile-tests.php
+php scripts/test/run-final-profile-route-tests.php
 ```
 
 The 018 fixture runs before owner-flow edits, after both version suites. Existing
