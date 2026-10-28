@@ -24,15 +24,13 @@ Compose also requires `EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY`. For a disposable lo
 $env:EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
 ```
 
-On a fresh database, bootstrap the shipped V1 baseline once before starting the long-running web service. The development Compose file does not forward `PRESERVED_V1_OIDC_SUBJECT`, so pass the **synthetic local-only** subject explicitly to the one-off web container. Its normal entrypoint waits for the database and applies the migrations:
+A fresh database is initialized from the shipped V1 baseline, which needs a preserved Owner subject exactly once. For this disposable trial, set the **synthetic local-only** value `PRESERVED_V1_OIDC_SUBJECT=local-development-only` in your local `.env`; there is deliberately no default. The web entrypoint waits for the database, applies the migrations and the one-time binding, then starts Apache, so one command starts everything:
 
 ```powershell
-docker compose run --rm -e PRESERVED_V1_OIDC_SUBJECT=local-development-only web true
-docker compose up -d
-docker compose ps
+docker compose up -d --build --wait
 ```
 
-Open <http://127.0.0.1:8088>. The Landing and inactive account-entry presentations work without Auth0; `/ready.php` should return `READY`. The base development configuration currently reports web **unhealthy** because `/health.php` is mapped only by the Owner HTTPS overlay; this does not prevent the HTTP Landing or readiness route from working. The overlay below supplies that mapping.
+Open <http://127.0.0.1:8088>. `/health.php` returns `OK` and `/ready.php` returns `READY`; the Landing and inactive account-entry presentations work without Auth0. Edits to the checkout are live: Compose bind-mounts it at `/var/www/app` and its `public/` tree at the document root `/var/www/public`.
 
 Real Owner sign-in, account switching, logout through Auth0 and private Evidence Hub access require a configured Auth0 Regular Web Application, its dependencies and an authorized local identity binding. Before initializing a database intended for real sign-in, replace the synthetic bootstrap subject with the separately verified durable subject. See [Auth0 setup](docs/P2J09_AUTH0_SETUP.md) and the [authentication/onboarding record](docs/auth-onboarding/README.md); initialization alone does not enable registration or complete onboarding. Install the locked PHP dependencies with `composer install` (Composer 2 with PHP 8.3, or its Docker image) before exercising real OIDC flows. No provider interaction is needed for the local trial or Phase 2 foundation.
 
@@ -46,7 +44,7 @@ The HTTPS origin is <https://localhost:8443>. Keep the same Compose file argumen
 
 ## Running tests
 
-Use the image-based Phase 2 command and capability requirements in [AGENTS.md — Running tests](AGENTS.md#running-tests). Select the newest local `ather-career-local` tag as described there. If none exists, build one from this checkout with `docker build -t ather-career-local:eng01-dev .` and use that tag. Full gates additionally need Node.js/npm and the pinned Chromium installation; `-InstallChromium` on the full runner installs the required browser when absent.
+Use the image-based Phase 2 command and capability requirements in [AGENTS.md — Running tests](AGENTS.md#running-tests). Select the newest local `ather-career-local` tag as described there. If none exists, build one from this checkout with `docker build --target development -t ather-career-local:dev .` and use that tag. Full gates additionally need Node.js/npm and the pinned Chromium installation; `-InstallChromium` on the full runner installs the required browser when absent.
 
 | Level | Command | Success marker |
 | --- | --- | --- |
@@ -63,9 +61,8 @@ For individual test commands, operational helpers and developer tools, see the [
 
 ```text
 *.php          Root application routes: authentication/HTTP checks and calls into includes/
-*.css, *.js    Current page styles and progressive enhancements at the root
 .github/       CI workflows
-assets/        Local fonts, images and licenses
+assets/        Private attribution for inlined icons (not web-served)
 config/        Database and runtime configuration boundaries
 contracts/     Versioned Evidence Hub schemas and taxonomies
 data/          Checked-in profile catalogs, pinned sources and provenance
@@ -73,14 +70,14 @@ database/      Baseline SQL, ordered migrations, rollback companions and recover
 docker/        Apache/PHP/Caddy configuration and container entrypoints
 docs/          Documentation index, maintained references and historical archive
 includes/      Domain functions, repositories, rendering and shared HTTP/auth helpers
-public/        Production front controllers and health handler; copied to /var/www/public
+public/        The web document root: front controllers, health handler and assets/{css,js,fonts,images}
 runtime/       Ignored generated runtime state (tracked placeholders only)
 scripts/       Stable entry points; test/, ci/, ops/, tools/ and approved archive/
 tests/         Phase 2 unit/static cases, fixtures and Playwright browser gates
 uploads/       Legacy upload locations with tracked placeholders; managed media is private
 ```
 
-Development serves the repository root. Production uses [docker-compose.production.yml](docker-compose.production.yml) and [Dockerfile.production](Dockerfile.production): `public/` front controllers are copied into the public document root and delegate to application routes in `/var/www/app`. See [AGENTS.md — Layout](AGENTS.md#layout) for contributor conventions.
+Every runtime uses one layout, built from one multi-stage [Dockerfile](Dockerfile): code in `/var/www/app` and the Apache document root `/var/www/public`, which holds only the repository `public/` tree. Nothing outside `public/` is web-reachable. The `development` target serves dev Compose and the required gates; the `production` target (the default) serves [docker-compose.production.yml](docker-compose.production.yml), CI and the Owner's local stack. Reference assets with `versionedAssetUrl('assets/css/<file>.css')`, which returns an absolute, content-versioned URL. See [docs/RUNTIME_TOPOLOGY.md](docs/RUNTIME_TOPOLOGY.md) and [AGENTS.md — Layout](AGENTS.md#layout).
 
 ## Documentation
 

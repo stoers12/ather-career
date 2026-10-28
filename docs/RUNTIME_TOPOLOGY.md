@@ -1,6 +1,6 @@
 # Runtime topology and public-assets design
 
-Status: ENG-04 Phase A design, **approved with the amendments in section 9**. Section 9 is binding where it differs from sections 1–8. Verified on 2026-10-28 against `origin/main` at `3817dbf`. This document describes Phase B; it implements no runtime changes and authorizes no deployment. Phase A changes only this file and the documentation index.
+Status: ENG-04 Phase A design, **approved with the amendments in section 9** and **implemented by ENG-04 Phase B** (single multi-stage `Dockerfile`, shared `docker/apache/vhost.conf`, assets under `public/assets/`, public-boundary gate). Section 9 is binding where it differs from sections 1–8; sections 1 and 4 describe the pre-Phase-B state. Verified on 2026-10-28 against `origin/main` at `3817dbf`. This document describes Phase B; it implements no runtime changes and authorizes no deployment. Phase A changes only this file and the documentation index.
 
 ## 1. Current state
 

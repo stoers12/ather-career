@@ -10,7 +10,8 @@ A PHP 8.3 / Apache / MySQL 8.4 multi-tenant portfolio platform. Owners sign in w
 
 ## Layout
 
-- `*.php` at the root are thin routes: authentication, CSRF, request shape, then a call into `includes/`. Keep routes thin.
+- `*.php` at the root are thin routes: authentication, CSRF, request shape, then a call into `includes/`. Keep routes thin. Each served route also needs its one-line front controller in `public/`.
+- `public/` is the only web document root (`/var/www/public`) in every runtime; code lives in `/var/www/app`. Static files go in `public/assets/{css,js,fonts,images}` and are referenced with `versionedAssetUrl('assets/…')`. Never put internal files under `public/`.
 - `includes/` holds the domain logic as procedural functions with `declare(strict_types=1)`.
   - Pure functions stay pure: no database access, no `$_GET`/`$_POST`/`$_SESSION`.
   - Repositories take `PDO` + `AuthorizedPortfolioContext`.
