@@ -108,6 +108,9 @@ if ($dryRunBlocks.Count -ne 1 -or $dryRunBlocks[0].Clauses[0].Item2.Extent.Text.
         Add-SecretMask $key $value
         if ((Protect-Text $value) -cne '[REDACTED]') { throw 'MySQL secret-bearing key was not masked' }
     }
+    Add-EnvFileMasks @('PRESERVED_V1_OIDC_SUBJECT="unit-v1-subject"', 'export OIDC_CLIENT_SECRET=unit-env-secret', 'APP_VERSION=unit-public-version')
+    if ((Protect-Text 'unit-v1-subject unit-env-secret') -cne '[REDACTED] [REDACTED]') { throw '.env secret key with digits was not masked' }
+    if ((Protect-Text 'unit-public-version') -cne 'unit-public-version') { throw '.env non-secret key was masked' }
     foreach ($entry in @(@('MYSQL_MAJOR', '8.4'), @('MYSQL_VERSION', '8.4.8-1.el9'), @('MYSQL_SHELL_VERSION', '8.4.8-1.el9'))) {
         Add-SecretMask $entry[0] $entry[1]
         if ((Protect-Text $entry[1]) -cne $entry[1]) { throw 'MySQL version metadata was masked' }

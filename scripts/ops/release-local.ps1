@@ -50,6 +50,15 @@ function Add-SecretMask([string]$Name, [string]$Value) {
     }
 }
 
+function Add-EnvFileMasks([string[]]$Lines) {
+    # Keys may contain digits (PRESERVED_V1_OIDC_SUBJECT); Add-SecretMask decides what is secret.
+    foreach ($line in $Lines) {
+        if ($line -match '^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$') {
+            Add-SecretMask $Matches[1] $Matches[2].Trim().Trim('"', "'")
+        }
+    }
+}
+
 function Assert-TestProject {
     Assert-Release ($ProjectName -match '^eng05-test(?:-|$)') 'Failure injection is restricted to disposable test projects'
 }
@@ -457,11 +466,7 @@ try {
         Assert-Release ([IO.File]::Exists((Join-Path $ComposeRoot $name))) 'Required Compose input is missing'
     }
     foreach ($name in @('.env', '.env.owner.local')) {
-        foreach ($line in [IO.File]::ReadAllLines((Join-Path $ComposeRoot $name))) {
-            if ($line -match '^\s*(?:export\s+)?([A-Z_]+)\s*=\s*(.*)$') {
-                Add-SecretMask $Matches[1] $Matches[2].Trim().Trim('"', "'")
-            }
-        }
+        Add-EnvFileMasks ([IO.File]::ReadAllLines((Join-Path $ComposeRoot $name)))
     }
     foreach ($base in @($HttpBase, $HttpsBase)) {
         $uri = [uri]$base
