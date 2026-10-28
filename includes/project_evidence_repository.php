@@ -34,9 +34,14 @@ function projectEvidenceLogicalEvaluationsFromStorage(array $record): array
 /** @param array<string, mixed> $values @return array{problem:array<string,mixed>,personal_role:array<string,mixed>,measurable_outcome:array<string,mixed>} */
 function projectEvidenceLogicalEvaluations(array $values): array
 {
+    $storageValues = [];
+    foreach (projectEvidenceLogicalToStorageFields() as $logical => $storage) {
+        $storageValues[$storage] = $values[$logical];
+    }
+    $projectEvaluations = evaluateEvidenceProjectTexts($storageValues);
     $evaluations = [];
     foreach (projectEvidenceLogicalToStorageFields() as $logical => $storage) {
-        $evaluations[$logical] = evaluateEvidenceText($storage, $values[$logical]);
+        $evaluations[$logical] = $projectEvaluations[$storage];
     }
     return $evaluations;
 }

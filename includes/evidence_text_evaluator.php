@@ -221,3 +221,48 @@ function evidenceTextPlaceholderComparisonValue(string $placeholder): string
 
     return $normalization['comparison_text'];
 }
+
+/**
+ * Compare only these three fields of one project. Shingles and source identities
+ * stay local: callers receive the usual evaluations with status/reason changes.
+ *
+ * @param array<string, mixed> $values
+ * @return array<string, array<string, mixed>>
+ */
+function evaluateEvidenceProjectTexts(array $values, string $ruleVersion = EVIDENCE_TEXT_LIVE_RULE_VERSION): array
+{
+    $evaluations = [];
+    foreach (evidenceTextFieldNames() as $field) {
+        $evaluations[$field] = evaluateEvidenceText($field, $values[$field] ?? null, $ruleVersion);
+    }
+    if ($ruleVersion === EVIDENCE_TEXT_RULE_VERSION) {
+        return $evaluations;
+    }
+    $shingles = [];
+    $comparisons = [];
+    foreach ($evaluations as $field => $evaluation) {
+        $comparisons[$field] = $evaluation['analytical_text'] === null ? null : evidenceTextLatinCaseFold($evaluation['analytical_text']);
+        $keys = array_map('evidenceTextTokenComparisonKey', evidenceTextUsefulTokensForVersion($evaluation['analytical_text'] ?? '', $ruleVersion));
+        $shingles[$field] = [];
+        for ($i = 0; $i + 2 < count($keys); ++$i) {
+            $shingles[$field][json_encode(array_slice($keys, $i, 3), JSON_THROW_ON_ERROR)] = true;
+        }
+    }
+    $original = $evaluations;
+    foreach (evidenceTextFieldNames() as $i => $field) {
+        if ($original[$field]['evidence_status'] !== 'complete') continue;
+        foreach (evidenceTextFieldNames() as $j => $other) {
+            if ($i === $j) continue;
+            $exact = $comparisons[$field] !== null && $comparisons[$field] !== '' && $comparisons[$field] === $comparisons[$other];
+            $shared = count(array_intersect_key($shingles[$field], $shingles[$other]));
+            $contained = count($shingles[$field]) >= 3 && $shared * 10000 >= count($shingles[$field]) * 8000;
+            $mutual = $exact || (count($shingles[$other]) >= 3 && $shared * 10000 >= count($shingles[$other]) * 8000);
+            if (($exact || $contained) && (!$mutual || $i > $j)) {
+                $evaluations[$field]['evidence_status'] = 'needs_attention';
+                $evaluations[$field]['reason_codes'] = ['DUPLICATED_ACROSS_FIELDS'];
+                break;
+            }
+        }
+    }
+    return $evaluations;
+}

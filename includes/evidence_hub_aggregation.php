@@ -58,12 +58,13 @@ function evidenceHubProgressStage(int $projectCount, int $completeProjectCount, 
  * @param array{project_ref: int, problem_statement: mixed, personal_role: mixed, measurable_outcome: mixed, recorded_at_epoch_seconds: int, technology_storage_state: string, technology_storage_reason_codes: list<string>, technologies: list<string>} $project
  * @return array<string, mixed>
  */
-function evaluateEvidenceHubProjectDocumentation(array $project): array
+function evaluateEvidenceHubProjectDocumentation(array $project, string $ruleVersion = EVIDENCE_TEXT_RULE_VERSION): array
 {
     $evaluations = [];
     $complete = 0;
+    $projectEvaluations = evaluateEvidenceProjectTexts($project, $ruleVersion);
     foreach (evidenceTextFieldNames() as $field) {
-        $evaluation = evaluateEvidenceText($field, $project[$field] ?? null);
+        $evaluation = $projectEvaluations[$field];
         $evaluations[$field] = [
             'evidence_field' => $evaluation['evidence_field'],
             'rule_version' => $evaluation['rule_version'],
