@@ -99,3 +99,5 @@ Additional checks:
 - Never commit secrets, `.env*`, database dumps, or files from `ather-career-releases/`.
 - Never print or log credentials, session cookies, HMAC keys or Owner data.
 - Never add network fetches or new runtime dependencies without approval.
+
+- Agents never run `scripts/ops/release-local.ps1` or any Compose command against project `portfolio_course`; use explicit disposable project, paths, ports and state for tests. The Owner/reviewer operates the real release.
