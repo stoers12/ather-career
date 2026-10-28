@@ -19,4 +19,4 @@ Moving a command requires updating its project-root/sibling paths and every call
 
 ## Local releases
 
-[ops/release-local.ps1](ops/release-local.ps1) uses [ops/templates/local-owner-release.yml](ops/templates/local-owner-release.yml). See [the local release guide](../docs/LOCAL_RELEASE.md) for planning, automatic/explicit rollback and isolated testing. Agents never run it against `portfolio_course`. Its Pester-free safety suite is `pwsh -NoProfile -File scripts/test/test-release-local.ps1`; explicit disposable fixture parameters also prove DryRun performs no writes.
+[ops/release-local.ps1](ops/release-local.ps1) uses [ops/templates/local-owner-release.yml](ops/templates/local-owner-release.yml). See [the local release guide](../docs/LOCAL_RELEASE.md) for planning, automatic/explicit rollback and isolated testing. Agents never run it against `portfolio_course`. CI runs its Docker-free, Pester-free safety suite on every PR: `pwsh -NoProfile -File scripts/test/test-release-local.ps1`; explicit disposable fixture parameters also prove DryRun performs no writes.

@@ -13,7 +13,8 @@ param(
     [Parameter(ParameterSetName = 'Release')][switch]$Migrate,
     [switch]$DryRun,
     [Parameter(Mandatory, ParameterSetName = 'Rollback')][string]$Rollback,
-    [Parameter(DontShow, ParameterSetName = 'Release')][string]$TestBuildTarget
+    [Parameter(DontShow, ParameterSetName = 'Release')][string]$TestBuildTarget,
+    [Parameter(DontShow, ParameterSetName = 'Release')][switch]$TestMigrationFailure
 )
 
 Set-StrictMode -Version Latest
@@ -42,6 +43,23 @@ $script:CurrentFiles = @()
 $script:BackupFile = ''
 $script:RollbackCommand = ''
 $script:Outcome = 'FAILED (no service changed)'
+
+function Add-SecretMask([string]$Name, [string]$Value) {
+    if ($Name -match '(?i)^(?:MYSQL_(?:PASSWORD|ROOT_PASSWORD|USER|DATABASE)$|DB_PASSWORD$|OIDC_|EXPECTED_OIDC_|PRESERVED_|EVIDENCE_HUB_OPAQUE_)') {
+        [void]$script:Masks.Add($Value)
+    }
+}
+
+function Assert-TestProject {
+    Assert-Release ($ProjectName -match '^eng05-test(?:-|$)') 'Failure injection is restricted to disposable test projects'
+}
+
+function Invoke-ReleaseMigration {
+    # Preflight restricts this failure process to explicit disposable projects
+    # with -Migrate. It never connects to a database.
+    $migration = if ($TestMigrationFailure) { @('-r', 'fwrite(STDERR, "Injected migration failure\n"); exit(1);') } else { @('database/migrate.php') }
+    $null = Invoke-Compose $script:CurrentFiles (@('run', '--rm', '--no-deps', '--entrypoint', 'php', 'web') + $migration)
+}
 
 function Protect-Text([string]$Text) {
     foreach ($value in @($script:Masks | Sort-Object Length -Descending)) {
@@ -161,9 +179,7 @@ function Get-Service([string]$Service, [switch]$RequireHealthy) {
     $container = (Invoke-ReleaseNative docker @('inspect', '--format', '{{json .}}', $ids[0])).Output | ConvertFrom-Json -AsHashtable
     foreach ($entry in $container.Config.Env) {
         $parts = $entry -split '=', 2
-        if ($parts.Count -eq 2 -and $parts[0] -match '(?i)^(MYSQL_|DB_PASSWORD|OIDC_|EXPECTED_OIDC_|PRESERVED_|EVIDENCE_HUB_OPAQUE_)') {
-            [void]$script:Masks.Add($parts[1])
-        }
+        if ($parts.Count -eq 2) { Add-SecretMask $parts[0] $parts[1] }
     }
     if ($RequireHealthy) {
         Assert-Release ($container.State.Running -and $container.State.ContainsKey('Health') -and
@@ -442,8 +458,8 @@ try {
     }
     foreach ($name in @('.env', '.env.owner.local')) {
         foreach ($line in [IO.File]::ReadAllLines((Join-Path $ComposeRoot $name))) {
-            if ($line -match '^\s*(?:export\s+)?(?:MYSQL_[A-Z_]+|DB_PASSWORD|OIDC_[A-Z_]+|EXPECTED_OIDC_ISSUER|PRESERVED_V1_OIDC_SUBJECT|EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY)\s*=\s*(.*)$') {
-                [void]$script:Masks.Add($Matches[1].Trim().Trim('"', "'"))
+            if ($line -match '^\s*(?:export\s+)?([A-Z_]+)\s*=\s*(.*)$') {
+                Add-SecretMask $Matches[1] $Matches[2].Trim().Trim('"', "'")
             }
         }
     }
@@ -453,7 +469,8 @@ try {
             $uri.UserInfo -eq '' -and $uri.Query -eq '' -and $uri.Fragment -eq '' -and $uri.AbsolutePath -eq '/') 'Smoke origins must be loopback origins'
     }
     Assert-Release (([uri]$HttpBase).Scheme -ceq 'http' -and ([uri]$HttpsBase).Scheme -ceq 'https') 'Both HTTP and HTTPS smoke origins are required'
-    if ($TestBuildTarget) { Assert-Release ($ProjectName -match '^eng05-test(?:-|$)') 'Build injection is restricted to disposable test projects' }
+    if ($TestBuildTarget -or $TestMigrationFailure) { Assert-TestProject }
+    if ($TestMigrationFailure) { Assert-Release ([bool]$Migrate) 'Migration failure injection requires -Migrate' }
     $baseFiles = @((Join-Path $ComposeRoot 'docker-compose.yml'), (Join-Path $ComposeRoot 'docker-compose.owner-https.yml'))
     if ($ExtraComposeFile) {
         $ExtraComposeFile = [IO.Path]::GetFullPath($ExtraComposeFile)
@@ -517,7 +534,7 @@ try {
             Start-Step $step; Complete-Step 'DRY RUN: would execute; actual release fetches and revalidates origin/main'
         }
         if ($Rollback) { Write-Host ([IO.File]::ReadAllText((Join-Path $Rollback 'canonical-release.yml'))) } else { Write-Host $overlay }
-        Write-Host 'RELEASE_LOCAL_PASSED'
+        Write-Host 'RELEASE_LOCAL_DRYRUN_PASSED'
         exit 0
     }
     Start-Step 'rollback-descriptor'
@@ -557,8 +574,8 @@ try {
         Complete-Step 'Rendered image, version, startup and exact mount lists verified'
         if ($Migrate) {
             Start-Step 'migrate'
-            $null = Invoke-Compose $script:CurrentFiles @('run', '--rm', '--no-deps', '--entrypoint', 'php', 'web', 'database/migrate.php')
-            Complete-Step 'Explicit migration completed after verified backup'
+            Invoke-ReleaseMigration
+            Complete-Step 'compose run --rm --no-deps --entrypoint php web database/migrate.php completed after verified backup'
         }
     } else {
         $script:InitialCounts = Get-DatabaseCounts

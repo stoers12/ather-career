@@ -40,7 +40,7 @@ The image is built from archived `source/Dockerfile`, target `production`. The c
 
 Only after those checks does it recreate web with `--no-deps --no-build --wait --wait-timeout 120`. Web must be healthy and log `Production security gate passed.` before proxy recreation. Then the same bounded wait is applied to `owner_https`.
 
-`-Migrate` is explicit and optional. It runs only `web database/migrate.php` as a one-off PHP process after the verified backup, with the new overlay, before service replacement. It never invokes bootstrap or owner binding. It disables only the unchanged-ledger assertion. An image rollback does not undo a schema change: select schema-compatible revisions and use the separately approved recovery procedure if a migration needs recovery.
+`-Migrate` is explicit and optional. It runs `compose run --rm --no-deps --entrypoint php web database/migrate.php` as a one-off PHP process after the verified backup, with the new overlay, before service replacement. It never invokes bootstrap or owner binding. It disables only the unchanged-ledger assertion. An image rollback does not undo a schema change: select schema-compatible revisions and use the separately approved recovery procedure if a migration needs recovery.
 
 ## Smoke, output and failure
 
@@ -48,7 +48,7 @@ Both loopback origins must pass liveness/readiness, landing/sign-in, the first p
 
 The tool also checks running version/image identity, the production-security line, zero PHP fatal/warning/parse/uncaught log matches, and the unchanged migration count unless explicitly migrating. It reads logs privately, including stderr, and never prints bodies or raw diagnostics.
 
-Output consists of `STEP <name> OK|FAIL <detail>` and the final `RELEASE_LOCAL_PASSED` or `RELEASE_LOCAL_FAILED`. `RELEASE.md` records identity/tree equality, image label, backup/hash/counts, overlay summary, durations, path/status smoke results, and an exact command to the preceding configuration. Candidate and restored smoke results are distinguished so a failure remains visible after recovery.
+Output consists of `STEP <name> OK|FAIL <detail>` and the final `RELEASE_LOCAL_PASSED` or `RELEASE_LOCAL_FAILED`. A successful DryRun ends with `RELEASE_LOCAL_DRYRUN_PASSED`. `RELEASE.md` records identity/tree equality, image label, backup/hash/counts, overlay summary, durations, path/status smoke results, and an exact command to the preceding configuration. Candidate and restored smoke results are distinguished so a failure remains visible after recovery.
 
 Any failure after attempting web replacement triggers automatic rollback. The previous image alias is verified and its original tag restored if necessary, then the **previous label-derived file list** is reapplied. Proxy is restored only if its replacement was attempted. Rollback gets its own smoke verification; the attempt records **FAILED + rolled back** and exits nonzero. If recovery also fails, it records **rollback FAILED (manual recovery required)** and still exits nonzero. A pre-service failure never recreates either service. A failed proxy deployment or smoke uses the same recovery path.
 
@@ -70,6 +70,8 @@ Keep rollback releases, their image aliases and their Caddy source directories f
 
 The recorded recovery command first restores the retained image alias to its original tag, checks that operation, then reapplies the preceding Compose inputs. This matters when a same-commit rebuild changed the image behind that tag.
 
+The hidden `-TestMigrationFailure` hook requires `-Migrate` and an explicit `eng05-test` project (or `eng05-test-*`). It substitutes a PHP process that exits 1 without connecting to the database. Use it only in disposable fixtures to prove migration failure preserves both running service IDs, leaves the verified backup available and exits with `RELEASE_LOCAL_FAILED` before `up-web`.
+
 ## Verification and limits
 
 Run the Pester-free safety suite:
@@ -78,8 +80,8 @@ Run the Pester-free safety suite:
 pwsh -NoProfile -File scripts/test/test-release-local.ps1
 ~~~
 
-It parses PowerShell, checks the template/forbidden service operations, exercises rendered-config rejection cases and verifies redaction. With the explicit disposable paths/origins/ref parameters shown above, it also executes a real DryRun and verifies release directory contents, Git fetch metadata and stable container identities are unchanged.
+CI runs this command on every push and PR without `ComposeRoot`, so it needs no Docker. It parses PowerShell, checks the template/forbidden service operations, exercises rendered-config rejection cases, verifies the distinct DryRun sentinel and tests redaction (the four secret-bearing MySQL keys are masked; MySQL version metadata stays readable). With the explicit disposable paths/origins/ref parameters shown above, it also executes a real DryRun and verifies release directory contents, Git fetch metadata and stable container identities are unchanged.
 
-Isolated release testing additionally covers two successive releases with the same Git commit and different labels, prior-overlay detection from labels, off-main refs, a hidden disposable-only build-target injection, unhealthy startup, failed smoke and explicit rollback. Raw dummy configuration, seed diagnostics, dumps and provider-like values stay in private temporary fixtures; only sanitized transcripts and summary evidence belong in a PR.
+Isolated release testing additionally covers two successive releases with the same Git commit and different labels, prior-overlay detection from labels, off-main refs, a hidden disposable-only build-target injection, unhealthy startup, failed smoke and explicit rollback. For `-Migrate`, verify success against the complete repository migration manifest and both origins, then inject failure and check the backup, unchanged web/proxy IDs, unchanged ledger and failure sentinel before `up-web`. Raw dummy configuration, seed diagnostics, dumps and provider-like values stay in private temporary fixtures; only sanitized transcripts and summary evidence belong in a PR.
 
 The release script never issues Compose teardown, volume removal, prune, database service start/stop/recreate, a database restore into the source, a bootstrap, owner binding, or a remote deployment. It never changes runtime PHP, Dockerfiles or base Compose files. Disposable fixture setup/teardown is a separate test operation. Cleanup must enumerate exact owned containers, volumes, networks, image tags and temporary directories; never infer a broad live-resource deletion target.
