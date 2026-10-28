@@ -1,21 +1,21 @@
 # 04 — Data model and migration plan
 
-Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). Actual additive022 adds projects.is_published, enforced0/1/default0. Nullable staging initializes only uninitialized legacy rows from Portfolio publication once, preserving choices and content/ownership/timestamps. Historical017 publication proposal is not its migration number.
+Bounded local successor: [Card06 per-project publication](../archive/auth-onboarding/CARD06-PER-PROJECT-PUBLICATION.md). Actual additive022 adds projects.is_published, enforced0/1/default0. Nullable staging initializes only uninitialized legacy rows from Portfolio publication once, preserving choices and content/ownership/timestamps. Historical017 publication proposal is not its migration number.
 
 
 ## Additive 020 — owner journey cutover (local, not applied live)
 
-`portfolios.legacy_owner_user_id INT UNSIGNED NULL DEFAULT NULL` stores the original owner binding solely for a controlled snapshot; existing content/ownership/timestamps/visibility/profile_version stay unchanged. `owner_journey_cutover` stores singleton id 1, fixed revision, snapshot count, BINARY(32) SHA256 of sorted `[portfolio_id, original_user_id]` pairs and original UTC microsecond capture time. Migration creates/verifies empty schema and refuses populated unrecorded state. It never captures. An explicit separate CLI seals all owned Portfolios present at maintenance cutover in one SERIALIZABLE transaction and verifies only previously marked rows on retry. No runtime write path may change those fields. Restored startup verifies schema and preserves the seal, never adopts unmarked rows. [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).
+`portfolios.legacy_owner_user_id INT UNSIGNED NULL DEFAULT NULL` stores the original owner binding solely for a controlled snapshot; existing content/ownership/timestamps/visibility/profile_version stay unchanged. `owner_journey_cutover` stores singleton id 1, fixed revision, snapshot count, BINARY(32) SHA256 of sorted `[portfolio_id, original_user_id]` pairs and original UTC microsecond capture time. Migration creates/verifies empty schema and refuses populated unrecorded state. It never captures. An explicit separate CLI seals all owned Portfolios present at maintenance cutover in one SERIALIZABLE transaction and verifies only previously marked rows on retry. No runtime write path may change those fields. Restored startup verifies schema and preserves the seal, never adopts unmarked rows. [32 — server-side journey routing](../archive/auth-onboarding/32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).
 
-No schema change in [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md). Existing 015 exact evidence and bounded server-session presentation records remain the only attestation persistence. Editor document bodies, presentation token and unchecked/checked actions are transient RAM/DOM state, independent of draft fields/version/operation receipts. Neither current Profile nor completion evidence is changed by document presentation.
+No schema change in [29 — private editor attestation UI](../archive/auth-onboarding/29-ATTESTATION-EDITOR-UI-HANDOFF.md). Existing 015 exact evidence and bounded server-session presentation records remain the only attestation persistence. Editor document bodies, presentation token and unchecked/checked actions are transient RAM/DOM state, independent of draft fields/version/operation receipts. Neither current Profile nor completion evidence is changed by document presentation.
 
 **Card 04 HTTP slice (2026-10-19):** No migration or evidence-schema change. The new
 boundary reuses exact 015 evidence and original `recorded_at`; 019 and all protected
 rows remain unchanged. Only one bounded PHP-session presentation record is added:
 token plus User/authz/authentication/session digest and twelve trusted descriptors,
-without document bodies or a raw session secret. See [28](28-ATTESTATION-HTTP-HANDOFF.md).
+without document bodies or a raw session secret. See [28](../archive/auth-onboarding/28-ATTESTATION-HTTP-HANDOFF.md).
 
-**2026-10-19 bounded first-completion core:** Actual additive 019 creates only onboarding_completions: immutable first-completion evidence with User/Portfolio/Profile uniqueness and exact attestation-key references. No existing data/schema backfill. The guarded runner verifies/repeats compatible empty CREATE and rejects partial/drifted/populated unrecorded evidence. Full runtime schema readiness/restored manifest advances through 019. See [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md). No HTTP/UI/routing/publication or live change.
+**2026-10-19 bounded first-completion core:** Actual additive 019 creates only onboarding_completions: immutable first-completion evidence with User/Portfolio/Profile uniqueness and exact attestation-key references. No existing data/schema backfill. The guarded runner verifies/repeats compatible empty CREATE and rejects partial/drifted/populated unrecorded evidence. Full runtime schema readiness/restored manifest advances through 019. See [handoff 27](../archive/auth-onboarding/27-FIRST-COMPLETION-CORE-HANDOFF.md). No HTTP/UI/routing/publication or live change.
 
 **2026-10-19 optional final facts:** Actual additive 018 adds nullable
 `personal_info.country_code CHAR(2) ascii_bin`, `preferred_language CHAR(2) ascii_bin`,
@@ -23,9 +23,9 @@ without document bodies or a raw session secret. See [28](28-ATTESTATION-HTTP-HA
 Exact schema verification supports complete-ALTER recovery/repeat and rejects partial or
 incompatible shapes. Existing values/timestamps/owners/visibility/profile_version are
 preserved; no draft/provider backfill, completion receipt or public projection is added.
-See [handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md). Older proposed schema below is historical.
+See [handoff 24](../archive/auth-onboarding/24-FINAL-PROFILE-FIELDS-HANDOFF.md). Older proposed schema below is historical.
 
-**2026-10-05 status update:** The Phase 1 local-only statements below are historical. Migration 014 is deployed with five exact legacy bindings and ledger 001–014. The local Phase 2A callback contract is in [10](10-PHASE2A-CALLBACK-RESOLUTION.md); it makes no schema or data change.
+**2026-10-05 status update:** The Phase 1 local-only statements below are historical. Migration 014 is deployed with five exact legacy bindings and ledger 001–014. The local Phase 2A callback contract is in [10](../archive/auth-onboarding/10-PHASE2A-CALLBACK-RESOLUTION.md); it makes no schema or data change.
 
 **Phase 1 local implementation:** Migration 014 and a read-only compatibility repository exist in unpushed commit `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e`. Migration 014 passed isolated fresh and upgraded rehearsals; it has not been applied to the canonical database, whose ledger remains 001–013. Migrations 015–017 and all account-readiness, onboarding, linking and publication stores below remain proposals. Current behavior is detailed in [01](01-CURRENT-STATE.md); decisions in [02](02-ARCHITECTURE-DECISIONS.md).
 
@@ -104,7 +104,7 @@ This slice implements the identity and preservation portions of [AUTH-ADR-001, A
 with no legacy acceptance backfill. The broader paragraph below remains a proposal,
 not this migration's scope. No verification, roles, security/workflow state, drafts,
 route gates or production policy availability are implemented by 015. See
-[handoff 18](18-ONBOARDING-ATTESTATION-PERSISTENCE-HANDOFF.md) for the exact contract,
+[handoff 18](../archive/auth-onboarding/18-ONBOARDING-ATTESTATION-PERSISTENCE-HANDOFF.md) for the exact contract,
 validation, server descriptor trust boundary and rollout dependencies. No live
 migration is authorized or performed by this local implementation.
 
@@ -117,7 +117,7 @@ adds only one private, bounded, versioned draft per User, with partial section s
 resume and a latest-operation retry receipt. It adds no profile fields, completion
 workflow, slug reservation/history or publication authority; the broader paragraph
 below remains a proposal. The field/API contract, candidate-validation limits and
-unresolved lifecycle are in [handoff 19](19-ONBOARDING-DRAFT-PERSISTENCE-HANDOFF.md).
+unresolved lifecycle are in [handoff 19](../archive/auth-onboarding/19-ONBOARDING-DRAFT-PERSISTENCE-HANDOFF.md).
 Registration stays Google-only/default off and real policies remain unavailable.
 Operator/contact/hosting details and policy drafting are deferred to launch preparation.
 
@@ -128,7 +128,7 @@ Add one owner-scoped versioned draft per user, bounded idempotency and timestamp
 **2026-10-18 bounded implementation correction:** actual next-unused 017 is now
 `017_profile_version`: one additive bounded integer on `personal_info`, initialized
 to 1, plus its enforced range check. It changes no facts, ownership, visibility or
-publication behavior. See [handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
+publication behavior. See [handoff 23](../archive/auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
 The broader publication paragraph below remains a historical proposal requiring a
 later unused migration number and separate acceptance, not implemented 017 scope.
 

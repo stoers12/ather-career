@@ -2,9 +2,9 @@
 
 ## 2026-10-22 — bounded PR #8 historical reconciliation
 
-From main `b9d27994d5c2d2c6e9d950158256a481ca2f1332`, reconcile six documentation files only: README, this changelog and phase records 10–13. Preserve PR #7's [historical finalization](13-PHASE2B-PROMPT-LOGIN-EXPERIMENT.md#finalization-evidence-2026-10-09-utc), identify outdated temporary/unmerged checkpoints, and retain the newer D1 and standard-logout notes. Verify PR #3/#6/#7 merge metadata and PR #7 exact-merge CI metadata; attribute old owner/Agent observations rather than claiming a new runtime, data, provider or review-log check. Do not adopt PR #8's obsolete state/next-action text or its historical review exception. No application/schema/workflow change, new test/authentication, deployment, activation or PR #8 merge/closure is part of this correction.
+From main `b9d27994d5c2d2c6e9d950158256a481ca2f1332`, reconcile six documentation files only: README, this changelog and phase records 10–13. Preserve PR #7's [historical finalization](../archive/auth-onboarding/13-PHASE2B-PROMPT-LOGIN-EXPERIMENT.md#finalization-evidence-2026-10-09-utc), identify outdated temporary/unmerged checkpoints, and retain the newer D1 and standard-logout notes. Verify PR #3/#6/#7 merge metadata and PR #7 exact-merge CI metadata; attribute old owner/Agent observations rather than claiming a new runtime, data, provider or review-log check. Do not adopt PR #8's obsolete state/next-action text or its historical review exception. No application/schema/workflow change, new test/authentication, deployment, activation or PR #8 merge/closure is part of this correction.
 
-Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). 2026-10-22: local additive022 and explicit per-project controls/current shared public eligibility; owner-authorized technical legacy transition in disposable databases. Preserve content/ownership/timestamps/choices and existing transaction/uncertainty boundaries. No Evidence/slug expansion, live operation or launch; Card07 paused.
+Bounded local successor: [Card06 per-project publication](../archive/auth-onboarding/CARD06-PER-PROJECT-PUBLICATION.md). 2026-10-22: local additive022 and explicit per-project controls/current shared public eligibility; owner-authorized technical legacy transition in disposable databases. Preserve content/ownership/timestamps/choices and existing transaction/uncertainty boundaries. No Evidence/slug expansion, live operation or launch; Card07 paused.
 
 
 ## 2026-10-21 — separate integrated-fixture restoration cleanup correction
@@ -21,20 +21,20 @@ Connect the existing mock OIDC registration callback and its User/session/readin
 
 ## 2026-10-20 — Card 05 D1 authenticated entry (local implementation only)
 
-[34 — authenticated entry D1](34-AUTHENTICATED-ENTRY-D1-HANDOFF.md): current-authorized signin/signup/owner_login now offer localized fixed Dashboard/Resume or honest unavailable state with protected account actions. No automatic OIDC/navigation, discovery or start-attempt consumption for authorized visits; stale/malformed authority fails closed. Anonymous/default-off entry and Google-only explicit registration, callback/register/retry refusals and security boundaries remain. Existing CI suites gain focused route/mock/browser checks; local Apache/build and cleanup evidence retained. No schema/gate/policy/capture change. D2 discovery/launch copy deferred; no provider/hosting/manual accessibility certification or launch-ready journey claim.
+[34 — authenticated entry D1](../archive/auth-onboarding/34-AUTHENTICATED-ENTRY-D1-HANDOFF.md): current-authorized signin/signup/owner_login now offer localized fixed Dashboard/Resume or honest unavailable state with protected account actions. No automatic OIDC/navigation, discovery or start-attempt consumption for authorized visits; stale/malformed authority fails closed. Anonymous/default-off entry and Google-only explicit registration, callback/register/retry refusals and security boundaries remain. Existing CI suites gain focused route/mock/browser checks; local Apache/build and cleanup evidence retained. No schema/gate/policy/capture change. D2 discovery/launch copy deferred; no provider/hosting/manual accessibility certification or launch-ready journey claim.
 
 ## 2026-10-20 — Card 05 bounded private navigation (local review)
 
-[33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md): Save and exit reaches a strictly validated private pause presentation only after acknowledged saves, with explicit current-authority Resume/Dashboard and CSRF switch/logout. Confirmed receipt shows a fixed Dashboard link without automatic navigation or loss of unsaved-work protection. Extend existing HTTP/browser/renderer CI coverage, preserve original failures and report local evidence/gaps. No migration/core/API/catalog/capture/authentication/publication/gate or actual policy change. Card 05/launch are not complete.
+[33 — pause/resume and explicit Dashboard navigation](../archive/auth-onboarding/33-JOURNEY-NAVIGATION-UI-HANDOFF.md): Save and exit reaches a strictly validated private pause presentation only after acknowledged saves, with explicit current-authority Resume/Dashboard and CSRF switch/logout. Confirmed receipt shows a fixed Dashboard link without automatic navigation or loss of unsaved-work protection. Extend existing HTTP/browser/renderer CI coverage, preserve original failures and report local evidence/gaps. No migration/core/API/catalog/capture/authentication/publication/gate or actual policy change. Card 05/launch are not complete.
 
 
 ## 2026-10-20 — Card 05 bounded server routing/access (local)
 
-Added schema-only 020 and explicit maintenance-only frozen original-owner capture, centralized fixed destinations, receipt-bound/shared Owner access checks and retired legacy POST/helper creation. Existing owner readiness/policy exceptions and public behavior remain. Tests explicitly distinguish synthetic legacy owners and add routing/cutover/bypass coverage; all previous calls retained. Commands/results/failures/gaps: [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md). No push/deployment/live migration/capture/activation.
+Added schema-only 020 and explicit maintenance-only frozen original-owner capture, centralized fixed destinations, receipt-bound/shared Owner access checks and retired legacy POST/helper creation. Existing owner readiness/policy exceptions and public behavior remain. Tests explicitly distinguish synthetic legacy owners and add routing/cutover/bypass coverage; all previous calls retained. Commands/results/failures/gaps: [32 — server-side journey routing](../archive/auth-onboarding/32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md). No push/deployment/live migration/capture/activation.
 
-2026-10-20 — Card 04 bounded final editor review/completion/recovery ([31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md)): acknowledged saved-data review, fourteen exact positions/private optional disposition, two separate unchecked actions and one explicit immutable completion dispatch. Truthful original receipt/uncertain/null-read recovery and later Profile preservation; extended root/auth/request/listener boundaries. No core/API/schema/catalog/gate/policy/route-publication change or actual activation. Focused browser CI adds proven private carrier/clean-exit checks while retaining twenty CLI/existing browser assertions. Local commands/results, original failures/corrections and gaps in handoff 31.
+2026-10-20 — Card 04 bounded final editor review/completion/recovery ([31 — private final review and completion UI](../archive/auth-onboarding/31-COMPLETION-EDITOR-UI-HANDOFF.md)): acknowledged saved-data review, fourteen exact positions/private optional disposition, two separate unchecked actions and one explicit immutable completion dispatch. Truthful original receipt/uncertain/null-read recovery and later Profile preservation; extended root/auth/request/listener boundaries. No core/API/schema/catalog/gate/policy/route-publication change or actual activation. Focused browser CI adds proven private carrier/clean-exit checks while retaining twenty CLI/existing browser assertions. Local commands/results, original failures/corrections and gaps in handoff 31.
 
-2026-10-20 — Card 04 bounded completion HTTP transport ([30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md)): authenticated original-receipt GET, saved review POST and explicit confirmation POST reuse the unchanged core. Independent exact-`1` default-off capability; strict private transport/errors; scoped real HTTP tests and twentieth CI rehearsal/default-off smoke. No migration, UI/Create/routing/publication changes, policy text, gate activation or broader recommendation approval. Retained failures/corrections and precise evidence/gaps are in handoff 30.
+2026-10-20 — Card 04 bounded completion HTTP transport ([30 — completion HTTP transport](../archive/auth-onboarding/30-COMPLETION-HTTP-HANDOFF.md)): authenticated original-receipt GET, saved review POST and explicit confirmation POST reuse the unchanged core. Independent exact-`1` default-off capability; strict private transport/errors; scoped real HTTP tests and twentieth CI rehearsal/default-off smoke. No migration, UI/Create/routing/publication changes, policy text, gate activation or broader recommendation approval. Retained failures/corrections and precise evidence/gaps are in handoff 30.
 
 ## 2026-10-20 — bounded private attestation editor integration (local review)
 
@@ -50,7 +50,7 @@ and orderly cleanup, and renderer assertions without removing prior checks.
 Both production policy resolvers remain literal null, gates/Google-only registration
 remain default off, and Create/visibility remain disabled. No schema, completion UI/
 HTTP, routing/publication, activation or full-Card-04 completion is claimed.
-See [handoff 29](29-ATTESTATION-EDITOR-UI-HANDOFF.md) for commands, results, retained
+See [handoff 29](../archive/auth-onboarding/29-ATTESTATION-EDITOR-UI-HANDOFF.md) for commands, results, retained
 failures, redacted screenshots and verification gaps.
 
 ## 2026-10-19 — Card 04 default-off exact attestation HTTP boundary
@@ -99,7 +99,7 @@ the private Profile fixture carrier to the actual host runner UID/GID, verifies
 0600/0700 ownership/permissions and non-root Node readability, then runs the
 unchanged browser suite. Cleanup signals stop, waits up to 45 seconds, checks
 fixture exit/preservation evidence and removes resources without masking browser
-or cleanup failure. Only CI, [handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md#draft-pr-27--bounded-ci-fixture-handoff-correction)
+or cleanup failure. Only CI, [handoff 24](../archive/auth-onboarding/24-FINAL-PROFILE-FIELDS-HANDOFF.md#draft-pr-27--bounded-ci-fixture-handoff-correction)
 and this history change. YAML/24 Bash blocks, Node syntax, 11 cleanup simulations
 and a real Linux non-root permission probe pass; full remote reruns follow push.
 
@@ -110,7 +110,7 @@ AR/EN Profile labels/help/errors and set the conflict screenshot to a verified
 390×844 viewport. Existing desktop checks remain; mobile checks retain all four
 choices/text, the original version and visible recovery link. Seven HTTP groups,
 five Profile browser groups, regenerated screenshots and syntax/scope checks pass.
-[Handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md#bounded-review-follow-up-2026-10-19)
+[Handoff 24](../archive/auth-onboarding/24-FINAL-PROFILE-FIELDS-HANDOFF.md#bounded-review-follow-up-2026-10-19)
 records the corrected external-runner failure and explicit verification limits.
 Validation rules, catalogs, schema, privacy, authorization and CAS are unchanged.
 
@@ -121,7 +121,7 @@ additive verified 018, four optional fields, pinned independent ISO/CLDR catalog
 candidates, exact pure validation and existing versioned Profile controls. Omission/
 NULL/retired-value behavior, private projections and existing photo/contact/authorization
 semantics are preserved. Focused core/HTTP/browser checks join existing CI tooling.
-[Handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md) and catalog provenance record decisions,
+[Handoff 24](../archive/auth-onboarding/24-FINAL-PROFILE-FIELDS-HANDOFF.md) and catalog provenance record decisions,
 results and retained failures. No completion, draft/preview integration, policy/publication/
 routing requirement, provider change, gate activation or live migration is included.
 
@@ -130,7 +130,7 @@ routing requirement, provider change, gate activation or live migration is inclu
 Follow-up to reviewed `82bdaa8d210eae0c8aaa239e9089d1cfe390b1a6`: move only
 owner-flow after both profile-version suites so its save cannot invalidate the
 017 upgrade fixture's version-1 precondition. Credentials, assertions and cleanup
-are unchanged. [Handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md#draft-pr-26--bounded-ci-ordering-correction)
+are unchanged. [Handoff 23](../archive/auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md#draft-pr-26--bounded-ci-ordering-correction)
 records both failed CI runs, cause and all 15 corrected local rehearsal passes,
 including five core/six HTTP groups. Remote reruns remain a post-push check;
 no production source/schema, gates, completion or publication behavior changes.
@@ -141,7 +141,7 @@ Local R11/R12 implementation based on `0b818ea3babece756bc866259d10b590b478c573`
 preserving both prior documentation commits. Adds only migration 017's profile
 version, loaded form tokens, scoped CAS/absence guards, omission and explicit
 visibility handling, and confirmed/uncertain media outcome handling. Focused
-guarded MySQL/HTTP checks join CI; [handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md)
+guarded MySQL/HTTP checks join CI; [handoff 23](../archive/auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md)
 records evidence and gaps. No completion fields, catalogs, policy/publication/routing
 changes, activation, deployment, real login or live migration are included.
 

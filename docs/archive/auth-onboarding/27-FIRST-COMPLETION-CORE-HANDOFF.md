@@ -21,7 +21,7 @@ authorization/readiness/attestation/draft/Profile/slug/migration code were inspe
 
 ## Accepted decisions and scope
 
-The [accepted overlay in contract 22](22-ONBOARDING-COMPLETION-CONTRACT.md#accepted-bounded-first-completion-core--2026-10-19)
+The [accepted overlay in contract 22](../../auth-onboarding/22-ONBOARDING-COMPLETION-CONTRACT.md#accepted-bounded-first-completion-core--2026-10-19)
 supersedes only its listed recommendations. Professional display name maps to
 `full_name` (1–150 Unicode code points / 600 bytes), headline to `hero_headline`
 (1–180 / 720); no legal-name components, truncation or hidden normalization.
@@ -29,7 +29,7 @@ All seven connected fields are required for first completion. Initial slug is
 canonical 3–63 ASCII bytes through the existing syntax/reserved list/unique index;
 the existing 64-byte lifecycle remains. Specialization uses the shared exact
 150-code-point/600-byte validator. Country/language/status use the shared
-[13-country launch catalog](26-LAUNCH-COUNTRY-CATALOG.md), ar/en and six statuses.
+[13-country launch catalog](../../auth-onboarding/26-LAUNCH-COUNTRY-CATALOG.md), ar/en and six statuses.
 Country is professional location; status grants no authority. No inferred Jordan.
 
 New Portfolio is private/unpublished; contacts are private. The four final facts
@@ -47,7 +47,7 @@ remain deferred; no wider contract acceptance is implied.
 
 ## Internal API and review binding
 
-[Completion core](../../includes/onboarding_completion.php) exposes server-only:
+[Completion core](../../../includes/onboarding_completion.php) exposes server-only:
 
 - `prepareOnboardingCompletionReview(PDO, AuthenticatedUserContext, expectedVersion)`:
   authorized read transaction; returns all saved fields privately, deferred field
@@ -94,7 +94,7 @@ authz-version, lifetime and context checks. All draft writes use the same User l
    The production resolver is unchanged and **always null**, so new production
    completion remains unavailable. Readiness is an authorized application claim
    observation, never provider verification/freshness. Existing owners are not gated.
-3. Use [the internal exact lookup](../../includes/onboarding_attestations.php)
+3. Use [the internal exact lookup](../../../includes/onboarding_attestations.php)
    under the already-authorized User transaction/lock with exact binary descriptors
    and row share lock. Public attestation APIs retain their owned transactions;
    recording remains separate and is never nested into completion.

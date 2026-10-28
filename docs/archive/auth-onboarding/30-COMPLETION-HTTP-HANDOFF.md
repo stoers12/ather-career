@@ -11,8 +11,8 @@ were inspected. Canonical HEAD and both unrelated dirty source files remain inta
 
 ## Implemented; no activation
 
-[Handler](../../owner_onboarding_completion.php), [public shim](../../public/owner_onboarding_completion.php)
-and [transport helper](../../includes/onboarding_completion_http.php) introduce only
+[Handler](../../../owner_onboarding_completion.php), [public shim](../../../public/owner_onboarding_completion.php)
+and [transport helper](../../../includes/onboarding_completion_http.php) introduce only
 `/owner_onboarding_completion.php`. Independent capability
 `ATHERCAR_ONBOARDING_COMPLETION_HTTP_ENABLED` enables only on exact string `1`.
 Unset/empty/0/true/01/whitespace are off. Checked-in defaults in `.env.example` and
@@ -83,7 +83,7 @@ Error payload contains only success=false, stable code and safe error string.
 
 ## Tests and evidence
 
-[Focused route suite](../../scripts/run-onboarding-completion-route-tests.php) uses
+[Focused route suite](../../../scripts/run-onboarding-completion-route-tests.php) uses
 real HTTP to two independent PHP servers, persisted synthetic PHP sessions,
 disposable fully migrated MySQL, and guarded private source copies. Its test-only
 builder reversibly checks source include/resolver substitutions; no production

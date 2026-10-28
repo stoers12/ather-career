@@ -1,19 +1,19 @@
 # Bounded onboarding completion contract
 
-Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). Independent publication successor only; accepted completion/receipt/Profile mapping, requiredness and policies unchanged. Later projects start private; independent owner selection plus Portfolio publication is required. No optional draft import, Evidence publishing or new completion gate.
+Bounded local successor: [Card06 per-project publication](../archive/auth-onboarding/CARD06-PER-PROJECT-PUBLICATION.md). Independent publication successor only; accepted completion/receipt/Profile mapping, requiredness and policies unchanged. Later projects start private; independent owner selection plus Portfolio publication is required. No optional draft import, Evidence publishing or new completion gate.
 
 
-Bounded navigation successor: [33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md) adds only presentation/navigation around the unchanged accepted completion contract. Pause grants no authority; receipt-based Dashboard navigation is explicit and preserves local unsaved-work protection. No new requirement, core/API/capture/catalog/publication policy or activation.
+Bounded navigation successor: [33 — pause/resume and explicit Dashboard navigation](../archive/auth-onboarding/33-JOURNEY-NAVIGATION-UI-HANDOFF.md) adds only presentation/navigation around the unchanged accepted completion contract. Pause grants no authority; receipt-based Dashboard navigation is explicit and preserves local unsaved-work protection. No new requirement, core/API/capture/catalog/publication policy or activation.
 
-Owner-authorized Card 05 server-side successor (2026-10-20): [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md) now implements the bounded routing/access dependency: frozen original legacy-owner bindings or correctly bound completion evidence, centralized fixed destinations, shared Owner access enforcement and retired legacy first creation. It does not approve unrelated recommendations, change completion/receipt mappings or publication policy, activate capabilities, provide real policies or complete Card 05 UI/navigation. Historical routing-deferred statements below retain their earlier scope.
+Owner-authorized Card 05 server-side successor (2026-10-20): [32 — server-side journey routing](../archive/auth-onboarding/32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md) now implements the bounded routing/access dependency: frozen original legacy-owner bindings or correctly bound completion evidence, centralized fixed destinations, shared Owner access enforcement and retired legacy first creation. It does not approve unrelated recommendations, change completion/receipt mappings or publication policy, activate capabilities, provide real policies or complete Card 05 UI/navigation. Historical routing-deferred statements below retain their earlier scope.
 
-Owner-authorized bounded UI successor (2026-10-20): [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md) integrates saved review, two explicit private-creation/disposition confirmations and original-receipt recovery in the existing private editor. This supersedes earlier wholly-unimplemented completion UI statements only within this default-off scope. The accepted overlay/core/API, seven required initial fields, fourteen exact positions, optional disposition and later Profile authority remain unchanged. No additional recommendations, policies, routing/publication or launch are approved.
+Owner-authorized bounded UI successor (2026-10-20): [31 — private final review and completion UI](../archive/auth-onboarding/31-COMPLETION-EDITOR-UI-HANDOFF.md) integrates saved review, two explicit private-creation/disposition confirmations and original-receipt recovery in the existing private editor. This supersedes earlier wholly-unimplemented completion UI statements only within this default-off scope. The accepted overlay/core/API, seven required initial fields, fourteen exact positions, optional disposition and later Profile authority remain unchanged. No additional recommendations, policies, routing/publication or launch are approved.
 
-Owner-authorized bounded HTTP successor (2026-10-20): [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) now transports the existing receipt read, server review preparation and explicit five-key first-completion intent. This supersedes earlier statements that completion HTTP is wholly unimplemented, only for this independent default-off route. The accepted overlay, mappings, requiredness, optional disposition, exact-retry ordering and transaction core are unchanged. Policies/content remain null; completion UI, routing/publication and activation remain deferred. Historical evidence and unrelated proposals below retain their original scope.
+Owner-authorized bounded HTTP successor (2026-10-20): [30 — completion HTTP transport](../archive/auth-onboarding/30-COMPLETION-HTTP-HANDOFF.md) now transports the existing receipt read, server review preparation and explicit five-key first-completion intent. This supersedes earlier statements that completion HTTP is wholly unimplemented, only for this independent default-off route. The accepted overlay, mappings, requiredness, optional disposition, exact-retry ordering and transaction core are unchanged. Policies/content remain null; completion UI, routing/publication and activation remain deferred. Historical evidence and unrelated proposals below retain their original scope.
 
-Implementation cross-reference only: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) supplies a private attestation UI, independent of draft completion. It does not accept other recommendations, supply production policies, implement final review/completion HTTP, change required fields/publication or add routing/access gates. The accepted bounded first-completion overlay below remains unchanged.
+Implementation cross-reference only: [29 — private editor attestation UI](../archive/auth-onboarding/29-ATTESTATION-EDITOR-UI-HANDOFF.md) supplies a private attestation UI, independent of draft completion. It does not accept other recommendations, supply production policies, implement final review/completion HTTP, change required fields/publication or add routing/access gates. The accepted bounded first-completion overlay below remains unchanged.
 
-Later owner-authorized Card 04 transport: [28](28-ATTESTATION-HTTP-HANDOFF.md) implements
+Later owner-authorized Card 04 transport: [28](../archive/auth-onboarding/28-ATTESTATION-HTTP-HANDOFF.md) implements
 only default-off authenticated exact-document presentation/attestation recording.
 It does not change the accepted completion overlay, approve policies, complete the
 journey or authorize unrelated recommendations. Production policies remain null.
@@ -68,7 +68,7 @@ Unknown COMMIT outcome requires receipt recovery; never delete potentially commi
 Portfolio/Profile/evidence as compensation. Routing/publication bypass prevention
 below remains a separately approved later integration dependency.
 
-See [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) for the implemented API,
+See [handoff 27](../archive/auth-onboarding/27-FIRST-COMPLETION-CORE-HANDOFF.md) for the implemented API,
 receipt schema/recovery, current validation and explicit gaps. The historical
 recommendations below are not evidence of broader approval or activation.
 
@@ -76,13 +76,13 @@ Owner-approved catalog amendment (2026-10-19): [handoff 26](26-LAUNCH-COUNTRY-CA
 
 Explicit draft-only follow-up: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) reuses Profile catalogs/validators for new draft edits while preserving historical reads and receipts. It does not approve or implement the remaining completion/publication/routing recommendations.
 
-Explicitly authorized optional final-field follow-up: [handoff 24](24-FINAL-PROFILE-FIELDS-HANDOFF.md)
+Explicitly authorized optional final-field follow-up: [handoff 24](../archive/auth-onboarding/24-FINAL-PROFILE-FIELDS-HANDOFF.md)
 records four nullable final columns, pure validators, reviewed-source catalog candidates
 and existing Profile controls. Candidate membership is scoped to optional private edits;
 catalog naming/meanings remain reviewable. This does not accept or implement the other
 completion, publication, draft-promotion or routing recommendations below.
 
-Implementation follow-up: [handoff 23](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md)
+Implementation follow-up: [handoff 23](../archive/auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md)
 records the bounded user-authorized R11/R12 implementation. Other recommendations
 below remain proposals; this implementation does not enable completion.
 
@@ -95,8 +95,8 @@ Lifecycle revision, 2026-10-18: parent contract commit `7ef0db943e4fefc5e2a01f1b
 | Classification | What the repository establishes |
 | --- | --- |
 | Approved requirements | AUTH-ADR-014–020/023 require provisional 18+ self-attestation, versioned Terms acceptance and Privacy Notice acknowledgement, the seven fields below, private drafts, full atomic completion and explicit later publication. Phone is optional/private; names need no legal components; contact visibility is per type. ADR-022 approves controlled slug history but leaves exact policy unresolved. See [decisions](02-ARCHITECTURE-DECISIONS.md) and the [five-section field matrix](04-DATA-MODEL-AND-MIGRATIONS.md#five-section-onboarding-field-matrix). |
-| Approved narrower rollout policy | [14](14-OWNER-PORTFOLIO-CREATION-READINESS.md) and [15](15-OWNER-READINESS-ENFORCEMENT-HANDOFF.md) preserve existing-owner access with current authorization/ownership/session checks. Only first creation requires a strictly positive authorized current-session email observation. Broader every-route readiness proposals do not supersede this policy. |
-| Implemented at baseline | [19](19-ONBOARDING-DRAFT-PERSISTENCE-HANDOFF.md), [20](20-ONBOARDING-DRAFT-HTTP-HANDOFF.md), [21](21-ONBOARDING-DRAFT-EDITOR-HANDOFF.md): private versioned candidate persistence, HTTP save/resume and seven connected editor fields; HTTP/editor default off. [18](18-ONBOARDING-ATTESTATION-PERSISTENCE-HANDOFF.md): exact-bundle evidence APIs, but current bundle always null. [17](17-REGISTRATION-ROUTING-HANDOFF.md): Google-only registration/default off; legacy creation still exists. Integration in Git does not prove a live migration or activation. |
+| Approved narrower rollout policy | [14](14-OWNER-PORTFOLIO-CREATION-READINESS.md) and [15](../archive/auth-onboarding/15-OWNER-READINESS-ENFORCEMENT-HANDOFF.md) preserve existing-owner access with current authorization/ownership/session checks. Only first creation requires a strictly positive authorized current-session email observation. Broader every-route readiness proposals do not supersede this policy. |
+| Implemented at baseline | [19](../archive/auth-onboarding/19-ONBOARDING-DRAFT-PERSISTENCE-HANDOFF.md), [20](../archive/auth-onboarding/20-ONBOARDING-DRAFT-HTTP-HANDOFF.md), [21](../archive/auth-onboarding/21-ONBOARDING-DRAFT-EDITOR-HANDOFF.md): private versioned candidate persistence, HTTP save/resume and seven connected editor fields; HTTP/editor default off. [18](../archive/auth-onboarding/18-ONBOARDING-ATTESTATION-PERSISTENCE-HANDOFF.md): exact-bundle evidence APIs, but current bundle always null. [17](../archive/auth-onboarding/17-REGISTRATION-ROUTING-HANDOFF.md): Google-only registration/default off; legacy creation still exists. Integration in Git does not prove a live migration or activation. |
 | Historical/proposed | The broad workflow stores and migration 015–017 descriptions in [04](04-DATA-MODEL-AND-MIGRATIONS.md), route names/state machine in [05](05-USER-FLOWS-AND-ROUTES.md), autosave guidance and five-step preview are not current completion behavior. Actual 015/016 contain only attestations/drafts. Preview country/status examples, root URL illustration and separate contact toggles are not approved catalogs, routes or working privacy controls. |
 | This recommendation | R1–R9 define a bounded future first-completion operation; R10–R12 extend it through current-profile editing and publication. Existing owners are not backfilled, reclassified as completed, forced through new gates or overwritten. |
 
