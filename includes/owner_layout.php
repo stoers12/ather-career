@@ -41,21 +41,21 @@ function ownerLayoutStart(string $title, string $activePage, bool $themeCapable 
     <title><?php echo $isEvidenceHub ? ownerEscapeHtml(evidenceHubText('Evidence Hub — My Portfolio', $locale)) : ownerEscapeHtml($title) . ' — Ather Career'; ?></title>
     <link rel="icon" type="image/png" href="/assets/images/ather-navbar-logo.png">
     <?php if ($isEvidenceHub): ?>
-    <link rel="stylesheet" href="/<?php echo versionedAssetUrl('style.css'); ?>">
-    <link rel="stylesheet" href="/<?php echo versionedAssetUrl('admin.css'); ?>">
-    <link rel="stylesheet" href="/<?php echo versionedAssetUrl('evidence_hub.css'); ?>">
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/style.css'); ?>">
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/admin.css'); ?>">
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/evidence_hub.css'); ?>">
     <?php else: ?>
-    <link rel="stylesheet" href="/<?php echo versionedAssetUrl('owner_workspace.css'); ?>">
-    <?php if ($isDashboard): ?><link rel="stylesheet" href="/<?php echo versionedAssetUrl('owner_dashboard.css'); ?>"><?php endif; ?>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_workspace.css'); ?>">
+    <?php if ($isDashboard): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_dashboard.css'); ?>"><?php endif; ?>
     <?php endif; ?>
-    <script src="/<?php echo versionedAssetUrl('admin.js'); ?>" defer></script>
+    <script src="<?php echo versionedAssetUrl('assets/js/admin.js'); ?>" defer></script>
     <?php if ($isEvidenceHub): ?>
-    <script src="/<?php echo versionedAssetUrl('evidence_hub.js'); ?>" defer></script>
+    <script src="<?php echo versionedAssetUrl('assets/js/evidence_hub.js'); ?>" defer></script>
     <?php endif; ?>
 </head>
 <body class="<?php echo $isEvidenceHub ? 'evidence-hub-page' : 'owner-workspace-page' . ($isDashboard ? ' owner-dashboard-page' : ''); ?>"<?php if (!$isEvidenceHub): ?> data-owner-confirm-title="<?php echo ownerEscapeHtml(ownerText('Are you sure?')); ?>" data-owner-confirm-cancel="<?php echo ownerEscapeHtml(ownerText('Cancel')); ?>" data-owner-confirm-action="<?php echo ownerEscapeHtml(ownerText('Continue')); ?>"<?php endif; ?>>
 <?php if ($themeCapable): ?>
-<script src="/<?php echo versionedAssetUrl('owner_theme.js'); ?>"></script>
+<script src="<?php echo versionedAssetUrl('assets/js/owner_theme.js'); ?>"></script>
 <?php endif; ?>
 <div class="admin-layout<?php echo $isEvidenceHub ? ' evidence-hub-layout' : ''; ?>">
     <?php ownerNavigation($activePage, $workspace); ?>

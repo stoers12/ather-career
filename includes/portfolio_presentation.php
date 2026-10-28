@@ -325,8 +325,8 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
         && filter_var($options['canonical_url'], FILTER_VALIDATE_URL) !== false
         ? $options['canonical_url']
         : '';
-    $stylesheet = '/' . versionedAssetUrl('portfolio.css');
-    $script = '/' . versionedAssetUrl('portfolio.js');
+    $stylesheet = versionedAssetUrl('assets/css/portfolio.css');
+    $script = versionedAssetUrl('assets/js/portfolio.js');
     ?>
 <!DOCTYPE html>
 <html lang="en">

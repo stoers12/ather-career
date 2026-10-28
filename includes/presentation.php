@@ -1,12 +1,27 @@
 <?php
 
+/**
+ * Absolute URL of a public asset, versioned by its content so that every
+ * build and machine emits the same URL for the same bytes.
+ *
+ * @param string $relativePath path below public/, e.g. "assets/css/landing.css"
+ */
 function versionedAssetUrl(string $relativePath): string
 {
-    $projectRoot = dirname(__DIR__);
-    $assetPath = $projectRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
-    $version = is_file($assetPath) ? (string) filemtime($assetPath) : '1';
+    static $versions = [];
+    if (!preg_match('#^assets/(?:css|js|fonts|images)/[A-Za-z0-9_.-]+$#', $relativePath) || str_contains($relativePath, '..')) {
+        throw new InvalidArgumentException('Unsupported public asset path.');
+    }
+    if (!isset($versions[$relativePath])) {
+        $assetPath = dirname(__DIR__) . '/public/' . $relativePath;
+        $hash = is_file($assetPath) ? hash_file('sha256', $assetPath) : false;
+        if (!is_string($hash)) {
+            throw new RuntimeException('Public asset is missing: ' . $relativePath);
+        }
+        $versions[$relativePath] = substr($hash, 0, 16);
+    }
 
-    return $relativePath . '?v=' . rawurlencode($version);
+    return '/' . $relativePath . '?v=' . $versions[$relativePath];
 }
 function utf8FirstCharacter(string $value): string
 {

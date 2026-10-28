@@ -22,8 +22,8 @@ header('Content-Language: ' . $locale);
     <meta name="description" content="<?php echo landingCopy('description', $locale); ?>">
     <meta name="color-scheme" content="light dark">
     <title><?php echo landingCopy('title', $locale); ?></title>
-    <script src="<?php echo versionedAssetUrl('landing.js'); ?>"></script>
-    <link rel="stylesheet" href="<?php echo versionedAssetUrl('landing.css'); ?>">
+    <script src="<?php echo versionedAssetUrl('assets/js/landing.js'); ?>"></script>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/landing.css'); ?>">
 </head>
 <body>
 <a class="hf-skip" href="#hf-start"><?php echo landingCopy('skip', $locale); ?></a>

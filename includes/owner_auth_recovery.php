@@ -26,7 +26,7 @@ function renderOwnerAuthRecoveryPage(bool $authorizationDenied, int $status = 40
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sign-in not completed | تعذر إكمال تسجيل الدخول</title>
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body class="owner-auth-recovery">
 <main class="owner-auth-recovery-card" aria-labelledby="recovery-title">
@@ -57,7 +57,7 @@ function renderOwnerRegistrationRecoveryPage(bool $accountMayExist, int $status)
         ? 'قد يكون الحساب موجودًا بالفعل. يمكنك محاولة إنشاء الحساب مرة أخرى أو تسجيل الدخول.'
         : 'تعذر إكمال إنشاء الحساب. يمكنك العودة لإنشاء الحساب أو تسجيل الدخول.';
     ?><!DOCTYPE html>
-<html lang="en" dir="ltr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Registration not completed | تعذر إنشاء الحساب</title><link rel="stylesheet" href="/style.css"></head>
+<html lang="en" dir="ltr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Registration not completed | تعذر إنشاء الحساب</title><link rel="stylesheet" href="/assets/css/style.css"></head>
 <body class="owner-auth-recovery"><main class="owner-auth-recovery-card">
 <h1>Registration was not completed <span lang="ar" dir="rtl">لم يكتمل إنشاء الحساب</span></h1>
 <p><?= htmlspecialchars($detail, ENT_QUOTES, 'UTF-8') ?></p><p lang="ar" dir="rtl"><?= htmlspecialchars($arabic, ENT_QUOTES, 'UTF-8') ?></p>

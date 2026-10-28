@@ -1,6 +1,6 @@
 /* Product composition from the approved onboarding reference; preview controls are separate. */
-@font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 400; font-display: swap; src: url("assets/fonts/noto-sans-arabic-400.ttf") format("truetype"); }
-@font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 500; font-display: swap; src: url("assets/fonts/noto-sans-arabic-500.ttf") format("truetype"); }
+@font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/noto-sans-arabic-400.ttf") format("truetype"); }
+@font-face { font-family: "Noto Sans Arabic"; font-style: normal; font-weight: 500; font-display: swap; src: url("../fonts/noto-sans-arabic-500.ttf") format("truetype"); }
 html { color-scheme: light; background: #f3f6f1; }
 html[data-landing-theme="dark"] { color-scheme: dark; background: #0f1b17; }
 body { margin: 0; padding: 18px; }

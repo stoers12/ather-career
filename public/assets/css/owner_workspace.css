@@ -1,6 +1,6 @@
 /* Shared Portfolio workspace; Evidence Hub deliberately retains admin.css. */
-@font-face { font-family: "Ather Owner Arabic"; src: url("assets/fonts/noto-sans-arabic-400.ttf") format("truetype"); font-weight: 400; font-display: swap; }
-@font-face { font-family: "Ather Owner Arabic"; src: url("assets/fonts/noto-sans-arabic-500.ttf") format("truetype"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Ather Owner Arabic"; src: url("../fonts/noto-sans-arabic-400.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Ather Owner Arabic"; src: url("../fonts/noto-sans-arabic-500.ttf") format("truetype"); font-weight: 500; font-display: swap; }
 .owner-workspace-page {
     --admin-bg: #f5f7f3; --admin-surface: #fff; --admin-text: #102d23; --admin-muted: #586b63;
     --admin-border: #dce5df; --admin-primary: #176547; --admin-primary-hover: #124e37;
