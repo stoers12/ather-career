@@ -104,7 +104,7 @@ class PublicationFixtureDatabase extends PDO
 
 function publicationWorker(array $input): array
 {
-    $process = proc_open([PHP_BINARY, __DIR__.'/../../../scripts/run-publication-mutation-tests.php',
+    $process = proc_open([PHP_BINARY, __DIR__.'/../../../scripts/test/run-publication-mutation-tests.php',
         '--worker', base64_encode(json_encode($input, JSON_THROW_ON_ERROR))],
         [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes);
     completionAssert(is_resource($process), 'Worker unavailable.');

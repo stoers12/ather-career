@@ -123,8 +123,8 @@ metadata, not request bodies, tokens, SQL messages or private media paths.
 Focused CI commands use the existing generated database-scoped application user:
 
 ```sh
-php scripts/run-profile-version-tests.php
-php scripts/run-profile-version-route-tests.php
+php scripts/test/run-profile-version-tests.php
+php scripts/test/run-profile-version-route-tests.php
 ```
 
 The core suite covers upgrade/interrupted/repeated migration and unchanged

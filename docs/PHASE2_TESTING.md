@@ -33,7 +33,7 @@ Teardown requires a matching run marker and removes only that direct run-owned n
 Run the focused static guard separately when useful:
 
 ```powershell
-php scripts/check-phase2-static-architecture.php
+php scripts/test/check-phase2-static-architecture.php
 ```
 
 ## CI command

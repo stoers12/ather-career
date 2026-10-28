@@ -141,7 +141,7 @@ the existing safe request/security metadata. No request/response body is logged.
 
 ## Real-route tests and CI
 
-`scripts/run-onboarding-draft-route-tests.php` reuses the existing CLI/test-mode,
+`scripts/test/run-onboarding-draft-route-tests.php` reuses the existing CLI/test-mode,
 exact disposable-database guard and TestEnvironment namespace. It copies the real
 public shim into a private document root, links the application outside that root,
 starts PHP on loopback, and creates persisted sessions through CLI fixtures only.

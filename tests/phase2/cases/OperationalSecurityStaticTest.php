@@ -11,9 +11,9 @@ final class OperationalSecurityStaticTest
         $storage = self::read('includes/storage.php');
         $account = self::read('includes/account_operations.php');
         $logging = self::read('includes/security_events.php');
-        $backup = self::read('scripts/backup-production.sh');
-        $restore = self::read('scripts/restore-production.sh');
-        $recovery = self::read('scripts/stage4c-recovery.php');
+        $backup = self::read('scripts/ops/backup-production.sh');
+        $restore = self::read('scripts/ops/restore-production.sh');
+        $recovery = self::read('scripts/ops/stage4c-recovery.php');
         $contact = self::read('public_contact.php');
         $readiness = self::read('ready.php');
         $all = $session . $operations . $storage . $account . $logging . $backup . $restore;

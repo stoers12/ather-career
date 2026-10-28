@@ -195,7 +195,7 @@ an Ather authentication failure. Work resumed in the existing branch/worktree at
 the same baseline without resetting, cleaning, recreating or discarding work.
 
 Last complete retained pass: `validation-285d3bc24929.log` (local 00:40:32).
-File times place subsequent edits in `scripts/run-onboarding-draft-tests.php`
+File times place subsequent edits in `scripts/test/run-onboarding-draft-tests.php`
 (operation-ID reuse with a newer expected version must reject without changing
 rows) and review `validate.ps1`/`validate.sh` credential configuration (00:41).
 No source snapshot was retained for that run, so this attribution uses timestamps

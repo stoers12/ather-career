@@ -15,7 +15,7 @@ final class EvidenceHubRequiredGatesStaticTest
         $gate = self::read('scripts/run-evidence-hub-required-gates.ps1');
         $bootstrap = self::read('tests/phase2/support/evidence-hub-web-session-bootstrap.php');
         $httpMatrix = self::read('tests/phase2/cases/EvidenceHubRecommendationActionHttpMySqlTest.php');
-        $httpRunner = self::read('scripts/run-evidence-hub-http-action-test.php');
+        $httpRunner = self::read('scripts/test/run-evidence-hub-http-action-test.php');
         $mysqlMatrix = self::read('tests/phase2/cases/EvidenceHubRecommendationDispositionMySqlTest.php');
         $phase2Runner = self::read('scripts/run-phase2-tests.php');
 
@@ -49,7 +49,7 @@ final class EvidenceHubRequiredGatesStaticTest
             'EvidenceProjectTextRules110Test',
             'EvidenceHubContractV9Test',
             'EvidenceTextOwnerHintsTest',
-            'scripts/check-evidence-edit-http.php::textRules110',
+            'scripts/test/check-evidence-edit-http.php::textRules110',
             'tests/phase2/support/evidence-hub-text-rules-visual.cjs',
             'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle',
             'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle',
@@ -80,7 +80,7 @@ final class EvidenceHubRequiredGatesStaticTest
         );
         phase2Assert(!str_contains($gate, 'WebRequestSession') && !str_contains($gate, 'SESSION_HANDOFF') && str_contains($gate, 'curl.exe') && str_contains($gate, 'owner-a.cookiejar') && str_contains($gate, 'owner-b.cookiejar') && str_contains($gate, 'fabricated.cookiejar') && str_contains($gate, 'bootstrap endpoint remained reachable after removal'), 'Required-gates entry point must use two native cookie jars, reject a fabricated cookie, and remove its bootstrap endpoint.');
         phase2Assert(str_contains($gate, 'BOOTSTRAP_NONCE_A') && str_contains($gate, 'BOOTSTRAP_NONCE_B') && str_contains($gate, 'Owner A bootstrap nonce replay was accepted') && str_contains($gate, 'Owner B bootstrap nonce replay was accepted') && str_contains($gate, "'--seed'"), 'Required-gates entry point must seed both owners before Web-SAPI nonce-bound bootstrap and prove replay rejection.');
-        $seedPosition = strpos($gate, "'scripts/run-evidence-hub-http-action-test.php', '--seed'");
+        $seedPosition = strpos($gate, "'scripts/test/run-evidence-hub-http-action-test.php', '--seed'");
         $cutoverPosition = strpos($gate, "'database/capture-owner-journey-cutover.php', '--confirm-exclusive-maintenance', \"--database=\$databaseName\"");
         $apachePosition = strpos($gate, "@('run', '--detach', '--name', \$web");
         phase2Assert($seedPosition !== false && $cutoverPosition !== false && $apachePosition !== false
@@ -93,10 +93,10 @@ final class EvidenceHubRequiredGatesStaticTest
         foreach (['EvidenceTextRules110Test', 'EvidenceProjectTextRules110Test', 'EvidenceHubContractV9Test', 'EvidenceTextOwnerHintsTest'] as $test) {
             phase2Assert(str_contains($phase2Runner, $test . '::class'), 'A registered text-rule unit gate is not executed.');
         }
-        $editorHttp = self::read('scripts/check-evidence-edit-http.php');
+        $editorHttp = self::read('scripts/test/check-evidence-edit-http.php');
         phase2Assert(str_contains($editorHttp, 'verifyTextRules110Http($fields, $route, $cookieA)') && str_contains($editorHttp, 'EVIDENCE_TEXT_RULES_110_HTTP_PASSED') && str_contains($gate, "Invoke-Tool 'node' @((Join-Path \$Root 'tests/phase2/support/evidence-hub-text-rules-visual.cjs'))"), 'Registered text-rule HTTP and browser gates must execute.');
-        $editorPosition = strpos($gate, "'scripts/check-evidence-edit-http.php'");
-        $technologyReviewPosition = strpos($gate, "'scripts/check-evidence-technology-review-http.php'");
+        $editorPosition = strpos($gate, "'scripts/test/check-evidence-edit-http.php'");
+        $technologyReviewPosition = strpos($gate, "'scripts/test/check-evidence-technology-review-http.php'");
         phase2Assert($editorPosition !== false && $technologyReviewPosition !== false && $editorPosition < $technologyReviewPosition, 'Required-gates entry point must run the Owner technology review HTTP and MySQL check with the native Owner sessions.');
         phase2Assert(!str_contains($dockerfile, '/var/www/public/evidence-hub-web-session-bootstrap.php') && !str_contains($compose, 'EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP'), 'Production artifacts must not publish or enable the Web-SAPI bootstrap.');
     }

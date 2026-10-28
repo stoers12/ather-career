@@ -69,7 +69,7 @@ function profileTestRace(int $userId, array $inputs): array
     $workers = [];
     try {
         foreach ($inputs as $input) {
-            $process = proc_open([PHP_BINARY, __DIR__ . '/../../../scripts/run-profile-version-race-worker.php', (string) $userId,
+            $process = proc_open([PHP_BINARY, __DIR__ . '/../../../scripts/test/run-profile-version-race-worker.php', (string) $userId,
                 base64_encode(json_encode($input, JSON_THROW_ON_ERROR))], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
             profileTestAssert(is_resource($process), 'Profile worker unavailable.'); stream_set_timeout($pipes[1], 25); $workers[] = [$process, $pipes];
         }
