@@ -24,15 +24,16 @@ Compose also requires `EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY`. For a disposable lo
 $env:EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
 ```
 
-A fresh database is initialized from the shipped V1 baseline, which needs a preserved Owner subject exactly once. For this disposable trial, set the **synthetic local-only** value `PRESERVED_V1_OIDC_SUBJECT=local-development-only` in your local `.env`; there is deliberately no default. The web entrypoint waits for the database, applies the migrations and the one-time binding, then starts Apache, so one command starts everything:
+A fresh database is initialized from the shipped V1 baseline, which needs a preserved Owner subject exactly once. For this disposable trial, set the **synthetic local-only** value `PRESERVED_V1_OIDC_SUBJECT=local-development-only` in your local `.env`; there is deliberately no default. Compose bind-mounts the checkout over the image code, so install the locked PHP dependencies into it first (again whenever `composer.json` or `composer.lock` changes); classes under `src/` are loaded through Composer ([architecture](docs/ARCHITECTURE.md)). The web entrypoint waits for the database, applies the migrations and the one-time binding, then starts Apache:
 
 ```powershell
+docker run --rm -v "${PWD}:/app" -w /app composer:2 install
 docker compose up -d --build --wait
 ```
 
 Open <http://127.0.0.1:8088>. `/health.php` returns `OK` and `/ready.php` returns `READY`; the Landing and inactive account-entry presentations work without Auth0. Edits to the checkout are live: Compose bind-mounts it at `/var/www/app` and its `public/` tree at the document root `/var/www/public`.
 
-Real Owner sign-in, account switching, logout through Auth0 and private Evidence Hub access require a configured Auth0 Regular Web Application, its dependencies and an authorized local identity binding. Before initializing a database intended for real sign-in, replace the synthetic bootstrap subject with the separately verified durable subject. See [Auth0 setup](docs/P2J09_AUTH0_SETUP.md) and the [authentication/onboarding record](docs/auth-onboarding/README.md); initialization alone does not enable registration or complete onboarding. Install the locked PHP dependencies with `composer install` (Composer 2 with PHP 8.3, or its Docker image) before exercising real OIDC flows. No provider interaction is needed for the local trial or Phase 2 foundation.
+Real Owner sign-in, account switching, logout through Auth0 and private Evidence Hub access require a configured Auth0 Regular Web Application, its dependencies and an authorized local identity binding. Before initializing a database intended for real sign-in, replace the synthetic bootstrap subject with the separately verified durable subject. See [Auth0 setup](docs/P2J09_AUTH0_SETUP.md) and the [authentication/onboarding record](docs/auth-onboarding/README.md); initialization alone does not enable registration or complete onboarding. No provider interaction is needed for the local trial or Phase 2 foundation.
 
 Optionally enable the local Owner HTTPS bridge. Set `PUBLIC_BASE_URL=https://localhost:8443`, `SESSION_COOKIE_SECURE=true` and the exact HTTPS callback/allowed Auth0 URLs first; port 8443 must be unused. Trust Caddy's local CA in your development browser as appropriate:
 
