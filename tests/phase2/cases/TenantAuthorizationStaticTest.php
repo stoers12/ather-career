@@ -7,7 +7,7 @@ final class TenantAuthorizationStaticTest
     public static function run(TestEnvironment $environment): void
     {
         $authorization = self::normalizeLineEndings(self::read('includes/authorization.php'));
-        $scopedData = self::normalizeLineEndings(self::read('includes/portfolio_scoped_data.php'));
+        $scopedData = self::normalizeLineEndings(SplitSourceFile::read('includes/portfolio_scoped_data.php'));
 
         phase2Assert(str_contains($authorization, 'function requireAuthenticatedUser(PDO $database, bool $forUpdate = false): AuthenticatedUserContext'), 'Authenticated User helper must preserve ordinary reads and support current write-lock validation.');
         phase2Assert(str_contains($authorization, 'function requireOwnedPortfolioContext(PDO $database): AuthorizedPortfolioContext'), 'P2J-03 owned Portfolio helper is missing.');

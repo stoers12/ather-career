@@ -8,7 +8,7 @@ final class ProjectTechnologiesStaticTest
     {
         $migration = self::read('database/migrations/006_project_technologies.sql');
         $technologies = self::read('includes/project_technologies.php');
-        $scopedData = self::read('includes/portfolio_scoped_data.php');
+        $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
         $lifecycle = self::read('includes/public_lifecycle.php');
         $ownerActions = self::read('includes/owner_actions.php');
         $projectActions = self::read('includes/project_actions.php');

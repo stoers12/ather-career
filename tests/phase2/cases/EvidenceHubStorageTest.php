@@ -23,7 +23,7 @@ final class EvidenceHubStorageTest
         $dispositionRollback = self::read('database/rollback/011_recommendation_dispositions.sql');
         $updatedMigration = self::read('database/migrations/012_project_updated_at.sql');
         $migrationRunner = self::read('database/migrate.php');
-        $scopedData = self::read('includes/portfolio_scoped_data.php');
+        $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
         $evaluator = self::read('includes/evidence_text_evaluator.php');
         $publicJson = self::read('includes/public_lifecycle.php');
         $developmentImage = self::read('Dockerfile');
