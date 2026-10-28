@@ -2,9 +2,9 @@
 
 ## Historical Phase 2A/2B reconciliation — 2026-10-22
 
-[Historical finalization evidence](13-PHASE2B-PROMPT-LOGIN-EXPERIMENT.md#finalization-evidence-2026-10-09-utc) preserves the bounded closure of PR #3/#6/#7 and distinguishes verified merge/CI metadata from retained owner/Agent observations. Draft PR #8 is a historical source, not a merged implementation dependency. Its old current-state and next-action text is not adopted. Later implementation notes below retain their own scope; this entry neither updates deployment/activation status nor restores the old instruction to begin Landing. The dated 2026-10-06 status further below is historical.
+[Historical finalization evidence](../archive/auth-onboarding/13-PHASE2B-PROMPT-LOGIN-EXPERIMENT.md#finalization-evidence-2026-10-09-utc) preserves the bounded closure of PR #3/#6/#7 and distinguishes verified merge/CI metadata from retained owner/Agent observations. Draft PR #8 is a historical source, not a merged implementation dependency. Its old current-state and next-action text is not adopted. Later implementation notes below retain their own scope; this entry neither updates deployment/activation status nor restores the old instruction to begin Landing. The dated 2026-10-06 status further below is historical.
 
-Bounded local Card06: [per-project publication](CARD06-PER-PROJECT-PUBLICATION.md) implements private new projects, an independent owner selection and shared current public eligibility with additive022. Technical legacy transition authorized for disposable review; actual gates off, policies null, registration Google-only. Next: local source/evidence review, not launch; Card07 paused.
+Bounded local Card06: [per-project publication](../archive/auth-onboarding/CARD06-PER-PROJECT-PUBLICATION.md) implements private new projects, an independent owner selection and shared current public eligibility with additive022. Technical legacy transition authorized for disposable review; actual gates off, policies null, registration Google-only. Next: local source/evidence review, not launch; Card07 paused.
 
 
 Card 08 bounded ONBOARD-UI-003 evidence follow-up: the integrated synthetic HTTP fixture now checks incomplete Dashboard/direct add GET routing, then follows the actual Dashboard Add Project href for a completed owner with zero projects and with one disposable fixture project. Add-mode controls, Projects empty-state presence/absence and whole-row preservation are asserted. No project-creation POST, banner, new route or production change; the sealed-legacy exception remains. Next: local review of this evidence slice; original Card 08 scope remains unresolved and Card 07 stays paused.
@@ -13,16 +13,16 @@ Separate test-helper correction: integrated fixture database cleanup now runs in
 
 Card 08 first bounded acceptance slice: the existing registration/OIDC route suite now connects one synthetic registration-purpose callback to an initially empty draft, acknowledged HTTP saves, pause/resume, explicit document attestations, saved review/confirmation, receipt/Dashboard access and later Profile preservation. It reuses guarded private policy copies and disposable fixtures; production resolvers remain null and actual gates off. Original approved Card 08 scope was not located in the bounded local records reviewed: this is the owner's current provisional journey checklist plus existing accepted contracts, not a whole-card acceptance claim. See [focused acceptance coverage](07-TEST-AND-ACCEPTANCE-MATRIX.md). No production behavior or provider/browser investigation changes.
 
-Card 05 owner-approved D1: [34 — authenticated entry D1](34-AUTHENTICATED-ENTRY-D1-HANDOFF.md) implements current-authorized signed-in presentations on signin/signup/direct owner_login, fixed explicit Dashboard/Resume or unavailable account actions. No authenticated visit starts OIDC or consumes its start budget. Anonymous entry and explicit Google registration remain; D2 public registration discovery/launch messaging is deferred. Production policies stay null and actual gates off. Next: owner review of local D1 evidence; provider/hosting/manual accessibility and controlled cutover remain separate, not launch-ready.
+Card 05 owner-approved D1: [34 — authenticated entry D1](../archive/auth-onboarding/34-AUTHENTICATED-ENTRY-D1-HANDOFF.md) implements current-authorized signed-in presentations on signin/signup/direct owner_login, fixed explicit Dashboard/Resume or unavailable account actions. No authenticated visit starts OIDC or consumes its start budget. Anonymous entry and explicit Google registration remain; D2 public registration discovery/launch messaging is deferred. Production policies stay null and actual gates off. Next: owner review of local D1 evidence; provider/hosting/manual accessibility and controlled cutover remain separate, not launch-ready.
 
-Card 05 bounded navigation successor: [33 — pause/resume and explicit Dashboard navigation](33-JOURNEY-NAVIGATION-UI-HANDOFF.md). Acknowledged Save and exit now reaches a private pause view; explicit Resume uses current server routing. Confirmed receipt recovery offers Dashboard without automatic navigation or suppressing unsaved-work protection. This finishes only these editor navigation gaps; public/account navigation review, real policies, controlled cutover preparation and activation remain separate. Production resolvers remain null, actual gates off. Next safe action: local review of this slice and its evidence.
+Card 05 bounded navigation successor: [33 — pause/resume and explicit Dashboard navigation](../archive/auth-onboarding/33-JOURNEY-NAVIGATION-UI-HANDOFF.md). Acknowledged Save and exit now reaches a private pause view; explicit Resume uses current server routing. Confirmed receipt recovery offers Dashboard without automatic navigation or suppressing unsaved-work protection. This finishes only these editor navigation gaps; public/account navigation review, real policies, controlled cutover preparation and activation remain separate. Production resolvers remain null, actual gates off. Next safe action: local review of this slice and its evidence.
 
 
-Card 05 first bounded server slice: [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md). Frozen maintenance-only legacy bindings and correctly bound completion now control fixed Owner/editor/holding destinations; alternate bare first creation is retired. Local review/testing only. Production resolvers stay null, actual gates off; no capture/deployment/launch or completed Card 05 claim. Next: review evidence, then separately bounded navigation/UI and controlled cutover preparation.
+Card 05 first bounded server slice: [32 — server-side journey routing](../archive/auth-onboarding/32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md). Frozen maintenance-only legacy bindings and correctly bound completion now control fixed Owner/editor/holding destinations; alternate bare first creation is retired. Local review/testing only. Production resolvers stay null, actual gates off; no capture/deployment/launch or completed Card 05 claim. Next: review evidence, then separately bounded navigation/UI and controlled cutover preparation.
 
-Card 04 bounded editor completion: [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md). Final review now uses acknowledged saved server data, two explicit confirmations and the existing completion HTTP gate. Original receipt recovery is independent of current policies/readiness. Both production resolvers stay null, actual gates off; the guarded preview remains nonpersistent/Create-disabled. Next safe step: owner review of this local commit/evidence. No launch, routing/publication cutover or finished Card 04 is claimed.
+Card 04 bounded editor completion: [31 — private final review and completion UI](../archive/auth-onboarding/31-COMPLETION-EDITOR-UI-HANDOFF.md). Final review now uses acknowledged saved server data, two explicit confirmations and the existing completion HTTP gate. Original receipt recovery is independent of current policies/readiness. Both production resolvers stay null, actual gates off; the guarded preview remains nonpersistent/Create-disabled. Next safe step: owner review of this local commit/evidence. No launch, routing/publication cutover or finished Card 04 is claimed.
 
-Card 04 bounded completion transport: [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md). Private receipt recovery, saved review preparation and explicit confirmation are implemented locally behind an independent exact-`1`, default-off capability. Production policy/content resolvers remain literal null. No final-review/Create UI, routing/publication cutover or activation. Next safe action: review this local commit and its evidence; Card 04 remains incomplete.
+Card 04 bounded completion transport: [30 — completion HTTP transport](../archive/auth-onboarding/30-COMPLETION-HTTP-HANDOFF.md). Private receipt recovery, saved review preparation and explicit confirmation are implemented locally behind an independent exact-`1`, default-off capability. Production policy/content resolvers remain literal null. No final-review/Create UI, routing/publication cutover or activation. Next safe action: review this local commit and its evidence; Card 04 remains incomplete.
 
 **Isolated presentation update (2026-10-15):** PR #16 merged at `5e5196cedfa837fd9f3cf3e4a5e389c7ed836eaa` with exact-merge Main CI success. This local `feat/onboarding-steps3-5-20261015` batch extends the approved preview to all five visual sections. It preserves transient choices through step navigation and bounded same-page language switches, provides illustrative status/link/privacy controls and review edits, and leaves Create disabled. The fixture remains outside production routes. It records no consent, saves no draft, reserves no link, changes no visibility, and creates no portfolio. Phone and legal policy, functional gates, deployment, and owner acceptance of steps 3–5 remain separate.
 
@@ -36,12 +36,12 @@ Ather is a broader professional platform, initially focused on students and grad
 
 ## Start here
 
-Card 04 bounded editor integration: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md).
+Card 04 bounded editor integration: [29 — private editor attestation UI](../archive/auth-onboarding/29-ATTESTATION-EDITOR-UI-HANDOFF.md).
 Complete exact server documents, explicit actions and safe evidence recovery are implemented
 locally for review. Production policies remain null; all capabilities remain default off.
 Create/completion UI and HTTP, routing cutover and activation remain separate. Card 04 is not finished.
 
-Card 04 first bounded slice: [28 — exact attestation HTTP presentation/recording](28-ATTESTATION-HTTP-HANDOFF.md).
+Card 04 first bounded slice: [28 — exact attestation HTTP presentation/recording](../archive/auth-onboarding/28-ATTESTATION-HTTP-HANDOFF.md).
 Authenticated GET/POST and its public shim are implemented locally behind an exact-`1`,
 default-off gate. Production bundle/content resolvers remain null: no approved legal
 documents, usable production presentation, activation, final UI or completion route.
@@ -61,25 +61,25 @@ Read current behavior before changing code; use the ADRs for approved choices, t
 | [07-TEST-AND-ACCEPTANCE-MATRIX.md](07-TEST-AND-ACCEPTANCE-MATRIX.md) | Stable test requirements and scoped evidence | Scoped verification recorded | This documentation correction | 2026-10-05 |
 | [08-OPERATIONS-ROLLBACK-AND-RECOVERY.md](08-OPERATIONS-ROLLBACK-AND-RECOVERY.md) | Recovery and canonical bind-mount runbook | Maintenance boundary recorded | This documentation correction | 2026-10-05 |
 | [09-OFFICIAL-REFERENCES.md](09-OFFICIAL-REFERENCES.md) | Primary-source register | Verified | This documentation-expansion commit | 2026-10-04 |
-| [10-PHASE2A-CALLBACK-RESOLUTION.md](10-PHASE2A-CALLBACK-RESOLUTION.md) | Local callback cutover contract and recovery boundary | Verified locally; runtime corrected | This documentation correction | 2026-10-05 |
+| [10-PHASE2A-CALLBACK-RESOLUTION.md](../archive/auth-onboarding/10-PHASE2A-CALLBACK-RESOLUTION.md) | Local callback cutover contract and recovery boundary | Verified locally; runtime corrected | This documentation correction | 2026-10-05 |
 | [11-PHASE2B-ACCOUNT-SELECTION.md](11-PHASE2B-ACCOUNT-SELECTION.md) | Local session switch and fixed account chooser contract | Isolated review branch | Phase 2B local implementation | 2026-10-06 |
 | [CHANGELOG.md](CHANGELOG.md) | Durable phase and commit history | Approved | This documentation correction | 2026-10-05 |
 
 “This documentation-expansion commit” identifies the containing commit without an impossible self-referential SHA. Its parent is 2c486f11de660a6587e8dd33e66b0ebfbe3ca5bd.
 
 Local persistence-only follow-up: [18 — onboarding-attestation persistence
-handoff](18-ONBOARDING-ATTESTATION-PERSISTENCE-HANDOFF.md). Migration 015 is narrow;
+handoff](../archive/auth-onboarding/18-ONBOARDING-ATTESTATION-PERSISTENCE-HANDOFF.md). Migration 015 is narrow;
 policy availability and registration activation remain off.
 
 Local private draft follow-up: [19 — onboarding draft persistence/resume
-handoff](19-ONBOARDING-DRAFT-PERSISTENCE-HANDOFF.md). Migration 016 is persistence
+handoff](../archive/auth-onboarding/19-ONBOARDING-DRAFT-PERSISTENCE-HANDOFF.md). Migration 016 is persistence
 only, without completion/profile/route integration or policy activation.
 
 Local HTTP follow-up: [20 — authenticated onboarding draft HTTP
-handoff](20-ONBOARDING-DRAFT-HTTP-HANDOFF.md). The JSON resume/save boundary is
+handoff](../archive/auth-onboarding/20-ONBOARDING-DRAFT-HTTP-HANDOFF.md). The JSON resume/save boundary is
 default off and independent of registration; onboarding UI/completion remain deferred.
 
-Local editor follow-up: [21 — private onboarding draft editor](21-ONBOARDING-DRAFT-EDITOR-HANDOFF.md).
+Local editor follow-up: [21 — private onboarding draft editor](../archive/auth-onboarding/21-ONBOARDING-DRAFT-EDITOR-HANDOFF.md).
 The approved design now supports authenticated explicit save/resume behind the same
 default-off gate; completion, consent, publication and final catalogs remain deferred.
 
@@ -88,11 +88,11 @@ Documentation-only recommendations await owner acceptance; the lifecycle revisio
 14 draft fields through current profile editing and publication. The proposed first slice is
 profile save preservation/concurrency; no completion behavior is enabled.
 
-Bounded R11/R12 implementation: [23 — profile preservation and concurrency](23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
+Bounded R11/R12 implementation: [23 — profile preservation and concurrency](../archive/auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
 Only profile versioning, scoped saves, omission/visibility preservation and media outcome handling
 are integrated locally; completion, publication/routing changes and activation remain deferred.
 
-Bounded optional final facts: [24 — private final-profile fields](24-FINAL-PROFILE-FIELDS-HANDOFF.md).
+Bounded optional final facts: [24 — private final-profile fields](../archive/auth-onboarding/24-FINAL-PROFILE-FIELDS-HANDOFF.md).
 Four nullable final columns, candidate catalogs/strict validators and existing Profile controls
 are developed together locally. They remain private and independent of onboarding drafts,
 completion/publication and gate activation; catalog labels/meanings remain owner-review items.
@@ -102,7 +102,7 @@ New edits reuse Profile rules; stored historical candidates and exact retry rece
 compatible. Existing native controls and guarded preview remain. Completion/policies/activation
 stay unavailable; the next safe action is owner review of this local slice.
 
-Bounded first completion: [27 — atomic core and durable receipt](27-FIRST-COMPLETION-CORE-HANDOFF.md).
+Bounded first completion: [27 — atomic core and durable receipt](../archive/auth-onboarding/27-FIRST-COMPLETION-CORE-HANDOFF.md).
 The owner accepted only the explicit overlay in contract 22. Production policies remain unavailable;
 no completion HTTP/UI, routing cutover or publication activation exists. Next step is local owner review.
 

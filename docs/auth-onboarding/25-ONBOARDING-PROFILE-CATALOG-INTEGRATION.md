@@ -1,8 +1,8 @@
 # Authenticated onboarding editor / Profile catalog integration
 
-Later UI-only integration: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) connects separate exact-document actions without changing the ordered 13-country catalog, stored historical values, validators or exact draft retry fingerprints. Production policies remain unavailable and all capabilities default off. Earlier evidence remains historical.
+Later UI-only integration: [29 — private editor attestation UI](../archive/auth-onboarding/29-ATTESTATION-EDITOR-UI-HANDOFF.md) connects separate exact-document actions without changing the ordered 13-country catalog, stored historical values, validators or exact draft retry fingerprints. Production policies remain unavailable and all capabilities default off. Earlier evidence remains historical.
 
-Bounded later core: [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) records atomic first creation/evidence and read-only completed drafts. Existing exact draft retries, current Profile authority and existing-owner access remain; HTTP/UI/routing/publication activation stays deferred. Earlier evidence below remains historical.
+Bounded later core: [handoff 27](../archive/auth-onboarding/27-FIRST-COMPLETION-CORE-HANDOFF.md) records atomic first creation/evidence and read-only completed drafts. Existing exact draft retries, current Profile authority and existing-owner access remain; HTTP/UI/routing/publication activation stays deferred. Earlier evidence below remains historical.
 
 Owner-approved catalog amendment (2026-10-19): [handoff 26](26-LAUNCH-COUNTRY-CATALOG.md) supersedes the earlier all-249 product offering with the ordered 13-country launch list. Full ISO/CLDR provenance and historical stored choices/receipts remain preserved; earlier evidence below retains its original scope.
 

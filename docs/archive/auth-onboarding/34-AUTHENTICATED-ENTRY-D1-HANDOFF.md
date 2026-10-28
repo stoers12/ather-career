@@ -14,9 +14,9 @@ before/after fingerprints and logs are outside the source worktree.
 
 ## Implemented boundary
 
-[Shared presentation](../../includes/authenticated_entry.php) is called by
-[signin](../../signin.php), [signup](../../signup.php) and the
-[direct login entry](../../owner_login.php). A session cookie only triggers
+[Shared presentation](../../../includes/authenticated_entry.php) is called by
+[signin](../../../signin.php), [signup](../../../signup.php) and the
+[direct login entry](../../../owner_login.php). A session cookie only triggers
 inspection, never authorization. Anonymous public signin/default-off signup do
 not create a session or load/connect to the database unnecessarily; an existing
 anonymous session also requires no database validation. Enabled anonymous signup
@@ -75,10 +75,10 @@ unproven, never adopted or repaired. Card05/full journey is not declared launch-
 
 Existing CI calls remain:21 CLI rehearsals, migration ordering, scoped credentials,
 all old browser assertions and private-carrier cleanup. Additions live in the existing
-[journey HTTP suite](../../scripts/run-owner-journey-route-tests.php),
-[registration/OIDC suite](../../scripts/run-registration-routing-tests.php), and
-[completion browser fixture](../../scripts/run-onboarding-completion-browser-fixture.php)/
-[browser suite](../../scripts/run-onboarding-completion-browser-tests.mjs).
+[journey HTTP suite](../../../scripts/run-owner-journey-route-tests.php),
+[registration/OIDC suite](../../../scripts/run-registration-routing-tests.php), and
+[completion browser fixture](../../../scripts/run-onboarding-completion-browser-fixture.php)/
+[browser suite](../../../scripts/run-onboarding-completion-browser-tests.mjs).
 Workflow changes are two explanatory comments; these already-invoked suites run the
 new checks unconditionally. No assertions, traps, credentials or calls removed.
 

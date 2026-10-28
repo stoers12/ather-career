@@ -48,7 +48,7 @@ link. Local authority is not restored. Local retirement failure is not reported
 as success. The outbound redirect only initiates Auth0 SSO logout; a browser or
 Auth0/network/allowlist failure after leaving Ather is not detectable here.
 Neither the plain Sign In return nor a fabricated visit claims remote success.
-Google's browser session may remain active. See the [bounded handoff](auth-onboarding/CARD07-STANDARD-LOGOUT.md).
+Google's browser session may remain active. See the [bounded handoff](archive/auth-onboarding/CARD07-STANDARD-LOGOUT.md).
 
 Unhandled web exceptions are reported through the existing sanitized
 application-error logger with a correlation identifier, route/action context,
@@ -74,11 +74,11 @@ means false only for that type. Omission of both value and marker preserves that
 type. Malformed input rejects the whole patch. Retired `public_contact_visible`
 or `public_contact_present` submissions return 409 with retained input and an
 explicit reload/review message; they never infer independent choices. See the
-[per-type contact handoff](auth-onboarding/CARD06-PER-TYPE-CONTACT-VISIBILITY.md).
+[per-type contact handoff](archive/auth-onboarding/CARD06-PER-TYPE-CONTACT-VISIBILITY.md).
 Photo selections may need
 reselection. Uncertain COMMIT outcomes return honest 503/reload guidance and retain
 potentially referenced media. Authorization/CSRF and existing-owner readiness policy
-are unchanged. See [the scoped handoff](auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
+are unchanged. See [the scoped handoff](archive/auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
 
 ## Public Sign In presentation
 
@@ -116,7 +116,7 @@ without public route shims. The separate loopback preview chooses a fixed fixtur
 client query claims do not alter it. Direct fixture requests are denied. Fixtures
 start no session, send no email, create no account and grant no verified status or
 access. Refresh/resend/onboarding controls are natively disabled. See the
-[implementation and prerequisite record](SIGNUP-VERIFICATION-IMPLEMENTATION.md).
+[implementation and prerequisite record](archive/SIGNUP-VERIFICATION-IMPLEMENTATION.md).
 
 
 Per-project publication: public HTML, project JSON and project media share current active-owner, published-Portfolio, matching-project and project.is_published=1 eligibility. A project flag alone grants no public access. Private project metadata/keys are not serialized; authorized Owner preview/media remain independent. The Projects page has a separate CSRF-protected publication POST; uncertain commit acknowledgement requires explicit reload/review, never automatic replay.

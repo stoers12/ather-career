@@ -31,7 +31,7 @@ Owner-scoped update that increments the version once. Atomic version comparison
 replaces the former existence-based zero-row fallback: stale forms return 409,
 preserve their text/visibility/original version and require explicit reload/review.
 Omitted fields preserve their saved values; text saves do not replay image paths.
-See [the bounded profile handoff](auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
+See [the bounded profile handoff](archive/auth-onboarding/23-PROFILE-PRESERVATION-CONCURRENCY-HANDOFF.md).
 
 Owner forms continue to work without JavaScript. With JavaScript, an eligible
 submit control is temporarily disabled, retains a stable width, and announces a

@@ -2,9 +2,9 @@
 
 Bounded later core: [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) records atomic first creation/evidence and read-only completed drafts. Existing exact draft retries, current Profile authority and existing-owner access remain; HTTP/UI/routing/publication activation stays deferred. Earlier evidence below remains historical.
 
-Owner-approved catalog amendment (2026-10-19): [handoff 26](26-LAUNCH-COUNTRY-CATALOG.md) supersedes the earlier all-249 product offering with the ordered 13-country launch list. Full ISO/CLDR provenance and historical stored choices/receipts remain preserved; earlier evidence below retains its original scope.
+Owner-approved catalog amendment (2026-10-19): [handoff 26](../../auth-onboarding/26-LAUNCH-COUNTRY-CATALOG.md) supersedes the earlier all-249 product offering with the ordered 13-country launch list. Full ISO/CLDR provenance and historical stored choices/receipts remain preserved; earlier evidence below retains its original scope.
 
-Subsequent private draft integration: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) reuses these catalogs and validators without changing final-profile data, editing, storage or public projections. Historical Profile implementation evidence below retains its original scope.
+Subsequent private draft integration: [handoff 25](../../auth-onboarding/25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) reuses these catalogs and validators without changing final-profile data, editing, storage or public projections. Historical Profile implementation evidence below retains its original scope.
 
 Exact implementation base: merged `bd0ec90f395d99dc6f963c3ba00505e4aa993c46`
 (PR 26). Its parents are `d2514104a405c26587350be84c28720ac87f3ff7` and approved
@@ -14,10 +14,10 @@ Worktree: `.worktrees/final-profile-fields`, branch
 `feat/final-profile-fields-20261018`. Original checkout remains at `82353dc…`
 with its unrelated required-gates edit/hash preserved. No AGENTS.md was found
 in the checkout/worktree or ancestor chain; repository maintenance instructions
-and [contract 22](22-ONBOARDING-COMPLETION-CONTRACT.md) were read first.
+and [contract 22](../../auth-onboarding/22-ONBOARDING-COMPLETION-CONTRACT.md) were read first.
 
 This implements only the explicitly requested four-field storage/validator/
-existing-Profile-control slice. [Catalog candidates and owner decisions](../../data/profile-catalog/README.md)
+existing-Profile-control slice. [Catalog candidates and owner decisions](../../../data/profile-catalog/README.md)
 remain distinct from approved completion requirements. This does not approve or
 implement other recommendations in contract 22. There is no completion service,
 receipt, routing/publication gate, optional-draft promotion, consent flow or new
@@ -85,9 +85,9 @@ it must never hydrate over current Profile edits from an old draft.
 
 ## Catalog provenance and decisions
 
-[Provenance JSON](../../data/profile-catalog/provenance.json) records immutable
+[Provenance JSON](../../../data/profile-catalog/provenance.json) records immutable
 URLs/release/commit identifiers, all raw-source/notice checksums and byte counts,
-entry counts and generated checksum. [Offline generator](../../scripts/build-profile-catalog.py)
+entry counts and generated checksum. [Offline generator](../../../scripts/build-profile-catalog.py)
 reproduces exact primary CLDR AR/EN labels filtered through an independent
 249-entry ISO snapshot. CLDR labels alone never define membership. Macroregions,
 reserved/user-assigned/non-ISO/retired examples and alternate labels are excluded.

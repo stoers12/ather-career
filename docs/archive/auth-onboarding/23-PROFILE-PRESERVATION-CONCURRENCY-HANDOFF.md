@@ -12,7 +12,7 @@ checkout, isolated worktree or ancestor chain. Worktree:
 `.worktrees/profile-preservation-concurrency`.
 
 This implements only the user-authorized R11/R12 portion of
-[contract 22](22-ONBOARDING-COMPLETION-CONTRACT.md#small-profile-write-concurrency-contract-r11).
+[contract 22](../../auth-onboarding/22-ONBOARDING-COMPLETION-CONTRACT.md#small-profile-write-concurrency-contract-r11).
 It does not approve or implement the other completion/lifecycle recommendations.
 Registration remains Google-only/default off, draft/editor gates remain default
 off and `currentOnboardingAttestationBundle()` remains null. No completion facts,

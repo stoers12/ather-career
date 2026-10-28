@@ -1,23 +1,23 @@
 # 01 — Verified current state
 
-Bounded successor: [per-project publication](CARD06-PER-PROJECT-PUBLICATION.md) implements independent project selection and additive022. Earlier descriptions of all-project public exposure are historical. Local/disposable review only; no running-source/schema activation claimed.
+Bounded successor: [per-project publication](../archive/auth-onboarding/CARD06-PER-PROJECT-PUBLICATION.md) implements independent project selection and additive022. Earlier descriptions of all-project public exposure are historical. Local/disposable review only; no running-source/schema activation claimed.
 
 
-Card 05 first bounded slice starts from merged `435ee57e31baa2e233f30a8162090ade07741066`. Local server routing now distinguishes a frozen legacy owner binding, a correctly bound committed completion, and incomplete setup. No deployment/capture/activation is claimed; see [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).
+Card 05 first bounded slice starts from merged `435ee57e31baa2e233f30a8162090ade07741066`. Local server routing now distinguishes a frozen legacy owner binding, a correctly bound committed completion, and incomplete setup. No deployment/capture/activation is claimed; see [32 — server-side journey routing](../archive/auth-onboarding/32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).
 
-Local bounded successor (2026-10-20): [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md), based on merged `38b4db27c608bc47a40d93c72742db3e5e918921`. Private editor review/confirmation/recovery is implemented for review only; earlier deployed/merged records below retain their historical scope. No deployment/activation or real policies.
+Local bounded successor (2026-10-20): [31 — private final review and completion UI](../archive/auth-onboarding/31-COMPLETION-EDITOR-UI-HANDOFF.md), based on merged `38b4db27c608bc47a40d93c72742db3e5e918921`. Private editor review/confirmation/recovery is implemented for review only; earlier deployed/merged records below retain their historical scope. No deployment/activation or real policies.
 
-Local successor (2026-10-20): [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) adds default-off authenticated completion receipt/review/confirmation HTTP only at baseline `dd63500e11e34019856bf438cab354502886bd31`. Earlier deployed/merged status records below are historical; no new deployment or activation is claimed.
+Local successor (2026-10-20): [30 — completion HTTP transport](../archive/auth-onboarding/30-COMPLETION-HTTP-HANDOFF.md) adds default-off authenticated completion receipt/review/confirmation HTTP only at baseline `dd63500e11e34019856bf438cab354502886bd31`. Earlier deployed/merged status records below are historical; no new deployment or activation is claimed.
 
-Card 04 bounded UI follow-up (2026-10-20): [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) connects the existing private editor to the merged attestation HTTP boundary. Baseline main is `a459d785a54da1e06dfeb009d926a434ac57651e`; the implementation is local and default off. Production bundle/content resolvers remain null. This is not a finished Card 04 or completed/activated onboarding journey.
+Card 04 bounded UI follow-up (2026-10-20): [29 — private editor attestation UI](../archive/auth-onboarding/29-ATTESTATION-EDITOR-UI-HANDOFF.md) connects the existing private editor to the merged attestation HTTP boundary. Baseline main is `a459d785a54da1e06dfeb009d926a434ac57651e`; the implementation is local and default off. Production bundle/content resolvers remain null. This is not a finished Card 04 or completed/activated onboarding journey.
 
 **Card 04 bounded local HTTP slice (2026-10-19):** Base `8bef4ac1ebaa4e2b667291e4ad667ad0b6c44c6a`.
 One private authenticated attestation endpoint now prepares exact immutable document
 bytes and records only explicit bound affirmations. Gate defaults off; production
 bundle and fixed content resolvers remain null. No schema, owner access, country
-catalog, completion/Profile/draft/publication or live change. See [28](28-ATTESTATION-HTTP-HANDOFF.md).
+catalog, completion/Profile/draft/publication or live change. See [28](../archive/auth-onboarding/28-ATTESTATION-HTTP-HANDOFF.md).
 
-**2026-10-05 status update:** The baseline below is historical. Phase 1 is merged, canonical ledger is 001–014 with five verified bindings, and the local Phase 2A callback change is described in [10](10-PHASE2A-CALLBACK-RESOLUTION.md). The canonical callback is still the merged-main version.
+**2026-10-05 status update:** The baseline below is historical. Phase 1 is merged, canonical ledger is 001–014 with five verified bindings, and the local Phase 2A callback change is described in [10](../archive/auth-onboarding/10-PHASE2A-CALLBACK-RESOLUTION.md). The canonical callback is still the merged-main version.
 
 Baseline: main at adbd1fd5772f6ce16b4844e29d0c6052e8eda221, documented in Phase 0 on 2026-10-04. “Verified” below means repository behavior and prior sanitized discovery; live tenant settings, upstream provider sessions and Docker identities were not independently verified for this documentation expansion. New architecture is in [ADRs](02-ARCHITECTURE-DECISIONS.md).
 

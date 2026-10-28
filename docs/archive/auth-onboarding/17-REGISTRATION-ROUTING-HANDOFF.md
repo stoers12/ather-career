@@ -60,6 +60,6 @@ Before any live switch activation, separately review the missing consent/eligibi
 
 Production: `includes/auth0_oidc.php`, `owner_register.php`, `public/owner_register.php`, `owner_oidc_callback.php`, `includes/owner_auth_recovery.php`, `signup.php`, `includes/signup_copy.php`, `docker-compose.production.yml`.
 
-Tests/CI: `scripts/run-registration-routing-tests.php`, `tests/phase2/support/registration-oidc-mock.php`, `scripts/run-owner-readiness-claim-tests.php`, `tests/phase2/cases/HttpValidationContractTest.php`, `.github/workflows/ci.yml`. This handoff is `docs/auth-onboarding/17-REGISTRATION-ROUTING-HANDOFF.md`.
+Tests/CI: `scripts/run-registration-routing-tests.php`, `tests/phase2/support/registration-oidc-mock.php`, `scripts/run-owner-readiness-claim-tests.php`, `tests/phase2/cases/HttpValidationContractTest.php`, `.github/workflows/ci.yml`. This handoff is `docs/archive/auth-onboarding/17-REGISTRATION-ROUTING-HANDOFF.md`.
 
 The Desktop review bundle exports the complete baseline-to-head patch, this handoff from the commit, retained logs/commands, and redacted UI evidence. No credentials, raw sessions, codes, tokens, signing keys, or unredacted access logs belong in it. Disposable resources/credential files are removed after validation. No push, merge, deployment, live activation, real authentication, Auth0 change, canonical checkout/container/data change, or Notion update occurred.

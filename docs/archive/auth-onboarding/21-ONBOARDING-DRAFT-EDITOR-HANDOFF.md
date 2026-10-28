@@ -4,7 +4,7 @@ Bounded successor: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-
 
 Bounded later core: [handoff 27](27-FIRST-COMPLETION-CORE-HANDOFF.md) records atomic first creation/evidence and read-only completed drafts. Existing exact draft retries, current Profile authority and existing-owner access remain; HTTP/UI/routing/publication activation stays deferred. Earlier evidence below remains historical.
 
-Catalog-only successor: [handoff 25](25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) supersedes the editor sample-choice description below with the existing Profile catalogs and safe older-choice labels. The guarded design preview retains its samples; completion and activation remain unavailable.
+Catalog-only successor: [handoff 25](../../auth-onboarding/25-ONBOARDING-PROFILE-CATALOG-INTEGRATION.md) supersedes the editor sample-choice description below with the existing Profile catalogs and safe older-choice labels. The guarded design preview retains its samples; completion and activation remain unavailable.
 
 Approved baseline: `7ddb34b1b34c342e502ec77aa2f188a55b5944b9` (PR #24 merged;
 Main CI passed). Branch/worktree: `feat/onboarding-draft-editor-20261018`,

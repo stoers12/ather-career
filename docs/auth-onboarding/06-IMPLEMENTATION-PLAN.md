@@ -1,26 +1,26 @@
 # 06 — Phased implementation plan
 
-Bounded local successor: [Card06 per-project publication](CARD06-PER-PROJECT-PUBLICATION.md). The owner authorized this bounded technical transition and implementation in disposable databases. Existing projects inherit Portfolio publication once, without historic individual-consent attribution. No live migration approval or Phase6/Evidence/slug/launch completion.
+Bounded local successor: [Card06 per-project publication](../archive/auth-onboarding/CARD06-PER-PROJECT-PUBLICATION.md). The owner authorized this bounded technical transition and implementation in disposable databases. Existing projects inherit Portfolio publication once, without historic individual-consent attribution. No live migration approval or Phase6/Evidence/slug/launch completion.
 
 
 ## Card 05 first slice — local server routing/access
 
-Implement frozen maintenance cohort, shared eligibility/fixed destinations and retire alternate first creation before any eventual routing activation/deployment. Test capture/retry/partial/restore and direct protected bypasses, preserving existing owner rules. Next separate work: Card 05 navigation/UI/account journeys, owner acceptance, real policy/operator preparation and controlled maintenance cutover. No whole-card completion or launch claim. [32 — server-side journey routing](32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).
+Implement frozen maintenance cohort, shared eligibility/fixed destinations and retire alternate first creation before any eventual routing activation/deployment. Test capture/retry/partial/restore and direct protected bypasses, preserving existing owner rules. Next separate work: Card 05 navigation/UI/account journeys, owner acceptance, real policy/operator preparation and controlled maintenance cutover. No whole-card completion or launch claim. [32 — server-side journey routing](../archive/auth-onboarding/32-REGISTRATION-JOURNEY-ROUTING-HANDOFF.md).
 
-Bounded Card 04 progress: [31 — private final review and completion UI](31-COMPLETION-EDITOR-UI-HANDOFF.md) implements only private editor final saved review/confirmation/receipt recovery atop existing core/HTTP. Local review and separately approved real policy/rollout decisions remain next; this does not authorize launch or finish the journey. No new capability gate, migration or framework.
+Bounded Card 04 progress: [31 — private final review and completion UI](../archive/auth-onboarding/31-COMPLETION-EDITOR-UI-HANDOFF.md) implements only private editor final saved review/confirmation/receipt recovery atop existing core/HTTP. Local review and separately approved real policy/rollout decisions remain next; this does not authorize launch or finish the journey. No new capability gate, migration or framework.
 
-Bounded transport progress: [30 — completion HTTP transport](30-COMPLETION-HTTP-HANDOFF.md) implements only completion receipt recovery/review/confirmation JSON, independent of attestation recording and editor UI. Owner review of source/evidence is next; real policies, final review UI, Create integration, routing/cutover and activation remain separate. No wider contract recommendation is accepted.
+Bounded transport progress: [30 — completion HTTP transport](../archive/auth-onboarding/30-COMPLETION-HTTP-HANDOFF.md) implements only completion receipt recovery/review/confirmation JSON, independent of attestation recording and editor UI. Owner review of source/evidence is next; real policies, final review UI, Create integration, routing/cutover and activation remain separate. No wider contract recommendation is accepted.
 
-Card 04 remains partial: [29 — private editor attestation UI](29-ATTESTATION-EDITOR-UI-HANDOFF.md) implements only the existing private editor presentation/actions/recovery around the reviewed HTTP slice. Default-off and null-policy boundaries remain. Real approved immutable legal documents, operator/launch work and separately reviewed final-review/completion/routing integration remain future work; this UI is not authorization to implement them.
+Card 04 remains partial: [29 — private editor attestation UI](../archive/auth-onboarding/29-ATTESTATION-EDITOR-UI-HANDOFF.md) implements only the existing private editor presentation/actions/recovery around the reviewed HTTP slice. Default-off and null-policy boundaries remain. Real approved immutable legal documents, operator/launch work and separately reviewed final-review/completion/routing integration remain future work; this UI is not authorization to implement them.
 
-**Card 04 first bounded slice (2026-10-19):** [28](28-ATTESTATION-HTTP-HANDOFF.md) covers
+**Card 04 first bounded slice (2026-10-19):** [28](../archive/auth-onboarding/28-ATTESTATION-HTTP-HANDOFF.md) covers
 authenticated JSON presentation and exact recording only, locally implemented with
 default-off configuration and guarded real-HTTP tests. Production policies/content
 remain unavailable. Approved immutable documents/translations, final review UI,
 journey/completion transport, routing/cutover, retention and activation remain later
 separately reviewed work; this slice accepts none of those implicitly.
 
-**2026-10-05 status update:** Phase 1 has merged and canonical ledger is 001–014. The local, unpushed Phase 2A callback-resolution slice is documented in [10](10-PHASE2A-CALLBACK-RESOLUTION.md); the earlier Phase 1 status below is historical.
+**2026-10-05 status update:** Phase 1 has merged and canonical ledger is 001–014. The local, unpushed Phase 2A callback-resolution slice is documented in [10](../archive/auth-onboarding/10-PHASE2A-CALLBACK-RESOLUTION.md); the earlier Phase 1 status below is historical.
 
 **Historical Phase 1 review status (2026-10-04; superseded by the status update above):** Phase 1 identity foundation was committed locally at `bd7510c00181957fd9f1d4c3ceb3ee4789738c0e` and reviewed against the approved architecture. The six-file implementation is unpushed and undeployed. 014 passed isolated rehearsal; the canonical ledger remains 001–013. Phases 2–7 remain proposed and blocked by their own gates. Keep open registration disabled until security, privacy, accessibility, recovery, tenant and legal gates pass. [Data plan](04-DATA-MODEL-AND-MIGRATIONS.md) distinguishes implemented 014 from proposed 015–017; [test matrix](07-TEST-AND-ACCEPTANCE-MATRIX.md) records scoped evidence.
 
