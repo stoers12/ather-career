@@ -6,7 +6,7 @@ final class PublicLifecycleStaticTest
 {
     public static function run(TestEnvironment $environment): void
     {
-        $migration = self::read('database/migrate.php');
+        $migration = SplitSourceFile::read('database/migrate.php');
         $lifecycle = self::normalizeLineEndings(self::read('includes/public_lifecycle.php'));
         $ownerRoute = self::read('owner_publication.php');
         $publicRoute = self::read('public_portfolio.php');
