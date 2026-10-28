@@ -1,5 +1,7 @@
 # AGENTS.md — working on Ather Career
 
+For a human introduction and local setup, start with [README.md](README.md).
+
 Guidance for coding agents (Codex, Claude Code, …) and human contributors. Read it fully before changing code. When this file and a task prompt disagree, stop and ask; do not guess.
 
 ## Project in one paragraph
