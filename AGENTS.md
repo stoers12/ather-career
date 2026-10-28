@@ -15,6 +15,7 @@ A PHP 8.3 / Apache / MySQL 8.4 multi-tenant portfolio platform. Owners sign in w
 - `includes/` holds the domain logic as procedural functions with `declare(strict_types=1)`.
   - Pure functions stay pure: no database access, no `$_GET`/`$_POST`/`$_SESSION`.
   - Repositories take `PDO` + `AuthorizedPortfolioContext`.
+- `src/` holds namespaced classes (`Ather\`, PSR-4, Composer autoload via `includes/autoload.php`). Modules move there one card at a time and keep their `includes/` functions as one-line wrappers; follow [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - `contracts/` holds versioned JSON: `evidence-hub-contract-vN.schema.json` and `evidence-hub-taxonomy-vN.json`.
 - `database/migrations/NNN_name.sql` is applied in order by `database/migrate.php`. Every additive table gets a `database/rollback/NNN_name.sql` companion.
 - `tests/phase2/cases/*Test.php` are unit and static tests, registered in `scripts/run-phase2-tests.php`. `tests/phase2/support/` holds fixtures, SQLite schemas and the Playwright `*.cjs` browser gates.

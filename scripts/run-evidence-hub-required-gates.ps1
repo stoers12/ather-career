@@ -279,7 +279,7 @@ function Invoke-DisposableHttpStatus([string]$Url, [string]$Method = 'GET', [has
 # Probe real internal files that exist in the image: each must be refused, while
 # every kind of published asset and the liveness probe must be served directly.
 function Assert-PublicBoundary([string]$BaseUrl, [string]$Label) {
-    foreach ($path in @('/tests/phase2/cases/AccountSelectionStaticTest.php', '/scripts/README.md', '/scripts/check-production-security.php', '/docs/README.md', '/vendor/autoload.php', '/vendor/composer/installed.json', '/composer.json', '/composer.lock', '/phpstan.neon.dist', '/contracts/evidence-hub-contract-v1.schema.json', '/data/profile-catalog/catalog.json', '/config/database.php', '/includes/presentation.php', '/database/portfolio_db.sql', '/docker/production-entrypoint.sh', '/Dockerfile', '/docker-compose.yml', '/.env', '/.git/HEAD', '/public/index.php', '/app/index.php', '/tests/', '/vendor/', '/includes/')) {
+    foreach ($path in @('/tests/phase2/cases/AccountSelectionStaticTest.php', '/scripts/README.md', '/scripts/check-production-security.php', '/docs/README.md', '/vendor/autoload.php', '/vendor/composer/installed.json', '/composer.json', '/composer.lock', '/phpstan.neon.dist', '/contracts/evidence-hub-contract-v1.schema.json', '/data/profile-catalog/catalog.json', '/config/database.php', '/includes/presentation.php', '/src/EvidenceHub/Text/EvidenceTextEvaluator.php', '/src/', '/database/portfolio_db.sql', '/docker/production-entrypoint.sh', '/Dockerfile', '/docker-compose.yml', '/.env', '/.git/HEAD', '/public/index.php', '/app/index.php', '/tests/', '/vendor/', '/includes/')) {
         $status = Invoke-DisposableHttpStatus "$BaseUrl$path"
         if ($status -notin @('403', '404')) { Fail-Gate 'public boundary' "$Label served internal path $path with status $status" }
     }
@@ -301,9 +301,14 @@ function Invoke-ProductionBoundaryGate([string]$Image) {
     $port = Get-FreeLoopbackPort
     try {
         Invoke-Tool 'docker' @('run', '--detach', '--name', $container, '-p', "127.0.0.1:${port}:80", '--entrypoint', 'docker-php-entrypoint', $Image, 'apache2-foreground')
-        for ($attempt = 0; $attempt -lt 30; $attempt++) {
-            if ((Invoke-DisposableHttpStatus "http://127.0.0.1:$port/health.php") -eq '200') { break }
+        # Until Apache listens, Docker's port proxy can return an empty reply; the
+        # strict curl helper would abort on that, so wait with a tolerant probe.
+        for ($attempt = 0; $attempt -lt 60; $attempt++) {
+            try { if ((Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "http://127.0.0.1:$port/health.php").StatusCode -eq 200) { break } } catch { }
             Start-Sleep -Milliseconds 500
+        }
+        try { $null = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "http://127.0.0.1:$port/health.php" } catch {
+            Fail-Gate 'public boundary' 'production image did not become reachable'
         }
         Assert-PublicBoundary "http://127.0.0.1:$port" 'production image'
     } finally {
@@ -467,7 +472,9 @@ function Invoke-RequiredGates {
         Invoke-ProductionBoundaryGate $productionImage
         & docker run --rm --entrypoint php $devImage -r 'foreach (["pdo_mysql","gd","intl","mbstring"] as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, $extension . " unavailable\\n"); exit(1); } } if (!function_exists("grapheme_strlen")) { exit(1); } echo "PHP_CAPABILITIES_OK\\n";'
         if ($LASTEXITCODE -ne 0) { Fail-Gate 'PHP capabilities' 'required verification capability is unavailable' }
-        & docker run --rm --entrypoint php -v "${resolvedRoot}:/var/www/html:ro" -w /var/www/html -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 $devImage scripts/run-phase2-tests.php
+        # Run the source baked into the identity-checked image: it carries the
+        # Composer autoloader for src/, which a fresh checkout does not have.
+        & docker run --rm --entrypoint php -w /var/www/app -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 $devImage scripts/run-phase2-tests.php
         if ($LASTEXITCODE -ne 0) { Fail-Gate 'Phase-2' 'fast deterministic suite failed' }
         $playwright = New-TemporaryPlaywright $resolvedRoot
         $chrome = Get-Chromium1208Executable $playwright

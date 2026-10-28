@@ -8,7 +8,10 @@ FROM composer:2 AS dependencies
 
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+RUN composer install --no-dev --prefer-dist --no-interaction --no-autoloader
+# Packages stay cached; only the class map is rebuilt when src/ changes.
+COPY src ./src
+RUN composer dump-autoload --no-dev --optimize --no-interaction
 
 FROM php:8.3-apache AS runtime-base
 

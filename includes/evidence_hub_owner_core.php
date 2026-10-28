@@ -8,6 +8,8 @@ require_once __DIR__ . '/evidence_hub_technology_mapper.php';
 require_once __DIR__ . '/evidence_hub_contract_mapper.php';
 require_once __DIR__ . '/evidence_hub_technology_review_repository.php';
 
+use Ather\EvidenceHub\Aggregation\EvidenceHubAggregationInvariantException;
+
 /** The single contract version the private Owner Evidence Hub publishes. */
 const EVIDENCE_HUB_OWNER_CONTRACT_VERSION = 'v9';
 

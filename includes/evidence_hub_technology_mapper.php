@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/evidence_hub_taxonomy.php';
 
+use Ather\EvidenceHub\Aggregation\EvidenceHubAggregationInvariantException;
+
 /**
  * Taxonomy aliases always win; an Owner mapping only resolves a label the
  * taxonomy does not know. A mapping whose canonical entry is absent from the

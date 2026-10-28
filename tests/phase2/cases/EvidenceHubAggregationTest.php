@@ -547,7 +547,7 @@ final class EvidenceHubAggregationTest
     {
         try {
             $probe();
-        } catch (EvidenceHubAggregationInvariantException) {
+        } catch (\Ather\EvidenceHub\Aggregation\EvidenceHubAggregationInvariantException) {
             return;
         }
         throw new RuntimeException($message);
