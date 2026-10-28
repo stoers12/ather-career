@@ -41,6 +41,7 @@ final class Auth0OidcStaticTest
         foreach (['http://issuer.example.test/', 'https://issuer.example.test/?q=/', 'https://issuer.example.test/#/', 'https://user@issuer.example.test/'] as $invalidIssuer) {
             phase2Assert(auth0HttpsUrlParts($invalidIssuer) === null, 'Malformed OIDC URL must be rejected.');
         }
+        self::assertLocalOwnerStackRelaxesOnlyTheLoopbackCallback();
         $allowedReasons = [
             'token_transport_failed',
             'token_http_rejected',
@@ -108,6 +109,43 @@ final class Auth0OidcStaticTest
             && str_contains($oidc, "'access_denied'")
             && !preg_match('/(?:echo|print|error_log|reportSecurityEvent)\s*\([^;]*(?:error_description|error_uri)/i', $oidc), 'OAuth cancellation classification must never expose provider descriptions or URIs.');
         phase2Assert(!preg_match('/error_log|reportSecurityEvent|json_encode\s*\([^\n]*(?:exception|token|code|state|nonce|cookie|header)/i', $oidc), 'Auth0 token-validation classification must not log sensitive payloads.');
+    }
+
+    /** The Owner's local stack may use an HTTPS loopback callback; nothing else relaxes. */
+    private static function assertLocalOwnerStackRelaxesOnlyTheLoopbackCallback(): void
+    {
+        $names = ['EXPECTED_OIDC_ISSUER', 'OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET', 'OIDC_REDIRECT_URI'];
+        $saved = [];
+        foreach ($names as $name) {
+            $saved[$name] = getenv($name);
+        }
+        $configure = static function (string $issuer, string $clientId, string $redirectUri): void {
+            putenv('EXPECTED_OIDC_ISSUER=' . $issuer);
+            putenv('OIDC_CLIENT_ID=' . $clientId);
+            putenv('OIDC_CLIENT_SECRET=synthetic-owner-secret-value');
+            putenv('OIDC_REDIRECT_URI=' . $redirectUri);
+        };
+        try {
+            $configure('https://tenant.auth0.com/', 'owner-client', 'https://localhost:8443/owner_oidc_callback.php');
+            phase2Assert(auth0ProductionConfigurationFailures() !== [], 'Production must reject a loopback Auth0 callback.');
+            phase2Assert(auth0ProductionConfigurationFailures(true) === [], 'The local Owner stack must accept its HTTPS loopback callback.');
+            $configure('https://tenant.auth0.com/', 'owner-client', 'https://127.0.0.1:8443/owner_oidc_callback.php');
+            phase2Assert(auth0ProductionConfigurationFailures(true) === [], 'The local Owner stack must accept an HTTPS 127.0.0.1 callback.');
+            foreach ([
+                ['https://localhost/', 'owner-client', 'https://localhost:8443/owner_oidc_callback.php'],
+                ['https://tenant.auth0.com/', 'replace-me', 'https://localhost:8443/owner_oidc_callback.php'],
+                ['https://tenant.auth0.com/', 'owner-client', 'https://localhost:8443/fixture/owner_oidc_callback.php'],
+                ['https://tenant.auth0.com/', 'owner-client', 'https://localhost.example.com/owner_oidc_callback.php'],
+                ['https://tenant.auth0.com/', 'owner-client', 'http://localhost:8443/owner_oidc_callback.php'],
+            ] as [$issuer, $clientId, $redirectUri]) {
+                $configure($issuer, $clientId, $redirectUri);
+                phase2Assert(auth0ProductionConfigurationFailures(true) !== [], "The local Owner stack must still reject {$issuer} / {$clientId} / {$redirectUri}.");
+            }
+        } finally {
+            foreach ($saved as $name => $value) {
+                putenv($value === false ? $name : $name . '=' . $value);
+            }
+        }
     }
 
     private static function read(string $path): string

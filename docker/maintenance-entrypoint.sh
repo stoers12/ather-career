@@ -22,7 +22,7 @@ if [ ! -d "$storage_root" ] || [ -L "$storage_root" ] || [ "$(readlink -f "$stor
 fi
 
 if [ "${PORTFOLIO_PRODUCTION_SECURITY_CHECK:-0}" = "1" ]; then
-    php /var/www/app/scripts/check-production-security.php
+    php /var/www/app/scripts/check-production-security.php --local-owner-stack
 fi
 
 exec docker-php-entrypoint "$@"

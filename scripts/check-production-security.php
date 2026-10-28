@@ -16,8 +16,12 @@ function productionSecurityDirectiveIsEnabled(string $name): bool
     return in_array(strtolower(trim((string) ini_get($name))), ['1', 'on', 'true', 'yes'], true);
 }
 
+// The Owner's local stack (docker/maintenance-entrypoint.sh) passes this flag:
+// its Auth0 callback is necessarily an HTTPS loopback origin. Nothing else relaxes.
+$localOwnerStack = in_array('--local-owner-stack', array_slice($argv ?? [], 1), true);
+
 $failures = [];
-$failures = array_merge($failures, auth0ProductionConfigurationFailures());
+$failures = array_merge($failures, auth0ProductionConfigurationFailures($localOwnerStack));
 try {
     evidenceHubOpaqueTargetHmacKeyFromEnvironment();
 } catch (EvidenceHubHmacConfigurationException) {

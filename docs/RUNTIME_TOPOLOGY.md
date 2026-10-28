@@ -418,6 +418,7 @@ The reviewer (Claude Code, who owns ENG-04 Phase B) recorded these decisions. Th
    - The owner's local stack runs the **same `production` image** (same digest) that the gates and CI test.
    - Maintenance startup is a repo-owned entrypoint script, `docker/maintenance-entrypoint.sh`, shipped inside that image. The **local release overlay selects it explicitly** (`entrypoint:`), as the current overlay already overrides the entrypoint.
    - That script performs the read-only validation, including `scripts/check-production-security.php` with the owner HTTPS configuration. It never migrates, bootstraps or repairs storage.
+   - It passes `--local-owner-stack` to that check. This relaxes exactly one rule: the Auth0 callback may be an HTTPS `localhost`/`127.0.0.1` origin, which a local stack necessarily uses. Every other check is unchanged. The rehearsal found that production rule correctly rejecting the local callback.
    - The default production entrypoint is unchanged.
    - This keeps byte-identical dev/prod parity, and it avoids a second image whose only difference is its configuration.
 3. **No old-URL redirects.**
