@@ -5,13 +5,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: development
     ports:
       - "127.0.0.1:8088:80"
     mem_limit: 512m
     security_opt:
       - no-new-privileges:true
     volumes:
-      - .:/var/www/html
+      # Same layout as the production image: code and the separate public
+      # document root, both live from this checkout.
+      - .:/var/www/app
+      - ./public:/var/www/public
       - portfolio_private_storage:/var/www/private-storage
     environment:
       DB_HOST: ${DB_HOST}
@@ -26,6 +30,8 @@ services:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?PUBLIC_BASE_URL must be configured}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE}
       EXPECTED_OIDC_ISSUER: ${EXPECTED_OIDC_ISSUER}
+      # Required only for a fresh V1 baseline before ownership migration 004.
+      PRESERVED_V1_OIDC_SUBJECT: ${PRESERVED_V1_OIDC_SUBJECT:-}
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
       OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI}

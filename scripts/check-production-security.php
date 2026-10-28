@@ -63,7 +63,7 @@ $publicRoot = '/var/www/public';
 if (!is_dir($publicRoot)) {
     $failures[] = 'the production public root is unavailable.';
 } else {
-    foreach (['.env', '.git', 'database', 'includes', 'config', 'Dockerfile', 'docker-compose.yml'] as $internalPath) {
+    foreach (['.env', '.git', 'database', 'includes', 'config', 'Dockerfile', 'docker-compose.yml', 'tests', 'scripts', 'docs', 'vendor', 'contracts', 'data', 'runtime', 'composer.json', 'composer.lock'] as $internalPath) {
         if (file_exists($publicRoot . '/' . $internalPath)) {
             $failures[] = 'an internal repository path is present in the public root.';
             break;
