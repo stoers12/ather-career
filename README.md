@@ -57,6 +57,8 @@ Use the image-based Phase 2 command and capability requirements in [AGENTS.md â€
 
 The full runner creates and removes disposable databases, containers and browser state. Follow the [workflow](AGENTS.md#workflow-mandatory) before opening a PR.
 
+For individual test commands, operational helpers and developer tools, see the [scripts layout](scripts/README.md).
+
 ## Repository layout
 
 ```text
@@ -73,7 +75,7 @@ docs/          Documentation index, maintained references and historical archive
 includes/      Domain functions, repositories, rendering and shared HTTP/auth helpers
 public/        Production front controllers and health handler; copied to /var/www/public
 runtime/       Ignored generated runtime state (tracked placeholders only)
-scripts/       Test runners, disposable HTTP checks and required-gates entrypoint
+scripts/       Stable entry points; test/, ci/, ops/, tools/ and approved archive/
 tests/         Phase 2 unit/static cases, fixtures and Playwright browser gates
 uploads/       Legacy upload locations with tracked placeholders; managed media is private
 ```

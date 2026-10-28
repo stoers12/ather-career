@@ -1,5 +1,7 @@
 # Documentation map
 
+For test commands, operational helpers and developer tools, see the [scripts layout](../scripts/README.md).
+
 Use living references for maintained guidance, architecture decisions/contracts for approved choices, and historical records for the evidence of a dated implementation or review. A historical record does not establish current deployment or launch readiness.
 
 This index lists every other file under this directory exactly once. Some historical records stay outside the archive because tracked files elsewhere reference them; the authentication/onboarding changelog also stays in place.
