@@ -144,6 +144,20 @@ The taxonomy remains frozen: `React.js` is a native alias of React, while `React
 
 The shared recommendation rule version remains `1.0.0`: adding a fifth rule does not change any existing rule. Bumping the shared version would alter existing fingerprints and stop stored snoozes and dismissals from suppressing the same recommendations. Canonical IDs, not raw skill labels, determine the private target and predicate facts; the Owner card displays the taxonomy's canonical name and links to add a project or review skills. Recommendation targets and action tokens remain tenant-scoped. Recommendation undo is outside this card's scope; snooze and dismissal retain the existing lifecycle.
 
+### Text rules 1.1.0 (contract v9)
+
+The live Owner contract is v9 and explicitly selects text rules `1.1.0`; the editor uses the same live version. Historical contracts v1–v8 select the callable, frozen `1.0.0` baseline. Field thresholds, placeholder vocabulary, normalization, and storage validity are unchanged. No migration is needed.
+
+Character runs of at least three identical letter graphemes, compared after Latin case folding, count as one content grapheme. Tokens consisting entirely of such a run are excluded from useful tokens. The reported `content_graphemes` and `useful_token_count` are effective counts: the counts used by the thresholds. `CHARACTER_RUN_SUSPECTED` replaces a grapheme or useful-token threshold reason only when raw counts would pass that threshold. Genuine detail with one stretched word can still be complete. Digits such as `10000` are excluded from run discounting, and runs of two such as `coffee` or `keep` are untouched. Tatweel was already stripped analytically; punctuation and emoji runs already contributed no content letters or digits. Tests pin those existing behaviours.
+
+`LOW_DISTINCT_TOKEN_RATIO` applies independently of dominant-token repetition when there are at least 12 useful tokens and `distinct × 10000 < useful × 4000`. All comparisons use integer math.
+
+Inspired by the Gopher duplicate-content filter, project-local cross-field checking builds sets of word 3-grams using the existing token comparison keys after excluding run-only tokens. An otherwise complete field with at least three distinct shingles is flagged when at least 80% of its shingles occur in another field of the same project. Exact equality of non-empty comparison text is checked regardless of shingle count. Mutual duplicates flag only the later field in the order problem, role, outcome; a shorter field copied from a longer field is the one flagged. `DUPLICATED_ACROSS_FIELDS` changes only status and reason. Shingles, raw evidence, and the identity of the other field never enter facts, contracts, or logs.
+
+The shared recommendation rule version remains `1.0.0`. New evidence reasons can intentionally change a project-completion predicate and its fingerprint, while unaffected keys and fingerprints remain stable. Existing snoozes and dismissals retain their meaning for unchanged predicates.
+
+Calibration preceded runtime implementation. The selected defaults (4000 / 12 tokens and containment 0.80) produced zero natural-text false positives, caught all six new adversarial padding/rotation inputs, and matched all seven cross-field scenarios. Natural English and Arabic problem statements near the 2000-scalar limit remained complete. Existing synthetic letter-run boundary inputs are listed individually as **synthetic padding (intended)**; their `1.0.0` assertions remain unchanged, and their `1.1.0` catches are asserted separately. New run-free boundaries prove exact and one-below thresholds in both languages. The full per-fixture table, ratio sweep, and containment sweep are in [the calibration report](EVIDENCE_HUB_TEXT_110_CALIBRATION.md). All examples are synthetic. Only Owner hints are added; visitor routes do not expose them.
+
 ## Portfolio Progress
 
 The Owner page shows how many projects are public (`projects.is_published`). The five stages are computed by the pure `evidenceHubProgressStage()`.

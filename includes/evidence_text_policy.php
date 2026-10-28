@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 const EVIDENCE_TEXT_RULE_VERSION = '1.0.0';
+const EVIDENCE_TEXT_LIVE_RULE_VERSION = '1.1.0';
+const EVIDENCE_TEXT_SUPPORTED_RULE_VERSIONS = ['1.0.0', '1.1.0'];
 
 const EVIDENCE_TEXT_FIELD_POLICIES = [
     'problem_statement' => [

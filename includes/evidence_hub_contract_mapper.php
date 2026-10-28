@@ -55,22 +55,28 @@ function mapEvidenceHubContractV8(array $core, array $recommendations): array
     return mapEvidenceHubContractVersion($core, $recommendations, 'v8');
 }
 
+function mapEvidenceHubContractV9(array $core, array $recommendations): array
+{
+    return mapEvidenceHubContractVersion($core, $recommendations, 'v9');
+}
+
 /**
  * Each contract version names the taxonomy it publishes. A contract and a
  * taxonomy version move independently: v5 adds Owner mappings over taxonomy v4.
  */
 const EVIDENCE_HUB_CONTRACT_VERSIONS = [
-    'v1' => ['schema_version' => '1.0.0', 'taxonomy_version' => 'v1', 'owner_mappings' => false, 'evidence_detail' => false, 'skill_evidence' => false],
-    'v2' => ['schema_version' => '2.0.0', 'taxonomy_version' => 'v2', 'owner_mappings' => false, 'evidence_detail' => false, 'skill_evidence' => false],
-    'v3' => ['schema_version' => '3.0.0', 'taxonomy_version' => 'v3', 'owner_mappings' => false, 'evidence_detail' => false, 'skill_evidence' => false],
-    'v4' => ['schema_version' => '4.0.0', 'taxonomy_version' => 'v4', 'owner_mappings' => false, 'evidence_detail' => false, 'skill_evidence' => false],
-    'v5' => ['schema_version' => '5.0.0', 'taxonomy_version' => 'v4', 'owner_mappings' => true, 'evidence_detail' => false, 'skill_evidence' => false],
-    'v6' => ['schema_version' => '6.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => false, 'skill_evidence' => false],
-    'v7' => ['schema_version' => '7.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => false],
-    'v8' => ['schema_version' => '8.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => true],
+    'v1' => ['schema_version' => '1.0.0', 'taxonomy_version' => 'v1', 'owner_mappings' => false, 'evidence_detail' => false, 'skill_evidence' => false, 'text_rule_version' => '1.0.0'],
+    'v2' => ['schema_version' => '2.0.0', 'taxonomy_version' => 'v2', 'owner_mappings' => false, 'evidence_detail' => false, 'skill_evidence' => false, 'text_rule_version' => '1.0.0'],
+    'v3' => ['schema_version' => '3.0.0', 'taxonomy_version' => 'v3', 'owner_mappings' => false, 'evidence_detail' => false, 'skill_evidence' => false, 'text_rule_version' => '1.0.0'],
+    'v4' => ['schema_version' => '4.0.0', 'taxonomy_version' => 'v4', 'owner_mappings' => false, 'evidence_detail' => false, 'skill_evidence' => false, 'text_rule_version' => '1.0.0'],
+    'v5' => ['schema_version' => '5.0.0', 'taxonomy_version' => 'v4', 'owner_mappings' => true, 'evidence_detail' => false, 'skill_evidence' => false, 'text_rule_version' => '1.0.0'],
+    'v6' => ['schema_version' => '6.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => false, 'skill_evidence' => false, 'text_rule_version' => '1.0.0'],
+    'v7' => ['schema_version' => '7.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => false, 'text_rule_version' => '1.0.0'],
+    'v8' => ['schema_version' => '8.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => true, 'text_rule_version' => '1.0.0'],
+    'v9' => ['schema_version' => '9.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => true, 'text_rule_version' => '1.1.0'],
 ];
 
-/** @return array{schema_version: string, taxonomy_version: string, owner_mappings: bool, evidence_detail: bool, skill_evidence: bool} */
+/** @return array{schema_version: string, taxonomy_version: string, owner_mappings: bool, evidence_detail: bool, skill_evidence: bool, text_rule_version: string} */
 function evidenceHubContractVersionDefinition(string $version): array
 {
     return EVIDENCE_HUB_CONTRACT_VERSIONS[$version] ?? throw new EvidenceHubContractMappingException('Evidence Hub contract version is unsupported.');
@@ -80,6 +86,7 @@ function evidenceHubContractVersionDefinition(string $version): array
 function mapEvidenceHubContractVersion(array $core, array $recommendations, string $version): array
 {
     $definition = evidenceHubContractVersionDefinition($version);
+    evidenceHubContractAssertTextRules($core, $recommendations, $definition['text_rule_version']);
     if (!$definition['skill_evidence']) {
         foreach ($recommendations as $recommendation) {
             if (is_array($recommendation) && ($recommendation['rule_id'] ?? null) === 'add_skill_evidence') {
@@ -366,4 +373,26 @@ function evidenceHubContractAssertEvidenceDetail(array $documentation, array $te
         || ($detail['basis_codes'] ?? null) !== evidenceHubConfidenceDetail($documentation['project_count'], $documentation['coverage_bps'])['basis_codes']) {
         throw new EvidenceHubContractMappingException('Evidence Hub confidence detail is invalid.');
     }
+}
+
+/** Internal text version and controlled reasons must agree with the chosen contract. */
+function evidenceHubContractAssertTextRules(array $core, array $recommendations, string $ruleVersion): void
+{
+    if (isset($core['text_rule_version']) && $core['text_rule_version'] !== $ruleVersion) {
+        throw new EvidenceHubContractMappingException('Evidence Hub core text rule version does not match its contract.');
+    }
+    $walk = static function (array $node) use (&$walk, $ruleVersion): void {
+        if (isset($node['evidence_field']) && ($node['rule_version'] ?? null) !== $ruleVersion) {
+            throw new EvidenceHubContractMappingException('Evidence Hub field text rule version does not match its contract.');
+        }
+        foreach ($node as $key => $value) {
+            if ($key === 'reason_codes' && is_array($value) && $ruleVersion === '1.0.0'
+                && array_intersect($value, ['CHARACTER_RUN_SUSPECTED', 'LOW_DISTINCT_TOKEN_RATIO', 'DUPLICATED_ACROSS_FIELDS']) !== []) {
+                throw new EvidenceHubContractMappingException('Evidence Hub historical contract does not support this text reason.');
+            }
+            if (is_array($value)) $walk($value);
+        }
+    };
+    $walk($core);
+    $walk($recommendations);
 }

@@ -45,6 +45,12 @@ final class EvidenceHubRequiredGatesStaticTest
             'EvidenceHubTimestampMySqlTest',
             'EvidenceHubSkillEvidenceTest',
             'EvidenceHubContractV8Test',
+            'EvidenceTextRules110Test',
+            'EvidenceProjectTextRules110Test',
+            'EvidenceHubContractV9Test',
+            'EvidenceTextOwnerHintsTest',
+            'scripts/check-evidence-edit-http.php::textRules110',
+            'tests/phase2/support/evidence-hub-text-rules-visual.cjs',
             'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle',
             'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle',
             'tests/phase2/support/evidence-hub-skill-evidence-visual.cjs',
@@ -84,6 +90,11 @@ final class EvidenceHubRequiredGatesStaticTest
         phase2Assert(!str_contains($httpMatrix, 'session_id(') && !str_contains($httpMatrix, 'session_save_path(') && !str_contains($httpMatrix, 'Cookie:') && str_contains($httpMatrix, "'/usr/bin/curl'") && str_contains($httpMatrix, 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_') && str_contains($httpMatrix, "ownerJar('a')") && str_contains($httpMatrix, "ownerJar('b')") && str_contains($httpMatrix, 'fabricatedCookieDenial') && str_contains($httpMatrix, 'crossTenantDenial'), 'HTTP action matrix must be a two-owner native cookie-jar client with no CLI session authority.');
         phase2Assert(str_contains($phase2Runner, 'EvidenceHubSkillEvidenceTest::class') && str_contains($phase2Runner, 'EvidenceHubContractV8Test::class') && str_contains($mysqlMatrix, 'self::skillEvidenceLifecycle(') && str_contains($httpMatrix, '$test->skillEvidenceLifecycle()') && str_contains($gate, "Invoke-Tool 'node' @((Join-Path \$Root 'tests/phase2/support/evidence-hub-skill-evidence-visual.cjs'))"), 'Every registered skill-evidence gate must execute.');
         phase2Assert(!str_contains($httpRunner, 'SESSION_HANDOFF') && str_contains($httpRunner, 'seedSyntheticOwners') && str_contains($httpRunner, "'--seed'"), 'HTTP action runner must allow identity-free seeding but never session handoff.');
+        foreach (['EvidenceTextRules110Test', 'EvidenceProjectTextRules110Test', 'EvidenceHubContractV9Test', 'EvidenceTextOwnerHintsTest'] as $test) {
+            phase2Assert(str_contains($phase2Runner, $test . '::class'), 'A registered text-rule unit gate is not executed.');
+        }
+        $editorHttp = self::read('scripts/check-evidence-edit-http.php');
+        phase2Assert(str_contains($editorHttp, 'verifyTextRules110Http($fields, $route, $cookieA)') && str_contains($editorHttp, 'EVIDENCE_TEXT_RULES_110_HTTP_PASSED') && str_contains($gate, "Invoke-Tool 'node' @((Join-Path \$Root 'tests/phase2/support/evidence-hub-text-rules-visual.cjs'))"), 'Registered text-rule HTTP and browser gates must execute.');
         $editorPosition = strpos($gate, "'scripts/check-evidence-edit-http.php'");
         $technologyReviewPosition = strpos($gate, "'scripts/check-evidence-technology-review-http.php'");
         phase2Assert($editorPosition !== false && $technologyReviewPosition !== false && $editorPosition < $technologyReviewPosition, 'Required-gates entry point must run the Owner technology review HTTP and MySQL check with the native Owner sessions.');

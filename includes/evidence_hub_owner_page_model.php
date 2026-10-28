@@ -81,7 +81,7 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
             'technology_storage_state' => $storage['storage_state'],
             'technology_storage_reason_codes' => $storage['reason_codes'],
             'technologies' => $storage['labels'],
-        ]);
+        ], evidenceHubContractVersionDefinition(EVIDENCE_HUB_OWNER_CONTRACT_VERSION)['text_rule_version']);
         $fields = [];
         foreach (['problem' => 'Problem', 'personal_role' => 'Personal role', 'measurable_outcome' => 'Measurable outcome'] as $field => $label) {
             $evaluation = $logicalEvaluations[$field];
@@ -198,6 +198,9 @@ function evidenceHubOwnerPageFieldReason(array $evaluation, string $label): stri
         'USEFUL_TOKEN_THRESHOLD_NOT_MET' => 'Add more useful words about this part of the project.',
         'DISTINCT_TOKEN_THRESHOLD_NOT_MET' => 'Add more varied details about this part of the project.',
         'REPETITION_SUSPECTED' => 'Replace repeated wording with specific details.',
+        'CHARACTER_RUN_SUSPECTED' => "Stretched letters don't count. Add real details instead.",
+        'LOW_DISTINCT_TOKEN_RATIO' => 'The same few words repeat. Describe it in more varied, specific words.',
+        'DUPLICATED_ACROSS_FIELDS' => 'This repeats another field of the same project. Write what is specific to this field.',
         'NON_SCALAR_INPUT' => 'Review and save this field again.',
         'INVALID_UTF8' => 'Review and save this field again.',
         'MAXIMUM_LENGTH_EXCEEDED' => 'Shorten this field and save it again.',

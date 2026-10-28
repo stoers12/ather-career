@@ -5,7 +5,53 @@ declare(strict_types=1);
 require_once __DIR__ . '/evidence_text_normalization.php';
 
 /** @return array{evidence_field: string, rule_version: string, storage_validity: string, evidence_status: string, content_graphemes: int, useful_token_count: int, distinct_token_count: int, dominant_token_count: int, reason_codes: list<string>, stored_value: ?string, analytical_text: ?string} */
-function evaluateEvidenceText(string $field, mixed $value): array
+function evaluateEvidenceText(string $field, mixed $value, string $ruleVersion = EVIDENCE_TEXT_LIVE_RULE_VERSION): array
+{
+    if (!in_array($ruleVersion, EVIDENCE_TEXT_SUPPORTED_RULE_VERSIONS, true)) {
+        throw new InvalidArgumentException('Evidence Hub text rule version is unsupported.');
+    }
+    $result = evaluateEvidenceTextV100($field, $value);
+    if ($ruleVersion === EVIDENCE_TEXT_RULE_VERSION) {
+        return $result;
+    }
+    $result['rule_version'] = $ruleVersion;
+    if ($result['evidence_status'] === 'unavailable') {
+        return $result;
+    }
+    $raw = $result;
+    $result['content_graphemes'] = evidenceTextEffectiveContentGraphemeCount($result['analytical_text']);
+    $tokens = evidenceTextUsefulTokensForVersion($result['analytical_text'], $ruleVersion);
+    $frequencies = array_count_values(array_map('evidenceTextTokenComparisonKey', $tokens));
+    $result['useful_token_count'] = count($tokens);
+    $result['distinct_token_count'] = count($frequencies);
+    $result['dominant_token_count'] = $frequencies === [] ? 0 : max($frequencies);
+    if (in_array('PLACEHOLDER_CONFIRMED', $result['reason_codes'], true)) {
+        return $result;
+    }
+    $policy = evidenceTextFieldPolicy($field);
+    $reasons = [];
+    foreach ([
+        'content_graphemes' => ['minimum_content_graphemes', 'GRAPHEME_THRESHOLD_NOT_MET'],
+        'useful_token_count' => ['minimum_useful_tokens', 'USEFUL_TOKEN_THRESHOLD_NOT_MET'],
+        'distinct_token_count' => ['minimum_distinct_tokens', 'DISTINCT_TOKEN_THRESHOLD_NOT_MET'],
+    ] as $count => [$minimum, $reason]) {
+        if ($result[$count] < $policy[$minimum]) {
+            $reasons[] = $count !== 'distinct_token_count' && $raw[$count] >= $policy[$minimum] ? 'CHARACTER_RUN_SUSPECTED' : $reason;
+        }
+    }
+    if (count($tokens) >= 5 && $result['dominant_token_count'] * 10000 >= count($tokens) * 6000) {
+        $reasons[] = 'REPETITION_SUSPECTED';
+    }
+    if (count($tokens) >= 12 && count($frequencies) * 10000 < count($tokens) * 4000) {
+        $reasons[] = 'LOW_DISTINCT_TOKEN_RATIO';
+    }
+    $result['evidence_status'] = $reasons === [] ? 'complete' : 'needs_attention';
+    $result['reason_codes'] = array_values(array_unique($reasons ?: ['TEXT_COMPLETE']));
+    return $result;
+}
+
+/** Frozen baseline: retain its calculations, field order and values for historical contracts. */
+function evaluateEvidenceTextV100(string $field, mixed $value): array
 {
     $policy = evidenceTextFieldPolicy($field);
     $normalized = normalizeEvidenceTextValue($field, $value);
@@ -98,6 +144,42 @@ function evidenceTextContentGraphemeCount(string $analyticalText): int
     return $contentCount;
 }
 
+/** Counts used by 1.1.0 thresholds; a letter run of at least three counts once. */
+function evidenceTextEffectiveContentGraphemeCount(string $analyticalText): int
+{
+    preg_match_all('/\X/u', $analyticalText, $matches);
+    $count = 0;
+    $graphemes = $matches[0];
+    for ($i = 0; $i < count($graphemes); ++$i) {
+        $grapheme = $graphemes[$i];
+        $length = 1;
+        if (preg_match('/\p{L}/u', $grapheme) === 1) {
+            $key = evidenceTextLatinCaseFold($grapheme);
+            while (isset($graphemes[$i + $length]) && evidenceTextLatinCaseFold($graphemes[$i + $length]) === $key) {
+                ++$length;
+            }
+        }
+        if (preg_match('/[\p{L}\p{N}]/u', $grapheme) === 1) {
+            $count += $length >= 3 ? 1 : $length;
+        }
+        $i += $length - 1;
+    }
+    return $count;
+}
+
+/** @return list<string> */
+function evidenceTextUsefulTokensForVersion(string $text, string $ruleVersion): array
+{
+    $tokens = evidenceTextUsefulTokens($text);
+    if ($ruleVersion === EVIDENCE_TEXT_RULE_VERSION) {
+        return $tokens;
+    }
+    return array_values(array_filter($tokens, static function (string $token): bool {
+        preg_match_all('/\X/u', evidenceTextLatinCaseFold($token), $matches);
+        return !(count($matches[0]) >= 3 && count(array_unique($matches[0])) === 1 && preg_match('/\p{L}/u', $matches[0][0]) === 1);
+    }));
+}
+
 /** @return list<string> */
 function evidenceTextUsefulTokens(string $analyticalText): array
 {
@@ -138,4 +220,49 @@ function evidenceTextPlaceholderComparisonValue(string $placeholder): string
     }
 
     return $normalization['comparison_text'];
+}
+
+/**
+ * Compare only these three fields of one project. Shingles and source identities
+ * stay local: callers receive the usual evaluations with status/reason changes.
+ *
+ * @param array<string, mixed> $values
+ * @return array<string, array<string, mixed>>
+ */
+function evaluateEvidenceProjectTexts(array $values, string $ruleVersion = EVIDENCE_TEXT_LIVE_RULE_VERSION): array
+{
+    $evaluations = [];
+    foreach (evidenceTextFieldNames() as $field) {
+        $evaluations[$field] = evaluateEvidenceText($field, $values[$field] ?? null, $ruleVersion);
+    }
+    if ($ruleVersion === EVIDENCE_TEXT_RULE_VERSION) {
+        return $evaluations;
+    }
+    $shingles = [];
+    $comparisons = [];
+    foreach ($evaluations as $field => $evaluation) {
+        $comparisons[$field] = $evaluation['analytical_text'] === null ? null : evidenceTextLatinCaseFold($evaluation['analytical_text']);
+        $keys = array_map('evidenceTextTokenComparisonKey', evidenceTextUsefulTokensForVersion($evaluation['analytical_text'] ?? '', $ruleVersion));
+        $shingles[$field] = [];
+        for ($i = 0; $i + 2 < count($keys); ++$i) {
+            $shingles[$field][json_encode(array_slice($keys, $i, 3), JSON_THROW_ON_ERROR)] = true;
+        }
+    }
+    $original = $evaluations;
+    foreach (evidenceTextFieldNames() as $i => $field) {
+        if ($original[$field]['evidence_status'] !== 'complete') continue;
+        foreach (evidenceTextFieldNames() as $j => $other) {
+            if ($i === $j) continue;
+            $exact = $comparisons[$field] !== null && $comparisons[$field] !== '' && $comparisons[$field] === $comparisons[$other];
+            $shared = count(array_intersect_key($shingles[$field], $shingles[$other]));
+            $contained = count($shingles[$field]) >= 3 && $shared * 10000 >= count($shingles[$field]) * 8000;
+            $mutual = $exact || (count($shingles[$other]) >= 3 && $shared * 10000 >= count($shingles[$other]) * 8000);
+            if (($exact || $contained) && (!$mutual || $i > $j)) {
+                $evaluations[$field]['evidence_status'] = 'needs_attention';
+                $evaluations[$field]['reason_codes'] = ['DUPLICATED_ACROSS_FIELDS'];
+                break;
+            }
+        }
+    }
+    return $evaluations;
 }

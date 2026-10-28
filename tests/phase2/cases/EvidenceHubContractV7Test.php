@@ -160,10 +160,10 @@ final class EvidenceHubContractV7Test
     private static function authorizedPaths(): void
     {
         $database = self::database();
-        phase2AssertSame(['schema_version' => '7.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => false], evidenceHubContractVersionDefinition('v7'), 'The historical v7 definition is wrong.');
+        phase2AssertSame(['schema_version' => '7.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => false, 'text_rule_version' => '1.0.0'], evidenceHubContractVersionDefinition('v7'), 'The historical v7 definition is wrong.');
         foreach ([[1, 10, 1], [2, 20, 2], [3, 30, 0]] as [$user, $portfolio, $published]) {
             $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser($user), $portfolio);
-            $contract = mapEvidenceHubContractV7(buildAuthorizedEvidenceHubOwnerCore($database, $context), []);
+            $contract = mapEvidenceHubContractV7(buildAuthorizedEvidenceHubOwnerCore($database, $context, 'v7'), []);
             phase2AssertSame('evidence-hub-contract-v7', $contract['contract_id'], 'The historical v7 mapper identity changed.');
             $model = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, ['contract' => ['recommendations' => []]], 'v7-test-synthetic-hmac');
             $progress = $contract['metrics']['portfolio_progress'];
@@ -209,7 +209,7 @@ final class EvidenceHubContractV7Test
                 if ($percent !== null) {
                     phase2AssertSame(1, substr_count($html, '<p>' . $prefix . $percent . '%</p>'), "{$locale}: recognition must display the contract's truncated whole percent.");
                 }
-                $historical = mapEvidenceHubContractV6(buildAuthorizedEvidenceHubOwnerCore($database, $context), []);
+                $historical = mapEvidenceHubContractV6(buildAuthorizedEvidenceHubOwnerCore($database, $context, 'v6'), []);
                 ob_start();
                 renderEvidenceHubOwnerPage($historical, $model, [], '', ['kind' => 'none'], $locale);
                 $oldHtml = (string) ob_get_clean();

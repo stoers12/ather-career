@@ -9,7 +9,7 @@ require_once __DIR__ . '/evidence_hub_contract_mapper.php';
 require_once __DIR__ . '/evidence_hub_technology_review_repository.php';
 
 /** The single contract version the private Owner Evidence Hub publishes. */
-const EVIDENCE_HUB_OWNER_CONTRACT_VERSION = 'v8';
+const EVIDENCE_HUB_OWNER_CONTRACT_VERSION = 'v9';
 
 /** @return array{taxonomy_version: string, entries: list<array<string, mixed>>, aliases: array<string, array<string, mixed>>, category_order: list<string>} */
 function loadEvidenceHubOwnerTaxonomy(): array
@@ -24,31 +24,41 @@ function mapEvidenceHubOwnerContract(array $core, array $recommendations): array
 }
 
 /** @return array{documentation_coverage: array<string, mixed>, maturity: array{state: string, version: string}, portfolio_progress: array<string, mixed>, technology_evidence_map: array<string, mixed>} */
-function buildAuthorizedEvidenceHubOwnerCore(PDO $database, AuthorizedPortfolioContext $context): array
+function buildAuthorizedEvidenceHubOwnerCore(PDO $database, AuthorizedPortfolioContext $context, string $contractVersion = EVIDENCE_HUB_OWNER_CONTRACT_VERSION): array
 {
     return buildEvidenceHubOwnerCoreFromEvaluatedProjects(
-        loadAuthorizedEvidenceHubOwnerEvaluatedProjects($database, $context),
+        loadAuthorizedEvidenceHubOwnerEvaluatedProjects($database, $context, $contractVersion),
         loadAuthorizedEvidenceHubPublicationState($database, $context),
         loadAuthorizedTechnologyOwnerMappings($database, $context),
         loadAuthorizedEvidenceHubPublishedProjectCount($database, $context),
+        $contractVersion,
     );
 }
 
 /** @return list<array<string, mixed>> */
-function loadAuthorizedEvidenceHubOwnerEvaluatedProjects(PDO $database, AuthorizedPortfolioContext $context): array
+function loadAuthorizedEvidenceHubOwnerEvaluatedProjects(PDO $database, AuthorizedPortfolioContext $context, string $contractVersion = EVIDENCE_HUB_OWNER_CONTRACT_VERSION): array
 {
-    return array_map('evaluateEvidenceHubProjectDocumentation', loadAuthorizedEvidenceHubProjectFacts($database, $context));
+    $ruleVersion = evidenceHubContractVersionDefinition($contractVersion)['text_rule_version'];
+    return array_map(static fn (array $project): array => evaluateEvidenceHubProjectDocumentation($project, $ruleVersion), loadAuthorizedEvidenceHubProjectFacts($database, $context));
 }
 
 /** @param list<array<string, mixed>> $projects @param array<string, string> $ownerMappings
  * @return array{documentation_coverage: array<string, mixed>, maturity: array{state: string, version: string}, portfolio_progress: array<string, mixed>, technology_evidence_map: array<string, mixed>}
  */
-function buildEvidenceHubOwnerCoreFromEvaluatedProjects(array $projects, string $publicationState, array $ownerMappings = [], ?int $publishedProjectCount = null): array
+function buildEvidenceHubOwnerCoreFromEvaluatedProjects(array $projects, string $publicationState, array $ownerMappings = [], ?int $publishedProjectCount = null, ?string $contractVersion = null): array
 {
     $coverage = aggregateEvidenceHubDocumentationCoverage($projects);
-    $taxonomy = loadEvidenceHubOwnerTaxonomy();
+    $definition = evidenceHubContractVersionDefinition($contractVersion ?? EVIDENCE_HUB_OWNER_CONTRACT_VERSION);
+    $taxonomy = loadEvidenceHubTechnologyTaxonomy($definition['taxonomy_version']);
+    if ($contractVersion !== null) {
+        foreach ($projects as $project) foreach ($project['field_evaluations'] as $evaluation) {
+            if (($evaluation['rule_version'] ?? null) !== $definition['text_rule_version']) {
+                throw new EvidenceHubAggregationInvariantException('Evidence Hub project text rule version does not match its contract.');
+            }
+        }
+    }
 
-    return [
+    $core = [
         'documentation_coverage' => $coverage,
         'maturity' => ['state' => evidenceHubMaturityState($projects), 'version' => EVIDENCE_HUB_CONTRACT_VERSION],
         'portfolio_progress' => summarizeEvidenceHubPortfolioProgress($projects, $publicationState, $publishedProjectCount),
@@ -58,6 +68,8 @@ function buildEvidenceHubOwnerCoreFromEvaluatedProjects(array $projects, string 
             'labels' => $project['technologies'],
         ], $projects), $taxonomy, $ownerMappings),
     ];
+    if ($contractVersion !== null) $core['text_rule_version'] = $definition['text_rule_version'];
+    return $core;
 }
 
 /**
@@ -71,6 +83,7 @@ function buildAuthorizedEvidenceHubOwnerContract(
     PDO $database,
     AuthorizedPortfolioContext $context,
     array $recommendations,
+    string $contractVersion = EVIDENCE_HUB_OWNER_CONTRACT_VERSION,
 ): array {
-    return mapEvidenceHubOwnerContract(buildAuthorizedEvidenceHubOwnerCore($database, $context), $recommendations);
+    return mapEvidenceHubContractVersion(buildAuthorizedEvidenceHubOwnerCore($database, $context, $contractVersion), $recommendations, $contractVersion);
 }

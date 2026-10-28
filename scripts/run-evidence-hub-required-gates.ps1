@@ -167,7 +167,7 @@ function Assert-RequiredGateRegistry([string[]]$Registry) {
     $expected = @(
         'EvidenceHubRecommendationActionHttpMySqlTest',
         'EvidenceHubRecommendationDispositionMySqlTest',
-        'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle',
+        'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceTextRules110Test', 'EvidenceProjectTextRules110Test', 'EvidenceHubContractV9Test', 'EvidenceTextOwnerHintsTest', 'scripts/check-evidence-edit-http.php::textRules110', 'tests/phase2/support/evidence-hub-text-rules-visual.cjs', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle',
         'tests/phase2/support/evidence-hub-owner-visual.cjs',
         'tests/phase2/support/evidence-hub-owner-actions-visual.cjs',
         'tests/phase2/support/evidence-hub-editor-writing-visual.cjs',
@@ -383,6 +383,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-editor-writing-visual.cjs'))
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-technology-review-visual.cjs'))
             Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-skill-evidence-visual.cjs'))
+            Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-text-rules-visual.cjs'))
         }
         Restore-LinuxCookieJarOwnership $Temporary 'before-editor'
         if ($IsLinux) { Invoke-Tool 'docker' @('exec', $web, 'sh', '-ec', 'uid=$(id -u); gid=$(id -g); printf "COOKIE_JAR_WRITER consumer=editor uid=%s gid=%s\n" "$uid" "$gid"') }
@@ -412,7 +413,7 @@ function Invoke-RequiredGates {
         $registry = @(
             'EvidenceHubRecommendationActionHttpMySqlTest',
             'EvidenceHubRecommendationDispositionMySqlTest',
-            'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle',
+            'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceTextRules110Test', 'EvidenceProjectTextRules110Test', 'EvidenceHubContractV9Test', 'EvidenceTextOwnerHintsTest', 'scripts/check-evidence-edit-http.php::textRules110', 'tests/phase2/support/evidence-hub-text-rules-visual.cjs', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle',
             'tests/phase2/support/evidence-hub-owner-visual.cjs',
             'tests/phase2/support/evidence-hub-owner-actions-visual.cjs',
             'tests/phase2/support/evidence-hub-editor-writing-visual.cjs',
@@ -463,7 +464,7 @@ function Invoke-FocusedTwoOwnerGate {
 }
 
 if ($IdentityChallenge -or $RegistrationChallenge) {
-    $registry = @('EvidenceHubRecommendationActionHttpMySqlTest', 'EvidenceHubRecommendationDispositionMySqlTest', 'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle', 'tests/phase2/support/evidence-hub-owner-visual.cjs', 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs', 'tests/phase2/support/evidence-hub-editor-writing-visual.cjs', 'tests/phase2/support/evidence-hub-technology-review-visual.cjs', 'tests/phase2/support/evidence-hub-skill-evidence-visual.cjs')
+    $registry = @('EvidenceHubRecommendationActionHttpMySqlTest', 'EvidenceHubRecommendationDispositionMySqlTest', 'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceTextRules110Test', 'EvidenceProjectTextRules110Test', 'EvidenceHubContractV9Test', 'EvidenceTextOwnerHintsTest', 'scripts/check-evidence-edit-http.php::textRules110', 'tests/phase2/support/evidence-hub-text-rules-visual.cjs', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle', 'tests/phase2/support/evidence-hub-owner-visual.cjs', 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs', 'tests/phase2/support/evidence-hub-editor-writing-visual.cjs', 'tests/phase2/support/evidence-hub-technology-review-visual.cjs', 'tests/phase2/support/evidence-hub-skill-evidence-visual.cjs')
     if ($RegistrationChallenge) { Invoke-RequiredGateRegistryChallenges $registry; Write-Host 'REGISTRATION_CHALLENGES_PASSED' }
     if ($IdentityChallenge) { Write-Host 'Identity challenge is exercised by Assert-CurrentSourceIdentity against a deliberately stale disposable image.' }
     exit 0

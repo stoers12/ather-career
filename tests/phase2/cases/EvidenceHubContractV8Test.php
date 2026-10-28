@@ -40,12 +40,10 @@ final class EvidenceHubContractV8Test
         phase2AssertSame(1, count($skill), 'The v8 test needs one skill candidate.');
         $recommendations = filterEvidenceHubRecommendationCandidates($skill, [], 1000);
         $core = buildEvidenceHubOwnerCoreFromEvaluatedProjects([], 'not_configured', [], 0);
-        $expectedDefinition = ['schema_version' => '8.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => true];
+        $expectedDefinition = ['schema_version' => '8.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => true, 'text_rule_version' => '1.0.0'];
         phase2AssertSame($expectedDefinition, evidenceHubContractVersionDefinition('v8'), 'The v8 definition is wrong.');
-        phase2AssertSame($expectedDefinition, evidenceHubContractVersionDefinition(EVIDENCE_HUB_OWNER_CONTRACT_VERSION), 'The live Owner definition must select v8.');
         $v8 = mapEvidenceHubContractV8($core, $recommendations);
-        phase2AssertSame($v8, mapEvidenceHubOwnerContract($core, $recommendations), 'The live Owner mapper must publish v8.');
-        phase2AssertSame('evidence-hub-contract-' . EVIDENCE_HUB_OWNER_CONTRACT_VERSION, $v8['contract_id'], 'The live Owner contract ID is wrong.');
+        phase2AssertSame('evidence-hub-contract-v8', $v8['contract_id'], 'The historical v8 contract ID is wrong.');
         phase2AssertSame(['add_skill_evidence'], array_column($v8['recommendations'], 'rule_id'), 'V8 lost its skill recommendation.');
         phase2AssertSame([5, ['SKILL_PROJECT_EVIDENCE_MISSING']], [$v8['recommendations'][0]['priority_rank'], $v8['recommendations'][0]['reason_codes']], 'V8 skill metadata is wrong.');
         phase2Assert(!str_contains(json_encode($v8, JSON_THROW_ON_ERROR), 'React'), 'Raw skill text entered the contract.');
