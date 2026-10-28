@@ -28,9 +28,9 @@ const installRoutes = async (page, html) => {
     await page.route('http://work.test/**', route => {
         const url = new URL(route.request().url());
         if (url.pathname === '/') return route.fulfill({ contentType: 'text/html', body: html });
-        if (url.pathname === '/portfolio.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'portfolio.css')) });
-        if (url.pathname === '/portfolio.js') return route.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'portfolio.js')) });
-        if (url.pathname === '/assets/images/ather-navbar-logo.png') return route.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'assets/images/ather-navbar-logo.png')) });
+        if (url.pathname === '/assets/css/portfolio.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'public/assets/css/portfolio.css')) });
+        if (url.pathname === '/assets/js/portfolio.js') return route.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'public/assets/js/portfolio.js')) });
+        if (url.pathname === '/assets/images/ather-navbar-logo.png') return route.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'public/assets/images/ather-navbar-logo.png')) });
         return route.fulfill({ status: 204, body: '' });
     });
 };

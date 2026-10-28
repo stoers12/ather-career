@@ -62,8 +62,8 @@ function renderAuthenticatedEntry(string $locale, ?string $destination, bool $au
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <title><?= $heading ?></title>
-    <script src="/<?= versionedAssetUrl('landing.js') ?>"></script>
-    <link rel="stylesheet" href="/<?= versionedAssetUrl('signin.css') ?>">
+    <script src="<?= versionedAssetUrl('assets/js/landing.js') ?>"></script>
+    <link rel="stylesheet" href="<?= versionedAssetUrl('assets/css/signin.css') ?>">
 </head>
 <body>
 <a class="af-skip" href="#account-options"><?= $copy('انتقل إلى خيارات الحساب', 'Skip to account options') ?></a>

@@ -165,7 +165,7 @@ function routingSaveUi(string $html, string $file): void
     if (!is_string($output) || $output === '') { return; }
     routingAssert(is_dir($output) && !is_link($output), 'UI output directory unavailable.');
     $html = preg_replace('/(name="csrf_token" value=")[^"]*"/', '$1[REDACTED]"', $html);
-    $css = file_get_contents(__DIR__ . '/../../signin.css') . file_get_contents(__DIR__ . '/../../signup.css');
+    $css = file_get_contents(__DIR__ . '/../../public/assets/css/signin.css') . file_get_contents(__DIR__ . '/../../public/assets/css/signup.css');
     $html = str_replace('</head>', '<style>' . $css . '</style></head>', $html);
     file_put_contents($output . '/' . $file . '.html', $html);
 }

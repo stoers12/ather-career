@@ -23,8 +23,7 @@ try {
     mkdir($root,0700); mkdir($root.'/sessions',0700); mkdir($root.'/http',0700); mkdir($root.'/http/public',0700);
     symlink(realpath(__DIR__.'/../..'),$root.'/http/app');
     foreach (glob(__DIR__.'/../../public/*.php') as $shim) { copy($shim,$root.'/http/public/'.basename($shim)); }
-    foreach (['landing.js','onboarding_editor.js','onboarding.css','style.css','admin.css','admin.js','owner_theme.js'] as $asset) { copy(__DIR__.'/../../'.$asset,$root.'/http/public/'.$asset); }
-    mkdir($root.'/http/public/assets',0700); symlink(realpath(__DIR__.'/../../assets/fonts'),$root.'/http/public/assets/fonts');
+    symlink(realpath(__DIR__.'/../../public/assets'),$root.'/http/public/assets');
     session_save_path($root.'/sessions'); session_name(OWNER_SESSION_NAME); ini_set('session.cache_limiter','');
     foreach (['a','b'] as $name) {
         $db->prepare('INSERT INTO users (oidc_issuer,oidc_subject,account_status,authz_version) VALUES (?,?,?,1)')->execute(['https://editor.invalid/',bin2hex(random_bytes(16)),'active']);
@@ -54,8 +53,7 @@ try {
         mkdir($root.'/http-null',0700); mkdir($root.'/http-null/public',0700);
         symlink(realpath(__DIR__.'/../..'),$root.'/http-null/app');
         foreach (glob(__DIR__.'/../../public/*.php') as $shim) { copy($shim,$root.'/http-null/public/'.basename($shim)); }
-        foreach (['landing.js','onboarding_editor.js','onboarding.css','style.css'] as $asset) { copy(__DIR__.'/../../'.$asset,$root.'/http-null/public/'.$asset); }
-        mkdir($root.'/http-null/public/assets',0700); symlink(realpath(__DIR__.'/../../assets/fonts'),$root.'/http-null/public/assets/fonts');
+        symlink(realpath(__DIR__.'/../../public/assets'),$root.'/http-null/public/assets');
     }
     foreach (($attestationBrowser ? [8080=>'1',8081=>'1',8082=>'1'] : [8080=>'1',8081=>'0']) as $port=>$gate) {
         $childEnv=$env; $childEnv['ATHERCAR_ONBOARDING_DRAFT_HTTP_ENABLED']=$gate;

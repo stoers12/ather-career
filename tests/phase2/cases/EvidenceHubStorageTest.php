@@ -27,7 +27,7 @@ final class EvidenceHubStorageTest
         $evaluator = self::read('includes/evidence_text_evaluator.php');
         $publicJson = self::read('includes/public_lifecycle.php');
         $developmentImage = self::read('Dockerfile');
-        $productionImage = self::read('Dockerfile.production');
+        $productionImage = self::read('Dockerfile');
 
         foreach (['problem_statement TEXT NULL DEFAULT NULL', 'personal_role TEXT NULL DEFAULT NULL', 'measurable_outcome TEXT NULL DEFAULT NULL'] as $column) {
             phase2Assert(str_contains($migration, $column), 'Evidence migration does not add the approved nullable field.');

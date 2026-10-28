@@ -31,9 +31,9 @@ header('Content-Language: ' . $locale);
     <meta name="color-scheme" content="light dark">
     <meta name="description" content="<?php echo signUpCopy($canRegister ? 'description_enabled' : 'description', $locale); ?>">
     <title><?php echo signUpCopy('title', $locale); ?></title>
-    <script src="<?php echo versionedAssetUrl('landing.js'); ?>"></script>
-    <link rel="stylesheet" href="<?php echo versionedAssetUrl('signin.css'); ?>">
-    <link rel="stylesheet" href="<?php echo versionedAssetUrl('signup.css'); ?>">
+    <script src="<?php echo versionedAssetUrl('assets/js/landing.js'); ?>"></script>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/signin.css'); ?>">
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/signup.css'); ?>">
 </head>
 <body>
 <a class="af-skip" href="#signup-options"><?php echo signUpCopy('skip', $locale); ?></a>

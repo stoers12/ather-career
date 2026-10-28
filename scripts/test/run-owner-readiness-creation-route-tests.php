@@ -80,7 +80,7 @@ function saveRouteUiEvidence(string $body, string $name): void
     if ($folder === false || !is_dir($folder)) { throw new RuntimeException('UI evidence directory is unavailable.'); }
     $safeBody = preg_replace('/(name="csrf_token" value=")[^"]*"/', '$1[REDACTED]"', $body);
     if (!is_string($safeBody)) { throw new RuntimeException('UI evidence redaction failed.'); }
-    $styles = file_get_contents(__DIR__ . '/../../style.css') . file_get_contents(__DIR__ . '/../../admin.css');
+    $styles = file_get_contents(__DIR__ . '/../../public/assets/css/style.css') . file_get_contents(__DIR__ . '/../../public/assets/css/admin.css');
     $safeBody = str_replace('</head>', '<style>' . $styles . '</style></head>', $safeBody);
     if (file_put_contents($folder . DIRECTORY_SEPARATOR . $name . '.html', $safeBody) === false) {
         throw new RuntimeException('UI evidence could not be saved.');

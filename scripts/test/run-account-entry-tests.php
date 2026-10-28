@@ -61,7 +61,7 @@ try {
                 $check(!isset($ids[$element->getAttribute('id')]), 'Duplicate element ID.');
                 $ids[$element->getAttribute('id')] = true;
             }
-            $check($xpath->query('//script[not(@src="landing.js?v=' . filemtime($root . '/landing.js') . '")]')->length === 0, 'Only the existing theme script is permitted.');
+            $check($xpath->query('//script[not(@src="/assets/js/landing.js?v=' . substr(hash_file('sha256', $root . '/public/assets/js/landing.js'), 0, 16) . '")]')->length === 0, 'Only the existing theme script is permitted.');
             $check(!str_contains($html, 'data-screen') && !str_contains($html, 'data-size') && !str_contains($html, 'toolbar'), 'Prototype inspection/state controls must be absent.');
             if ($screen === 'signup') {
                 $check(str_contains($html, signInCopy('unavailable', $locale)), 'Approved registration policy must be visible.');

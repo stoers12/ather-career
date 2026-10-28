@@ -183,8 +183,12 @@ function auth0ConfigurationFromEnvironment(): Auth0OidcConfiguration
     return new Auth0OidcConfiguration($issuer, strtolower((string) $issuerParts['host']), $clientId, $clientSecret, $redirectUri);
 }
 
-/** @return list<string> */
-function auth0ProductionConfigurationFailures(): array
+/**
+ * @param bool $allowLoopbackRedirect only for the Owner's local stack: its HTTPS
+ *     callback is necessarily on localhost/127.0.0.1. Every other rule still applies.
+ * @return list<string>
+ */
+function auth0ProductionConfigurationFailures(bool $allowLoopbackRedirect = false): array
 {
     try {
         $configuration = auth0ConfigurationFromEnvironment();
@@ -193,7 +197,10 @@ function auth0ProductionConfigurationFailures(): array
     }
 
     $values = [$configuration->issuer, $configuration->clientId, $configuration->clientSecret, $configuration->redirectUri];
-    foreach ($values as $value) {
+    foreach ($values as $index => $value) {
+        if ($allowLoopbackRedirect && $index === 3) {
+            $value = preg_replace('#^https://(?:localhost|127\.0\.0\.1)(?=[:/]|$)#i', 'https://loopback', $value) ?? $value;
+        }
         if (preg_match('/replace|fixture|issuer\.test|localhost|\.test(?:[\/]|$)|example|(?:^|[-_])test(?:[-_]|$)/i', $value) === 1) {
             return ['test or placeholder Auth0 OIDC configuration is forbidden.'];
         }

@@ -142,7 +142,7 @@ try {
     echo "PASS project-publication measured User/Portfolio locks and two-worker explicit choice plus Portfolio unpublish serialization\n";
 
     $stage='http and valid image';
-    $key=copyFileToPrivateMedia(__DIR__.'/../../assets/images/ather-navbar-logo.png',$a->portfolioId,'projects',createManagedUploadFilename('project','png'));
+    $key=copyFileToPrivateMedia(__DIR__.'/../../public/assets/images/ather-navbar-logo.png',$a->portfolioId,'projects',createManagedUploadFilename('project','png'));
     completionAssert($key!==null && generateProjectPresentationImage($key,$a->portfolioId)!==null,'Existing valid PNG fixture unavailable.');
     $db->prepare('UPDATE projects SET image_path=?,is_published=1 WHERE id=?')->execute([$key,$alpha]);
     $hidden=createAuthorizedProject($db,$a,'Hidden project sentinel','Testing','Hidden description sentinel',null,$key,[]); $projects[]=$hidden;

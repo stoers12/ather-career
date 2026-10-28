@@ -18,12 +18,12 @@ final class PrivateMediaStaticTest
         $processor = self::read('includes/image_processor.php');
         $ownerProfile = self::read('owner_profile.php');
         $ownerProjects = self::read('owner_projects.php');
-        $adminScript = self::read('admin.js');
-        $vhost = self::read('docker/apache/production-vhost.conf');
+        $adminScript = self::read('public/assets/js/admin.js');
+        $vhost = self::read('docker/apache/vhost.conf');
         $accessPolicy = self::read('docker/apache/access-policy.conf');
         $compose = self::read('docker-compose.production.yml');
         $developmentDockerfile = self::read('Dockerfile');
-        $productionDockerfile = self::read('Dockerfile.production');
+        $productionDockerfile = self::read('Dockerfile');
         $runtimeEntrypoint = self::read('docker/production-entrypoint.sh');
         $productionIni = self::read('docker/php/production.ini');
 
@@ -52,7 +52,7 @@ final class PrivateMediaStaticTest
         phase2Assert(str_contains($ownerActions, "\$removeImage = isset(\$post['remove_image'])") && str_contains($ownerActions, "authorizedProjectImageIsUnreferenced(\$database, \$context") && str_contains($ownerActions, "cleanProjectImage(\$oldImagePath, 'owner_project_update_old_image'") && str_contains($ownerActions, "cleanProjectImage(\$oldImagePath, 'owner_project_delete'"), 'S05A project cover replacement and removal cleanup must remain intact and avoid deleting shared references.');
         phase2Assert(!preg_match('/^\s*Alias\s+\/uploads\//mi', $vhost) && str_contains($accessPolicy, '^/uploads(?:/|$)'), 'P2J-07 direct upload access was not retired.');
         phase2Assert(str_contains($compose, 'ATHERCAR_STORAGE_ROOT: /var/lib/ather-career/storage') && str_contains($compose, 'portfolio_production_storage:/var/lib/ather-career/storage'), 'P2J-07 production private storage configuration is incomplete.');
-        phase2Assert(str_contains($developmentDockerfile, 'portfolio-runtime-entrypoint') && str_contains($productionDockerfile, 'portfolio-production-entrypoint'), 'Both images must run the private-media initializer before Apache.');
+        phase2Assert(substr_count($productionDockerfile, 'ENTRYPOINT ["/usr/local/bin/portfolio-production-entrypoint"]') === 2, 'Both images must run the private-media initializer before Apache.');
         phase2Assert(str_contains($runtimeEntrypoint, '/var/www/private-storage|/var/lib/ather-career/storage') && str_contains($runtimeEntrypoint, 'find "$storage_root" -xdev -type d') && str_contains($runtimeEntrypoint, 'chown www-data:www-data') && str_contains($runtimeEntrypoint, 'chmod 0700') && str_contains($runtimeEntrypoint, 'chmod 0600') && !str_contains($runtimeEntrypoint, '0777'), 'Runtime private-media ownership initialization must be scoped, restrictive, and compatible with reused volumes.');
         $productionOwnershipBootstrap = self::read('database/production-ownership-bootstrap.php');
         $productionBootstrapWait = self::read('database/wait-for-production-bootstrap.php');

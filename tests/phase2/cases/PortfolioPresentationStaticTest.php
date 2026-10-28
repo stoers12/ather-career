@@ -11,10 +11,10 @@ final class PortfolioPresentationStaticTest
         $presentation = self::read('includes/portfolio_presentation.php');
         $scopedData = self::read('includes/portfolio_scoped_data.php');
         $lifecycle = self::read('includes/public_lifecycle.php');
-        $stylesheet = self::read('portfolio.css');
-        $script = self::read('portfolio.js');
-        $dockerfile = self::read('Dockerfile.production');
-        $brandAsset = PHASE2_REPOSITORY_ROOT . '/assets/images/ather-navbar-logo.png';
+        $stylesheet = self::read('public/assets/css/portfolio.css');
+        $script = self::read('public/assets/js/portfolio.js');
+        $dockerfile = self::read('Dockerfile');
+        $brandAsset = PHASE2_REPOSITORY_ROOT . '/public/assets/images/ather-navbar-logo.png';
 
         phase2Assert(str_contains($public, 'resolvePublicReadContext') && str_contains($public, 'renderPortfolioPresentation('), 'Public Portfolio does not resolve publication authority before the shared presentation.');
         phase2Assert(str_contains($preview, 'requireOwnerPortfolioContext') && str_contains($preview, 'renderPortfolioPresentation(') && !str_contains($preview, 'ownerLayoutStart'), 'Private preview does not use owner authority and the shared standalone presentation.');
@@ -22,7 +22,7 @@ final class PortfolioPresentationStaticTest
         phase2Assert(str_contains($presentation, 'portfolioPresentationEscape(') && str_contains($presentation, 'isPublicWebsiteDestination('), 'Portfolio content or external links lack presentation safety checks.');
         phase2Assert(str_contains($presentation, '<header class="portfolio-header">') && str_contains($presentation, '<div class="portfolio-header-inner">') && str_contains($presentation, 'aria-label="ATHER, home"') && str_contains($presentation, 'src="/assets/images/ather-navbar-logo.png"') && str_contains($presentation, 'data-portfolio-section="top" aria-current="page">Home</a>') && str_contains($presentation, 'href="#about" data-portfolio-section="about">About</a>') && str_contains($presentation, 'href="#projects" data-portfolio-section="projects">Projects</a>') && str_contains($presentation, 'href="#experience" data-portfolio-section="experience">Experience</a>') && str_contains($presentation, 'href="#skills" data-portfolio-section="skills">Skills</a>') && str_contains($presentation, 'href="#contact" data-portfolio-section="contact">Contact</a>') && str_contains($presentation, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Insights</span>') && str_contains($presentation, 'portfolio-header-cta') && str_contains($presentation, '<svg viewBox="0 0 24 24"'), 'S13 Header platform brand, navigation, disabled Insights entry, or contact CTA is incomplete.');
         phase2Assert(str_contains($presentation, '<a class="portfolio-header-cta" href="#contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8.2 11.5 8.3-3.3-3.4 7.8-1.7-3.1-3.2-1.4Z"/><path d="m11.5 12.9 2.2-2.2"/></svg><span>Let’s Connect</span></a>') && !str_contains($presentation, 'Telegram'), 'S13 Contact CTA must keep its accessible text and use the decorative generic paper-plane icon.');
-        phase2Assert(is_file($brandAsset) && filesize($brandAsset) > 0 && str_contains($dockerfile, '/assets/images/ather-navbar-logo.png'), 'Approved compact ATHER asset is missing or is not published by the production image.');
+        phase2Assert(is_file($brandAsset) && filesize($brandAsset) > 0 && str_contains($dockerfile, 'cp -a /var/www/app/public/. /var/www/public/'), 'Approved compact ATHER asset is missing or is not published by the production image.');
         phase2Assert(!str_contains($presentation, 'href="#insights"') && !str_contains($presentation, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>'), 'S01 must not retain disabled Experience navigation or create a false Insights target.');
         phase2Assert(strpos($presentation, '<header class="portfolio-header">') < strpos($presentation, '<main id="portfolio-main">'), 'S01 header must be the first Portfolio content element.');
         phase2Assert(str_contains($presentation, 'portfolioPresentationHeroHeadline(') && str_contains($presentation, 'portfolio-hero-reserved') && str_contains($presentation, 'portfolio-hero-profile-card') && !str_contains($presentation, 'portfolio-hero-badge') && !str_contains($presentation, 'portfolio-hero-profile-role') && !str_contains($presentation, 'Turning Data into') && !str_contains($presentation, 'PROFILE / 01') && !str_contains($presentation, 'portfolio-profile-orbit') && substr_count($presentation, '<h1 ') === 1, 'S13 Hero must use the owner headline and a non-redundant Personal ID card without a title badge.');
@@ -59,7 +59,7 @@ final class PortfolioPresentationStaticTest
         foreach (['@media (max-width: 1100px)', '@media (max-width: 820px)', '@media (max-width: 620px)', '@media (max-width: 430px)'] as $breakpoint) {
             phase2Assert(str_contains($stylesheet, $breakpoint), "Portfolio responsive breakpoint is missing: {$breakpoint}");
         }
-        phase2Assert(str_contains($dockerfile, '/var/www/app/portfolio.css') && str_contains($dockerfile, '/var/www/app/portfolio.js'), 'Production image does not publish the Portfolio presentation assets.');
+        phase2Assert(str_contains($dockerfile, 'cp -a /var/www/app/public/. /var/www/public/') && is_file(PHASE2_REPOSITORY_ROOT . '/public/assets/css/portfolio.css') && is_file(PHASE2_REPOSITORY_ROOT . '/public/assets/js/portfolio.js'), 'Production image does not publish the Portfolio presentation assets.');
 
         require_once PHASE2_REPOSITORY_ROOT . '/includes/portfolio_presentation.php';
         ob_start();

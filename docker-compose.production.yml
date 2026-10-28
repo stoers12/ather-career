@@ -5,7 +5,8 @@ services:
     image: ${PORTFOLIO_PRODUCTION_IMAGE:-portfolio_course_production-web:latest}
     build:
       context: .
-      dockerfile: Dockerfile.production
+      dockerfile: Dockerfile
+      target: production
       args:
         APP_VERSION: ${APP_VERSION:-unknown}
     restart: unless-stopped

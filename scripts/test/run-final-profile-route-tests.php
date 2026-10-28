@@ -64,9 +64,7 @@ try {
     profileTestAssert(is_file('/.dockerenv'), 'HTTP fixtures require disposable Docker.');
     $environment = TestEnvironment::create(); $root = $environment->namespaceRoot . '/profile-http'; mkdir($root); mkdir($root . '/sessions'); mkdir($root . '/public'); mkdir($root . '/limits');
     symlink(realpath(__DIR__ . '/../..'), $root . '/app'); foreach (glob(__DIR__.'/../../public/*.php') as $shim) { copy($shim,$root.'/public/'.basename($shim)); }
-    foreach (['admin.css','style.css','owner_workspace.css','admin.js','owner_theme.js'] as $asset) { copy(__DIR__.'/../../'.$asset,$root.'/public/'.$asset); }
-    mkdir($root.'/public/assets'); symlink(realpath(__DIR__.'/../../assets/fonts'),$root.'/public/assets/fonts');
-    mkdir($root.'/public/assets/images'); copy(__DIR__.'/../../assets/images/ather-navbar-logo.png',$root.'/public/assets/images/ather-navbar-logo.png');
+    symlink(realpath(__DIR__.'/../../public/assets'),$root.'/public/assets');
     $png = $root . '/synthetic.png'; profileTestPng($png);
     session_save_path($root . '/sessions'); session_name(OWNER_SESSION_NAME); ini_set('session.cache_limiter', '');
     $socket = stream_socket_server('tcp://127.0.0.1:0', $errno, $message); $address = stream_socket_get_name($socket, false); fclose($socket); $port = $browserEvidence===null ? (int) substr($address, strrpos($address, ':') + 1) : 8082;

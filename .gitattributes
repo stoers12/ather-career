@@ -1,2 +1,9 @@
 *.sh text eol=lf
+# Files copied into images or read by Apache/PHP inside Linux containers.
+Dockerfile text eol=lf
+docker/**/*.conf text eol=lf
+docker/**/*.ini text eol=lf
+docker/Caddyfile* text eol=lf
+docker-compose*.yml text eol=lf
+tests/phase2/support/*.conf text eol=lf
 contracts/evidence-hub-contract-v1.schema.json text eol=lf

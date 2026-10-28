@@ -149,7 +149,7 @@ final class HttpValidationContractTest
             && str_contains($recovery, 'href="/owner_login.php"')
             && !preg_match('/\$_(?:GET|REQUEST|SERVER)\s*\[|\$_POST\s*\[(?![\'\"]csrf_token[\'\"])/', $retry)
             && !preg_match('/returnTo|return_url|HTTP_HOST|REQUEST_SCHEME|error_description|error_uri/i', $retry . $recovery), 'Recovery redirect must use validated discovery, configured callback, and fixed local destinations only.');
-        phase2Assert(str_contains(self::read('docker/apache/development-vhost.conf'), 'RewriteRule ^/p/') && str_contains(self::read('docker/apache/production-vhost.conf'), 'RewriteRule ^/p/'), 'Canonical public /p/<slug> routing is missing.');
+        phase2Assert(str_contains(self::read('docker/apache/vhost.conf'), 'RewriteRule ^/p/'), 'Canonical public /p/<slug> routing is missing.');
     }
 
     private static function runtimePhp(): string

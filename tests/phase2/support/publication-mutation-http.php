@@ -4,9 +4,10 @@ declare(strict_types=1);
 $app = realpath(__DIR__.'/../../..'); $privateApp = $root.'/http-app'; mkdir($privateApp,0700);
 // Only database construction is instrumented. The real route, includes, policy
 // resolvers and all application behavior remain byte-identical to this checkout.
-foreach (['includes','vendor','data','assets'] as $directory) {
+foreach (['includes','vendor','data','public'] as $directory) {
     if (is_dir($app.'/'.$directory)) { symlink($app.'/'.$directory,$privateApp.'/'.$directory); }
 }
+symlink($app.'/public/assets',$privateApp.'/assets');
 mkdir($privateApp.'/config',0700);
 foreach (glob($app.'/config/*.php') as $file) { copy($file,$privateApp.'/config/'.basename($file)); }
 foreach (glob($app.'/*.php') as $file) { copy($file,$privateApp.'/'.basename($file)); }

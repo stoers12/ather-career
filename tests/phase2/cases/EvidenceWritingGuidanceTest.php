@@ -88,7 +88,7 @@ final class EvidenceWritingGuidanceTest
                 }
             }
         }
-        $script = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/evidence_hub.js');
+        $script = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/public/assets/js/evidence_hub.js');
         phase2Assert(str_contains($script, "new RegExp(pattern, 'u')") && str_contains($script, 'data-hint-pattern'), 'The editor script must compile the server-rendered hint patterns.');
     }
 

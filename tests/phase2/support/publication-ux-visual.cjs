@@ -16,9 +16,9 @@ async function installRoutes(page, variant) {
     await page.route('http://publication.test/**', route => {
         const url = new URL(route.request().url());
         if (url.pathname === '/') return route.fulfill({ contentType: 'text/html', body: html });
-        if (url.pathname === '/style.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'style.css')) });
-        if (url.pathname === '/admin.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'admin.css')) });
-        if (url.pathname === '/admin.js') return route.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'admin.js')) });
+        if (url.pathname === '/assets/css/style.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'public/assets/css/style.css')) });
+        if (url.pathname === '/assets/css/admin.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'public/assets/css/admin.css')) });
+        if (url.pathname === '/assets/js/admin.js') return route.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'public/assets/js/admin.js')) });
         return route.fulfill({ status: 204, body: '' });
     });
 }

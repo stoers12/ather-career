@@ -3,9 +3,9 @@ declare(strict_types=1);
 // Guarded disposable suite only. Reuse the publication suite's private PDO fault
 // constructor; application routes/includes/policy resolvers are otherwise exact.
 $app=realpath(__DIR__.'/../../..'); $privateApp=$root.'/http-app'; mkdir($privateApp,0700); mkdir($privateApp.'/config',0700); mkdir($root.'/control',0700);
-foreach (['includes','vendor','data','assets'] as $directory) { symlink($app.'/'.$directory,$privateApp.'/'.$directory); }
+foreach (['includes','vendor','data','public'] as $directory) { symlink($app.'/'.$directory,$privateApp.'/'.$directory); }
+symlink($app.'/public/assets',$privateApp.'/assets');
 foreach (glob($app.'/*.php') as $file) { copy($file,$privateApp.'/'.basename($file)); }
-foreach ([...glob($app.'/*.css'),...glob($app.'/*.js')] as $file) { symlink($file,$privateApp.'/'.basename($file)); }
 foreach (glob($app.'/config/*.php') as $file) { copy($file,$privateApp.'/config/'.basename($file)); }
 $configuration=file_get_contents($app.'/config/database.php'); completionAssert(substr_count($configuration,'new PDO(')===1,'PDO fixture seam changed.');
 file_put_contents($privateApp.'/config/database.php',str_replace('new PDO(','new PublicationHttpDatabase(',$configuration)."\nrequire_once ".var_export(__DIR__.'/publication-http-database.php',true).";\n");
@@ -58,7 +58,7 @@ projectPublicationHttp($owner,'GET','/owner_media.php?type=project&id='.$hidden,
 projectPublicationHttp($owner,'GET','/owner_preview.php',200);
 $upload=['action'=>'update','csrf_token'=>$csrf,'id'=>(string)$alpha,'title'=>'Project Alpha','category'=>'Testing','description'=>'Image edit keeps publication','github_url'=>'','technologies'=>'PHP'];
 $parts=[]; foreach ($upload as $name=>$value) { $parts[]=['name'=>$name,'contents'=>$value]; }
-$parts[]=['name'=>'project_image','contents'=>fopen($app.'/assets/images/ather-navbar-logo.png','rb'),'filename'=>'existing-valid.png'];
+$parts[]=['name'=>'project_image','contents'=>fopen($app.'/public/assets/images/ather-navbar-logo.png','rb'),'filename'=>'existing-valid.png'];
 projectPublicationHttp($owner,'POST','/owner_projects.php',303,['multipart'=>$parts]);
 completionAssert($flag($alpha)===1,'Image edit reset project publication.'); $checkPublic(true);
 echo "PASS project-publication actual HTML JSON contact-error and existing valid PNG public GET/HEAD200 versus private404; authorized owner preview/media preserved\n";

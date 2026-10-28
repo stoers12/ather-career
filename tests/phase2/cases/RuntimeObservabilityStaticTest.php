@@ -17,8 +17,8 @@ final class RuntimeObservabilityStaticTest
         $ownerCompose = self::read('docker-compose.owner-https.yml');
         $productionCompose = self::read('docker-compose.production.yml');
         $entrypoint = self::read('docker/production-entrypoint.sh');
-        $developmentVhost = self::read('docker/apache/development-vhost.conf');
-        $productionVhost = self::read('docker/apache/production-vhost.conf');
+        $developmentVhost = self::read('docker/apache/vhost.conf');
+        $productionVhost = self::read('docker/apache/vhost.conf');
 
         phase2Assert(str_contains($health, "runtimeStartRequest('health')")
             && !preg_match('/getDatabaseConnection|runtimeReadinessFailureReason|PDO/i', $health)

@@ -36,9 +36,9 @@ header('X-Robots-Tag: noindex, nofollow');
     <meta name="color-scheme" content="light dark">
     <meta name="robots" content="noindex, nofollow">
     <title><?php echo $copy('title'); ?></title>
-    <script src="<?php echo versionedAssetUrl('landing.js'); ?>" defer></script>
-    <script src="<?php echo versionedAssetUrl($editor ? 'onboarding_editor.js' : 'onboarding.js'); ?>" defer></script>
-    <link rel="stylesheet" href="<?php echo versionedAssetUrl('onboarding.css'); ?>">
+    <script src="<?php echo versionedAssetUrl('assets/js/landing.js'); ?>" defer></script>
+    <script src="<?php echo versionedAssetUrl($editor ? 'assets/js/onboarding_editor.js' : 'assets/js/onboarding.js'); ?>" defer></script>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/onboarding.css'); ?>">
 </head>
 <body>
 <a class="ao-skip" href="#onboarding-card"><?php echo $copy('skip'); ?></a>

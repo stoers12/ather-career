@@ -68,7 +68,7 @@ final class LegacyBackendRemovalStaticTest
         phase2Assert(str_contains($ownerActions, 'function ' . 'handle' . 'Authorized' . 'Profile' . 'Action('), 'The authorized Owner Profile action handler is missing.');
         phase2Assert(str_contains($ownerActions, 'function ' . 'handle' . 'Authorized' . 'Project' . 'Action('), 'The authorized Owner Project action handler is missing.');
 
-        foreach (['docker/apache/development-vhost.conf', 'docker/apache/production-vhost.conf'] as $path) {
+        foreach (['docker/apache/vhost.conf'] as $path) {
             phase2Assert(str_contains(self::read($path), 'RewriteRule ^/p/'), "Canonical /p/<slug> routing is missing from {$path}.");
         }
     }

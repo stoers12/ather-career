@@ -42,7 +42,7 @@ final class OwnerFlowStaticTest
         phase2Assert(!str_contains($ownerActions, 'WHERE id = :id'), 'P2J-04 owner actions must not use unscoped ID mutations.');
 
         $profileRoute = self::read('owner_profile.php');
-        $adminScript = self::read('admin.js');
+        $adminScript = self::read('public/assets/js/admin.js');
         phase2Assert(str_contains($profileRoute, 'id="profile-form"')
             && str_contains($adminScript, "getElementById('profile-form')")
             && str_contains($adminScript, 'formState(profileForm)'), 'Owner profile unsaved-change protection is not wired end to end.');

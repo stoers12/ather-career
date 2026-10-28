@@ -10,7 +10,7 @@ const root = path.resolve(__dirname, '../../..');
 const output = process.argv[2];
 if (!output) throw new Error('A screenshot output directory is required.');
 fs.mkdirSync(output, { recursive: true });
-const portfolioScript = fs.readFileSync(path.join(root, 'portfolio.js'), 'utf8');
+const portfolioScript = fs.readFileSync(path.join(root, 'public/assets/js/portfolio.js'), 'utf8');
 
 const expectations = {
     'fallback-many': { projects: 3, images: 0, skills: 12, links: 1 },
@@ -59,9 +59,9 @@ const projectSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height=
                 await page.route('http://work.test/**', route => {
                     const url = new URL(route.request().url());
                     if (url.pathname === '/') return route.fulfill({ contentType: 'text/html', body: html });
-                    if (url.pathname === '/portfolio.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'portfolio.css')) });
-                    if (url.pathname === '/portfolio.js') return route.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'portfolio.js')) });
-                    if (url.pathname === '/assets/images/ather-navbar-logo.png') return route.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'assets/images/ather-navbar-logo.png')) });
+                    if (url.pathname === '/assets/css/portfolio.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'public/assets/css/portfolio.css')) });
+                    if (url.pathname === '/assets/js/portfolio.js') return route.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'public/assets/js/portfolio.js')) });
+                    if (url.pathname === '/assets/images/ather-navbar-logo.png') return route.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'public/assets/images/ather-navbar-logo.png')) });
                     if (url.pathname.startsWith('/synthetic-project-')) return route.fulfill({ contentType: 'image/svg+xml', body: projectSvg });
                     return route.fulfill({ status: 204, body: '' });
                 });
@@ -222,8 +222,8 @@ const projectSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height=
         await noJavaScriptPage.route('http://work.test/**', route => {
             const url = new URL(route.request().url());
             if (url.pathname === '/') return route.fulfill({ contentType: 'text/html', body: noJavaScriptHtml });
-            if (url.pathname === '/portfolio.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'portfolio.css')) });
-            if (url.pathname === '/assets/images/ather-navbar-logo.png') return route.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'assets/images/ather-navbar-logo.png')) });
+            if (url.pathname === '/assets/css/portfolio.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'public/assets/css/portfolio.css')) });
+            if (url.pathname === '/assets/images/ather-navbar-logo.png') return route.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'public/assets/images/ather-navbar-logo.png')) });
             if (url.pathname.startsWith('/synthetic-project-')) return route.fulfill({ contentType: 'image/svg+xml', body: projectSvg });
             return route.fulfill({ status: 204, body: '' });
         });

@@ -10,9 +10,9 @@ final class ResponsiveAccessibilityStaticTest
         $publicPortfolio = self::read('public_portfolio.php');
         $publicContact = self::read('public_contact.php');
         $presentation = self::read('includes/portfolio_presentation.php');
-        $portfolioCss = self::read('portfolio.css');
-        $portfolioJavascript = self::read('portfolio.js');
-        $adminJavascript = self::read('admin.js');
+        $portfolioCss = self::read('public/assets/css/portfolio.css');
+        $portfolioJavascript = self::read('public/assets/js/portfolio.js');
+        $adminJavascript = self::read('public/assets/js/admin.js');
 
         phase2Assert(
             str_contains($http, 'function httpRenderStatusPage')

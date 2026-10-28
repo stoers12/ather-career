@@ -23,8 +23,8 @@ header('Content-Language: ' . $locale);
     <meta name="color-scheme" content="light dark">
     <meta name="description" content="<?php echo signInCopy('description', $locale); ?>">
     <title><?php echo signInCopy('title', $locale); ?></title>
-    <script src="<?php echo versionedAssetUrl('landing.js'); ?>"></script>
-    <link rel="stylesheet" href="<?php echo versionedAssetUrl('signin.css'); ?>">
+    <script src="<?php echo versionedAssetUrl('assets/js/landing.js'); ?>"></script>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/signin.css'); ?>">
 </head>
 <body>
 <a class="af-skip" href="#signin-options"><?php echo signInCopy('skip', $locale); ?></a>

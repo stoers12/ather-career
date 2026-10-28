@@ -114,7 +114,7 @@ try {
             $check($_SESSION === ['existing_marker' => 'unchanged'] && session_status() === PHP_SESSION_NONE, 'Preview touched the session.');
         }
     }
-    $script = file_get_contents($root . '/onboarding.js');
+    $script = file_get_contents($root . '/public/assets/js/onboarding.js');
     $fixture = file_get_contents($root . '/tests/phase2/support/onboarding-preview.php');
     foreach (['localStorage', 'sessionStorage', 'XMLHttpRequest', 'sendBeacon', 'WebSocket', 'document.cookie', 'window.name', '.submit('] as $forbidden) {
         $check(!str_contains($script, $forbidden), 'Onboarding interaction script contains a forbidden persistence or request API.');
