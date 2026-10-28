@@ -8,10 +8,10 @@ if (PHP_SAPI !== 'cli' || getenv('APP_ENV') !== 'test' || getenv('ATHERCAR_TEST_
     || getenv('DB_NAME') !== 'ather_career_test_profile_contacts') {
     throw new RuntimeException('A dedicated disposable contact rehearsal database is required.');
 }
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../tests/phase2/bootstrap.php';
-require_once __DIR__ . '/../includes/owner_actions.php';
-require_once __DIR__ . '/../includes/public_lifecycle.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../tests/phase2/bootstrap.php';
+require_once __DIR__ . '/../../includes/owner_actions.php';
+require_once __DIR__ . '/../../includes/public_lifecycle.php';
 
 function contactRehearsalChild(array $arguments): string
 {
@@ -28,25 +28,25 @@ function contactRehearsalChild(array $arguments): string
 
 $db = getDatabaseConnection();
 phase2AssertSame([], $db->query('SHOW TABLES')->fetchAll(), 'Rehearsal requires an empty database.');
-$db->exec((string) file_get_contents(__DIR__ . '/../database/portfolio_db.sql'));
+$db->exec((string) file_get_contents(__DIR__ . '/../../database/portfolio_db.sql'));
 $db->exec('DELETE FROM projects'); // Remove only the fresh bootstrap sample.
-echo contactRehearsalChild([__DIR__ . '/../database/migrate.php', '--through=008']);
+echo contactRehearsalChild([__DIR__ . '/../../database/migrate.php', '--through=008']);
 $db->exec("INSERT INTO users (oidc_issuer, oidc_subject) VALUES ('https://issuer.test/', 'contact-owner'), ('https://issuer.test/', 'new-owner');
     INSERT INTO portfolios (owner_user_id, public_slug, is_published) VALUES (1, 'contact-owner', 1), (2, 'new-owner', 0);
     INSERT INTO personal_info (portfolio_id, full_name, email, phone_primary) VALUES (1, 'Synthetic Owner', 'private@example.org', '+962 79 123 4567')");
-echo contactRehearsalChild([__DIR__ . '/../database/migrate.php']);
+echo contactRehearsalChild([__DIR__ . '/../../database/migrate.php']);
 phase2AssertSame('0', (string) $db->query('SELECT public_contact_visible FROM personal_info')->fetchColumn(), 'Migration opted in an existing profile.');
 $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(2), 2);
 createAuthorizedPersonalInfo($db, $context, ['full_name' => 'New owner']);
 phase2AssertSame(0, (int) loadAuthorizedPersonalInfo($db, $context)['public_email_visible'], 'New profile did not default OFF.');
-phase2Assert(str_contains(contactRehearsalChild([__DIR__ . '/../database/migrate.php']), 'No pending migrations.'), 'Migration runner is not idempotent.');
+phase2Assert(str_contains(contactRehearsalChild([__DIR__ . '/../../database/migrate.php']), 'No pending migrations.'), 'Migration runner is not idempotent.');
 
 // Run the real public page and contact-error entrypoints in child processes.
 foreach ([[0,0],[1,0],[0,1],[1,1]] as [$emailVisible,$phoneVisible]) {
     $owner = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 1);
     updateAuthorizedPersonalInfo($db, $owner, 1, ['public_email_visible' => $emailVisible, 'public_phone_visible' => $phoneVisible], (int) loadAuthorizedPersonalInfo($db, $owner)['profile_version']);
     foreach (['public_portfolio.php', 'public_contact.php'] as $route) {
-        $code = '$_SERVER["REQUEST_METHOD"]=' . var_export($route === 'public_contact.php' ? 'POST' : 'GET', true) . '; $_GET["slug"]="contact-owner"; $_POST=[]; require ' . var_export(dirname(__DIR__) . '/' . $route, true) . ';';
+        $code = '$_SERVER["REQUEST_METHOD"]=' . var_export($route === 'public_contact.php' ? 'POST' : 'GET', true) . '; $_GET["slug"]="contact-owner"; $_POST=[]; require ' . var_export(dirname(__DIR__, 2) . '/' . $route, true) . ';';
         $html = contactRehearsalChild(['-r', $code]);
         phase2Assert(str_contains($html, 'Synthetic Owner'), 'Real route did not render the profile.');
         phase2AssertSame((bool) $emailVisible, str_contains($html, 'private@example.org'), 'Real public route violated email visibility.');

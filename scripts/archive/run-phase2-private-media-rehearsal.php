@@ -7,11 +7,11 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
-require_once __DIR__ . '/../tests/phase2/bootstrap.php';
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/media_access.php';
-require_once __DIR__ . '/../includes/media_migration.php';
-require_once __DIR__ . '/../includes/project_actions.php';
+require_once __DIR__ . '/../../tests/phase2/bootstrap.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/media_access.php';
+require_once __DIR__ . '/../../includes/media_migration.php';
+require_once __DIR__ . '/../../includes/project_actions.php';
 
 const PRIVATE_MEDIA_TEST_ISSUER = 'https://issuer.test/ather-career';
 

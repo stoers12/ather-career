@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$source = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot 'run-phase2a-oidc-http-rehearsal.ps1')).Path
+$source = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../test/run-phase2a-oidc-http-rehearsal.ps1')).Path
 $tokens = $null
 $errors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile($source, [ref]$tokens, [ref]$errors)

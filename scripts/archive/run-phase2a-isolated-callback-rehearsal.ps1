@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+$root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 $runId = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(12)).ToLowerInvariant()
 $network = "ather-phase2a-$runId"
 $container = "ather-phase2a-db-$runId"

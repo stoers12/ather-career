@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../includes/profile_actions.php';
+require_once __DIR__ . '/../../includes/profile_actions.php';
 
 if (function_exists('posix_geteuid')) {
     $runtimeUser = posix_getpwuid(posix_geteuid());

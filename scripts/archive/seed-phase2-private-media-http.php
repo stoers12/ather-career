@@ -7,8 +7,8 @@ if (PHP_SAPI !== 'cli' || getenv('APP_ENV') !== 'test' || getenv('ATHERCAR_TEST_
     exit(1);
 }
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/profile_presentation.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/profile_presentation.php';
 
 function httpMediaPng(string $path, int $red): void
 {
