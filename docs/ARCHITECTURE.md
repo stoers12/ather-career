@@ -43,3 +43,15 @@ Move one module per card, in the same shape as the pilot:
 5. **Classes, not `class_alias`.** PHPStan cannot see runtime aliases. Update the users of a moved class to import it.
 6. **Prove no behavior change.** Golden/contract tests unchanged, `composer analyse` with no new baseline entries, the full required gates, and a differential run when the module transforms user text or produces contract output.
 7. **Keep `src/` internal.** It sits outside the document root. The public-boundary gate probes it, and `StaticArchitectureGuards` scans it like `includes/`.
+
+## Splitting a large procedural file (ENG-07)
+
+Keep PHP files in `includes/`, `src/` and `database/` under about 600 lines. When a procedural file grows past that, split it by responsibility. This is not a namespace migration:
+
+1. **The original file stays the entry point.** Every caller keeps requiring it. It `require_once`s its parts and keeps the declarations that define its public surface: constants, exceptions and the main entry functions.
+2. **Each part starts with a marker line** `// Loaded by <entry>.php.`, written exactly like that, after `declare(strict_types=1)`. Parts only declare functions. They are never required directly.
+3. **Static tests read split files with `SplitSourceFile::read('<dir>/<entry>.php')`** (in `tests/phase2/support/`). It returns the entry followed by every marked sibling part, and it fails if a marked part is not required by its entry. That keeps negative guards, such as "never reads `$_GET`" or "no clock access", covering moved code.
+4. **Pure moves only.** Every function, constant and class must be byte-identical and appear exactly once across the new files, including line endings (LF; `.gitattributes` enforces `*.php eol=lf`). Prove it mechanically, not by reading the diff.
+5. **Behavior evidence matches the risk.** A presentation or validation split needs the full required gates. A `database/` split also needs a differential migration rehearsal: the old and new code run the production migration sequence, a refused contract, an injected failure with retry, and argument errors against fresh disposable MySQL databases. The transcripts, schema and row data (timestamps masked) must be identical.
+
+Splits so far: `includes/evidence_hub_recommendations.php` (4 files), `includes/portfolio_scoped_data.php` (3), `database/migrate.php` (3: runner, `migration_schema_inspection.php`, `legacy_schema_migrations.php`). Migrations 014 onward already live in their own `database/<name>.php` modules. Only 002–005, 012 and 013 were embedded in the runner.

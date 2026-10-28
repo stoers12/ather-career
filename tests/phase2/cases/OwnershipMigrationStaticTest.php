@@ -8,7 +8,7 @@ final class OwnershipMigrationStaticTest
     {
         $expand = self::read('database/migrations/003_ownership_expand.sql');
         $contract = self::read('database/migrations/004_ownership_contract.sql');
-        $runner = self::read('database/migrate.php');
+        $runner = SplitSourceFile::read('database/migrate.php');
         $backfill = self::read('database/backfill-v1-ownership.php');
 
         phase2Assert(str_contains($expand, 'Migration 003'), 'Migration 003 ownership expand marker is missing.');
