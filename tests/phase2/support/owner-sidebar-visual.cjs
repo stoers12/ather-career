@@ -2,6 +2,29 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs');
 
+async function setViewportAndSettle(page, width, height) {
+    await page.setViewportSize({ width, height });
+    try {
+        // Viewport acknowledgement can precede the matchMedia change handler.
+        await page.waitForFunction(expectedWidth => {
+            const sidebar = document.getElementById('evidence-hub-mobile-drawer');
+            const main = document.getElementById('main-content');
+            const backdrop = document.getElementById('evidence-hub-mobile-backdrop');
+            const root = document.body;
+            const mobile = window.matchMedia('(max-width: 1100px)').matches;
+            let collapsed = false;
+            try { collapsed = !mobile && localStorage.getItem('ather.evidenceHub.sidebarCollapsed') === 'true'; } catch (_) {}
+            return window.innerWidth === expectedWidth && sidebar && sidebar.inert === mobile
+                && root.classList.contains('evidence-hub-sidebar-collapsed') === collapsed
+                && !root.classList.contains('evidence-hub-mobile-open')
+                && !root.classList.contains('evidence-hub-mobile-scroll-lock')
+                && main && main.inert === false && backdrop && backdrop.hidden;
+        }, width, { timeout: 5000 });
+    } catch (error) {
+        throw new Error(`Sidebar viewport state did not settle at ${width}px within 5000ms.`, { cause: error });
+    }
+}
+
 module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output) {
     const page = await browser.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -188,12 +211,12 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     await page.locator('#evidence-hub-sidebar-toggle').click(); await page.waitForTimeout(200);
 
     for (const width of [1440, 1280, 1101]) {
-        await page.setViewportSize({ width, height: 900 });
+        await setViewportAndSettle(page, width, 900);
         const rail = await aside.boundingBox(); assert.ok(rail && Math.abs(rail.width - 232) < 1, `${width}px uses expanded desktop rail`);
         await same(page.locator('#evidence-hub-mobile-toggle').isVisible(), false, `${width}px is desktop`);
     }
     for (const width of [1100, 1024, 768, 390, 360, 320]) {
-        await page.setViewportSize({ width, height: width < 400 ? 568 : 768 });
+        await setViewportAndSettle(page, width, width < 400 ? 568 : 768);
         await same(aside.evaluate(n => n.inert), true, `${width}px drawer begins closed and inert`);
         await same(root.evaluate(n => n.classList.contains('evidence-hub-sidebar-collapsed')), false, `${width}px does not inherit desktop collapse state`);
         await same(page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.body.scrollWidth <= innerWidth), true, `${width}px has no horizontal overflow`);
@@ -239,7 +262,7 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
         await same(aside.evaluate(n => n.inert), true, `${width}px closed drawer is inert`);
     }
 
-    await page.setViewportSize({ width: 1440, height: 400 });
+    await setViewportAndSettle(page, 1440, 400);
     const scrolling = await nav.evaluate(n => ({ client: n.clientHeight, scroll: n.scrollHeight, overflow: getComputedStyle(n).overflowY }));
     await same(Promise.resolve(scrolling.overflow), 'auto', 'short desktop scrolls only workspace navigation');
     assert.ok(scrolling.scroll > scrolling.client, 'short desktop workspace region scrolls internally');
