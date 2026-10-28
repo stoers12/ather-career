@@ -35,8 +35,12 @@ jobs:
         run: |
           docker run --rm -v "$PWD:/app:ro" -w /app php:8.3-cli sh -lc 'find . -name "*.php" -not -path "./.git/*" -print0 | xargs -0 -n1 php -l'
 
+      - name: Static analysis
+        run: |
+          docker run --rm -v "$PWD:/app" -w /app composer:2 sh -ec 'composer install --no-interaction --prefer-dist && composer analyse'
+
       - name: JavaScript syntax
-        run: node --check admin.js && node --check portfolio.js && node --check onboarding.js && node --check onboarding_editor.js && node --check scripts/run-onboarding-editor-browser-tests.mjs && node --check scripts/run-final-profile-browser-tests.mjs && node --check scripts/run-project-publication-browser-tests.mjs
+        run: git ls-files -z '*.js' '*.mjs' '*.cjs' | xargs -0 -n1 node --check
 
       - name: Validate production Compose configuration
         run: docker compose -p ather-career-ci -f docker-compose.production.yml config --quiet
