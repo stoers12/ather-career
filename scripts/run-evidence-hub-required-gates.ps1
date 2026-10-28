@@ -204,7 +204,7 @@ function Assert-CurrentSourceIdentity([string]$Root, [string]$Image, [string]$La
     }
     # Every target shares one layout: code in /var/www/app, and the document
     # root is an exact copy of the repository public/ tree.
-    $check = "set -eu; cd /var/www/app; sha256sum -c /audit/source.manifest; diff -r /var/www/app/public /var/www/public; test -f database/migrations/011_recommendation_dispositions.sql; test -f owner_evidence_hub.php; test -f evidence_hub.css; test -f evidence_hub.js; test -f owner_theme.js"
+    $check = "set -eu; cd /var/www/app; sha256sum -c /audit/source.manifest; diff -r /var/www/app/public /var/www/public; test -f database/migrations/011_recommendation_dispositions.sql; test -f owner_evidence_hub.php; test -f public/assets/css/evidence_hub.css; test -f public/assets/js/evidence_hub.js; test -f public/assets/js/owner_theme.js"
     if ($Layout -eq 'production') { $check += '; test "${PORTFOLIO_PRODUCTION_SECURITY_CHECK:-}" = 1; test -f /usr/local/etc/php/conf.d/portfolio-production.ini' }
     & docker run --rm --entrypoint sh -v "${Root}:/verification-source:ro" -v "${Manifest}:/audit/source.manifest:ro" $Image -lc $check
     if ($LASTEXITCODE -ne 0) { Fail-Gate 'source identity' 'container-visible application source differs from the intended verification source' }
