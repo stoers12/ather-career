@@ -7,8 +7,8 @@ if (PHP_SAPI !== 'cli') {
     exit(1);
 }
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/public_lifecycle.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/public_lifecycle.php';
 
 const CI_SMOKE_DATABASE = 'ather_career_test_ci';
 const CI_SMOKE_ISSUER = 'https://127.0.0.1:9443/';

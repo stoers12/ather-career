@@ -8,12 +8,12 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/authorization.php';
-require_once __DIR__ . '/../includes/portfolio_scoped_data.php';
-require_once __DIR__ . '/../includes/public_lifecycle.php';
-require_once __DIR__ . '/../includes/media_access.php';
-require_once __DIR__ . '/../includes/owner_session.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/authorization.php';
+require_once __DIR__ . '/../../includes/portfolio_scoped_data.php';
+require_once __DIR__ . '/../../includes/public_lifecycle.php';
+require_once __DIR__ . '/../../includes/media_access.php';
+require_once __DIR__ . '/../../includes/owner_session.php';
 require_once __DIR__ . '/stage4c-recovery.php';
 
 const STAGE4C_DR_PREFIX = 'ather_stage4c_dr_';

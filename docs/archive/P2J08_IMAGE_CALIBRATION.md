@@ -1,6 +1,6 @@
 # P2J-08 image calibration
 
-Disposable production-image calibration used PHP 8.3.33, bundled GD 2.1-compatible, and the production `memory_limit` of 128 MiB. `scripts/calibrate-phase2-images.php` generated and decoded high-compression JPEG and PNG inputs through the current profile resize and conservative full project decode paths.
+Disposable production-image calibration used PHP 8.3.33, bundled GD 2.1-compatible, and the production `memory_limit` of 128 MiB. `scripts/tools/calibrate-phase2-images.php` generated and decoded high-compression JPEG and PNG inputs through the current profile resize and conservative full project decode paths.
 
 | Input | Pixels | Worst measured PHP peak | Worst measured process high-water RSS |
 |---|---:|---:|---:|

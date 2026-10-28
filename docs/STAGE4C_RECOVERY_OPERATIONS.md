@@ -26,7 +26,7 @@ counted as excluded operational state, not backup content.
 
 ## Backup format v1
 
-`scripts/stage4c-recovery.php backup` creates one atomically finalized
+`scripts/ops/stage4c-recovery.php backup` creates one atomically finalized
 `stage4c-<UTC>-<random>` directory beneath an explicit operator-provided output
 directory. It contains only:
 
@@ -105,7 +105,7 @@ The wrapper already selects `backup`; do not include the word `backup` twice.
 An illustrative production invocation is:
 
 ```sh
-scripts/backup-production.sh \
+scripts/ops/backup-production.sh \
   --mode production --output-dir /operator-approved/encrypted-backups \
   --media-root /operator-approved/private-media --db-host db --db-port 3306 \
   --db-name portfolio_data --db-user backup_user \
@@ -120,7 +120,7 @@ container logs into a data backup.
 
 ## Restore safety
 
-`scripts/restore-production.sh` delegates to the same verifier. It checks the
+`scripts/ops/restore-production.sh` delegates to the same verifier. It checks the
 manifest format/version, directory allow-list, artifact sizes/checksums,
 media-manifest checksums, deterministic managed-key grammar, duplicate and
 unrecognized archive members, symlinks, traversal, and plaintext checksums
@@ -145,9 +145,9 @@ outside this tool and require an approved Stage-5 change procedure.
 
 ## Disaster-recovery rehearsal
 
-The stable `scripts/run-stage4c-dr-rehearsal.ps1` runner creates a named,
+The stable `scripts/ops/run-stage4c-dr-rehearsal.ps1` runner creates a named,
 loopback-only disposable production-like source stack and a distinct restore
-stack. It uses `scripts/stage4c-dr-fixture.php`, which refuses any namespace
+stack. It uses `scripts/ops/stage4c-dr-fixture.php`, which refuses any namespace
 other than an exact generated source `ather_stage4c_dr_<24 lowercase hex>` or
 restore `ather_stage4c_restore_<24 lowercase hex>` name.
 The fixture creates one active synthetic Owner, a complete profile and contact

@@ -76,7 +76,7 @@ parameters:
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/migrate-phase2-private-media.php
+			path: scripts/ops/migrate-phase2-private-media.php
 
 		-
 			message: '#^Call to an undefined method DOMNameSpaceNode\|DOMNode\:\:getAttribute\(\)\.$#'
@@ -340,7 +340,7 @@ parameters:
 			message: '#^Variable \$argv might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
-			path: scripts/stage4c-recovery.php
+			path: scripts/ops/stage4c-recovery.php
 
 		-
 			message: '#^Offset ''category_order'' does not exist on array\{taxonomy_version\: string, entries\: list\<array\<string, mixed\>\>, aliases\: array\<string, array\<string, mixed\>\>\}\.$#'

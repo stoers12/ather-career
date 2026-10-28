@@ -6,12 +6,12 @@ final class OperationalRecoveryStaticTest
 {
     public static function run(TestEnvironment $environment): void
     {
-        $recovery = self::read('scripts/stage4c-recovery.php');
-        $backupWrapper = self::read('scripts/backup-production.sh');
-        $restoreWrapper = self::read('scripts/restore-production.sh');
-        $fixture = self::read('scripts/stage4c-dr-fixture.php');
-        $negative = self::read('scripts/stage4c-negative-recovery-tests.php');
-        $rehearsal = self::read('scripts/run-stage4c-dr-rehearsal.ps1');
+        $recovery = self::read('scripts/ops/stage4c-recovery.php');
+        $backupWrapper = self::read('scripts/ops/backup-production.sh');
+        $restoreWrapper = self::read('scripts/ops/restore-production.sh');
+        $fixture = self::read('scripts/ops/stage4c-dr-fixture.php');
+        $negative = self::read('scripts/ops/stage4c-negative-recovery-tests.php');
+        $rehearsal = self::read('scripts/ops/run-stage4c-dr-rehearsal.ps1');
         $documentation = self::read('docs/STAGE4C_RECOVERY_OPERATIONS.md');
         $productionCompose = self::read('docker-compose.production.yml');
         $developmentCompose = self::read('docker-compose.yml');

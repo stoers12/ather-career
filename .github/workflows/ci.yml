@@ -46,7 +46,7 @@ jobs:
         run: docker compose -p ather-career-ci -f docker-compose.production.yml config --quiet
 
       - name: Verify pinned final-profile catalog
-        run: python3 scripts/build-profile-catalog.py --check
+        run: python3 scripts/tools/build-profile-catalog.py --check
 
       - name: Build production PHP image
         run: docker compose -p ather-career-ci -f docker-compose.production.yml build web
@@ -692,7 +692,7 @@ jobs:
       - name: Seed isolated public HTTP fixture
         run: |
           set -euo pipefail
-          fixture() { docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e ATHERCAR_CI_SMOKE_FIXTURE=1 "$@" web php scripts/ci-public-smoke-fixture.php; }
+          fixture() { docker compose -p ather-career-ci -f docker-compose.production.yml exec -T -e ATHERCAR_CI_SMOKE_FIXTURE=1 "$@" web php scripts/ci/ci-public-smoke-fixture.php; }
           if fixture -e DB_NAME=incorrect_ci_database >/dev/null 2>&1; then echo 'Fixture accepted wrong database'; exit 1; fi
           if fixture -e EXPECTED_OIDC_ISSUER=https://wrong-ci.invalid/ >/dev/null 2>&1; then echo 'Fixture accepted wrong issuer'; exit 1; fi
           if fixture -e PRESERVED_V1_OIDC_SUBJECT=wrong-ci-owner >/dev/null 2>&1; then echo 'Fixture accepted wrong subject'; exit 1; fi
@@ -727,7 +727,7 @@ jobs:
             cp /tmp/ather-career-ci-oidc/cert.pem /usr/local/share/ca-certificates/ather-career-ci-oidc.crt
             update-ca-certificates >/dev/null 2>&1
           '
-          docker exec -d -e ATHERCAR_CI_OIDC_MOCK=1 -e ATHERCAR_CI_OIDC_INVALID_METADATA=1 ather-career-ci-web-1 php scripts/ci-oidc-discovery-mock.php /tmp/ather-career-ci-oidc
+          docker exec -d -e ATHERCAR_CI_OIDC_MOCK=1 -e ATHERCAR_CI_OIDC_INVALID_METADATA=1 ather-career-ci-web-1 php scripts/ci/ci-oidc-discovery-mock.php /tmp/ather-career-ci-oidc
           for _ in $(seq 1 15); do
             if docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php -r 'exit(file_get_contents("https://127.0.0.1:9443/.well-known/openid-configuration") === false ? 1 : 0);' >/dev/null 2>&1; then break; fi
             sleep 1
@@ -738,7 +738,7 @@ jobs:
             catch (Auth0OidcException $error) { if ($error->safeReason !== "discovery_invalid") exit(1); }
           '
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web sh -lc 'kill "$(cat /tmp/ather-career-ci-oidc/mock.pid)"; sleep 1'
-          docker exec -d -e ATHERCAR_CI_OIDC_MOCK=1 ather-career-ci-web-1 php scripts/ci-oidc-discovery-mock.php /tmp/ather-career-ci-oidc
+          docker exec -d -e ATHERCAR_CI_OIDC_MOCK=1 ather-career-ci-web-1 php scripts/ci/ci-oidc-discovery-mock.php /tmp/ather-career-ci-oidc
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php -r '
             require "includes/auth0_oidc.php";
             $config = auth0ConfigurationFromEnvironment();

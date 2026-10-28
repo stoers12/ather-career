@@ -55,7 +55,7 @@ final class LegacyBackendRemovalStaticTest
             phase2Assert(is_file(PHASE2_REPOSITORY_ROOT . '/' . $path), "Owner/Auth0 route is missing: {$path}");
         }
 
-        $smoke = self::read('scripts/run-production-smoke.ps1');
+        $smoke = self::read('scripts/ops/run-production-smoke.ps1');
         foreach (['/admin.php', '/login.php', '/logout.php', '/personal_info.php', '/projects.php', '/messages.php', '/api/projects.php'] as $path) {
             phase2Assert(str_contains($smoke, "'{$path}'") && str_contains($smoke, 'Assert-HttpStatus'), "Production smoke coverage no longer requires HTTP 404 for {$path}.");
         }

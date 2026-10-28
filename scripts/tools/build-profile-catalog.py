@@ -5,7 +5,7 @@ import json
 import re
 import sys
 
-ROOT = Path(__file__).resolve().parents[1] / 'data/profile-catalog'
+ROOT = Path(__file__).resolve().parents[2] / 'data/profile-catalog'
 LAUNCH_COUNTRIES = ['JO','PS','SA','AE','QA','KW','BH','OM','IQ','LB','SY','YE','EG']
 def encoded(value):
     return (json.dumps(value, ensure_ascii=False, indent=2) + '\n').encode('utf-8')

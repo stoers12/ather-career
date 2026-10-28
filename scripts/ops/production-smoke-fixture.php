@@ -12,12 +12,12 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/authorization.php';
-require_once __DIR__ . '/../includes/portfolio_scoped_data.php';
-require_once __DIR__ . '/../includes/public_lifecycle.php';
-require_once __DIR__ . '/../includes/public_url.php';
-require_once __DIR__ . '/../includes/media_access.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/authorization.php';
+require_once __DIR__ . '/../../includes/portfolio_scoped_data.php';
+require_once __DIR__ . '/../../includes/public_lifecycle.php';
+require_once __DIR__ . '/../../includes/public_url.php';
+require_once __DIR__ . '/../../includes/media_access.php';
 
 const PRODUCTION_SMOKE_PREFIX = 'ather_production_smoke_';
 
@@ -106,7 +106,7 @@ function productionSmokeCreatePng(string $path, int $red, int $green, int $blue)
 function productionSmokeExpectedMigrations(): array
 {
     $expected = [];
-    foreach (glob(__DIR__ . '/../database/migrations/[0-9][0-9][0-9]_*.sql') ?: [] as $path) {
+    foreach (glob(__DIR__ . '/../../database/migrations/[0-9][0-9][0-9]_*.sql') ?: [] as $path) {
         if (preg_match('/\/([0-9]{3})_([a-z0-9][a-z0-9_-]*)\.sql$/', str_replace('\\', '/', $path), $matches) !== 1) {
             throw new RuntimeException('The repository migration manifest is malformed.');
         }

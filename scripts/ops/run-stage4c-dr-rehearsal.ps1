@@ -101,7 +101,7 @@ function Convert-DrJson([string]$Value, [string]$Name) {
 }
 
 function Invoke-DrFixture([string]$Container, [string]$DatabaseNamespace, [string]$Action, [string]$Slug) {
-    $output = Invoke-DrDocker @('exec', '--user', 'www-data', '--env', 'ATHERCAR_STAGE4C_DR=1', '--env', "ATHERCAR_STAGE4C_DR_PROJECT=$DatabaseNamespace", $Container, 'php', 'scripts/stage4c-dr-fixture.php', $Action, $Slug)
+    $output = Invoke-DrDocker @('exec', '--user', 'www-data', '--env', 'ATHERCAR_STAGE4C_DR=1', '--env', "ATHERCAR_STAGE4C_DR_PROJECT=$DatabaseNamespace", $Container, 'php', 'scripts/ops/stage4c-dr-fixture.php', $Action, $Slug)
     return Convert-DrJson $output 'fixture'
 }
 
@@ -218,11 +218,11 @@ try {
 
     Invoke-DrDocker @('exec', $sourceWeb, 'sh', '-lc', 'mkdir -p /tmp/stage4c-backups && chown www-data:www-data /tmp/stage4c-backups') | Out-Null
     $backupWatch = [System.Diagnostics.Stopwatch]::StartNew()
-    $backupOutput = Invoke-DrDocker @('exec', '--user', 'www-data', '--env', "STAGE4C_REHEARSAL_PASSWORD=$($env:DB_PASSWORD)", $sourceWeb, 'php', 'scripts/stage4c-recovery.php', 'backup', '--mode', 'disposable-rehearsal', '--output-dir', '/tmp/stage4c-backups', '--media-root', '/var/lib/ather-career/storage', '--db-host', 'db', '--db-port', '3306', '--db-name', $sourceDatabase, '--db-user', 'stage4c_app', '--db-password-env', 'STAGE4C_REHEARSAL_PASSWORD', '--quiesced-confirmation', 'I_CONFIRM_QUIESCED_STAGE4C', '--allow-unencrypted-rehearsal', '--app-commit', $head, '--image-identity', $imageId)
+    $backupOutput = Invoke-DrDocker @('exec', '--user', 'www-data', '--env', "STAGE4C_REHEARSAL_PASSWORD=$($env:DB_PASSWORD)", $sourceWeb, 'php', 'scripts/ops/stage4c-recovery.php', 'backup', '--mode', 'disposable-rehearsal', '--output-dir', '/tmp/stage4c-backups', '--media-root', '/var/lib/ather-career/storage', '--db-host', 'db', '--db-port', '3306', '--db-name', $sourceDatabase, '--db-user', 'stage4c_app', '--db-password-env', 'STAGE4C_REHEARSAL_PASSWORD', '--quiesced-confirmation', 'I_CONFIRM_QUIESCED_STAGE4C', '--allow-unencrypted-rehearsal', '--app-commit', $head, '--image-identity', $imageId)
     $backupDuration = $backupWatch.Elapsed
     $backup = Convert-DrJson $backupOutput 'backup'
     Assert-Dr ($backup.ok -eq $true -and [int]$backup.recognized_media_file_count -eq [int]$before.media_files) 'The disposable backup result is incomplete.'
-    $verifyOutput = Invoke-DrDocker @('exec', '--user', 'www-data', $sourceWeb, 'php', 'scripts/stage4c-recovery.php', 'verify', '--mode', 'disposable-rehearsal', '--backup-dir', ("/tmp/stage4c-backups/" + [string]$backup.directory))
+    $verifyOutput = Invoke-DrDocker @('exec', '--user', 'www-data', $sourceWeb, 'php', 'scripts/ops/stage4c-recovery.php', 'verify', '--mode', 'disposable-rehearsal', '--backup-dir', ("/tmp/stage4c-backups/" + [string]$backup.directory))
     $verified = Convert-DrJson $verifyOutput 'backup verification'
     Assert-Dr ($verified.ok -eq $true -and $verified.content_manifest_sha256 -eq $before.media_manifest_sha256) 'The source backup manifest did not verify.'
     Set-DrCheckpoint 'backup-verified'
@@ -251,12 +251,12 @@ try {
     Invoke-DrDocker @('exec', $runnerContainer, 'sh', '-lc', 'mkdir -p /tmp/stage4c-inbox') | Out-Null
     Invoke-DrDocker @('cp', $backupHost, ("${runnerContainer}:/tmp/stage4c-inbox/backup")) | Out-Null
     $restoreWatch = [System.Diagnostics.Stopwatch]::StartNew()
-    $restoreOutput = Invoke-DrDocker @('exec', '--env', "STAGE4C_REHEARSAL_PASSWORD=$rootPassword", $runnerContainer, 'php', 'scripts/stage4c-recovery.php', 'restore', '--mode', 'disposable-rehearsal', '--backup-dir', '/tmp/stage4c-inbox/backup', '--target-media-root', '/var/lib/ather-career/storage', '--db-host', 'db', '--db-port', '3306', '--target-db', $restoreDatabase, '--db-user', 'stage4c_restore', '--db-password-env', 'STAGE4C_REHEARSAL_PASSWORD')
+    $restoreOutput = Invoke-DrDocker @('exec', '--env', "STAGE4C_REHEARSAL_PASSWORD=$rootPassword", $runnerContainer, 'php', 'scripts/ops/stage4c-recovery.php', 'restore', '--mode', 'disposable-rehearsal', '--backup-dir', '/tmp/stage4c-inbox/backup', '--target-media-root', '/var/lib/ather-career/storage', '--db-host', 'db', '--db-port', '3306', '--target-db', $restoreDatabase, '--db-user', 'stage4c_restore', '--db-password-env', 'STAGE4C_REHEARSAL_PASSWORD')
     $restoreDuration = $restoreWatch.Elapsed
     $restored = Convert-DrJson $restoreOutput 'restore'
     Assert-Dr ($restored.ok -eq $true -and [int]$restored.recognized_media_file_count -eq [int]$before.media_files) 'The disposable restore result is incomplete.'
     Set-DrCheckpoint 'restore-complete'
-    $negativeOutput = Invoke-DrDocker @('exec', $runnerContainer, 'php', 'scripts/stage4c-negative-recovery-tests.php')
+    $negativeOutput = Invoke-DrDocker @('exec', $runnerContainer, 'php', 'scripts/ops/stage4c-negative-recovery-tests.php')
     $negative = Convert-DrJson $negativeOutput 'negative recovery tests'
     Assert-Dr ($negative.ok -eq $true -and @($negative.negative_cases).Count -ge 16) 'The required negative recovery cases did not pass.'
     Set-DrCheckpoint 'negative-complete'

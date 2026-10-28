@@ -7,11 +7,11 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/media_migration.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/media_migration.php';
 
 if (count($argv) !== 3 || $argv[1] !== '--source-root' || !isAbsoluteFilesystemPath($argv[2])) {
-    fwrite(STDERR, "Usage: php scripts/migrate-phase2-private-media.php --source-root <absolute-v1-root>\n");
+    fwrite(STDERR, "Usage: php scripts/ops/migrate-phase2-private-media.php --source-root <absolute-v1-root>\n");
     exit(1);
 }
 

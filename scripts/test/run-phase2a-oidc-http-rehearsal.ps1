@@ -27,7 +27,7 @@ openssl req -x509 -newkey rsa:2048 -sha256 -nodes -days 1 \
   -subj /CN=ather-career-ci-oidc -addext subjectAltName=IP:127.0.0.1 >/dev/null 2>&1
 cp /tmp/ather-career-ci-oidc/cert.pem /usr/local/share/ca-certificates/ather-phase2a.crt
 update-ca-certificates >/dev/null 2>&1
-php scripts/ci-oidc-discovery-mock.php /tmp/ather-career-ci-oidc >/dev/null 2>&1 &
+php scripts/ci/ci-oidc-discovery-mock.php /tmp/ather-career-ci-oidc >/dev/null 2>&1 &
 exec php -S 0.0.0.0:8080 -t /var/www/html >/dev/null 2>&1
 '@
 
@@ -306,7 +306,7 @@ function Initialize-RunWebRoot([string]$sourceRoot, [string]$webRootPath, [strin
         $vendorMountpoint = Join-Path $safeRoot 'vendor'
         if (Test-Path -LiteralPath $vendorMountpoint) { throw 'Disposable web source already contained a vendor path.' }
         New-Item -ItemType Directory -Path $vendorMountpoint | Out-Null
-        foreach ($relative in @('owner_oidc_callback.php', 'scripts/ci-oidc-discovery-mock.php', 'composer.lock') + $candidateFiles) {
+        foreach ($relative in @('owner_oidc_callback.php', 'scripts/ci/ci-oidc-discovery-mock.php', 'composer.lock') + $candidateFiles) {
             $original = Join-Path $sourceRoot $relative
             $staged = Join-Path $safeRoot $relative
             if (-not (Test-Path -LiteralPath $staged -PathType Leaf) -or

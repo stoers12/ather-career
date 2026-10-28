@@ -299,7 +299,7 @@ function Invoke-SmokeFixture([string]$Container, [string]$Project, [string]$Acti
         '--env', 'ATHERCAR_PRODUCTION_SMOKE=1',
         '--env', "ATHERCAR_PRODUCTION_SMOKE_PROJECT=$Project",
         $Container,
-        'php', 'scripts/production-smoke-fixture.php', $Action, $Slug
+        'php', 'scripts/ops/production-smoke-fixture.php', $Action, $Slug
     )
     $jsonResult = @($result -split "`r?`n" | Where-Object { $_ -match '^\{"ok":' } | Select-Object -Last 1) -join ''
     try {
@@ -403,7 +403,7 @@ function Invoke-SmokeFixtureCompose([string]$Project, [string]$Action, [string]$
         '--entrypoint', 'php',
         '--env', 'ATHERCAR_PRODUCTION_SMOKE=1',
         '--env', "ATHERCAR_PRODUCTION_SMOKE_PROJECT=$Project",
-        'web', 'scripts/production-smoke-fixture.php', $Action, $Slug
+        'web', 'scripts/ops/production-smoke-fixture.php', $Action, $Slug
     )
     return Convert-FixtureOutput $output
 }

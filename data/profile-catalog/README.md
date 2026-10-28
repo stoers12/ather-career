@@ -54,8 +54,8 @@ See [handoff 26](../../docs/auth-onboarding/26-LAUNCH-COUNTRY-CATALOG.md).
 Offline reproduction/check (Python standard library only):
 
 ```sh
-python3 scripts/build-profile-catalog.py
-python3 scripts/build-profile-catalog.py --check
+python3 scripts/tools/build-profile-catalog.py
+python3 scripts/tools/build-profile-catalog.py --check
 ```
 
 The tool checks all pinned input hashes, counts, labels, exact membership and the

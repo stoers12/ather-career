@@ -87,7 +87,7 @@ it must never hydrate over current Profile edits from an old draft.
 
 [Provenance JSON](../../../data/profile-catalog/provenance.json) records immutable
 URLs/release/commit identifiers, all raw-source/notice checksums and byte counts,
-entry counts and generated checksum. [Offline generator](../../../scripts/build-profile-catalog.py)
+entry counts and generated checksum. [Offline generator](../../../scripts/tools/build-profile-catalog.py)
 reproduces exact primary CLDR AR/EN labels filtered through an independent
 249-entry ISO snapshot. CLDR labels alone never define membership. Macroregions,
 reserved/user-assigned/non-ISO/retired examples and alternate labels are excluded.
@@ -113,7 +113,7 @@ or production bypass is added. Browser contexts use private CLI-created sessions
 Focused CI integration uses the existing generated database-scoped user for:
 
 ```sh
-python3 scripts/build-profile-catalog.py --check
+python3 scripts/tools/build-profile-catalog.py --check
 php scripts/test/run-final-profile-tests.php
 php scripts/test/run-final-profile-route-tests.php
 ```
