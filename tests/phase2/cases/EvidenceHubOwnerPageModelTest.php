@@ -43,7 +43,9 @@ final class EvidenceHubOwnerPageModelTest
             phase2Assert(str_contains($editPresentation . $presentation, $anchor) || str_contains($guidance, "'anchor' => '" . trim($anchor, '#') . "'"), "Evidence fragment {$anchor} is missing.");
         }
         phase2Assert(str_contains(file_get_contents($root . 'public/assets/js/evidence_hub.js'), 'targetCard()') && str_contains(file_get_contents($root . 'public/assets/js/evidence_hub.js'), 'revealFragment()'), 'Targeted project reveal is missing.');
-        phase2Assert(str_contains(file_get_contents($root . 'docker/apache/vhost.conf'), '^/owner/projects/[1-9][0-9]*/evidence/?$'), 'Clean evidence route is missing.');
+        RouteContract::assertRoute('/owner/projects/7/evidence', 'owner_project_evidence.php', null, 'Clean evidence route is missing.');
+        RouteContract::assertRoute('/owner/projects/7/evidence/', 'owner_project_evidence.php', null, 'Clean evidence route lost its optional trailing slash.');
+        RouteContract::assertNoRoute('/owner/projects/0/evidence', 'Clean evidence route accepts a non-positive project id.');
     }
 
     private static function fractionalEpochParsing(): void

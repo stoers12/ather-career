@@ -11,8 +11,11 @@ function startOwnerSession(): void
 {
     startApplicationSession(OWNER_SESSION_NAME);
     if (PHP_SAPI !== 'cli' && currentInternalUserSession() !== null) {
+        // Behind the front controller every script is public/index.php, so the
+        // routed entry script identifies the request (ENG-09 design 7a.1).
+        $routedScript = class_exists(\Ather\Http\CurrentRoute::class) ? \Ather\Http\CurrentRoute::entryScript() : null;
         expireEvidenceHubUndoForOwnerRequest(
-            basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')),
+            $routedScript ?? basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')),
             (string) ($_SERVER['REQUEST_METHOD'] ?? ''),
             explode('?', (string) ($_SERVER['REQUEST_URI'] ?? ''), 2)[0],
             is_array($_POST) ? $_POST : []

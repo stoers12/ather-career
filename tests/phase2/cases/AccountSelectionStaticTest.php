@@ -8,7 +8,6 @@ final class AccountSelectionStaticTest
     {
         $root = PHASE2_REPOSITORY_ROOT . '/';
         $route = (string) file_get_contents($root . 'owner_switch_account.php');
-        $shim = (string) file_get_contents($root . 'public/owner_switch_account.php');
         $session = (string) file_get_contents($root . 'includes/owner_session.php');
         $internalSession = (string) file_get_contents($root . 'includes/session.php');
         $oidc = (string) file_get_contents($root . 'includes/auth0_oidc.php');
@@ -16,7 +15,6 @@ final class AccountSelectionStaticTest
         $callback = (string) file_get_contents($root . 'owner_oidc_callback.php');
         $retry = (string) file_get_contents($root . 'owner_auth_retry.php');
         $recovery = (string) file_get_contents($root . 'includes/owner_auth_recovery.php');
-        $retryShim = (string) file_get_contents($root . 'public/owner_auth_retry.php');
         $stylesheet = (string) file_get_contents($root . 'public/assets/css/style.css');
 
         phase2Assert(str_contains($route, "httpRequireMethod(['POST'])")
@@ -46,16 +44,16 @@ final class AccountSelectionStaticTest
             && str_contains($layout, 'getCsrfToken()')
             && str_contains($layout, 'Use another account')
             && str_contains($layout, 'lang="ar" dir="rtl"'), 'Account selection must remain keyboard-operable and follow the workspace and Evidence Hub locale.');
-        phase2Assert(str_contains($shim, "require dirname(__DIR__) . '/app/owner_switch_account.php'")
-            && str_contains($callback, 'resolveAuth0InternalUser')
+        RouteContract::assertRoute('/owner_switch_account.php', 'owner_switch_account.php', null, 'Account selection is not routed to its handler.');
+        RouteContract::assertRoute('/owner_auth_retry.php', 'owner_auth_retry.php', null, 'Recovery retry is not routed to its handler.');
+        phase2Assert(str_contains($callback, 'resolveAuth0InternalUser')
             && !preg_match('/logout_uri|federated|account_link|account_merge|INSERT\s+INTO\s+users/i', $route), 'Selection must return through the existing exact binding and never federate logout or create accounts.');
         phase2Assert(str_contains($retry, "httpRequireMethod(['POST'])")
             && str_contains($retry, "requireValidCsrfToken(\$_POST['csrf_token'] ?? null)")
             && strpos($retry, 'requireValidCsrfToken') < strpos($retry, 'beginFreshOwnerAccountSelectionSession')
             && str_contains($retry, 'currentInternalUserSession() !== null')
             && str_contains($retry, "consumeRateLimit('oidc_start'")
-            && str_contains($retry, "'login'")
-            && str_contains($retryShim, "require dirname(__DIR__) . '/app/owner_auth_retry.php'"), 'Recovery retry lost its anonymous POST, CSRF, rotation, or login-prompt contract.');
+            && str_contains($retry, "'login'"), 'Recovery retry lost its anonymous POST, CSRF, rotation, or login-prompt contract.');
         phase2Assert(str_contains($callback, "=== 'authorization_denied'")
             && str_contains($callback, 'beginFreshOwnerAccountSelectionSession()')
             && str_contains($callback, 'renderOwnerAuthRecoveryPage(')

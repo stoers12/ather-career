@@ -10,6 +10,7 @@ require_once __DIR__ . '/support/SyntheticFixtures.php';
 require_once __DIR__ . '/support/TestAuthenticationContext.php';
 require_once __DIR__ . '/support/StaticArchitectureGuards.php';
 require_once __DIR__ . '/support/SplitSourceFile.php';
+require_once __DIR__ . '/support/RouteContract.php';
 require_once __DIR__ . '/support/owner-journey-fixtures.php';
 require_once __DIR__ . '/support/evidence-hub-technology-review-schema.php';
 

@@ -69,7 +69,8 @@ final class LegacyBackendRemovalStaticTest
         phase2Assert(str_contains($ownerActions, 'function ' . 'handle' . 'Authorized' . 'Project' . 'Action('), 'The authorized Owner Project action handler is missing.');
 
         foreach (['docker/apache/vhost.conf'] as $path) {
-            phase2Assert(str_contains(self::read($path), 'RewriteRule ^/p/'), "Canonical /p/<slug> routing is missing from {$path}.");
+            phase2Assert(str_contains(self::read($path), 'RewriteRule ^ index.php [END]'), "The front controller is missing from {$path}.");
+            RouteContract::assertRoute('/p/ab-1', 'public_portfolio.php', ['slug' => 'ab-1'], 'Canonical /p/<slug> routing is missing from config/routes.php.');
         }
     }
 

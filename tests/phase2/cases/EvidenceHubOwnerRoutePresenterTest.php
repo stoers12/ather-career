@@ -22,9 +22,6 @@ final class EvidenceHubOwnerRoutePresenterTest
     private static function routeAndWrapperContracts(array $fixtures): void
     {
         $route = self::read('owner_evidence_hub.php');
-        $wrapper = self::read('public/owner_evidence_hub.php');
-        $productionVhost = self::read('docker/apache/vhost.conf');
-        $developmentVhost = self::read('docker/apache/vhost.conf');
         $canonical = $fixtures['canonical_path'];
         phase2Assert(is_string($canonical), 'Owner page fixture canonical path is invalid.');
 
@@ -36,9 +33,13 @@ final class EvidenceHubOwnerRoutePresenterTest
         phase2Assert(str_contains($route, "=== 'HEAD'") && str_contains($route, 'exit;'), 'HEAD handling does not terminate before rendering a response body.');
         phase2Assert(!preg_match('/\$_(?:GET|REQUEST|COOKIE)\b/', $route), 'Protected Evidence Hub route accepts request input outside its protected action boundary.');
         phase2Assert(!str_contains($route, "\$_POST['recommendation_key']") && !str_contains($route, "\$_POST['rule_version']") && !str_contains($route, "\$_POST['evidence_fingerprint']") && !str_contains($route, "\$_POST['target_ref']"), 'Protected Evidence Hub route accepts client recommendation authority.');
-        phase2AssertSame("<?php\n\nrequire dirname(__DIR__) . '/app/owner_evidence_hub.php';\n", str_replace("\r\n", "\n", self::read('public/owner_evidence_hub.php')), 'Production wrapper diverged from the root handler convention.');
-        foreach ([$productionVhost, $developmentVhost] as $vhost) {
-            phase2Assert(str_contains($vhost, '^/owner/evidence-hub/?$') && str_contains($vhost, '/owner_evidence_hub.php'), 'Apache route rewrite is missing or accepts a different path.');
+        foreach (['/owner/evidence-hub', '/owner/evidence-hub/', '/owner_evidence_hub.php'] as $path) {
+            RouteContract::assertRoute($path, 'owner_evidence_hub.php', null, "The Evidence Hub route is missing {$path}.");
+            // Undo stays alive only for this request identity (ENG-09 design 7a.1).
+            phase2AssertSame('owner_evidence_hub.php', RouteContract::resolve($path)['script'] ?? null, "{$path} lost the Evidence Hub request identity.");
+        }
+        foreach (['/owner/evidence-hubx', '/owner/evidence-hub/x', '/Owner/evidence-hub'] as $path) {
+            RouteContract::assertNoRoute($path, "The Evidence Hub route accepts a different path: {$path}.");
         }
     }
 

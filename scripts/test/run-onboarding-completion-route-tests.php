@@ -156,7 +156,7 @@ $servers=[];$users=[];$secrets=[];$environment=null;$initial=null;$exitCode=0;$p
 try {
     $environment=TestEnvironment::create(); $root=$environment->namespaceRoot.'/completion-http';
     mkdir($root,0700); mkdir($root.'/sessions',0700); mkdir($root.'/arrivals',0700); mkdir($root.'/http',0700); mkdir($root.'/http/public',0700);
-    symlink(realpath(__DIR__.'/../..'),$root.'/http/app'); copy(__DIR__.'/../../public/owner_onboarding_completion.php',$root.'/http/public/owner_onboarding_completion.php');
+    symlink(realpath(__DIR__.'/../..'),$root.'/http/app'); file_put_contents($root.'/http/public/owner_onboarding_completion.php',"<?php\n\nrequire dirname(__DIR__) . '/app/owner_onboarding_completion.php';\n");
     completionHttpFixtureCopies($root); compHttpControl();
     session_save_path($root.'/sessions'); session_name(OWNER_SESSION_NAME); ini_set('session.cache_limiter','');
     $database=getDatabaseConnection();
