@@ -77,7 +77,7 @@ The hidden `-TestMigrationFailure` hook requires `-Migrate` and an explicit `eng
 Run the Pester-free safety suite:
 
 ~~~powershell
-pwsh -NoProfile -File scripts/test/test-release-local.ps1
+pwsh -NoProfile -File tests/Integration/test-release-local.ps1
 ~~~
 
 CI runs this command on every push and PR without `ComposeRoot`, so it needs no Docker. It parses PowerShell, checks the template/forbidden service operations, exercises rendered-config rejection cases, verifies the distinct DryRun sentinel and tests redaction (the four secret-bearing MySQL keys are masked; MySQL version metadata stays readable). With the explicit disposable paths/origins/ref parameters shown above, it also executes a real DryRun and verifies release directory contents, Git fetch metadata and stable container identities are unchanged.

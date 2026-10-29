@@ -51,6 +51,7 @@ Use the image-based Phase 2 command and capability requirements in [AGENTS.md â€
 | --- | --- | --- |
 | Static analysis | `composer analyse` (in the PHP image) | `[OK] No errors` |
 | Phase 2 foundation | Image-based command in [AGENTS.md](AGENTS.md#running-tests), mounting this checkout read-only | `Phase 2 test foundation passed.` |
+| PHPUnit (`tests/Unit/` and the legacy adapter) | Image-based PHPUnit command in [AGENTS.md](AGENTS.md#running-tests) | PHPUnit `OK` |
 | Gate registration | `pwsh -NoProfile -File scripts/run-evidence-hub-required-gates.ps1 -RegistrationChallenge` | `REGISTRATION_CHALLENGES_PASSED` |
 | Full required gates | `pwsh -NoProfile -File scripts/run-evidence-hub-required-gates.ps1` | `REQUIRED_GATES_PASSED` |
 
@@ -73,8 +74,8 @@ docs/          Documentation index, maintained references and historical archive
 includes/      Domain functions, repositories, rendering and shared HTTP/auth helpers
 public/        The web document root: the single front controller index.php, health/ready probes and assets/{css,js,fonts,images}
 runtime/       Ignored generated runtime state (tracked placeholders only)
-scripts/       Stable entry points; test/, ci/, ops/, tools/ and approved archive/
-tests/         Phase 2 unit/static cases, fixtures and Playwright browser gates
+scripts/       Stable entry points; ci/, ops/, tools/ and approved archive/
+tests/         Unit/ (PHPUnit), Legacy/ (registered cases), Integration/ (MySQL/HTTP), Browser/ (Playwright), Support/ (shared helpers and fixtures)
 uploads/       Legacy upload locations with tracked placeholders; managed media is private
 ```
 

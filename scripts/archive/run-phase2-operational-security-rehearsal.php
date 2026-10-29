@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 
-require_once __DIR__ . '/../../tests/phase2/bootstrap.php';
+require_once __DIR__ . '/../../tests/Legacy/bootstrap.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/account_operations.php';
 require_once __DIR__ . '/../../includes/authorization.php';

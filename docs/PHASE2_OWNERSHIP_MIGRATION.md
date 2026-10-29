@@ -23,7 +23,7 @@ ambiguous state stops for inspection. P2J-02 does not authorize running this
 against preserved production data. The disposable rehearsal command is:
 
 ```sh
-APP_ENV=test ATHERCAR_TEST_MODE=1 php scripts/test/run-phase2-ownership-rehearsal.php
+APP_ENV=test ATHERCAR_TEST_MODE=1 php tests/Integration/run-phase2-ownership-rehearsal.php
 ```
 
 Migration 004 remains blocked until backfill verifies every resource mapping.

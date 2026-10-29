@@ -12,8 +12,8 @@ Documents marked “classification review” mix current guidance with older sco
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Code layout (`includes/`, `src/`, Composer autoload) and the module-by-module migration rule.
 - [LOCAL_RELEASE.md](LOCAL_RELEASE.md) — Owner local release automation, dry-run, rollback and isolated verification.
-- [EVIDENCE_HUB_0_LITE.md](EVIDENCE_HUB_0_LITE.md) — Authoritative Evidence Hub rules, versioned contracts and private Owner boundary. (kept in place — referenced from `tests/phase2/cases/EvidenceHubContractTest.php`, `AGENTS.md`)
-- [HTTP_CONTRACTS.md](HTTP_CONTRACTS.md) — Active HTTP methods, validation, redirects and public JSON contracts. (kept in place — referenced from `tests/phase2/cases/PublicProjectJsonContractTest.php`)
+- [EVIDENCE_HUB_0_LITE.md](EVIDENCE_HUB_0_LITE.md) — Authoritative Evidence Hub rules, versioned contracts and private Owner boundary. (kept in place — referenced from `tests/Legacy/cases/EvidenceHubContractTest.php`, `AGENTS.md`)
+- [HTTP_CONTRACTS.md](HTTP_CONTRACTS.md) — Active HTTP methods, validation, redirects and public JSON contracts. (kept in place — referenced from `tests/Legacy/cases/PublicProjectJsonContractTest.php`)
 - [P2J09_AUTH0_SETUP.md](P2J09_AUTH0_SETUP.md) — Auth0 application configuration and real-provider verification prerequisites.
 - [PHASE2_OWNERSHIP_MIGRATION.md](PHASE2_OWNERSHIP_MIGRATION.md) — Ownership migration order and disposable rehearsal procedure. (classification review — retained as Living reference)
 - [PHASE2_TESTING.md](PHASE2_TESTING.md) — Phase 2 foundation invocation, disposable namespaces and safety rules.
@@ -24,7 +24,7 @@ Documents marked “classification review” mix current guidance with older sco
 - [STAGE3C_PERFORMANCE_RESILIENCE.md](STAGE3C_PERFORMANCE_RESILIENCE.md) — Current delivery/resilience conventions with dated local performance evidence. (classification review — retained as Living reference)
 - [STAGE4A_RUNTIME_OBSERVABILITY.md](STAGE4A_RUNTIME_OBSERVABILITY.md) — Runtime topology, health/readiness probes and structured event contract.
 - [STAGE4B_EDGE_SECURITY.md](STAGE4B_EDGE_SECURITY.md) — Response security policy, proxy trust and abuse-protection boundaries.
-- [STAGE4C_RECOVERY_OPERATIONS.md](STAGE4C_RECOVERY_OPERATIONS.md) — Recovery formats, backup/restore safety and operational-security procedures. (kept in place — referenced from `tests/phase2/cases/OperationalRecoveryStaticTest.php`)
+- [STAGE4C_RECOVERY_OPERATIONS.md](STAGE4C_RECOVERY_OPERATIONS.md) — Recovery formats, backup/restore safety and operational-security procedures. (kept in place — referenced from `tests/Legacy/cases/OperationalRecoveryStaticTest.php`)
 - [auth-onboarding/01-CURRENT-STATE.md](auth-onboarding/01-CURRENT-STATE.md) — Maintained authentication/onboarding baseline and scoped successor notes.
 - [auth-onboarding/03-SECURITY-PRIVACY-THREAT-MODEL.md](auth-onboarding/03-SECURITY-PRIVACY-THREAT-MODEL.md) — Threats, trust boundaries, mitigations and release blockers.
 - [auth-onboarding/04-DATA-MODEL-AND-MIGRATIONS.md](auth-onboarding/04-DATA-MODEL-AND-MIGRATIONS.md) — Current schema additions, historical proposals and migration constraints.

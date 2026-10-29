@@ -2,6 +2,8 @@
 
 P2J-00 establishes a native PHP test runner. It is intentionally schema-neutral: it does not connect to MySQL, apply migrations, or use repository uploads. Later Phase 2 slices add disposable database and container integration tests to this foundation.
 
+All tests live under `tests/`: `Unit/` contains native PHPUnit tests, `Legacy/` the unchanged registered cases with their bootstrap and registry, `Integration/` MySQL/HTTP rehearsals and workers, `Browser/` Playwright drivers and dedicated browser fixtures, and `Support/` shared helpers, the coverage collector and `fixtures/`. Shared preview pages used by PHP presentation tests also live in `Support/`.
+
 ## Run the deterministic foundation
 
 The runner refuses to start unless both values are explicit:
@@ -33,17 +35,17 @@ Teardown requires a matching run marker and removes only that direct run-owned n
 Run the focused static guard separately when useful:
 
 ```powershell
-php scripts/test/check-phase2-static-architecture.php
+php tests/Integration/check-phase2-static-architecture.php
 ```
 
 ## Registry and PHPUnit
 
-Every fast case is listed once, in `tests/phase2/registry.php`. Two runners execute that same list with one shared `TestEnvironment`:
+Every fast case is listed once, in `tests/Legacy/registry.php`. Two runners execute that same list with one shared `TestEnvironment`:
 
 - `scripts/run-phase2-tests.php`, the original runner. It prints `Phase 2 test foundation passed.`
-- PHPUnit 12.5 (`phpunit.xml.dist`). `tests/phpunit/LegacyPhase2CaseTest.php` turns each registered case into one PHPUnit test. PHPUnit also runs every native test in `tests/phpunit/`.
+- PHPUnit 12.5 (`phpunit.xml.dist`). `tests/Unit/LegacyPhase2CaseTest.php` turns each registered case into one PHPUnit test. PHPUnit also runs every native test in `tests/Unit/`.
 
-**New tests are written natively in PHPUnit** in `tests/phpunit/<Subject>Test.php`:
+**New tests are written natively in PHPUnit** in `tests/Unit/<Subject>Test.php`:
 - `final class … extends PHPUnit\Framework\TestCase`;
 - one test method per behavior;
 - data providers for tables;
@@ -58,7 +60,7 @@ Both runners need `vendor/` with the development packages. The development image
 The `phpunit-coverage` CI job builds the development image with the PCOV driver (`docker/phpunit-coverage.Dockerfile`) and measures line coverage over `src/`, `includes/` and `database/`:
 
 1. PHPUnit writes its report with `--coverage-php`.
-2. The self-contained `scripts/test/run-*.php` runners, which need no database or network, run with `auto_prepend_file=tests/coverage/collect-process.php`. That collector is inert unless `PHASE2_COVERAGE_DIR` and PCOV are both present, and it records each process into its own `.cov` file.
+2. The self-contained `tests/Integration/run-*.php` runners, which need no database or network, run with `auto_prepend_file=tests/Support/collect-process.php`. That collector is inert unless `PHASE2_COVERAGE_DIR` and PCOV are both present, and it records each process into its own `.cov` file.
 3. `phpcov merge` combines everything into `clover.xml` and a text summary, uploaded as the `phpunit-coverage` artifact.
 
 **Not counted yet:** the database-backed rehearsals, race workers and HTTP route runners. Each needs a specific orchestrated database state that CI sets up step by step, so they count only once they become PHPUnit tests with their own fixtures (the deferred full conversion).

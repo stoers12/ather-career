@@ -714,7 +714,7 @@ function Invoke-ProductionSmokeRun([int]$Number, [string]$Head) {
 
         $phaseTwo = Invoke-Native 'docker' @('run', '--rm', '--entrypoint', 'php', '--env', 'APP_ENV=test', '--env', 'ATHERCAR_TEST_MODE=1', '--volume', "$(Get-Location):/workspace:ro", '--workdir', '/workspace', $image, 'scripts/run-phase2-tests.php')
         Assert-Smoke ($phaseTwo -match 'Phase 2 test foundation passed\.') 'The full Phase-2 gate did not pass in the libvips-capable Production image.'
-        $lifecycle = & (Join-Path $PSHOME 'pwsh.exe') -NoProfile -File 'scripts/test/run-phase2-publication-lifecycle-e2e.ps1' -WebContainer $web -DbContainer $db -PublicBaseUrl 'https://localhost:8443' 2>&1 | ForEach-Object { $_.ToString() }
+        $lifecycle = & (Join-Path $PSHOME 'pwsh.exe') -NoProfile -File 'tests/Integration/run-phase2-publication-lifecycle-e2e.ps1' -WebContainer $web -DbContainer $db -PublicBaseUrl 'https://localhost:8443' 2>&1 | ForEach-Object { $_.ToString() }
         if ($LASTEXITCODE -ne 0 -or (($lifecycle -join "`n") -notmatch 'PASS isolated publication lifecycle database teardown')) {
             $lifecycleFailure = @($lifecycle | Where-Object { $_ -match '^FAIL' } | Select-Object -First 1) -join ''
             if ($lifecycleFailure -eq '') {

@@ -111,7 +111,7 @@ All registration providers are native disabled buttons with visible availability
 explanations. There are no forms, credentials, authentication links or account
 mutations; the existing-account link navigates to `/signin.php`.
 
-Pending/success email screens are isolated fixtures under `tests/phase2/support/`,
+Pending/success email screens are isolated fixtures under `tests/Support/`,
 without public route shims. The separate loopback preview chooses a fixed fixture;
 client query claims do not alter it. Direct fixture requests are denied. Fixtures
 start no session, send no email, create no account and grant no verified status or

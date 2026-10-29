@@ -7,11 +7,11 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
-require_once __DIR__ . '/../tests/phase2/bootstrap.php';
+require_once __DIR__ . '/../tests/Legacy/bootstrap.php';
 
 $environment = null;
 $failures = [];
-$tests = require __DIR__ . '/../tests/phase2/registry.php';
+$tests = require __DIR__ . '/../tests/Legacy/registry.php';
 
 try {
     $environment = TestEnvironment::create();

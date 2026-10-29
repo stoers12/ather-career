@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- PHPUnit runs the registered Phase 2 cases through tests/phpunit/LegacyPhase2CaseTest.php
-     and every native test in tests/phpunit/. See docs/PHASE2_TESTING.md. -->
+<!-- PHPUnit runs the registered Phase 2 cases through tests/Unit/LegacyPhase2CaseTest.php
+     and every native test in tests/Unit/. See docs/PHASE2_TESTING.md. -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="tests/phase2/bootstrap.php"
+         bootstrap="tests/Legacy/bootstrap.php"
          colors="false"
          failOnRisky="true"
          failOnWarning="true"
@@ -11,7 +11,7 @@
          cacheDirectory="runtime/phpunit/cache">
     <testsuites>
         <testsuite name="phase2">
-            <directory>tests/phpunit</directory>
+            <directory>tests/Unit</directory>
         </testsuite>
     </testsuites>
     <source>

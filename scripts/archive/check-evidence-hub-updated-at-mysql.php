@@ -16,7 +16,7 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/portfolio_scoped_data.php';
 require_once __DIR__ . '/../../includes/project_evidence_repository.php';
 require_once __DIR__ . '/../../includes/public_lifecycle.php';
-require_once __DIR__ . '/../../tests/phase2/support/publication-mutation-fixtures.php';
+require_once __DIR__ . '/../../tests/Support/publication-mutation-fixtures.php';
 
 $database = getDatabaseConnection();
 $database->exec("SET time_zone = '+00:00'");
