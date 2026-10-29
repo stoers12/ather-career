@@ -55,7 +55,13 @@ Both runners need `vendor/` with the development packages. The development image
 
 ## Coverage
 
-The `phpunit-coverage` CI job builds the development image with the PCOV driver (`docker/phpunit-coverage.Dockerfile`). It runs PHPUnit with line coverage over `src/`, `includes/` and `database/`, prints the summary, and uploads `clover.xml` as the `phpunit-coverage` artifact. Code exercised only by separate processes, such as `scripts/test/run-*.php`, the MySQL rehearsals and HTTP checks, is not counted yet.
+The `phpunit-coverage` CI job builds the development image with the PCOV driver (`docker/phpunit-coverage.Dockerfile`) and measures line coverage over `src/`, `includes/` and `database/`:
+
+1. PHPUnit writes its report with `--coverage-php`.
+2. The self-contained `scripts/test/run-*.php` runners, which need no database or network, run with `auto_prepend_file=tests/coverage/collect-process.php`. That collector is inert unless `PHASE2_COVERAGE_DIR` and PCOV are both present, and it records each process into its own `.cov` file.
+3. `phpcov merge` combines everything into `clover.xml` and a text summary, uploaded as the `phpunit-coverage` artifact.
+
+**Not counted yet:** the database-backed rehearsals, race workers and HTTP route runners. Each needs a specific orchestrated database state that CI sets up step by step, so they count only once they become PHPUnit tests with their own fixtures (the deferred full conversion).
 
 ## CI command
 

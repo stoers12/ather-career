@@ -31,4 +31,4 @@ graphify-out/
 
 # PHPUnit result cache and local coverage output.
 runtime/phpunit/
-coverage/
+/coverage/
