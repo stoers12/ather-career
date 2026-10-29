@@ -36,11 +36,36 @@ Run the focused static guard separately when useful:
 php scripts/test/check-phase2-static-architecture.php
 ```
 
+## Registry and PHPUnit
+
+Every fast case is listed once, in `tests/phase2/registry.php`. Two runners execute that same list with one shared `TestEnvironment`:
+
+- `scripts/run-phase2-tests.php`, the original runner. It prints `Phase 2 test foundation passed.`
+- PHPUnit 12.5 (`phpunit.xml.dist`). `tests/phpunit/LegacyPhase2CaseTest.php` turns each registered case into one PHPUnit test. PHPUnit also runs every native test in `tests/phpunit/`.
+
+**New tests are written natively in PHPUnit** in `tests/phpunit/<Subject>Test.php`:
+- `final class … extends PHPUnit\Framework\TestCase`;
+- one test method per behavior;
+- data providers for tables;
+- `self::assertSame()` so failures show expected and actual values.
+
+Do not add new classes to the registry. Convert an existing registered case to native PHPUnit when you are changing it anyway, then remove it from the registry. A full conversion is deliberately deferred (ENG-08 report).
+
+Both runners need `vendor/` with the development packages. The development image carries them. For a checkout, run `composer install` (without `--no-dev`) once.
+
+## Coverage
+
+The `phpunit-coverage` CI job builds the development image with the PCOV driver (`docker/phpunit-coverage.Dockerfile`). It runs PHPUnit with line coverage over `src/`, `includes/` and `database/`, prints the summary, and uploads `clover.xml` as the `phpunit-coverage` artifact. Code exercised only by separate processes, such as `scripts/test/run-*.php`, the MySQL rehearsals and HTTP checks, is not counted yet.
+
 ## CI command
 
-CI runs the foundation in a disposable PHP container:
+CI runs both runners in the production image, against the checkout and its `composer install`:
 
 ```sh
-docker run --rm -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 \
-  -v "$PWD:/app:ro" -w /app php:8.3-cli php scripts/run-phase2-tests.php
+docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 \
+  -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/run-phase2-tests.php
+docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 \
+  -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" vendor/bin/phpunit --do-not-cache-result
 ```
+
+The required gates run both inside the identity-checked development image.
