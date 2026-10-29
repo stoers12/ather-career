@@ -139,16 +139,37 @@ function tenantPortfolioSnapshot(PDO $database, int $portfolioId): array
     return $snapshot;
 }
 
-/** @return array<string, string> */
-function tenantUploadSnapshot(string $uploadsRoot): array
+function tenantAssertRepositoryUploadsAbsent(): void
 {
-    if (!is_dir($uploadsRoot)) {
-        throw new RuntimeException('The disposable uploads root is unavailable.');
+    $repositoryRoot = realpath(__DIR__ . '/../..');
+    if ($repositoryRoot === false) {
+        throw new RuntimeException('Cannot resolve the repository root for the uploads absence check.');
+    }
+    foreach (array_unique([$repositoryRoot, '/var/www/app']) as $root) {
+        $resolvedRoot = realpath($root);
+        if ($resolvedRoot === false || !is_dir($resolvedRoot)) {
+            throw new RuntimeException('Cannot resolve an application root for the uploads absence check.');
+        }
+        // Listing the parent rejects every entry, including a broken symlink;
+        // a failed lookup must not be mistaken for an absent path.
+        $entries = @scandir($resolvedRoot);
+        if ($entries === false) {
+            throw new RuntimeException('Cannot inspect an application root for the uploads absence check.');
+        }
+        phase2Assert(!in_array('uploads', $entries, true), 'Repository uploads path must remain absent.');
+    }
+}
+
+/** @return array<string, string> */
+function tenantUploadSnapshot(string $legacyFixtureRoot): array
+{
+    if (!is_dir($legacyFixtureRoot)) {
+        throw new RuntimeException('The disposable legacy fixture root is unavailable.');
     }
 
     $snapshot = [];
     $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($uploadsRoot, FilesystemIterator::SKIP_DOTS),
+        new RecursiveDirectoryIterator($legacyFixtureRoot, FilesystemIterator::SKIP_DOTS),
         RecursiveIteratorIterator::LEAVES_ONLY,
     );
     foreach ($iterator as $file) {
@@ -160,7 +181,7 @@ function tenantUploadSnapshot(string $uploadsRoot): array
         if ($hash === false) {
             throw new RuntimeException('Could not snapshot a disposable upload.');
         }
-        $snapshot[str_replace(DIRECTORY_SEPARATOR, '/', substr($path, strlen($uploadsRoot) + 1))] = $hash;
+        $snapshot[str_replace(DIRECTORY_SEPARATOR, '/', substr($path, strlen($legacyFixtureRoot) + 1))] = $hash;
     }
     ksort($snapshot);
 
@@ -202,6 +223,7 @@ $bImageFile = null;
 try {
     TestEnvironment::assertSafeEnvironment(getenv());
     $environment = TestEnvironment::create();
+    tenantAssertRepositoryUploadsAbsent();
     session_name('phase2_tenant_authorization');
 
     $database = getDatabaseConnection();
@@ -227,12 +249,16 @@ try {
 
     $profileB = tenantSeedProfile($database, $portfolioB, 'Private B Profile');
     $skillB = tenantSeedSkill($database, $portfolioB, 'B Skill');
-    $uploadsRoot = realpath(__DIR__ . '/../../uploads');
-    if ($uploadsRoot === false) {
-        throw new RuntimeException('The disposable uploads root is unavailable.');
+    $legacyFixtureDirectory = $environment->namespaceRoot . '/legacy-uploads';
+    if (!mkdir($legacyFixtureDirectory . '/projects', 0700, true)) {
+        throw new RuntimeException('Could not create the disposable legacy fixture root.');
+    }
+    $legacyFixtureRoot = realpath($legacyFixtureDirectory);
+    if ($legacyFixtureRoot === false) {
+        throw new RuntimeException('The disposable legacy fixture root is unavailable.');
     }
     $bImageFilename = 'p2j03-b-' . bin2hex(random_bytes(8)) . '.bin';
-    $bImageFile = $uploadsRoot . DIRECTORY_SEPARATOR . 'projects' . DIRECTORY_SEPARATOR . $bImageFilename;
+    $bImageFile = $legacyFixtureRoot . DIRECTORY_SEPARATOR . 'projects' . DIRECTORY_SEPARATOR . $bImageFilename;
     if (file_put_contents($bImageFile, 'B private project image', LOCK_EX) === false) {
         throw new RuntimeException('Could not create the disposable B image fixture.');
     }
@@ -275,7 +301,7 @@ try {
 
     // T-XTENANT: A sees B identifiers but every read/mutation remains scoped to A.
     $bBeforeA = tenantPortfolioSnapshot($database, $portfolioB);
-    $uploadsBeforeA = tenantUploadSnapshot($uploadsRoot);
+    $uploadsBeforeA = tenantUploadSnapshot($legacyFixtureRoot);
     phase2AssertSame(null, findAuthorizedPersonalInfo($database, $contextA, $profileB), 'A read B private profile.');
     phase2AssertSame(false, updateAuthorizedPersonalInfo($database, $contextA, $profileB, ['full_name' => 'A overwrote B'], (int) loadAuthorizedPersonalInfo($database, $contextA)['profile_version']), 'A updated B profile.');
     phase2AssertSame(null, findAuthorizedSkill($database, $contextA, $skillB), 'A read B skill.');
@@ -292,8 +318,9 @@ try {
     phase2AssertSame(false, deleteAuthorizedProject($database, $contextA, $projectB), 'A deleted B project.');
     phase2AssertSame(null, findAuthorizedMessage($database, $contextA, $messageB), 'A read B message.');
     phase2AssertSame($bBeforeA, tenantPortfolioSnapshot($database, $portfolioB), 'A cross-tenant operation changed B database rows.');
-    phase2AssertSame($uploadsBeforeA, tenantUploadSnapshot($uploadsRoot), 'A cross-tenant operation changed B filesystem state.');
+    phase2AssertSame($uploadsBeforeA, tenantUploadSnapshot($legacyFixtureRoot), 'A cross-tenant operation changed B filesystem state.');
     phase2AssertSame('B private project image', file_get_contents($bImageFile), 'A cross-tenant operation changed B project file contents.');
+    tenantAssertRepositoryUploadsAbsent();
     $passed[] = 'T-XTENANT A_TO_B';
 
     // The same scoped helpers must deny the symmetric B -> A candidates.
@@ -301,7 +328,7 @@ try {
     tenantSetClientTenantCandidates($portfolioA);
     $contextB = requireOwnedPortfolioContext($database);
     $aBeforeB = tenantPortfolioSnapshot($database, $portfolioA);
-    $uploadsBeforeB = tenantUploadSnapshot($uploadsRoot);
+    $uploadsBeforeB = tenantUploadSnapshot($legacyFixtureRoot);
     phase2AssertSame(null, findAuthorizedPersonalInfo($database, $contextB, $profileA), 'B read A private profile.');
     phase2AssertSame(false, updateAuthorizedPersonalInfo($database, $contextB, $profileA, ['full_name' => 'B overwrote A'], (int) loadAuthorizedPersonalInfo($database, $contextB)['profile_version']), 'B updated A profile.');
     phase2AssertSame(null, findAuthorizedSkill($database, $contextB, $skillA), 'B read A skill.');
@@ -312,7 +339,8 @@ try {
     phase2AssertSame(false, deleteAuthorizedProject($database, $contextB, $projectA), 'B deleted A project.');
     phase2AssertSame(null, findAuthorizedMessage($database, $contextB, $messageA), 'B read A message.');
     phase2AssertSame($aBeforeB, tenantPortfolioSnapshot($database, $portfolioA), 'B cross-tenant operation changed A database rows.');
-    phase2AssertSame($uploadsBeforeB, tenantUploadSnapshot($uploadsRoot), 'B cross-tenant operation changed filesystem state.');
+    phase2AssertSame($uploadsBeforeB, tenantUploadSnapshot($legacyFixtureRoot), 'B cross-tenant operation changed filesystem state.');
+    tenantAssertRepositoryUploadsAbsent();
     $passed[] = 'T-XTENANT B_TO_A';
 
     // T-COLLECT: every collection and aggregate is constrained before PHP receives rows.
@@ -338,7 +366,7 @@ try {
     tenantSetClientTenantCandidates($portfolioB);
     $contextA = requireOwnedPortfolioContext($database);
     $bBeforeMass = tenantPortfolioSnapshot($database, $portfolioB);
-    $uploadsBeforeMass = tenantUploadSnapshot($uploadsRoot);
+    $uploadsBeforeMass = tenantUploadSnapshot($legacyFixtureRoot);
     tenantAssertInvalidInput(
         static fn (): int => createAuthorizedPersonalInfo($database, $contextA, ['full_name' => 'Rejected tenant selector', 'portfolio_id' => $portfolioB]),
         'Client portfolio_id was accepted for profile creation.'
@@ -348,8 +376,10 @@ try {
         'Client portfolio_id was accepted for profile update.'
     );
     phase2AssertSame($bBeforeMass, tenantPortfolioSnapshot($database, $portfolioB), 'Client mass-assignment attempt changed B database rows.');
-    phase2AssertSame($uploadsBeforeMass, tenantUploadSnapshot($uploadsRoot), 'Client mass-assignment attempt changed filesystem state.');
+    phase2AssertSame($uploadsBeforeMass, tenantUploadSnapshot($legacyFixtureRoot), 'Client mass-assignment attempt changed filesystem state.');
     $passed[] = 'T-MASS';
+    tenantAssertRepositoryUploadsAbsent();
+    $passed[] = 'T-REPOSITORY-UPLOADS-ABSENT';
 } catch (Throwable $exception) {
     fwrite(STDERR, "FAIL tenant authorization rehearsal: {$exception->getMessage()}\n");
     exit(1);

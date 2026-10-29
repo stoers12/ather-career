@@ -9,6 +9,7 @@ This note describes where PHP code lives and the rule for moving a module from p
 | `handlers/` | Thin request handlers: authentication, CSRF, request shape, then a call into `includes/`. | `public/index.php`, the single front controller, through the route table `config/routes.php`. |
 | `includes/` | Procedural domain logic, repositories and, for migrated modules, compatibility wrappers. | `require_once`. |
 | `src/` | Namespaced classes under `Ather\`, one class per file (PSR-4). | Composer's autoloader only. |
+| `resources/` | Non-PHP resources such as third-party licenses; kept outside the public document root. | Private attribution in the image; not loaded by application code. |
 | `vendor/` | Composer packages and the generated autoloader. Never committed. | `includes/autoload.php`. |
 
 `includes/autoload.php` is the single entry to Composer's autoloader. It fails with a clear message when `vendor/` is missing instead of letting a class lookup fail later.

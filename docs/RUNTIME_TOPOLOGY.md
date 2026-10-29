@@ -8,6 +8,8 @@ Status: ENG-04 Phase A design, **approved with the amendments in section 9** and
 
 **Paths moved by ENG-09 ST-4:** `tests/phpunit/` → `tests/Unit/`; `tests/phase2/cases/`, `bootstrap.php` and `registry.php` → `tests/Legacy/` (cases retain `cases/`); `scripts/test/` → `tests/Integration/`, with browser drivers and dedicated fixtures in `tests/Browser/`; `tests/phase2/support/` → `tests/Support/`, with Playwright gates and dedicated browser pages in `tests/Browser/`; `tests/phase2/fixtures/` → `tests/Support/fixtures/`; `tests/coverage/` → `tests/Support/`. Historical paths below are preserved.
 
+**ENG-09 ST-3 supersedes the ENG-04 attribution location below:** `assets/licenses/LUCIDE.txt` moved to `resources/licenses/LUCIDE.txt`, retained as private attribution in the image outside the public document root. The repository's legacy `uploads/` placeholders were removed; managed media uses private storage, and legacy migration source roots remain explicit parameters. Historical paths below are preserved; the instruction to keep attribution in `assets/licenses/` no longer applies. The retired public-path deny and vhost Alias guards remain unchanged.
+
 ## 1. Current state
 
 ### Evidence and boundaries

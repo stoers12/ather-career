@@ -15,7 +15,7 @@ Retained product order: navigation; headline/hero and illustrative CareerFit AI 
 - `landing.js`: existing theme preference key `ather.evidenceHub.theme`, system fallback, theme controls, progressive mobile menu, Escape and section/resize focus handling. No third-party runtime script.
 - `includes/landing_copy.php`: Arabic/English catalog and escaped static output; no query value is reflected into markup.
 - `includes/landing_icons.php`: 21 static SVGs extracted from the reference's exact Lucide 1.17.0 source; no icon library runtime.
-- `assets/fonts/`: original Noto Sans Arabic 400/500 weights served locally; OFL license included. `assets/licenses/LUCIDE.txt` retains the icon license.
+- `assets/fonts/`: original Noto Sans Arabic 400/500 weights served locally; OFL license included. `resources/licenses/LUCIDE.txt` retains the icon license.
 - `Dockerfile.production`: copy only the new stylesheet, script and fonts into the existing public asset tree. This is a source change; no image build, container mutation or deployment was performed.
 
 No framework, package/dependency manifest, workflow, security-header configuration, auth handler, database, storage or public portfolio route changed. Working sign-in uses the same existing handler; no provider login was initiated in this task.
