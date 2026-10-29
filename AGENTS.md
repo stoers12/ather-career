@@ -97,6 +97,8 @@ Additional checks:
   - Visitor-facing output must always be English. Never read the Owner's workspace preference implicitly.
 
 **UI**
+- For the site redesign and its features, follow [docs/ENGINEERING_GUIDELINES.md](docs/ENGINEERING_GUIDELINES.md): the frontend/backend split, feature contracts, file organization, clean code, no over-engineering, and the Evidence Hub special track. The owner's handoff package `ATHER-Agent-Handoff` is the only authority on how the product looks.
+- Use the project-local `ui-ux-pro-max` skill only as a quality checker (accessibility, touch, responsive, forms, navigation); never to choose colors, fonts or a design system. Read `.agents/skills/ui-ux-pro-max/SKILL.md` and [docs/ui-ux-pro-max.md](docs/ui-ux-pro-max.md); run it from the repository root with `python .agents/skills/ui-ux-pro-max/scripts/search.py`.
 - Every control works without JavaScript; JavaScript only enhances.
 - The layout works at 390px and 1280px with no horizontal overflow, and in RTL.
 - `admin.css` forces button display. Hidden controls need an explicit `[hidden] { display: none !important; }` rule, following the existing pattern.

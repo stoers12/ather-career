@@ -32,3 +32,6 @@ CLEANUP-EXECUTION-MANIFEST-*.md
 # PHPUnit result cache and local coverage output.
 runtime/phpunit/
 /coverage/
+
+# Local agent tooling (UI/UX Pro Max skill); never part of an image.
+.agents/
