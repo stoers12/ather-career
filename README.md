@@ -71,7 +71,7 @@ database/      Baseline SQL, ordered migrations, rollback companions and recover
 docker/        Apache/PHP/Caddy configuration and container entrypoints
 docs/          Documentation index, maintained references and historical archive
 includes/      Domain functions, repositories, rendering and shared HTTP/auth helpers
-public/        The web document root: front controllers, health handler and assets/{css,js,fonts,images}
+public/        The web document root: the single front controller index.php, health/ready probes and assets/{css,js,fonts,images}
 runtime/       Ignored generated runtime state (tracked placeholders only)
 scripts/       Stable entry points; test/, ci/, ops/, tools/ and approved archive/
 tests/         Phase 2 unit/static cases, fixtures and Playwright browser gates
