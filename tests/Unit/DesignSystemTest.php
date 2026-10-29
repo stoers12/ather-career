@@ -113,6 +113,13 @@ final class DesignSystemTest extends TestCase
         self::assertStringStartsWith('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"', $house);
         self::assertStringContainsString('class="lucide lucide-house" aria-hidden="true" focusable="false">', $house);
         self::assertStringEndsWith('</svg>', $house);
+        // Every icon draws something: an empty entry renders an invisible icon.
+        preg_match_all("/^        '([a-z0-9-]+)' => '(.*)',$/m", (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/ather_icons.php'), $icons, PREG_SET_ORDER);
+        self::assertGreaterThanOrEqual(60, count($icons));
+        foreach ($icons as [, $name, $paths]) {
+            self::assertMatchesRegularExpression('/^(<(path|rect|circle|line|polyline|polygon|ellipse)\s[^>]+\/>)+$/', $paths, "Icon {$name} has no drawing elements");
+        }
+        self::assertStringContainsString('<rect width="20" height="14" x="2" y="6" rx="2"/>', atherIcon('briefcase-business'), 'Multi-part icons keep every part');
         $this->expectException(InvalidArgumentException::class);
         atherIcon('not-a-reference-icon');
     }
