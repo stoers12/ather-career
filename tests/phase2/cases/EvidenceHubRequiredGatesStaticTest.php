@@ -17,7 +17,9 @@ final class EvidenceHubRequiredGatesStaticTest
         $httpMatrix = self::read('tests/phase2/cases/EvidenceHubRecommendationActionHttpMySqlTest.php');
         $httpRunner = self::read('scripts/test/run-evidence-hub-http-action-test.php');
         $mysqlMatrix = self::read('tests/phase2/cases/EvidenceHubRecommendationDispositionMySqlTest.php');
-        $phase2Runner = self::read('scripts/run-phase2-tests.php');
+        // The fast runner executes the shared registry; both must hold for a case to run.
+        phase2Assert(str_contains(self::read('scripts/run-phase2-tests.php'), "\$tests = require __DIR__ . '/../tests/phase2/registry.php';"), 'The Phase 2 runner no longer executes the shared registry.');
+        $phase2Runner = self::read('tests/phase2/registry.php');
 
         phase2Assert(
             str_contains($compose, 'EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY: ${EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY:?EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY is required}'),
