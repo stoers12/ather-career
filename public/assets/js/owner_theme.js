@@ -32,12 +32,20 @@
     function applyTheme(value) {
         var theme = value === 'light' || value === 'dark' ? value : resolvedTheme();
         root.setAttribute('data-evidence-hub-theme', theme);
+        // The redesigned workspace root (ather.css) reads its own attribute.
+        var app = document.getElementById('ather-navigation');
+        if (app) app.setAttribute('data-ath-theme', theme);
         if (typeof document.querySelectorAll === 'function') document.querySelectorAll('[data-owner-theme]').forEach(function (button) {
             button.setAttribute('aria-pressed', button.getAttribute('data-owner-theme') === theme ? 'true' : 'false');
         });
     }
 
     applyTheme();
+    // Restore a collapsed workspace sidebar before the first paint; admin.js handles the button.
+    try {
+        var workspace = document.getElementById('ather-navigation');
+        if (workspace && window.localStorage.getItem('ather.sidebar.collapsed') === '1') workspace.setAttribute('data-sidebar-collapsed', 'true');
+    } catch (error) { /* The sidebar stays expanded when storage is unavailable. */ }
     if (typeof document.addEventListener === 'function') document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('[data-owner-theme]').forEach(function (button) {
             button.addEventListener('click', function () {

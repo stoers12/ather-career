@@ -4,17 +4,42 @@
     if (navigationToggle) {
         var sidebar = navigationToggle.closest('.admin-sidebar');
         document.body.classList.add('owner-nav-enabled');
+        var setNavigationLabel = function (open) {
+            var label = navigationToggle.getAttribute(open ? 'data-label-close' : 'data-label-open');
+            if (label) navigationToggle.setAttribute('aria-label', label);
+        };
         navigationToggle.addEventListener('click', function () {
             var open = navigationToggle.getAttribute('aria-expanded') !== 'true';
             navigationToggle.setAttribute('aria-expanded', String(open));
             sidebar.classList.toggle('owner-nav-open', open);
+            setNavigationLabel(open);
         });
         sidebar.addEventListener('keydown', function (event) {
             if (event.key !== 'Escape' || navigationToggle.getAttribute('aria-expanded') !== 'true') return;
             event.preventDefault();
             navigationToggle.setAttribute('aria-expanded', 'false');
             sidebar.classList.remove('owner-nav-open');
+            setNavigationLabel(false);
             navigationToggle.focus();
+        });
+    }
+    // Redesigned workspace: collapse the sidebar to its icon rail (reference behaviour).
+    var collapseButton = document.querySelector('[data-ath-collapse]');
+    var workspace = document.getElementById('ather-navigation');
+    if (collapseButton && workspace) {
+        var setCollapsed = function (collapsed) {
+            workspace.setAttribute('data-sidebar-collapsed', String(collapsed));
+            collapseButton.setAttribute('aria-expanded', String(!collapsed));
+            var label = collapseButton.getAttribute(collapsed ? 'data-label-expand' : 'data-label-collapse');
+            if (label) collapseButton.setAttribute('aria-label', label);
+            // The rail shows every destination, as the reference does.
+            if (collapsed) workspace.querySelectorAll('details.an-group').forEach(function (group) { group.open = true; });
+        };
+        setCollapsed(workspace.getAttribute('data-sidebar-collapsed') === 'true');
+        collapseButton.addEventListener('click', function () {
+            var collapsed = workspace.getAttribute('data-sidebar-collapsed') !== 'true';
+            setCollapsed(collapsed);
+            try { window.localStorage.setItem('ather.sidebar.collapsed', collapsed ? '1' : '0'); } catch (error) { /* Applies to this page only. */ }
         });
     }
     var modal;

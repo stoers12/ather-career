@@ -23,12 +23,12 @@ final class OwnerWorkspacePresentationTest
                 $xpath = new DOMXPath($dom);
                 phase2Assert($xpath->query('//html[@lang="' . $locale . '" and @dir="' . $direction . '"]')->length === 1, 'Workspace language/direction must honor an allowlisted explicit locale.');
                 phase2Assert($xpath->query('//body[contains(@class,"owner-workspace-page") and not(contains(@class,"owner-dashboard-page"))]')->length === 1, 'Project/editor pages must use the shared shell without impersonating Dashboard.');
-                phase2Assert($xpath->query('//aside//nav/a')->length === 7
-                    && $xpath->query('//aside//nav/a[@aria-current="page" and @href="/owner_projects.php?lang=' . $locale . '"]')->length === 1
-                    && $xpath->query('//aside//nav/a[@href="/owner/evidence-hub"]')->length === 1, 'Workspace navigation must expose the seven real routes, one correct active page and unchanged Evidence Hub URL.');
+                phase2Assert($xpath->query('//aside//nav//a')->length === 7
+                    && $xpath->query('//aside//nav//a[@aria-current="page" and @href="/owner_projects.php?lang=' . $locale . '"]')->length === 1
+                    && $xpath->query('//aside//nav//a[@href="/owner/evidence-hub"]')->length === 1, 'Workspace navigation must expose the seven real routes, one correct active page and unchanged Evidence Hub URL.');
                 phase2Assert(str_contains($rendered, 'owner_workspace.css?') && !str_contains($rendered, 'owner_dashboard.css?')
                     && !str_contains($rendered, 'href="/assets/css/admin.css?') && !str_contains($rendered, 'href="/assets/css/style.css?'), 'Shared pages must not load Dashboard content CSS or the frozen legacy cascade.');
-                phase2Assert(str_contains($rendered, '&lt;script&gt;untrusted owner&lt;/script&gt;') && $xpath->query('//bdi/script')->length === 0, 'Workspace identity must escape owner-entered data.');
+                phase2Assert(str_contains($rendered, '&lt;script&gt;untrusted owner&lt;/script&gt;') && $xpath->query('//bdi/script | //strong/script | //summary//script')->length === 0, 'Workspace identity must escape owner-entered data.');
                 foreach (['/owner_switch_account.php', '/owner_logout.php'] as $action) {
                     $form = '//form[@action="' . $action . '" and @method="POST"]';
                     phase2Assert($xpath->query($form)->length === 1 && $xpath->query($form . '/input')->length === 1
@@ -37,7 +37,7 @@ final class OwnerWorkspacePresentationTest
                 }
                 phase2Assert($xpath->query('//button[@data-owner-theme]')->length === 2
                     && $xpath->query('//button[@data-owner-nav-toggle and @aria-controls="owner-navigation" and @aria-expanded="false"]')->length === 1, 'The shared shell must expose accessible theme and menu controls.');
-                phase2Assert($xpath->query('//header[@class="owner-toolbar"]/a[@href="/owner_preview.php"]')->length === 1, 'The workspace toolbar must retain its private Portfolio preview.');
+                phase2Assert($xpath->query('//header[contains(concat(" ", @class, " "), " owner-toolbar ")]//a[@href="/owner_preview.php"]')->length === 1, 'The workspace toolbar must retain its private Portfolio preview.');
                 $alternate = $locale === 'ar' ? 'en' : 'ar';
                 $url = ownerLanguageUrl($alternate);
                 phase2Assert(str_contains($url, 'edit=19') && str_contains($url, 'lang=' . $alternate)

@@ -57,3 +57,21 @@ The light and dark values are the reference's final ("editorial workspace") pale
 3. **Icons:** Lucide icons as inline SVG (the package's `lucide.min.js` holds the exact paths). Never load an icon script.
 4. **Styles:** no `style=` attributes or `<style>` elements (CSP). If the server version needs a rule the reference does not have, put it in the adapters stylesheet with a comment explaining why.
 5. **Checks:** compare with the reference screenshot at 1440 Arabic light, 1440 English dark and 390 Arabic light, plus 390 without JavaScript.
+
+## The owner shell (UI-02)
+
+`includes/owner_shell.php` renders the reference shell for the seven workspace pages: the frame, the sidebar (brand, grouped navigation, Evidence Hub, Settings and Help, the account menu) and the toolbar. It uses the reference's exact markup, classes and copy (`sidebarBrand`, `workspaceNavigation`, `sidebarGroup`, `sidebarItem`, `sidebarUtilities`, `accountControl` and the toolbar in `app.js`). Evidence Hub keeps its own shell until UI-08.
+
+- **Server rendering:**
+  - destinations are links;
+  - the groups and the account menu are `<details>`;
+  - sign-out and account switching are the existing POST forms.
+- **JavaScript only enhances:**
+  - `owner_theme.js` runs inside the root, so the theme (`data-ath-theme`) and a collapsed sidebar apply before the first paint;
+  - `admin.js` handles the collapse button and the phone menu.
+- **Deliberate gaps (decision ق-29):**
+  - Settings and Help are shown inactive, marked "Coming soon";
+  - the unread-messages count waits for a read state;
+  - there is no language switch in the workspace, because the reference keeps it in Settings.
+- **`public/assets/css/ather-adapters.css`:** the rules the server rendering needs, each with its reason. Examples: `<details>` markers, the theme toggle without JavaScript, legacy button colors for pages not yet redesigned, and the root's `content-box` against `owner_workspace.css`.
+- **Page stylesheets:** a page card adds only `public/assets/css/owner-page-<page>.css` when it needs a rule the reference lacks. `ownerPageStylesheet()` loads it after the shell.

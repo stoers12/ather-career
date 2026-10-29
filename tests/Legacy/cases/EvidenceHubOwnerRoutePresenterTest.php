@@ -167,7 +167,11 @@ final class EvidenceHubOwnerRoutePresenterTest
         foreach (['ather.evidenceHub.theme', "window.matchMedia('(prefers-color-scheme: dark)')", 'data-evidence-hub-theme', "addEventListener('change'", "value === 'light' || value === 'dark'"] as $required) {
             phase2Assert(str_contains($ownerTheme, $required), "Shared Owner theme resolver is missing {$required}.");
         }
-        phase2Assert(str_contains($layout, 'bool $themeCapable = false') && str_contains($layout, 'if ($themeCapable)') && str_contains($layout, "versionedAssetUrl('assets/js/owner_theme.js')") && str_contains($layout, "versionedAssetUrl('assets/js/admin.js')"), 'Shared Owner layout must load its theme resolver only for explicit theme-capable pages.');
+        // UI-02: Evidence Hub loads the resolver in the layout; the redesigned
+        // workspace shell loads it inside its root (includes/owner_shell.php).
+        $shell = self::read('includes/owner_shell.php');
+        phase2Assert(str_contains($layout, 'bool $themeCapable = false') && str_contains($layout, 'if ($themeCapable && $isEvidenceHub)') && str_contains($layout, "versionedAssetUrl('assets/js/owner_theme.js')") && str_contains($layout, "versionedAssetUrl('assets/js/admin.js')")
+            && str_contains($shell, 'bool $themeCapable') && str_contains($shell, 'if ($themeCapable)') && str_contains($shell, "versionedAssetUrl('assets/js/owner_theme.js')"), 'Shared Owner layout must load its theme resolver only for explicit theme-capable pages.');
         phase2Assert(strpos($layout, "versionedAssetUrl('assets/js/owner_theme.js')") > strpos($layout, '<body') && strpos($layout, "versionedAssetUrl('assets/js/owner_theme.js')") < strpos($layout, '<div class="admin-layout'), 'Owner theme must resolve before workspace content.');
         phase2Assert(str_contains(self::read('handlers/owner_evidence_hub.php'), "ownerLayoutStart('Evidence Hub', 'evidence_hub', true)") && str_contains(self::read('handlers/owner_project_evidence.php'), "ownerLayoutStart('Edit project evidence', 'evidence_hub', true)"), 'Evidence Hub and its editor must explicitly opt in to dark theme capability.');
         foreach (['handlers/owner_profile.php' => ['Personal Info', 'profile'], 'handlers/owner_projects.php' => ['Projects', 'projects'], 'handlers/owner_experiences.php' => ['Experience', 'experiences'], 'handlers/owner_messages.php' => ['Messages', 'messages'], 'handlers/owner_publication.php' => ['Publication', 'publication']] as $route => [$title, $active]) {

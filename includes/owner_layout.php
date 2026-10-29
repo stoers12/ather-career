@@ -13,12 +13,15 @@ function ownerEscapeHtml(string $value): string
 }
 
 require_once __DIR__ . '/owner_form_feedback.php';
+require_once __DIR__ . '/ather_icons.php';
+require_once __DIR__ . '/owner_shell.php';
 
 /** @param array{locale?: string, account_name?: string} $workspace Presentation only; routes retain authorization. */
 function ownerLayoutStart(string $title, string $activePage, bool $themeCapable = false, array $workspace = []): void
 {
     $isEvidenceHub = $activePage === 'evidence_hub';
     $isDashboard = $activePage === 'dashboard';
+    $GLOBALS['owner_layout_shell'] = $isEvidenceHub ? 'evidence_hub' : 'workspace';
     $isEvidenceHubOverview = $isEvidenceHub && $title === 'Evidence Hub';
     $locale = ($workspace['locale'] ?? ownerLocale()) === 'en' ? 'en' : 'ar';
     $workspace['locale'] = $locale;
@@ -47,17 +50,23 @@ function ownerLayoutStart(string $title, string $activePage, bool $themeCapable 
     <?php else: ?>
     <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_workspace.css'); ?>">
     <?php if ($isDashboard): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_dashboard.css'); ?>"><?php endif; ?>
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/ather.css'); ?>">
+    <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/ather-adapters.css'); ?>">
+    <?php $pageStylesheet = ownerPageStylesheet($activePage); if ($pageStylesheet !== null): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl($pageStylesheet); ?>"><?php endif; ?>
     <?php endif; ?>
     <script src="<?php echo versionedAssetUrl('assets/js/admin.js'); ?>" defer></script>
     <?php if ($isEvidenceHub): ?>
     <script src="<?php echo versionedAssetUrl('assets/js/evidence_hub.js'); ?>" defer></script>
     <?php endif; ?>
 </head>
-<body class="<?php echo $isEvidenceHub ? 'evidence-hub-page' : 'owner-workspace-page' . ($isDashboard ? ' owner-dashboard-page' : ''); ?>"<?php if (!$isEvidenceHub): ?> data-owner-confirm-title="<?php echo ownerEscapeHtml(ownerText('Are you sure?')); ?>" data-owner-confirm-cancel="<?php echo ownerEscapeHtml(ownerText('Cancel')); ?>" data-owner-confirm-action="<?php echo ownerEscapeHtml(ownerText('Continue')); ?>"<?php endif; ?>>
-<?php if ($themeCapable): ?>
+<body class="<?php echo $isEvidenceHub ? 'evidence-hub-page' : 'owner-workspace-page ath-app' . ($isDashboard ? ' owner-dashboard-page' : ''); ?>"<?php if (!$isEvidenceHub): ?> data-owner-confirm-title="<?php echo ownerEscapeHtml(ownerText('Are you sure?')); ?>" data-owner-confirm-cancel="<?php echo ownerEscapeHtml(ownerText('Cancel')); ?>" data-owner-confirm-action="<?php echo ownerEscapeHtml(ownerText('Continue')); ?>"<?php endif; ?>>
+<?php if ($themeCapable && $isEvidenceHub): ?>
 <script src="<?php echo versionedAssetUrl('assets/js/owner_theme.js'); ?>"></script>
 <?php endif; ?>
-<div class="admin-layout<?php echo $isEvidenceHub ? ' evidence-hub-layout' : ''; ?>">
+<?php if (!$isEvidenceHub): ?>
+<a class="skip-link admin-skip-link" href="#main-content"><?php echo ownerDashboardCopy('skip', $locale); ?></a>
+<?php ownerWorkspaceShellStart($activePage, $workspace, $themeCapable); return; endif; ?>
+<div class="admin-layout evidence-hub-layout">
     <?php ownerNavigation($activePage, $workspace); ?>
     <main class="admin-content" id="main-content" tabindex="-1">
         <?php if ($isEvidenceHub): ?>
@@ -262,6 +271,11 @@ function evidenceHubOwnerIcon(string $name): string
 
 function ownerLayoutEnd(): void
 {
+    // ownerLayoutStart() records which shell it opened; each closes its own markup.
+    if (($GLOBALS['owner_layout_shell'] ?? null) === 'workspace') {
+        ownerWorkspaceShellEnd();
+        return;
+    }
     ?>
         </section>
     </main>

@@ -1,0 +1,78 @@
+/*
+ * Server-rendering adaptations of the reference (ather.css is generated from
+ * the owner's package and is never edited; docs/DESIGN_SYSTEM.md). The
+ * prototype keeps state in JavaScript; the product renders links, forms and
+ * <details> so every control works without it. Each rule below restores the
+ * reference look for one of those substitutions.
+ */
+
+/* Pages not yet redesigned still read owner_workspace.css variables; map them
+   to the reference palette so they follow the theme. */
+#ather-navigation {
+  --admin-bg: var(--ath-bg);
+  --admin-surface: var(--ath-surface);
+  --admin-text: var(--ath-text);
+  --admin-muted: var(--ath-muted);
+  --admin-border: var(--ath-line);
+  --admin-primary: var(--ath-green);
+  --admin-primary-hover: var(--ath-green);
+  --admin-danger: var(--ath-danger);
+  --admin-danger-hover: var(--ath-danger);
+  --admin-success: var(--ath-green);
+  --owner-soft: var(--ath-soft);
+  --owner-gold: var(--ath-gold);
+  --owner-gold-bg: var(--ath-raised);
+  --owner-focus: var(--ath-green);
+}
+
+/* owner_workspace.css sets border-box on every element; the reference root is
+   content-box, so its 1px border sits outside the 1280px frame. */
+body.ath-app #ather-navigation { box-sizing: content-box; }
+
+/* Navigation items and toolbar actions are links where the prototype used buttons. */
+#ather-navigation :is(a.an-item, a.an-brand-link, a.ath-button) { text-decoration: none; }
+
+/* Pages not yet redesigned use owner_workspace.css buttons. The reference's
+   element rules (#ather-navigation a, #ather-navigation button) would recolor
+   their text, so restore each variant on the reference palette. */
+#ather-navigation :is(.button-secondary, .button-link) { color: var(--ath-text); }
+#ather-navigation :is(.button-primary, .project-edit) { background: var(--ath-green); border-color: var(--ath-green); color: var(--ath-on-green); }
+#ather-navigation :is(.button-primary, .project-edit):hover { background: var(--ath-green); opacity: .92; }
+#ather-navigation .button-danger { color: var(--ath-danger); }
+
+/* Sidebar groups and the account menu are <details> instead of script toggles. */
+#ather-navigation :is(summary.an-group-toggle, summary.ath-account-trigger) { list-style: none; cursor: pointer; }
+#ather-navigation :is(summary.an-group-toggle, summary.ath-account-trigger)::-webkit-details-marker { display: none; }
+#ather-navigation .an-group:not([open]) .ath-group-open,
+#ather-navigation .an-group[open] .ath-group-closed,
+#ather-navigation .an-group[open] .an-current-group { display: none; }
+
+/* Settings and Help stay visible but inactive until their pages exist (ق-29). */
+#ather-navigation .an-item[aria-disabled="true"] { cursor: default; }
+#ather-navigation .an-item[aria-disabled="true"]:hover { background: transparent; color: var(--ath-muted); }
+
+/* One theme button, as in the reference: the button for the other theme shows.
+   Switching needs JavaScript, so without it the device theme applies and the
+   buttons stay hidden. */
+#ather-navigation [data-owner-theme][aria-pressed="true"],
+body.ath-app:not(.owner-nav-enabled) #ather-navigation [data-owner-theme] { display: none; }
+
+/* Sidebar collapse is a JavaScript enhancement (admin.js). */
+body.ath-app:not(.owner-nav-enabled) #ather-navigation .an-collapse-button,
+#ather-navigation .an-collapse-button .ath-collapse-open,
+#ather-navigation[data-sidebar-collapsed="true"] .an-collapse-button .ath-collapse-close { display: none; }
+#ather-navigation[data-sidebar-collapsed="true"] .an-collapse-button .ath-collapse-open { display: inline-flex; }
+#ather-navigation .an-collapse-button > span { display: inline-flex; }
+
+/* Phones: admin.js toggles .owner-nav-open where the prototype used .ath-nav-open.
+   Without JavaScript the menu has no toggle, so the navigation stays open. */
+#ather-navigation .owner-nav-toggle .ath-menu-close,
+#ather-navigation .owner-nav-toggle[aria-expanded="true"] .ath-menu-open { display: none; }
+#ather-navigation .owner-nav-toggle[aria-expanded="true"] .ath-menu-close { display: inline-flex; }
+@media (max-width: 660px) {
+  #ather-navigation .ath-sidebar.owner-nav-open .an-sidebar-body { display: block; }
+  #ather-navigation .ath-sidebar.owner-nav-open .an-sidebar-body .ath-nav { display: flex; flex-direction: column; grid-template-columns: none; }
+  body.ath-app:not(.owner-nav-enabled) #ather-navigation .an-sidebar-body { display: block; }
+  body.ath-app:not(.owner-nav-enabled) #ather-navigation .an-sidebar-body .ath-nav { display: flex; flex-direction: column; }
+  body.ath-app:not(.owner-nav-enabled) #ather-navigation .ath-mobile-menu { display: none; }
+}
