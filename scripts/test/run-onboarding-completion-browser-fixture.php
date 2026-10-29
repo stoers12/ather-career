@@ -27,7 +27,7 @@ try {
     $environment=TestEnvironment::create(); $root=$environment->namespaceRoot.'/editor';
     mkdir($root,0700); mkdir($root.'/sessions',0700); mkdir($root.'/http',0700); mkdir($root.'/http/public',0700);
     symlink(realpath(__DIR__.'/../..'),$root.'/http/app');
-    foreach (glob(__DIR__.'/../../public/*.php') as $shim) { copy($shim,$root.'/http/public/'.basename($shim)); }
+    RouteContract::writeEntryScripts($root.'/http/public');
     symlink(realpath(__DIR__.'/../../public/assets'),$root.'/http/public/assets');
     session_save_path($root.'/sessions'); session_name(OWNER_SESSION_NAME); ini_set('session.cache_limiter','');
     foreach (range('a','p') as $name) {
@@ -66,7 +66,7 @@ try {
         copy($root.'/synthetic-public/owner_onboarding_attestation.php',$root.'/http/public/owner_onboarding_attestation.php');
         mkdir($root.'/http-null',0700); mkdir($root.'/http-null/public',0700);
         symlink(realpath(__DIR__.'/../..'),$root.'/http-null/app');
-        foreach (glob(__DIR__.'/../../public/*.php') as $shim) { copy($shim,$root.'/http-null/public/'.basename($shim)); }
+        RouteContract::writeEntryScripts($root.'/http-null/public');
         symlink(realpath(__DIR__.'/../../public/assets'),$root.'/http-null/public/assets');
     }
     foreach ([8080=>'1',8081=>'1',8082=>'1'] as $port=>$gate) {
