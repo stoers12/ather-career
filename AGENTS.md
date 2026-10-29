@@ -97,6 +97,7 @@ Additional checks:
   - Visitor-facing output must always be English. Never read the Owner's workspace preference implicitly.
 
 **UI**
+- Redesigned pages use the shared design system in [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) (`ather.css`, scoped to `body.ath-app`). Do not copy the owner's reference prototype's JavaScript or inline styles.
 - Every control works without JavaScript; JavaScript only enhances.
 - The layout works at 390px and 1280px with no horizontal overflow, and in RTL.
 - `admin.css` forces button display. Hidden controls need an explicit `[hidden] { display: none !important; }` rule, following the existing pattern.

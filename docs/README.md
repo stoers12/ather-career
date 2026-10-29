@@ -11,6 +11,7 @@ Documents marked “classification review” mix current guidance with older sco
 ## Living reference
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Code layout (`includes/`, `src/`, Composer autoload) and the module-by-module migration rule.
+- [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) — The shared stylesheet `ather.css`: tokens, type, components, theme and the rules every redesigned page follows.
 - [LOCAL_RELEASE.md](LOCAL_RELEASE.md) — Owner local release automation, dry-run, rollback and isolated verification.
 - [EVIDENCE_HUB_0_LITE.md](EVIDENCE_HUB_0_LITE.md) — Authoritative Evidence Hub rules, versioned contracts and private Owner boundary. (kept in place — referenced from `tests/Legacy/cases/EvidenceHubContractTest.php`, `AGENTS.md`)
 - [HTTP_CONTRACTS.md](HTTP_CONTRACTS.md) — Active HTTP methods, validation, redirects and public JSON contracts. (kept in place — referenced from `tests/Legacy/cases/PublicProjectJsonContractTest.php`)

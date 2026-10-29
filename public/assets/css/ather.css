@@ -1,0 +1,307 @@
+/*
+ * Ather design system (UI-01, decision ق-28). Values come from the owner's
+ * reference package (ATHER-UI-Package, "editorial workspace" tokens); see
+ * docs/DESIGN_SYSTEM.md. Every rule is scoped to body.ath-app, so a page
+ * changes only once its layout opts in (UI-02).
+ *
+ * Theme: the page follows the device unless owner_theme.js records an explicit
+ * choice in data-evidence-hub-theme. Without JavaScript the device wins.
+ */
+
+@font-face { font-family: "Ather Arabic"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/ibm-plex-sans-arabic-400.woff2") format("woff2"); }
+@font-face { font-family: "Ather Arabic"; font-style: normal; font-weight: 600; font-display: swap; src: url("../fonts/ibm-plex-sans-arabic-600.woff2") format("woff2"); }
+@font-face { font-family: "Ather Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/inter-400.woff2") format("woff2"); }
+@font-face { font-family: "Ather Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("../fonts/inter-600.woff2") format("woff2"); }
+
+/* ---- Tokens ---------------------------------------------------------- */
+
+body.ath-app {
+  color-scheme: light;
+  --ath-bg: #f6f5f0;
+  --ath-surface: #ffffff;
+  --ath-raised: #f0f2ed;
+  --ath-text: #1c3028;
+  --ath-muted: #59685f;
+  --ath-line: #e0e5dc;
+  --ath-input-line: #87968b;
+  --ath-green: #235d45;
+  --ath-on-green: #ffffff;
+  --ath-soft: #e8f0e6;
+  --ath-gold: #84682e;
+  --ath-danger: #9a2828;
+  --ath-danger-bg: #fff0ee;
+  --ath-shadow: 0 15px 36px #14382914;
+  --ath-sidebar: #163629;
+  --ath-radius: 9px;
+  --ath-radius-control: 6px;
+  --ath-font: "Ather Arabic", "Ather Sans", "Segoe UI", Tahoma, sans-serif;
+  --ath-font-latin: "Ather Sans", "Ather Arabic", "Segoe UI", system-ui, sans-serif;
+  --ath-font-display: Georgia, "Times New Roman", serif;
+}
+
+body.ath-app[data-evidence-hub-theme="dark"] {
+  color-scheme: dark;
+  --ath-bg: #121b19;
+  --ath-surface: #1c2722;
+  --ath-raised: #25312a;
+  --ath-text: #edf3ea;
+  --ath-muted: #afc0b1;
+  --ath-line: #3a493e;
+  --ath-input-line: #819783;
+  --ath-green: #b8d4aa;
+  --ath-on-green: #163025;
+  --ath-soft: #2e4231;
+  --ath-gold: #dbc69b;
+  --ath-danger: #ffb4ae;
+  --ath-danger-bg: #382725;
+  --ath-shadow: 0 15px 36px #0004;
+}
+
+@media (prefers-color-scheme: dark) {
+  body.ath-app:not([data-evidence-hub-theme="light"]) {
+    color-scheme: dark;
+    --ath-bg: #121b19;
+    --ath-surface: #1c2722;
+    --ath-raised: #25312a;
+    --ath-text: #edf3ea;
+    --ath-muted: #afc0b1;
+    --ath-line: #3a493e;
+    --ath-input-line: #819783;
+    --ath-green: #b8d4aa;
+    --ath-on-green: #163025;
+    --ath-soft: #2e4231;
+    --ath-gold: #dbc69b;
+    --ath-danger: #ffb4ae;
+    --ath-danger-bg: #382725;
+    --ath-shadow: 0 15px 36px #0004;
+  }
+}
+
+/* The forest navigation rail keeps its own palette in both themes. */
+body.ath-app .ath-sidebar {
+  --ath-text: #f3f5ed;
+  --ath-muted: #bbccbf;
+  --ath-line: #3c5146;
+  --ath-raised: #233e30;
+  --ath-surface: #203c2e;
+  --ath-soft: #2c4938;
+  --ath-green: #d1e6bc;
+  --ath-gold: #ddc697;
+  background: var(--ath-sidebar);
+  color: var(--ath-text);
+}
+
+/* ---- Base ------------------------------------------------------------ */
+
+body.ath-app {
+  margin: 0;
+  background: var(--ath-bg);
+  color: var(--ath-text);
+  font: 14px/1.7 var(--ath-font);
+  -webkit-font-smoothing: antialiased;
+  text-align: start;
+}
+
+body.ath-app *,
+body.ath-app *::before,
+body.ath-app *::after { box-sizing: border-box; }
+
+body.ath-app :is(h1, h2, h3, p) { margin: 0; }
+body.ath-app h1 { font-size: 29px; line-height: 1.4; font-weight: 600; letter-spacing: -.5px; }
+body.ath-app h2 { font-size: 20px; line-height: 1.6; font-weight: 600; }
+body.ath-app h3 { font-size: 16px; line-height: 1.6; font-weight: 600; }
+body.ath-app :is(button, input, textarea, select) { font: inherit; }
+body.ath-app a { color: inherit; }
+body.ath-app [hidden] { display: none !important; }
+body.ath-app :focus-visible { outline: 2px solid var(--ath-green); outline-offset: 4px; }
+
+/* Latin runs (names, URLs, technologies) read better in the Latin face. */
+body.ath-app :is(.ath-latin, [lang="en"]) { font-family: var(--ath-font-latin); }
+
+.ath-app .ath-muted { color: var(--ath-muted); }
+
+/* ---- Brand ----------------------------------------------------------- */
+
+.ath-app .ath-wordmark {
+  display: inline-block;
+  direction: ltr;
+  font: 400 28px/1.2 var(--ath-font-latin);
+  letter-spacing: 6px;
+}
+.ath-app .ath-wordmark::first-letter { color: var(--ath-gold); }
+
+/* ---- Page heading ---------------------------------------------------- */
+
+.ath-app .ath-eyebrow {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--ath-gold);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .5px;
+}
+
+.ath-app .ath-page-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.ath-app .ath-page-heading p { margin-top: 8px; max-width: 55ch; color: var(--ath-muted); font-size: 14px; }
+
+.ath-app .ath-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ath-muted);
+  font-size: 12px;
+}
+.ath-app .ath-breadcrumb [aria-current="page"] { color: var(--ath-text); }
+
+/* ---- Buttons --------------------------------------------------------- */
+
+.ath-app .ath-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 16px;
+  border: 1px solid var(--ath-line);
+  border-radius: var(--ath-radius-control);
+  background: var(--ath-surface);
+  color: var(--ath-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .16s, border-color .16s;
+}
+.ath-app .ath-button:hover { background: var(--ath-raised); border-color: var(--ath-muted); }
+.ath-app .ath-button-primary { background: var(--ath-green); border-color: var(--ath-green); color: var(--ath-on-green); box-shadow: 0 3px 0 #00000008; }
+.ath-app .ath-button-primary:hover { background: var(--ath-green); border-color: var(--ath-green); opacity: .92; }
+.ath-app .ath-button-ghost { background: transparent; border-color: transparent; color: var(--ath-muted); }
+.ath-app .ath-button-ghost:hover { background: var(--ath-raised); border-color: transparent; color: var(--ath-text); }
+.ath-app .ath-button-danger { color: var(--ath-danger); }
+.ath-app .ath-button :is(svg, .ath-icon) { width: 16px; height: 16px; flex: 0 0 auto; }
+
+/* ---- Surfaces -------------------------------------------------------- */
+
+.ath-app .ath-panel {
+  min-width: 0;
+  background: var(--ath-surface);
+  border: 1px solid var(--ath-line);
+  border-radius: var(--ath-radius);
+}
+
+.ath-app .ath-next-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 17px;
+  margin: 20px 0 28px;
+  padding: 21px 23px;
+  background: var(--ath-soft);
+  border: 1px solid var(--ath-line);
+  border-radius: 8px;
+}
+.ath-app .ath-next-banner p { color: var(--ath-muted); }
+
+.ath-app .ath-callout {
+  margin: 20px 0;
+  padding: 4px 14px;
+  border-inline-start: 2px solid var(--ath-gold);
+  color: var(--ath-muted);
+  font-size: 13px;
+}
+
+.ath-app .ath-empty {
+  padding: 45px 20px;
+  text-align: center;
+  background: var(--ath-surface);
+  border: 1px dashed var(--ath-line);
+  border-radius: var(--ath-radius);
+}
+.ath-app .ath-empty p { color: var(--ath-muted); }
+
+/* ---- Badges and tags ------------------------------------------------- */
+
+.ath-app .ath-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border-radius: 4px;
+  background: var(--ath-soft);
+  color: var(--ath-green);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.ath-app .ath-status-muted { background: var(--ath-raised); color: var(--ath-muted); }
+
+.ath-app .ath-tag {
+  display: inline-block;
+  max-width: 100%;
+  padding: 4px 7px;
+  border-radius: 4px;
+  background: var(--ath-raised);
+  color: var(--ath-muted);
+  font: 11px/1.6 var(--ath-font-latin);
+  overflow-wrap: anywhere;
+}
+
+/* ---- Forms ----------------------------------------------------------- */
+
+.ath-app .ath-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; font-size: 13px; }
+.ath-app .ath-field label { font-weight: 500; }
+.ath-app .ath-field label span { margin-inline-start: 4px; color: var(--ath-muted); font-size: 11px; font-weight: 400; }
+.ath-app .ath-field small { color: var(--ath-muted); font-size: 11px; }
+.ath-app .ath-field .ath-field-error { color: var(--ath-danger); font-size: 12px; }
+
+.ath-app :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), textarea, select) {
+  min-width: 0;
+  max-width: 100%;
+  padding: 11px 13px;
+  background: var(--ath-surface);
+  border: 1px solid var(--ath-input-line);
+  border-radius: var(--ath-radius-control);
+  color: var(--ath-text);
+  font-size: 14px;
+}
+.ath-app :is(input, textarea)::placeholder { color: var(--ath-muted); opacity: .8; }
+.ath-app textarea { min-height: 108px; resize: vertical; line-height: 1.8; }
+.ath-app :is(input[type="checkbox"], input[type="radio"]) { width: 17px; height: 17px; flex-shrink: 0; accent-color: var(--ath-green); }
+.ath-app [aria-invalid="true"] { border-color: var(--ath-danger) !important; }
+
+.ath-app .ath-error-summary {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--ath-danger);
+  border-radius: 7px;
+  background: var(--ath-danger-bg);
+  color: var(--ath-danger);
+  font-size: 13px;
+}
+
+/* ---- Responsive and preferences ------------------------------------- */
+
+@media (max-width: 660px) {
+  body.ath-app h1 { font-size: 25px; }
+  /* 16px keeps mobile browsers from zooming into a focused field. */
+  .ath-app :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), textarea, select) { font-size: 16px; }
+}
+
+@media (pointer: coarse) {
+  .ath-app .ath-button { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ath-app *, .ath-app *::before, .ath-app *::after { transition: none !important; animation: none !important; }
+}
