@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+  "commit": "28b3b8dee8c976df4fa3e94aed4e092ad43fcb03",
+  "source_path": ".claude/skills/ui-ux-pro-max",
+  "installed_path": ".agents/skills/ui-ux-pro-max",
+  "installed_on": "2026-10-29",
+  "license": "MIT",
+  "installer": "Codex skill-installer/scripts/install-skill-from-github.py",
+  "local_changes": [
+    "Replaced Claude plugin script paths in SKILL.md with project-local .agents/skills paths.",
+    "Adjusted SKILL.md working-directory instructions for the project-local installation.",
+    "Included the upstream root LICENSE and this provenance manifest."
+  ]
+}
