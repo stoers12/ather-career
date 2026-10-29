@@ -199,12 +199,12 @@ function Invoke-RequiredGateRegistryChallenges([string[]]$Registry) {
 
 function Assert-CurrentSourceIdentity([string]$Root, [string]$Image, [string]$Layout, [string]$Manifest) {
     if (-not (Test-Path -LiteralPath (Join-Path $Root 'database/migrations/011_recommendation_dispositions.sql'))) { Fail-Gate 'source identity' 'migration 011 is absent from verification source' }
-    foreach ($path in @('owner_evidence_hub.php', 'public/assets/css/evidence_hub.css', 'public/assets/js/evidence_hub.js', 'public/assets/js/owner_theme.js', 'database/migrate.php')) {
+    foreach ($path in @('handlers/owner_evidence_hub.php', 'public/assets/css/evidence_hub.css', 'public/assets/js/evidence_hub.js', 'public/assets/js/owner_theme.js', 'database/migrate.php')) {
         if (-not (Test-Path -LiteralPath (Join-Path $Root $path))) { Fail-Gate 'source identity' "required source path $path is absent" }
     }
     # Every target shares one layout: code in /var/www/app, and the document
     # root is an exact copy of the repository public/ tree.
-    $check = "set -eu; cd /var/www/app; sha256sum -c /audit/source.manifest; diff -r /var/www/app/public /var/www/public; test -f database/migrations/011_recommendation_dispositions.sql; test -f owner_evidence_hub.php; test -f public/assets/css/evidence_hub.css; test -f public/assets/js/evidence_hub.js; test -f public/assets/js/owner_theme.js"
+    $check = "set -eu; cd /var/www/app; sha256sum -c /audit/source.manifest; diff -r /var/www/app/public /var/www/public; test -f database/migrations/011_recommendation_dispositions.sql; test -f handlers/owner_evidence_hub.php; test -f public/assets/css/evidence_hub.css; test -f public/assets/js/evidence_hub.js; test -f public/assets/js/owner_theme.js"
     if ($Layout -eq 'production') { $check += '; test "${PORTFOLIO_PRODUCTION_SECURITY_CHECK:-}" = 1; test -f /usr/local/etc/php/conf.d/portfolio-production.ini' }
     & docker run --rm --entrypoint sh -v "${Root}:/verification-source:ro" -v "${Manifest}:/audit/source.manifest:ro" $Image -lc $check
     if ($LASTEXITCODE -ne 0) { Fail-Gate 'source identity' 'container-visible application source differs from the intended verification source' }

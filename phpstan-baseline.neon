@@ -46,31 +46,31 @@ parameters:
 			message: '#^Variable \$ownerName on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.variable
 			count: 1
-			path: owner_experiences.php
+			path: handlers/owner_experiences.php
 
 		-
 			message: '#^Variable \$ownerName on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.variable
 			count: 1
-			path: owner_projects.php
+			path: handlers/owner_projects.php
 
 		-
 			message: '#^Variable \$context in isset\(\) always exists and is not nullable\.$#'
 			identifier: isset.variable
 			count: 1
-			path: owner_publication.php
+			path: handlers/owner_publication.php
 
 		-
 			message: '#^Variable \$database in isset\(\) always exists and is not nullable\.$#'
 			identifier: isset.variable
 			count: 1
-			path: owner_publication.php
+			path: handlers/owner_publication.php
 
 		-
 			message: '#^Variable \$ownerName on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.variable
 			count: 1
-			path: owner_publication.php
+			path: handlers/owner_publication.php
 
 		-
 			message: '#^Variable \$argv might not be defined\.$#'

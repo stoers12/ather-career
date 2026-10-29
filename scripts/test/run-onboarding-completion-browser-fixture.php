@@ -60,8 +60,8 @@ try {
         $documents=[]; foreach (['age','terms','privacy'] as $kind) { $documents[$kind]=['language'=>'en','content'=>'SYNTHETIC ONLY pause capability: '.$kind]; }
         file_put_contents($root.'/documents.json',json_encode($documents,JSON_THROW_ON_ERROR)); chmod($root.'/documents.json',0600);
         // Reuse the existing guarded journey source for current entry destinations.
-        foreach (['signin.php','signup.php','owner_login.php'] as $entry) { file_put_contents($root.'/http/public/'.$entry,'<?php require '.var_export($root.'/journey-app/'.$entry,true).';'); chmod($root.'/http/public/'.$entry,0600); }
-        file_put_contents($root.'/http/public/owner_onboarding.php','<?php require '.var_export($root.'/journey-app/owner_onboarding.php',true).';'); chmod($root.'/http/public/owner_onboarding.php',0600);
+        foreach (['signin.php','signup.php','owner_login.php'] as $entry) { file_put_contents($root.'/http/public/'.$entry,'<?php require '.var_export($root.'/journey-app/handlers/'.$entry,true).';'); chmod($root.'/http/public/'.$entry,0600); }
+        file_put_contents($root.'/http/public/owner_onboarding.php','<?php require '.var_export($root.'/journey-app/handlers/owner_onboarding.php',true).';'); chmod($root.'/http/public/owner_onboarding.php',0600);
         copy($root.'/synthetic-public/owner_onboarding_completion.php',$root.'/http/public/owner_onboarding_completion.php');
         copy($root.'/synthetic-public/owner_onboarding_attestation.php',$root.'/http/public/owner_onboarding_attestation.php');
         mkdir($root.'/http-null',0700); mkdir($root.'/http-null/public',0700);

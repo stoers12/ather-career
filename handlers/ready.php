@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/http.php';
-require_once __DIR__ . '/includes/runtime_readiness.php';
+require_once dirname(__DIR__) . '/includes/error_reporting.php';
+require_once dirname(__DIR__) . '/includes/http.php';
+require_once dirname(__DIR__) . '/includes/runtime_readiness.php';
 
 httpRegisterExceptionBoundary('ready.php');
 httpRequireMethod(['GET', 'HEAD']);

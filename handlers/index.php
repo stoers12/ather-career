@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/http.php';
-require_once __DIR__ . '/includes/presentation.php';
-require_once __DIR__ . '/includes/landing_copy.php';
-require_once __DIR__ . '/includes/landing_icons.php';
+require_once dirname(__DIR__) . '/includes/http.php';
+require_once dirname(__DIR__) . '/includes/presentation.php';
+require_once dirname(__DIR__) . '/includes/landing_copy.php';
+require_once dirname(__DIR__) . '/includes/landing_icons.php';
 
 httpRegisterExceptionBoundary('index.php');
 httpRequireMethod(['GET', 'HEAD']);

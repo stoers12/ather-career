@@ -50,12 +50,12 @@ function routeCase(PDO $db, int $userId, string $state, bool $csrfValid = true, 
     $source = <<<'PHP'
 session_save_path((string) getenv('ATHERCAR_TEST_SESSION_DIR'));
 session_name('portfolio_owner_session'); session_id($argv[1]);
-$_SERVER['REQUEST_METHOD'] = $argv[3]; $_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/owner_onboarding.php';
+$_SERVER['REQUEST_METHOD'] = $argv[3]; $_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/handlers/owner_onboarding.php';
 $_POST = json_decode($argv[2], true, 512, JSON_THROW_ON_ERROR);
 if ($argv[4] === 'missing_config') { putenv('DB_PORT'); }
 if ($argv[4] === 'database_unavailable') { putenv('DB_NAME=ather_career_test_unavailable'); }
 register_shutdown_function(static function (): void { fwrite(STDERR, 'HTTP_STATUS=' . (http_response_code() ?: 200) . PHP_EOL); });
-require __DIR__ . '/owner_onboarding.php';
+require __DIR__ . '/handlers/owner_onboarding.php';
 PHP;
     $command = [PHP_BINARY, '-r', $source, $id, json_encode($payload, JSON_THROW_ON_ERROR), $method, $failureMode];
     $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, __DIR__ . '/../..');

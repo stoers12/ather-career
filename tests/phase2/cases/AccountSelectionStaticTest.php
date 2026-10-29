@@ -7,13 +7,13 @@ final class AccountSelectionStaticTest
     public static function run(TestEnvironment $environment): void
     {
         $root = PHASE2_REPOSITORY_ROOT . '/';
-        $route = (string) file_get_contents($root . 'owner_switch_account.php');
+        $route = (string) file_get_contents($root . 'handlers/owner_switch_account.php');
         $session = (string) file_get_contents($root . 'includes/owner_session.php');
         $internalSession = (string) file_get_contents($root . 'includes/session.php');
         $oidc = (string) file_get_contents($root . 'includes/auth0_oidc.php');
         $layout = (string) file_get_contents($root . 'includes/owner_layout.php');
-        $callback = (string) file_get_contents($root . 'owner_oidc_callback.php');
-        $retry = (string) file_get_contents($root . 'owner_auth_retry.php');
+        $callback = (string) file_get_contents($root . 'handlers/owner_oidc_callback.php');
+        $retry = (string) file_get_contents($root . 'handlers/owner_auth_retry.php');
         $recovery = (string) file_get_contents($root . 'includes/owner_auth_recovery.php');
         $stylesheet = (string) file_get_contents($root . 'public/assets/css/style.css');
 
@@ -44,8 +44,8 @@ final class AccountSelectionStaticTest
             && str_contains($layout, 'getCsrfToken()')
             && str_contains($layout, 'Use another account')
             && str_contains($layout, 'lang="ar" dir="rtl"'), 'Account selection must remain keyboard-operable and follow the workspace and Evidence Hub locale.');
-        RouteContract::assertRoute('/owner_switch_account.php', 'owner_switch_account.php', null, 'Account selection is not routed to its handler.');
-        RouteContract::assertRoute('/owner_auth_retry.php', 'owner_auth_retry.php', null, 'Recovery retry is not routed to its handler.');
+        RouteContract::assertRoute('/owner_switch_account.php', 'handlers/owner_switch_account.php', null, 'Account selection is not routed to its handler.');
+        RouteContract::assertRoute('/owner_auth_retry.php', 'handlers/owner_auth_retry.php', null, 'Recovery retry is not routed to its handler.');
         phase2Assert(str_contains($callback, 'resolveAuth0InternalUser')
             && !preg_match('/logout_uri|federated|account_link|account_merge|INSERT\s+INTO\s+users/i', $route), 'Selection must return through the existing exact binding and never federate logout or create accounts.');
         phase2Assert(str_contains($retry, "httpRequireMethod(['POST'])")

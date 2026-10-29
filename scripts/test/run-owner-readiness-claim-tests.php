@@ -41,7 +41,7 @@ function syntheticValidatedCallback(Auth0OidcConfiguration $configuration, mixed
 try {
     startOwnerSession();
     $configuration = new Auth0OidcConfiguration('https://issuer.example.test/', 'issuer.example.test', 'synthetic-client', 'synthetic-secret', 'https://app.example.test/owner_oidc_callback.php');
-    $callback = (string) file_get_contents(__DIR__ . '/../../owner_oidc_callback.php');
+    $callback = (string) file_get_contents(__DIR__ . '/../../handlers/owner_oidc_callback.php');
     $oidc = (string) file_get_contents(__DIR__ . '/../../includes/auth0_oidc.php');
     claimCheck(strpos($oidc, '$token->validate(') < strpos($oidc, '$emailVerifiedClaim = is_array($claims)'),
         'Claim extraction must follow signed-token validation.');

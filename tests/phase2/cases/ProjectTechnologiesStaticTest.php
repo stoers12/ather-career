@@ -12,7 +12,7 @@ final class ProjectTechnologiesStaticTest
         $lifecycle = self::read('includes/public_lifecycle.php');
         $ownerActions = self::read('includes/owner_actions.php');
         $projectActions = self::read('includes/project_actions.php');
-        $ownerForm = self::read('owner_projects.php');
+        $ownerForm = self::read('handlers/owner_projects.php');
 
         phase2Assert(trim($migration) === 'ALTER TABLE projects ADD COLUMN technologies JSON NULL AFTER image_path;', 'S05C migration must add only the nullable native JSON Project technologies column.');
         phase2Assert(str_contains($technologies, 'PROJECT_TECHNOLOGIES_MAXIMUM = 12') && str_contains($technologies, 'PROJECT_TECHNOLOGY_MAX_LENGTH = 60') && str_contains($technologies, 'normalizeProjectTechnologies') && str_contains($technologies, 'projectTechnologiesFromStorage') && str_contains($technologies, 'JSON_THROW_ON_ERROR'), 'S05C technologies must have one bounded normalization and safe decode contract.');

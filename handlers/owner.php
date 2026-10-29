@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/owner_session.php';
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/http.php';
-require_once __DIR__ . '/includes/owner_flow.php';
-require_once __DIR__ . '/includes/portfolio_scoped_data.php';
-require_once __DIR__ . '/includes/public_lifecycle.php';
-require_once __DIR__ . '/includes/owner_publication_presentation.php';
-require_once __DIR__ . '/includes/owner_dashboard_copy.php';
+require_once dirname(__DIR__) . '/includes/owner_session.php';
+require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/includes/error_reporting.php';
+require_once dirname(__DIR__) . '/includes/http.php';
+require_once dirname(__DIR__) . '/includes/owner_flow.php';
+require_once dirname(__DIR__) . '/includes/portfolio_scoped_data.php';
+require_once dirname(__DIR__) . '/includes/public_lifecycle.php';
+require_once dirname(__DIR__) . '/includes/owner_publication_presentation.php';
+require_once dirname(__DIR__) . '/includes/owner_dashboard_copy.php';
 
 startOwnerSession();
 httpRegisterExceptionBoundary('owner.php');

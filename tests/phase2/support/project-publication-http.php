@@ -2,10 +2,18 @@
 declare(strict_types=1);
 // Guarded disposable suite only. Reuse the publication suite's private PDO fault
 // constructor; application routes/includes/policy resolvers are otherwise exact.
-$app=realpath(__DIR__.'/../../..'); $privateApp=$root.'/http-app'; mkdir($privateApp,0700); mkdir($privateApp.'/config',0700); mkdir($root.'/control',0700);
+$app=realpath(__DIR__.'/../../..'); $privateApp=$root.'/app'; mkdir($privateApp,0700); mkdir($privateApp.'/config',0700); mkdir($root.'/control',0700);
 foreach (['includes','vendor','data','public'] as $directory) { symlink($app.'/'.$directory,$privateApp.'/'.$directory); }
-symlink($app.'/public/assets',$privateApp.'/assets');
-foreach (glob($app.'/*.php') as $file) { copy($file,$privateApp.'/'.basename($file)); }
+$documentRoot=dirname($privateApp).'/public'; mkdir($documentRoot,0700);
+RouteContract::writeEntryScripts($documentRoot);
+symlink($app.'/public/assets',$documentRoot.'/assets');
+// These fixtures also request the former root-handler URLs.
+$routes=require PHASE2_REPOSITORY_ROOT.'/config/routes.php';
+foreach ($routes['scripts'] as $entry=>$handler) {
+    if ($entry!==basename($handler)) { completionAssert(copy($documentRoot.'/'.$entry,$documentRoot.'/'.basename($handler)),'Legacy fixture entry unavailable.'); }
+}
+mkdir($privateApp.'/handlers',0700);
+foreach (glob($app.'/handlers/*.php') as $file) { copy($file,$privateApp.'/handlers/'.basename($file)); }
 foreach (glob($app.'/config/*.php') as $file) { copy($file,$privateApp.'/config/'.basename($file)); }
 $configuration=file_get_contents($app.'/config/database.php'); completionAssert(substr_count($configuration,'new PDO(')===1,'PDO fixture seam changed.');
 file_put_contents($privateApp.'/config/database.php',str_replace('new PDO(','new PublicationHttpDatabase(',$configuration)."\nrequire_once ".var_export(__DIR__.'/publication-http-database.php',true).";\n");
@@ -14,17 +22,17 @@ file_put_contents($root.'/router.php', <<<'PHP'
 <?php
 $path=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);
 if (preg_match('~^/p/([a-z0-9-]+)(?:/(projects\.json|media/project/([0-9]+)))?/?$~',$path,$m)) {
-    $_GET['slug']=$m[1]; $file='public_portfolio.php';
-    if (($m[2]??'')==='projects.json') { $file='public_projects_json.php'; }
-    elseif (isset($m[3])) { $file='public_media.php'; $_GET['type']='project'; $_GET['id']=$m[3]; }
-    require __DIR__.'/http-app/'.$file; return true;
+    $_GET['slug']=$m[1]; $file='handlers/public_portfolio.php';
+    if (($m[2]??'')==='projects.json') { $file='handlers/public_projects_json.php'; }
+    elseif (isset($m[3])) { $file='handlers/public_media.php'; $_GET['type']='project'; $_GET['id']=$m[3]; }
+    require __DIR__.'/app/'.$file; return true;
 }
 return false;
 PHP);
 $socket=stream_socket_server('tcp://127.0.0.1:0',$errno,$error); $port=(int)substr(strrchr(stream_socket_get_name($socket,false),':'),1); fclose($socket);
 if ($browserEvidence!==null) { $port=8082; }
 $env=getenv(); $env['PUBLIC_BASE_URL']='http://127.0.0.1:'.$port; $env['SESSION_COOKIE_SECURE']='0'; $env['ATHERCAR_PUBLICATION_FIXTURE_CONTROL']=$root.'/control';
-$server=proc_open([PHP_BINARY,'-d','session.save_path='.$root.'/sessions','-S',($browserEvidence===null?'127.0.0.1':'0.0.0.0').':'.$port,'-t',$privateApp,$root.'/router.php'],
+$server=proc_open([PHP_BINARY,'-d','session.save_path='.$root.'/sessions','-S',($browserEvidence===null?'127.0.0.1':'0.0.0.0').':'.$port,'-t',$documentRoot,$root.'/router.php'],
     [0=>['file','/dev/null','r'],1=>['file',$root.'/server.log','a'],2=>['file',$root.'/server.log','a']],$pipes,$privateApp,$env);
 completionAssert(is_resource($server),'Project HTTP server unavailable.');
 $base='http://127.0.0.1:'.$port;

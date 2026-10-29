@@ -37,13 +37,13 @@ function attestationHttpFixtureCopies(string $root): void
     $source = file_get_contents($app.'/config/database.php');
     if (substr_count($source,'return new PDO(')!==1) { throw new RuntimeException('Test connection seam changed.'); }
     file_put_contents($private.'/database.php',str_replace('return new PDO(','return new AttestationHttpFixturePDO(',$source)); chmod($private.'/database.php',0600);
-    $handler = file_get_contents($app.'/owner_onboarding_attestation.php');
-    $copy = str_replace("require_once __DIR__ . '/includes/onboarding_attestation_presentation.php';",'require_once '.var_export($private.'/onboarding_attestation_presentation.php',true).';',$handler);
-    $copy = str_replace("require_once __DIR__ . '/config/database.php';",'require_once '.var_export($private.'/database.php',true).';',$copy);
-    $copy = str_replace('__DIR__',var_export($app,true),$copy);
-    $restore = str_replace(var_export($app,true),'__DIR__',$copy);
-    $restore = str_replace('require_once '.var_export($private.'/onboarding_attestation_presentation.php',true).';',"require_once __DIR__ . '/includes/onboarding_attestation_presentation.php';",$restore);
-    $restore = str_replace('require_once '.var_export($private.'/database.php',true).';',"require_once __DIR__ . '/config/database.php';",$restore);
+    $handler = file_get_contents($app.'/handlers/owner_onboarding_attestation.php');
+    $copy = str_replace("require_once dirname(__DIR__) . '/includes/onboarding_attestation_presentation.php';",'require_once '.var_export($private.'/onboarding_attestation_presentation.php',true).';',$handler);
+    $copy = str_replace("require_once dirname(__DIR__) . '/config/database.php';",'require_once '.var_export($private.'/database.php',true).';',$copy);
+    $copy = str_replace('dirname(__DIR__)',var_export($app,true),$copy);
+    $restore = str_replace(var_export($app,true),'dirname(__DIR__)',$copy);
+    $restore = str_replace('require_once '.var_export($private.'/onboarding_attestation_presentation.php',true).';',"require_once dirname(__DIR__) . '/includes/onboarding_attestation_presentation.php';",$restore);
+    $restore = str_replace('require_once '.var_export($private.'/database.php',true).';',"require_once dirname(__DIR__) . '/config/database.php';",$restore);
     if ($restore !== $handler) { throw new RuntimeException('Test copy changed HTTP handler behavior.'); }
     $copy = str_replace('declare(strict_types=1);','declare(strict_types=1);'."\nrequire_once ".var_export($private.'/bootstrap.php',true).';',$copy);
     if (!str_contains($copy,"require_once ".var_export($private.'/bootstrap.php',true))) {

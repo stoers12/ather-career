@@ -6,7 +6,7 @@ This note describes where PHP code lives and the rule for moving a module from p
 
 | Path | Holds | Loaded by |
 |---|---|---|
-| `*.php` (root) | Thin request handlers: authentication, CSRF, request shape, then a call into `includes/`. | `public/index.php`, the single front controller, through the route table `config/routes.php`. |
+| `handlers/` | Thin request handlers: authentication, CSRF, request shape, then a call into `includes/`. | `public/index.php`, the single front controller, through the route table `config/routes.php`. |
 | `includes/` | Procedural domain logic, repositories and, for migrated modules, compatibility wrappers. | `require_once`. |
 | `src/` | Namespaced classes under `Ather\`, one class per file (PSR-4). | Composer's autoloader only. |
 | `vendor/` | Composer packages and the generated autoloader. Never committed. | `includes/autoload.php`. |
@@ -15,8 +15,9 @@ This note describes where PHP code lives and the rule for moving a module from p
 
 ## Routing (ENG-09)
 
-Apache serves files that exist under `public/` directly: `index.php`, the `health.php` and `ready.php` probes, and `assets/`. It rewrites every other request to `public/index.php`. That front controller resolves the path through `config/routes.php` with `Ather\Http\Router`, then loads the handler at file scope, exactly as the former per-route `public/` scripts did.
+Apache serves files that exist under `public/` directly: `index.php`, the `health.php` and `ready.php` probes, and `assets/`. It rewrites every other request to `public/index.php`. That front controller resolves the path through `config/routes.php` with `Ather\Http\Router`, then loads the handler from `handlers/` at file scope, exactly as the former per-route `public/` scripts did.
 
+- **Handler layout (ST-2):** all 29 request handlers live in `handlers/`; the repository root contains no PHP files. The route table stores application-root-relative handler paths. Entry names and URLs are unchanged; `public/ready.php` loads `handlers/ready.php` directly, independently of the router.
 - **Two kinds of route:**
   - **Scripts:** every former entry such as `/owner_projects.php` keeps working, with an optional trailing PATH_INFO as under Apache.
   - **Patterns:** the pretty URLs `/owner/evidence-hub`, `/owner/projects/{id}/evidence` and `/p/{slug}/…`. A pattern that defines a query replaces the request's own, as the former rewrites did without QSA.

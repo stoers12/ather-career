@@ -46,7 +46,7 @@ foreach ([[0,0],[1,0],[0,1],[1,1]] as [$emailVisible,$phoneVisible]) {
     $owner = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 1);
     updateAuthorizedPersonalInfo($db, $owner, 1, ['public_email_visible' => $emailVisible, 'public_phone_visible' => $phoneVisible], (int) loadAuthorizedPersonalInfo($db, $owner)['profile_version']);
     foreach (['public_portfolio.php', 'public_contact.php'] as $route) {
-        $code = '$_SERVER["REQUEST_METHOD"]=' . var_export($route === 'public_contact.php' ? 'POST' : 'GET', true) . '; $_GET["slug"]="contact-owner"; $_POST=[]; require ' . var_export(dirname(__DIR__, 2) . '/' . $route, true) . ';';
+        $code = '$_SERVER["REQUEST_METHOD"]=' . var_export($route === 'public_contact.php' ? 'POST' : 'GET', true) . '; $_GET["slug"]="contact-owner"; $_POST=[]; require ' . var_export(dirname(__DIR__, 2) . '/handlers/' . $route, true) . ';';
         $html = contactRehearsalChild(['-r', $code]);
         phase2Assert(str_contains($html, 'Synthetic Owner'), 'Real route did not render the profile.');
         phase2AssertSame((bool) $emailVisible, str_contains($html, 'private@example.org'), 'Real public route violated email visibility.');

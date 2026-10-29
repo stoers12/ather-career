@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/http.php';
-require_once __DIR__ . '/includes/presentation.php';
-require_once __DIR__ . '/includes/signin_copy.php';
-require_once __DIR__ . '/includes/signin_icons.php';
+require_once dirname(__DIR__) . '/includes/http.php';
+require_once dirname(__DIR__) . '/includes/presentation.php';
+require_once dirname(__DIR__) . '/includes/signin_copy.php';
+require_once dirname(__DIR__) . '/includes/signin_icons.php';
 
 httpRegisterExceptionBoundary('signin.php');
 httpRequireMethod(['GET', 'HEAD']);
 $locale = ($_GET['lang'] ?? null) === 'en' ? 'en' : 'ar';
-require_once __DIR__ . '/includes/authenticated_entry.php';
+require_once dirname(__DIR__) . '/includes/authenticated_entry.php';
 presentAuthenticatedEntryIfPresent($locale);
 header('Content-Type: text/html; charset=utf-8');
 header('Content-Language: ' . $locale);

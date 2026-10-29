@@ -206,6 +206,19 @@ function publicationLifecycleE2eStartHttpServer(TestEnvironment $environment): a
         throw new RuntimeException('Could not determine a local lifecycle HTTP port.');
     }
 
+    $httpRoot = $environment->namespaceRoot . '/lifecycle-http';
+    mkdir($httpRoot, 0700);
+    mkdir($httpRoot . '/public', 0700);
+    symlink(dirname(__DIR__, 2), $httpRoot . '/app');
+    RouteContract::writeEntryScripts($httpRoot . '/public');
+    // Preserve this rehearsal's former root-handler URLs through generated entries.
+    $routes = require PHASE2_REPOSITORY_ROOT . '/config/routes.php';
+    foreach ($routes['scripts'] as $entry => $handler) {
+        if ($entry !== basename($handler)) {
+            phase2Assert(copy($httpRoot . '/public/' . $entry, $httpRoot . '/public/' . basename($handler)), 'Could not copy the legacy fixture entry.');
+        }
+    }
+
     $logPath = $environment->storageRoot . DIRECTORY_SEPARATOR . 'http-server.log';
     $pipes = [];
     $process = proc_open([
@@ -213,7 +226,7 @@ function publicationLifecycleE2eStartHttpServer(TestEnvironment $environment): a
         '-S',
         '127.0.0.1:' . $port,
         '-t',
-        dirname(__DIR__, 2),
+        $httpRoot . '/public',
     ], [
         0 => ['pipe', 'r'],
         1 => ['file', '/dev/null', 'a'],

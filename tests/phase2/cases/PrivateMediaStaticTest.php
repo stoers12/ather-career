@@ -8,16 +8,16 @@ final class PrivateMediaStaticTest
     {
         $storage = self::read('includes/storage.php');
         $access = self::read('includes/media_access.php');
-        $ownerRoute = self::read('owner_media.php');
-        $publicRoute = self::read('public_media.php');
+        $ownerRoute = self::read('handlers/owner_media.php');
+        $publicRoute = self::read('handlers/public_media.php');
         $ownerActions = self::read('includes/owner_actions.php') . self::read('includes/profile_form_actions.php');
         $profileActions = self::read('includes/profile_actions.php');
         $projectActions = self::read('includes/project_actions.php');
         $profilePresentation = self::read('includes/profile_presentation.php');
         $projectPresentation = self::read('includes/project_presentation.php');
         $processor = self::read('includes/image_processor.php');
-        $ownerProfile = self::read('owner_profile.php');
-        $ownerProjects = self::read('owner_projects.php');
+        $ownerProfile = self::read('handlers/owner_profile.php');
+        $ownerProjects = self::read('handlers/owner_projects.php');
         $adminScript = self::read('public/assets/js/admin.js');
         $vhost = self::read('docker/apache/vhost.conf');
         $accessPolicy = self::read('docker/apache/access-policy.conf');

@@ -65,7 +65,7 @@ final class PublicProjectJsonContractTest
             phase2AssertSame(null, normalizePublicSlug('a--b'), 'A matched but invalid slug did not fail application validation.');
 
             $lifecycle = self::read('includes/public_lifecycle.php');
-            $jsonRoute = self::read('public_projects_json.php');
+            $jsonRoute = self::read('handlers/public_projects_json.php');
             $developmentVhost = self::read('docker/apache/vhost.conf');
             $productionVhost = self::read('docker/apache/vhost.conf');
             $documentation = self::read('docs/HTTP_CONTRACTS.md');
@@ -76,7 +76,7 @@ final class PublicProjectJsonContractTest
             phase2Assert(str_contains($lifecycle, "\$project['image_url'] = publicProjectMediaUrl(\$normalizedSlug, \$projectId);") && str_contains($lifecycle, 'publicProjectPresentationIsReadable'), 'Public JSON mapper does not build its image URL through the approved readable-media helper.');
             phase2Assert(str_contains($lifecycle, "return '/p/' . rawurlencode(\$slug) . '/media/project/' . \$projectId;"), 'Public image URLs are not restricted to the public Project media route.');
             phase2Assert(!str_contains($frontend, 'projects.json') && !str_contains($frontend, 'image_path'), 'A browser JSON consumer still depends on a raw Project media path.');
-            RouteContract::assertRoute('/p/ab-1/projects.json', 'public_projects_json.php', ['slug' => 'ab-1'], 'Canonical Project JSON route is missing.');
+            RouteContract::assertRoute('/p/ab-1/projects.json', 'handlers/public_projects_json.php', ['slug' => 'ab-1'], 'Canonical Project JSON route is missing.');
             foreach (['/p/ab-1/projects.json/', '/p/ab-1/projects.jsonx', '/p/ab-1/x/projects.json'] as $broad) {
                 RouteContract::assertNoRoute($broad, "A broad Project JSON route accepts {$broad}.");
             }

@@ -39,7 +39,7 @@ foreach (['ar','en'] as $locale) {
         $checks+=7;
     }
 }
-$source=file_get_contents(__DIR__.'/../../owner_onboarding_editor.php');
+$source=file_get_contents(__DIR__.'/../../handlers/owner_onboarding_editor.php');
 phase2Assert(!str_contains($source,'tests/') && !str_contains($source,'createOwnedPortfolio') && str_contains($source,'onboardingDraftHttpEnabled()'),'Editor production boundary');
 $js=file_get_contents(__DIR__.'/../../public/assets/js/onboarding_editor.js');
 foreach (['localStorage','sessionStorage','console.','sendBeacon','window.name','document.cookie'] as $term) { phase2Assert(!str_contains($js,$term),'Private editor persistence/telemetry boundary'); }

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/http.php';
-require_once __DIR__ . '/includes/public_lifecycle.php';
-require_once __DIR__ . '/includes/public_url.php';
-require_once __DIR__ . '/includes/portfolio_presentation.php';
+require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/includes/error_reporting.php';
+require_once dirname(__DIR__) . '/includes/http.php';
+require_once dirname(__DIR__) . '/includes/public_lifecycle.php';
+require_once dirname(__DIR__) . '/includes/public_url.php';
+require_once dirname(__DIR__) . '/includes/portfolio_presentation.php';
 
 function publicPortfolioNotFound(): never
 {

@@ -13,6 +13,10 @@ final class StaticArchitectureGuards
             return ['repository root is unavailable.'];
         }
 
+        foreach (glob($repositoryRoot . DIRECTORY_SEPARATOR . '*.php') ?: [] as $path) {
+            $failures[] = self::relative($repositoryRoot, $path) . ' must not be a PHP file at the repository root.';
+        }
+
         foreach (self::productionPhpFiles($repositoryRoot) as $path) {
             $contents = file_get_contents($path);
             if (!is_string($contents)) {
@@ -56,7 +60,7 @@ final class StaticArchitectureGuards
     private static function productionPhpFiles(string $repositoryRoot): array
     {
         $paths = [];
-        foreach (['includes', 'src', 'config', 'classes', 'api', 'public'] as $directory) {
+        foreach (['handlers', 'includes', 'src', 'config', 'classes', 'api', 'public'] as $directory) {
             $root = $repositoryRoot . DIRECTORY_SEPARATOR . $directory;
             if (!is_dir($root)) {
                 continue;
@@ -67,9 +71,6 @@ final class StaticArchitectureGuards
                     $paths[] = $file->getPathname();
                 }
             }
-        }
-        foreach (glob($repositoryRoot . DIRECTORY_SEPARATOR . '*.php') ?: [] as $path) {
-            $paths[] = $path;
         }
 
         sort($paths);

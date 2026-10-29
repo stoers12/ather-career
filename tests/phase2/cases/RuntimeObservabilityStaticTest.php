@@ -7,7 +7,7 @@ final class RuntimeObservabilityStaticTest
     public static function run(TestEnvironment $environment): void
     {
         $health = self::read('public/health.php');
-        $readiness = self::read('ready.php');
+        $readiness = self::read('handlers/ready.php');
         $readinessChecks = self::read('includes/runtime_readiness.php');
         $observability = self::read('includes/observability.php');
         $http = self::read('includes/http.php');

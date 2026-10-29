@@ -48,9 +48,12 @@ function journeyServer(string $docroot,array $flags,bool $unavailableDatabase=fa
     $env['OIDC_CLIENT_SECRET']='journey-synthetic-secret'; $env['OIDC_REDIRECT_URI']='https://journey-test.invalid/owner_oidc_callback.php';
     if ($unavailableDatabase) { $env['DB_HOST']='127.0.0.1'; $env['DB_PORT']='1'; }
     foreach (['DRAFT','ATTESTATION','COMPLETION'] as $index=>$gate) { $env['ATHERCAR_ONBOARDING_'.$gate.'_HTTP_ENABLED']=$flags[$index]; }
+    $http=$root.'/http-'.$port; mkdir($http,0700); mkdir($http.'/public',0700);
+    symlink($docroot,$http.'/app'); RouteContract::writeEntryScripts($http.'/public');
+    symlink($docroot.'/public/assets',$http.'/public/assets');
     $router=$root.'/router-'.$port.'.php';
-    file_put_contents($router,'<?php if (preg_match("@^/owner/projects/[1-9][0-9]*/evidence$@D",explode("?",$_SERVER["REQUEST_URI"],2)[0])) { require '.var_export($docroot.'/owner_project_evidence.php',true).'; } else { return false; }'); chmod($router,0600);
-    $process=proc_open([PHP_BINARY,'-d','session.save_path='.$root.'/sessions','-d','display_errors=0','-S','127.0.0.1:'.$port,'-t',$docroot,$router],[0=>['pipe','r'],1=>['file',$root.'/private-http.log','a'],2=>['file',$root.'/private-http.log','a']],$pipes,null,$env);
+    file_put_contents($router,'<?php if (preg_match("@^/owner/projects/[1-9][0-9]*/evidence$@D",explode("?",$_SERVER["REQUEST_URI"],2)[0])) { require '.var_export($http.'/public/owner_project_evidence.php',true).'; } else { return false; }'); chmod($router,0600);
+    $process=proc_open([PHP_BINARY,'-d','session.save_path='.$root.'/sessions','-d','display_errors=0','-S','127.0.0.1:'.$port,'-t',$http.'/public',$router],[0=>['pipe','r'],1=>['file',$root.'/private-http.log','a'],2=>['file',$root.'/private-http.log','a']],$pipes,null,$env);
     journeyAssert(is_resource($process),'Private HTTP server unavailable'); fclose($pipes[0]); $servers[]=$process;
     for ($i=0;$i<60;$i++) { $s=@stream_socket_client('tcp://127.0.0.1:'.$port,$errno,$error,.1); if (is_resource($s)) { fclose($s); return $port; } usleep(50000); }
     throw new RuntimeException('Private HTTP server readiness failed');

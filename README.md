@@ -61,7 +61,7 @@ For individual test commands, operational helpers and developer tools, see the [
 ## Repository layout
 
 ```text
-*.php          Root application routes: authentication/HTTP checks and calls into includes/
+handlers/      Thin request handlers: authentication/HTTP checks and calls into includes/
 .github/       CI workflows
 assets/        Private attribution for inlined icons (not web-served)
 config/        Database and runtime configuration boundaries

@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/includes/onboarding_draft_http.php';
-require_once __DIR__ . '/includes/owner_session.php';
-require_once __DIR__ . '/includes/authorization.php';
-require_once __DIR__ . '/includes/csrf.php';
-require_once __DIR__ . '/includes/onboarding_presentation.php';
-require_once __DIR__ . '/config/database.php';
+require_once dirname(__DIR__) . '/includes/onboarding_draft_http.php';
+require_once dirname(__DIR__) . '/includes/owner_session.php';
+require_once dirname(__DIR__) . '/includes/authorization.php';
+require_once dirname(__DIR__) . '/includes/csrf.php';
+require_once dirname(__DIR__) . '/includes/onboarding_presentation.php';
+require_once dirname(__DIR__) . '/config/database.php';
 runtimeStartRequest('owner_onboarding_editor.php');
 set_exception_handler(static function (Throwable $error): never { httpAbortHtml(503, 'Draft editor is temporarily unavailable.'); });
 set_error_handler(static function (int $severity): bool {

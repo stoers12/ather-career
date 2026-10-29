@@ -100,8 +100,8 @@ final class EvidenceHubUndoTest
 
     private static function routeGuards(): void
     {
-        $route = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/owner_evidence_hub.php');
-        $editor = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/owner_project_evidence.php');
+        $route = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/handlers/owner_evidence_hub.php');
+        $editor = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/handlers/owner_project_evidence.php');
         $session = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/session.php');
         $ownerSession = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/owner_session.php');
         phase2Assert(str_contains($route, 'requireOwnerPortfolioContext($database)') && str_contains($route, 'requireValidCsrfToken') && str_contains($route, "=== 'POST'") && str_contains($route, 'executeImmediateEvidenceHubUndo') && str_contains($route, "httpRedirect('/owner/evidence-hub', 303)"), 'Undo route lost Owner, CSRF, POST, or PRG guards.');

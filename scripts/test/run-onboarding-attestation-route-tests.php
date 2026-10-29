@@ -172,7 +172,7 @@ try {
     foreach(['PUT','PATCH','DELETE','OPTIONS','HEAD'] as $method){attHttpRequest(attHttpBrowser(),$method,405);}
     foreach(['get','post'] as $method){
         $code='$_SERVER["REQUEST_METHOD"]=$argv[1]; putenv("ATHERCAR_ONBOARDING_ATTESTATION_HTTP_ENABLED=1"); putenv("DB_PORT=invalid"); register_shutdown_function(static function():void{fwrite(STDERR,"STATUS=".http_response_code());}); require $argv[2];';
-        $p=proc_open([PHP_BINARY,'-r',$code,$method,__DIR__.'/../../owner_onboarding_attestation.php'],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes); fclose($pipes[0]);
+        $p=proc_open([PHP_BINARY,'-r',$code,$method,__DIR__.'/../../handlers/owner_onboarding_attestation.php'],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes); fclose($pipes[0]);
         $body=stream_get_contents($pipes[1]);$err=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);
         attHttpAssert(proc_close($p)===0 && str_contains($err,'STATUS=405') && json_decode($body,true)['code']==='method_not_allowed','Lowercase method bypass.');
     }

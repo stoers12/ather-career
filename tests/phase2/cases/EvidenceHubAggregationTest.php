@@ -505,7 +505,7 @@ final class EvidenceHubAggregationTest
 
     private static function staticNonDisclosure(): void
     {
-        foreach (['includes/public_lifecycle.php', 'public_projects_json.php', 'public/index.php', 'config/routes.php', 'public/assets/js/portfolio.js'] as $source) {
+        foreach (['includes/public_lifecycle.php', 'handlers/public_projects_json.php', 'public/index.php', 'config/routes.php', 'public/assets/js/portfolio.js'] as $source) {
             $contents = file_get_contents(PHASE2_REPOSITORY_ROOT . '/' . $source);
             phase2Assert(is_string($contents), "{$source} is unreadable.");
             phase2Assert(!str_contains($contents, 'evidence_hub_owner_core'), "{$source} exposes the Owner Evidence Hub core.");

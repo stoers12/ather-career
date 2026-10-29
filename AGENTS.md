@@ -10,7 +10,7 @@ A PHP 8.3 / Apache / MySQL 8.4 multi-tenant portfolio platform. Owners sign in w
 
 ## Layout
 
-- `*.php` at the root are thin request handlers: authentication, CSRF, request shape, then a call into `includes/`. Keep them thin. `public/index.php` is the single front controller and `config/routes.php` the only route table (ENG-09): adding a page means a handler plus one route line, never a file in `public/`. `/owner_oidc_callback.php` is registered in Auth0 and must keep working.
+- `handlers/*.php` are thin request handlers: authentication, CSRF, request shape, then a call into `includes/`. Keep them thin. `public/index.php` is the single front controller and `config/routes.php` the only route table (ENG-09): adding a page means a handler in `handlers/` plus one route line, never a file in `public/`. `/owner_oidc_callback.php` is registered in Auth0 and must keep working.
 - `public/` is the only web document root (`/var/www/public`) in every runtime; code lives in `/var/www/app`. Static files go in `public/assets/{css,js,fonts,images}` and are referenced with `versionedAssetUrl('assets/…')`. Never put internal files under `public/`.
 - `includes/` holds the domain logic as procedural functions with `declare(strict_types=1)`.
   - Pure functions stay pure: no database access, no `$_GET`/`$_POST`/`$_SESSION`.

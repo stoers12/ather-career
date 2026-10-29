@@ -7,13 +7,13 @@ final class FrontendPerformanceResilienceStaticTest
     public static function run(TestEnvironment $environment): void
     {
         $presentation = self::read('includes/portfolio_presentation.php');
-        $public = self::read('public_portfolio.php');
+        $public = self::read('handlers/public_portfolio.php');
         $stylesheet = self::read('public/assets/css/portfolio.css');
         $javascript = self::read('public/assets/js/portfolio.js');
         $ownerLayout = self::read('includes/owner_layout.php');
 
         phase2Assert(
-            str_contains($public, "require_once __DIR__ . '/includes/public_url.php';")
+            str_contains($public, "require_once dirname(__DIR__) . '/includes/public_url.php';")
             && str_contains($public, "'canonical_url' => publicPortfolioUrl(\$slug)"),
             'Published Portfolio pages must pass the configured canonical URL to the shared renderer.',
         );

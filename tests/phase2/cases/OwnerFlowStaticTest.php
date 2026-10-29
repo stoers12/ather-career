@@ -8,7 +8,7 @@ final class OwnerFlowStaticTest
     {
         $ownerFlow = self::read('includes/owner_flow.php');
         $ownerActions = self::read('includes/owner_actions.php');
-        $onboarding = self::read('owner_onboarding.php');
+        $onboarding = self::read('handlers/owner_onboarding.php');
 
         phase2Assert(str_contains($ownerFlow, 'function requireOwnerPortfolioContext(PDO $database): AuthorizedPortfolioContext'), 'P2J-04 owner Portfolio route helper is missing.');
         phase2Assert(str_contains($ownerFlow, 'return requireOwnedPortfolioContext($database);'), 'P2J-04 owner routes do not reuse the P2J-03 context.');
@@ -18,7 +18,7 @@ final class OwnerFlowStaticTest
         phase2Assert(str_contains($onboarding, 'requireOwnerAuthenticatedUser($database)') && str_contains($onboarding, 'ownerJourneyDestination($database,$user)'), 'P2J-04 onboarding does not validate the current User before server-owned creation.');
         phase2Assert(str_contains($onboarding, "httpRequireMethod(['GET','HEAD'])") && !str_contains($onboarding, 'createOwnedPortfolio('), 'Legacy POST must be retired before DB work.');
 
-        foreach (['owner.php', 'owner_profile.php', 'owner_projects.php', 'owner_experiences.php', 'owner_messages.php', 'owner_preview.php', 'owner_publication.php'] as $route) {
+        foreach (['handlers/owner.php', 'handlers/owner_profile.php', 'handlers/owner_projects.php', 'handlers/owner_experiences.php', 'handlers/owner_messages.php', 'handlers/owner_preview.php', 'handlers/owner_publication.php'] as $route) {
             $contents = self::read($route);
             phase2Assert(str_contains($contents, 'startOwnerSession();'), "{$route} does not start the owner session.");
             phase2Assert(str_contains($contents, 'requireOwnerPortfolioContext($database)'), "{$route} does not require a server-derived Portfolio context.");
@@ -35,18 +35,18 @@ final class OwnerFlowStaticTest
             'findAuthorizedMessage',
             'authorizedPortfolioDashboardAggregate',
         ] as $required) {
-            phase2Assert(str_contains($ownerActions . self::read('owner.php') . self::read('owner_profile.php') . self::read('owner_messages.php'), $required), "P2J-04 owner flow is missing {$required} scoped access.");
+            phase2Assert(str_contains($ownerActions . self::read('handlers/owner.php') . self::read('handlers/owner_profile.php') . self::read('handlers/owner_messages.php'), $required), "P2J-04 owner flow is missing {$required} scoped access.");
         }
 
         phase2Assert(str_contains($ownerActions, 'findAuthorizedProject($database, $context, $projectId)') && str_contains($ownerActions, 'storeValidatedProjectImage'), 'P2J-04 must scope a project before a project upload can be stored.');
         phase2Assert(!str_contains($ownerActions, 'WHERE id = :id'), 'P2J-04 owner actions must not use unscoped ID mutations.');
 
-        $profileRoute = self::read('owner_profile.php');
+        $profileRoute = self::read('handlers/owner_profile.php');
         $adminScript = self::read('public/assets/js/admin.js');
         phase2Assert(str_contains($profileRoute, 'id="profile-form"')
             && str_contains($adminScript, "getElementById('profile-form')")
             && str_contains($adminScript, 'formState(profileForm)'), 'Owner profile unsaved-change protection is not wired end to end.');
-        foreach (['owner_profile.php', 'owner_projects.php', 'owner_experiences.php', 'includes/owner_publication_presentation.php'] as $route) {
+        foreach (['handlers/owner_profile.php', 'handlers/owner_projects.php', 'handlers/owner_experiences.php', 'includes/owner_publication_presentation.php'] as $route) {
             phase2Assert(str_contains(self::read($route), 'data-confirm='), "{$route} bypasses the shared confirmation dialog for a material action.");
         }
         self::optionalProjectGithubUrl();
@@ -54,7 +54,7 @@ final class OwnerFlowStaticTest
 
     private static function optionalProjectGithubUrl(): void
     {
-        $form = self::read('owner_projects.php');
+        $form = self::read('handlers/owner_projects.php');
         phase2Assert(str_contains($form, "ownerText('GitHub URL')")
             && str_contains($form, "ownerText('(optional)')")
             && str_contains($form, "ownerText('Leave blank to hide the public GitHub link.')"), 'Owner form must localize the optional GitHub label and its visibility explanation.');

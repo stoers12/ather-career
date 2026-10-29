@@ -18,20 +18,20 @@ final class RouterTest extends TestCase
     /** @return iterable<string, array{string, string, string, array<string, string>|null}> */
     public static function routedPaths(): iterable
     {
-        yield 'root' => ['/', 'index.php', 'index.php', null];
-        yield 'index script' => ['/index.php', 'index.php', 'index.php', null];
-        yield 'auth0 callback (registered in Auth0)' => ['/owner_oidc_callback.php', 'owner_oidc_callback.php', 'owner_oidc_callback.php', null];
-        yield 'script with path info' => ['/signin.php/extra/part', 'signin.php', 'signin.php', null];
-        yield 'evidence hub pretty' => ['/owner/evidence-hub', 'owner_evidence_hub.php', 'owner_evidence_hub.php', null];
-        yield 'evidence hub trailing slash' => ['/owner/evidence-hub/', 'owner_evidence_hub.php', 'owner_evidence_hub.php', null];
-        yield 'project evidence' => ['/owner/projects/42/evidence', 'owner_project_evidence.php', 'owner_project_evidence.php', null];
-        yield 'portfolio' => ['/p/jane-doe', 'p.php', 'public_portfolio.php', ['slug' => 'jane-doe']];
-        yield 'portfolio slash' => ['/p/jane-doe/', 'p.php', 'public_portfolio.php', ['slug' => 'jane-doe']];
-        yield 'contact' => ['/p/jane-doe/contact', 'p_contact.php', 'public_contact.php', ['slug' => 'jane-doe']];
-        yield 'projects json' => ['/p/jane-doe/projects.json', 'p_projects.php', 'public_projects_json.php', ['slug' => 'jane-doe']];
-        yield 'profile media' => ['/p/jane-doe/media/profile', 'p_media.php', 'public_media.php', ['slug' => 'jane-doe', 'type' => 'profile']];
-        yield 'project media' => ['/p/jane-doe/media/project/9', 'p_media.php', 'public_media.php', ['slug' => 'jane-doe', 'type' => 'project', 'id' => '9']];
-        yield 'legacy portfolio script' => ['/p.php', 'p.php', 'public_portfolio.php', null];
+        yield 'root' => ['/', 'index.php', 'handlers/index.php', null];
+        yield 'index script' => ['/index.php', 'index.php', 'handlers/index.php', null];
+        yield 'auth0 callback (registered in Auth0)' => ['/owner_oidc_callback.php', 'owner_oidc_callback.php', 'handlers/owner_oidc_callback.php', null];
+        yield 'script with path info' => ['/signin.php/extra/part', 'signin.php', 'handlers/signin.php', null];
+        yield 'evidence hub pretty' => ['/owner/evidence-hub', 'owner_evidence_hub.php', 'handlers/owner_evidence_hub.php', null];
+        yield 'evidence hub trailing slash' => ['/owner/evidence-hub/', 'owner_evidence_hub.php', 'handlers/owner_evidence_hub.php', null];
+        yield 'project evidence' => ['/owner/projects/42/evidence', 'owner_project_evidence.php', 'handlers/owner_project_evidence.php', null];
+        yield 'portfolio' => ['/p/jane-doe', 'p.php', 'handlers/public_portfolio.php', ['slug' => 'jane-doe']];
+        yield 'portfolio slash' => ['/p/jane-doe/', 'p.php', 'handlers/public_portfolio.php', ['slug' => 'jane-doe']];
+        yield 'contact' => ['/p/jane-doe/contact', 'p_contact.php', 'handlers/public_contact.php', ['slug' => 'jane-doe']];
+        yield 'projects json' => ['/p/jane-doe/projects.json', 'p_projects.php', 'handlers/public_projects_json.php', ['slug' => 'jane-doe']];
+        yield 'profile media' => ['/p/jane-doe/media/profile', 'p_media.php', 'handlers/public_media.php', ['slug' => 'jane-doe', 'type' => 'profile']];
+        yield 'project media' => ['/p/jane-doe/media/project/9', 'p_media.php', 'handlers/public_media.php', ['slug' => 'jane-doe', 'type' => 'project', 'id' => '9']];
+        yield 'legacy portfolio script' => ['/p.php', 'p.php', 'handlers/public_portfolio.php', null];
     }
 
     /** @param array<string, string>|null $query */
@@ -62,7 +62,7 @@ final class RouterTest extends TestCase
         self::assertNull(self::router()->match($path));
     }
 
-    public function testEveryHandlerExistsAndEveryRootHandlerIsRouted(): void
+    public function testEveryHandlerExistsAndIsRouted(): void
     {
         $routes = require PHASE2_REPOSITORY_ROOT . '/config/routes.php';
         foreach ($routes['scripts'] as $entry => $handler) {
@@ -72,8 +72,10 @@ final class RouterTest extends TestCase
             self::assertArrayHasKey($route['script'], $routes['scripts'], "{$route['pattern']} targets an unknown entry script");
         }
         // ready.php is served by public/ready.php directly, so readiness never depends on the router.
-        $rootHandlers = array_map('basename', glob(PHASE2_REPOSITORY_ROOT . '/*.php') ?: []);
-        self::assertSame(['ready.php'], array_values(array_diff($rootHandlers, array_values($routes['scripts']))), 'A root handler has no route');
+        self::assertSame([], glob(PHASE2_REPOSITORY_ROOT . '/*.php') ?: [], 'Repository root must not contain PHP files');
+        $handlers = array_map(static fn (string $path): string => 'handlers/' . basename($path), glob(PHASE2_REPOSITORY_ROOT . '/handlers/*.php') ?: []);
+        self::assertCount(29, $handlers);
+        self::assertSame(['handlers/ready.php'], array_values(array_diff($handlers, array_values($routes['scripts']))), 'A handler has no route');
     }
 
     public function testPublicHoldsOnlyTheFrontControllerAndProbes(): void
