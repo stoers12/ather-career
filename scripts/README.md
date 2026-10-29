@@ -10,7 +10,7 @@ Run commands from the repository root. The three stable entry points remain dire
 | [../tests/Integration/](../tests/Integration/) and [../tests/Browser/](../tests/Browser/) | Test runners, workers, browser drivers and HTTP checks formerly in `test/` | All active tests now live under the five-part `tests/` tree; shared helpers live in [../tests/Support/](../tests/Support/). |
 | [ci/](ci/) | 2 CI discovery/public-smoke mocks and fixtures | Synthetic CI setup; the discovery mock is also reused by the isolated OIDC test driver. |
 | [ops/](ops/) | 11 backup, restore, DR, migration, account-administration, production-smoke and local-release helpers | Operational commands and their dedicated recovery/smoke fixtures. |
-| [tools/](tools/) | 2 developer tools: profile-catalog generation and image calibration | Maintenance and calibration commands that are not test runners. |
+| [tools/](tools/) | 3 developer tools: profile-catalog generation, image calibration and the design-system port (`port-ather-css.py`, see docs/DESIGN_SYSTEM.md) | Maintenance and calibration commands that are not test runners. |
 | [archive/](archive/) | Exactly 9 Owner-approved historical rehearsals and probes | Preserved with working relative paths; CI and required gates do not execute these entry points. Syntax checks and static analysis still include them. |
 
 The approved archive contains `run-phase2-operational-security-rehearsal.php`, `run-phase2-private-media-rehearsal.php`, `run-phase2-public-contact-rehearsal.php`, `run-phase2a-isolated-callback-rehearsal.ps1`, `test-phase2a-oidc-http-harness.ps1`, `run-private-media-principal-rehearsal.php`, `run-profile-contact-mysql-rehearsal.php`, `seed-phase2-private-media-http.php` and `check-evidence-hub-updated-at-mysql.php`.
