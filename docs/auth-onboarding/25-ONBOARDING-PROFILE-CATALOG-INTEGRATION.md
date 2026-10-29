@@ -82,7 +82,7 @@ save evicts the receipt and old retries conflict; changing expected version whil
 reusing the old ID remains invalid. No additional retry history/version field,
 receipt service, profile write or synchronization framework is introduced.
 
-[HTTP handler](../../owner_onboarding_draft.php) and [transport helper](../../includes/onboarding_draft_http.php)
+[HTTP handler](../../handlers/owner_onboarding_draft.php) and [transport helper](../../includes/onboarding_draft_http.php)
 are unchanged: the existing safe generic 400/409 envelopes and private/no-store
 responses remain. Editor feedback asks for listed choices and valid text without
 printing server exceptions. Immutable pending operations, exact retry, late-edit
