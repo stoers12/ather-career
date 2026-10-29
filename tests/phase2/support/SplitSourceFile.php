@@ -9,9 +9,9 @@ declare(strict_types=1);
  */
 final class SplitSourceFile
 {
-    public static function read(string $entryRelativePath): string
+    public static function read(string $entryRelativePath, string $root = PHASE2_REPOSITORY_ROOT): string
     {
-        $entryPath = PHASE2_REPOSITORY_ROOT . '/' . $entryRelativePath;
+        $entryPath = $root . '/' . $entryRelativePath;
         $entry = file_get_contents($entryPath);
         phase2Assert(is_string($entry) && $entry !== '', "{$entryRelativePath} is unreadable.");
 

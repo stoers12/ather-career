@@ -476,6 +476,9 @@ function Invoke-RequiredGates {
         # Composer autoloader for src/, which a fresh checkout does not have.
         & docker run --rm --entrypoint php -w /var/www/app -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 $devImage scripts/run-phase2-tests.php
         if ($LASTEXITCODE -ne 0) { Fail-Gate 'Phase-2' 'fast deterministic suite failed' }
+        # The development image carries PHPUnit: the same registry plus native tests/phpunit tests.
+        & docker run --rm --entrypoint php -w /var/www/app -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 $devImage vendor/bin/phpunit --do-not-cache-result
+        if ($LASTEXITCODE -ne 0) { Fail-Gate 'PHPUnit' 'registered Phase 2 cases or native PHPUnit tests failed' }
         $playwright = New-TemporaryPlaywright $resolvedRoot
         $chrome = Get-Chromium1208Executable $playwright
         Invoke-RequiredMySqlAndBrowserGates $resolvedRoot $devImage $playwright $chrome $temporary

@@ -33,3 +33,7 @@ AGENTS.md
 CACHE-ASSESSMENT-*.csv
 CACHE-CLEANUP-OUTPUT-*.txt
 CLEANUP-EXECUTION-MANIFEST-*.md
+
+# PHPUnit result cache and local coverage output.
+runtime/phpunit/
+coverage/
