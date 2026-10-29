@@ -47,6 +47,7 @@ return (static function (): array {
             'owner_projects.php' => 'handlers/owner_projects.php',
             'owner_publication.php' => 'handlers/owner_publication.php',
             'owner_register.php' => 'handlers/owner_register.php',
+            'owner_settings.php' => 'handlers/owner_settings.php',
             'owner_switch_account.php' => 'handlers/owner_switch_account.php',
             'p.php' => 'handlers/public_portfolio.php',
             'p_contact.php' => 'handlers/public_contact.php',

@@ -73,7 +73,7 @@ final class RouterTest extends TestCase
         // ready.php is served by public/ready.php directly, so readiness never depends on the router.
         self::assertSame([], glob(PHASE2_REPOSITORY_ROOT . '/*.php') ?: [], 'Repository root must not contain PHP files');
         $handlers = array_map(static fn (string $path): string => 'handlers/' . basename($path), glob(PHASE2_REPOSITORY_ROOT . '/handlers/*.php') ?: []);
-        self::assertCount(30, $handlers);
+        self::assertCount(31, $handlers);
         $routed = [...array_values($routes['scripts']), $routes['not_found']];
         self::assertSame(['handlers/ready.php'], array_values(array_diff($handlers, $routed)), 'A handler has no route');
     }
