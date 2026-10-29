@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Static Lucide 1.17.0 product icons; ISC license in assets/licenses/LUCIDE.txt. */
+/** Static Lucide 1.17.0 product icons; ISC license in resources/licenses/LUCIDE.txt. */
 function landingIcon(string $name): string
 {
     static $icons = [

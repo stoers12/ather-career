@@ -64,7 +64,6 @@ For individual test commands, operational helpers and developer tools, see the [
 ```text
 handlers/      Thin request handlers: authentication/HTTP checks and calls into includes/
 .github/       CI workflows
-assets/        Private attribution for inlined icons (not web-served)
 config/        Database and runtime configuration boundaries
 contracts/     Versioned Evidence Hub schemas and taxonomies
 data/          Checked-in profile catalogs, pinned sources and provenance
@@ -73,10 +72,10 @@ docker/        Apache/PHP/Caddy configuration and container entrypoints
 docs/          Documentation index, maintained references and historical archive
 includes/      Domain functions, repositories, rendering and shared HTTP/auth helpers
 public/        The web document root: the single front controller index.php, health/ready probes and assets/{css,js,fonts,images}
+resources/     Non-PHP resources, including private third-party license attribution
 runtime/       Ignored generated runtime state (tracked placeholders only)
 scripts/       Stable entry points; ci/, ops/, tools/ and approved archive/
 tests/         Unit/ (PHPUnit), Legacy/ (registered cases), Integration/ (MySQL/HTTP), Browser/ (Playwright), Support/ (shared helpers and fixtures)
-uploads/       Legacy upload locations with tracked placeholders; managed media is private
 ```
 
 Every runtime uses one layout, built from one multi-stage [Dockerfile](Dockerfile): code in `/var/www/app` and the Apache document root `/var/www/public`, which holds only the repository `public/` tree. Nothing outside `public/` is web-reachable. The `development` target serves dev Compose and the required gates; the `production` target (the default) serves [docker-compose.production.yml](docker-compose.production.yml), CI and the Owner's local stack. Reference assets with `versionedAssetUrl('assets/css/<file>.css')`, which returns an absolute, content-versioned URL. See [docs/RUNTIME_TOPOLOGY.md](docs/RUNTIME_TOPOLOGY.md) and [AGENTS.md — Layout](AGENTS.md#layout).

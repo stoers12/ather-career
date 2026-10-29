@@ -61,12 +61,33 @@ function ownerFlowSnapshot(PDO $database, int $portfolioId): array
     return $snapshot;
 }
 
+function ownerFlowAssertRepositoryUploadsAbsent(): void
+{
+    $repositoryRoot = realpath(__DIR__ . '/../..');
+    if ($repositoryRoot === false) {
+        throw new RuntimeException('Cannot resolve the repository root for the uploads absence check.');
+    }
+    foreach (array_unique([$repositoryRoot, '/var/www/app']) as $root) {
+        $resolvedRoot = realpath($root);
+        if ($resolvedRoot === false || !is_dir($resolvedRoot)) {
+            throw new RuntimeException('Cannot resolve an application root for the uploads absence check.');
+        }
+        // Listing the parent rejects every entry, including a broken symlink;
+        // a failed lookup must not be mistaken for an absent path.
+        $entries = @scandir($resolvedRoot);
+        if ($entries === false) {
+            throw new RuntimeException('Cannot inspect an application root for the uploads absence check.');
+        }
+        phase2Assert(!in_array('uploads', $entries, true), 'Repository uploads path must remain absent.');
+    }
+}
+
 /** @return array<string, string> */
-function ownerFlowUploadSnapshot(string $uploadsRoot): array
+function ownerFlowUploadSnapshot(string $legacyFixtureRoot): array
 {
     $files = [];
     $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($uploadsRoot, FilesystemIterator::SKIP_DOTS),
+        new RecursiveDirectoryIterator($legacyFixtureRoot, FilesystemIterator::SKIP_DOTS),
         RecursiveIteratorIterator::LEAVES_ONLY,
     );
     foreach ($iterator as $file) {
@@ -75,7 +96,7 @@ function ownerFlowUploadSnapshot(string $uploadsRoot): array
             if ($hash === false) {
                 throw new RuntimeException('Could not snapshot a test upload.');
             }
-            $files[str_replace(DIRECTORY_SEPARATOR, '/', substr($file->getPathname(), strlen($uploadsRoot) + 1))] = $hash;
+            $files[str_replace(DIRECTORY_SEPARATOR, '/', substr($file->getPathname(), strlen($legacyFixtureRoot) + 1))] = $hash;
         }
     }
     ksort($files);
@@ -151,6 +172,7 @@ $passed = [];
 try {
     TestEnvironment::assertSafeEnvironment(getenv());
     $environment = TestEnvironment::create();
+    ownerFlowAssertRepositoryUploadsAbsent();
     $database = getDatabaseConnection();
     phase2AssertSame('ownership_contract', $database->query("SELECT name FROM schema_migrations WHERE version = '004'")->fetchColumn(), 'P2J-04 rehearsal requires the P2J-02 ownership contract.');
 
@@ -198,12 +220,16 @@ try {
     $contextB = requireOwnedPortfolioContext($database);
     $profileB = createAuthorizedPersonalInfo($database, $contextB, ownerFlowProfileValues('Private B'));
     $skillB = createAuthorizedSkill($database, $contextB, 'B Skill');
-    $uploadsRoot = realpath(__DIR__ . '/../../uploads');
-    if ($uploadsRoot === false) {
-        throw new RuntimeException('Test uploads root is unavailable.');
+    $legacyFixtureDirectory = $environment->namespaceRoot . '/legacy-uploads';
+    if (!mkdir($legacyFixtureDirectory . '/projects', 0700, true)) {
+        throw new RuntimeException('Could not create the disposable legacy fixture root.');
+    }
+    $legacyFixtureRoot = realpath($legacyFixtureDirectory);
+    if ($legacyFixtureRoot === false) {
+        throw new RuntimeException('Test legacy fixture root is unavailable.');
     }
     $bImageFilename = 'p2j04-b-' . bin2hex(random_bytes(8)) . '.bin';
-    $bImagePath = $uploadsRoot . DIRECTORY_SEPARATOR . 'projects' . DIRECTORY_SEPARATOR . $bImageFilename;
+    $bImagePath = $legacyFixtureRoot . DIRECTORY_SEPARATOR . 'projects' . DIRECTORY_SEPARATOR . $bImageFilename;
     if (file_put_contents($bImagePath, 'B private image', LOCK_EX) === false) {
         throw new RuntimeException('Could not create B project image fixture.');
     }
@@ -217,7 +243,7 @@ try {
     $currentA = loadAuthorizedPersonalInfo($database, $contextA);
     phase2Assert(is_array($currentA), 'A profile is unavailable for owner route rehearsal.');
     $bBefore = ownerFlowSnapshot($database, $portfolioB);
-    $filesystemBefore = ownerFlowUploadSnapshot($uploadsRoot);
+    $filesystemBefore = ownerFlowUploadSnapshot($legacyFixtureRoot);
 
     $foreignProfile = handleAuthorizedProfileAction($database, $contextA, [
         'action' => 'save_profile', 'profile_id' => (string) $profileB, 'expected_profile_version' => (string) $currentA['profile_version'],
@@ -271,20 +297,22 @@ try {
     phase2AssertSame(null, findAuthorizedPersonalInfo($database, $contextA, $profileB), 'A read B profile.');
     phase2AssertSame(null, findAuthorizedProject($database, $contextA, $projectB), 'A read B project.');
     phase2AssertSame($bBefore, ownerFlowSnapshot($database, $portfolioB), 'A owner route attempt changed B database rows.');
-    phase2AssertSame($filesystemBefore, ownerFlowUploadSnapshot($uploadsRoot), 'A owner route attempt changed B filesystem state.');
+    phase2AssertSame($filesystemBefore, ownerFlowUploadSnapshot($legacyFixtureRoot), 'A owner route attempt changed B filesystem state.');
     phase2AssertSame('B private image', file_get_contents($bImagePath), 'A owner route attempt changed B project image bytes.');
+    ownerFlowAssertRepositoryUploadsAbsent();
     $passed[] = 'T-OWNER-XTENANT A_TO_B';
 
     ownerFlowEstablishSession($userB, 9);
     $contextB = requireOwnedPortfolioContext($database);
     $aBefore = ownerFlowSnapshot($database, $portfolioA);
-    $aFilesystemBefore = ownerFlowUploadSnapshot($uploadsRoot);
+    $aFilesystemBefore = ownerFlowUploadSnapshot($legacyFixtureRoot);
     phase2AssertSame(null, findAuthorizedPersonalInfo($database, $contextB, $profileA), 'B read A profile.');
     phase2AssertSame(false, updateAuthorizedSkill($database, $contextB, $skillA, 'B Overwrote A'), 'B updated A skill.');
     phase2AssertSame(false, deleteAuthorizedProject($database, $contextB, $projectA), 'B deleted A project.');
     phase2AssertSame(null, findAuthorizedMessage($database, $contextB, $messageAId), 'B message candidate bypassed scope.');
     phase2AssertSame($aBefore, ownerFlowSnapshot($database, $portfolioA), 'B owner route attempt changed A database rows.');
-    phase2AssertSame($aFilesystemBefore, ownerFlowUploadSnapshot($uploadsRoot), 'B owner route attempt changed A filesystem state.');
+    phase2AssertSame($aFilesystemBefore, ownerFlowUploadSnapshot($legacyFixtureRoot), 'B owner route attempt changed A filesystem state.');
+    ownerFlowAssertRepositoryUploadsAbsent();
     $passed[] = 'T-OWNER-XTENANT B_TO_A';
 
     ownerFlowEstablishSession($userA, 7);
@@ -295,6 +323,8 @@ try {
     phase2AssertSame(1, $aggregate['message_count'], 'A dashboard count included foreign messages.');
     phase2AssertSame([$profileA], array_map(static fn (array $row): int => (int) $row['id'], array_filter([loadAuthorizedPersonalInfo($database, $contextA)])), 'A profile collection was not scoped.');
     $passed[] = 'T-OWNER-COLLECT';
+    ownerFlowAssertRepositoryUploadsAbsent();
+    $passed[] = 'T-OWNER-REPOSITORY-UPLOADS-ABSENT';
 } catch (Throwable $exception) {
     fwrite(STDERR, "FAIL owner flow rehearsal: {$exception->getMessage()}\n");
     exit(1);

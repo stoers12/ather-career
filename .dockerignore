@@ -5,11 +5,6 @@
 !.env.example
 /vendor/
 
-uploads/profile/*
-!uploads/profile/.gitkeep
-uploads/projects/*
-!uploads/projects/.gitkeep
-
 runtime/rate-limit/*
 !runtime/rate-limit/.gitkeep
 

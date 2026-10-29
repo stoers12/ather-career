@@ -17,6 +17,7 @@ A PHP 8.3 / Apache / MySQL 8.4 multi-tenant portfolio platform. Owners sign in w
   - Repositories take `PDO` + `AuthorizedPortfolioContext`.
 - `src/` holds namespaced classes (`Ather\`, PSR-4, Composer autoload via `includes/autoload.php`). Modules move there one card at a time and keep their `includes/` functions as one-line wrappers; follow [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - `contracts/` holds versioned JSON: `evidence-hub-contract-vN.schema.json` and `evidence-hub-taxonomy-vN.json`.
+- `resources/` holds non-PHP resources such as third-party licenses; it stays outside `public/`. Managed media lives in private storage; legacy migration source roots are passed explicitly.
 - `database/migrations/NNN_name.sql` is applied in order by `database/migrate.php`. Every additive table gets a `database/rollback/NNN_name.sql` companion.
 - `tests/Unit/` holds native PHPUnit tests. `tests/Legacy/cases/*Test.php` are legacy cases registered in `tests/Legacy/registry.php`, run by both PHPUnit and `scripts/run-phase2-tests.php`. `tests/Integration/` holds MySQL/HTTP rehearsals and workers, `tests/Browser/` holds Playwright drivers and dedicated browser fixtures, and `tests/Support/` holds shared helpers, fixtures, SQLite schemas and the coverage collector.
 - `scripts/` keeps the Phase 2, required-gates and production-security entry points at its root; see the [scripts layout](scripts/README.md) for `ci/`, `ops/`, `tools/` and the approved `archive/`.
