@@ -7,8 +7,8 @@ final class ResponsiveAccessibilityStaticTest
     public static function run(TestEnvironment $environment): void
     {
         $http = self::read('includes/http.php');
-        $publicPortfolio = self::read('public_portfolio.php');
-        $publicContact = self::read('public_contact.php');
+        $publicPortfolio = self::read('handlers/public_portfolio.php');
+        $publicContact = self::read('handlers/public_contact.php');
         $presentation = self::read('includes/portfolio_presentation.php');
         $portfolioCss = self::read('public/assets/css/portfolio.css');
         $portfolioJavascript = self::read('public/assets/js/portfolio.js');

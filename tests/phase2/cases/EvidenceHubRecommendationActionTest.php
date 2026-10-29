@@ -47,7 +47,7 @@ final class EvidenceHubRecommendationActionTest
     private static function presentationAndRouteContracts(): void
     {
         require_once PHASE2_REPOSITORY_ROOT . '/includes/evidence_hub_owner_presentation.php';
-        $route = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/owner_evidence_hub.php');
+        $route = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/handlers/owner_evidence_hub.php');
         foreach (['csrf_token', 'action_token', "['snooze', 'dismiss']", 'consumeEvidenceHubRecommendationActionToken', 'executeAuthorizedEvidenceHubRecommendationAction', "httpRedirect('/owner/evidence-hub', 303)"] as $required) {
             phase2Assert(str_contains($route, $required), "Protected action route is missing {$required}.");
         }

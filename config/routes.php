@@ -6,15 +6,14 @@ declare(strict_types=1);
  * The application's route table (ENG-09). public/index.php is the only web
  * entry point; it resolves every request through this table.
  *
- * - scripts: each former public/ entry script => its handler file (relative to
- *   the application root). The entry name stays the request's identity and its
+ * - scripts: each former public/ entry script => its handler file (relative to the application root). The entry name stays the request's identity and its
  *   URL keeps working, with an optional trailing PATH_INFO as under Apache.
  *   /owner_oidc_callback.php is registered in Auth0 and must never change.
  * - patterns: the pretty URLs that docker/apache/vhost.conf used to rewrite, in
  *   the same order (first match wins). A query replaces the request's own, as the
  *   former rewrites did; {name} inserts the named capture.
  *
- * Adding a page: add the handler file and one line here; nothing in public/.
+ * Adding a page: add the handler in handlers/ and one line here; nothing in public/.
  * A closure keeps $slug out of the handler's file scope and lets tests load the
  * table repeatedly.
  */
@@ -23,34 +22,34 @@ return (static function (): array {
 
     return [
         'scripts' => [
-            'index.php' => 'index.php',
-            'owner.php' => 'owner.php',
-            'owner_auth_retry.php' => 'owner_auth_retry.php',
-            'owner_evidence_hub.php' => 'owner_evidence_hub.php',
-            'owner_experiences.php' => 'owner_experiences.php',
-            'owner_login.php' => 'owner_login.php',
-            'owner_logout.php' => 'owner_logout.php',
-            'owner_media.php' => 'owner_media.php',
-            'owner_messages.php' => 'owner_messages.php',
-            'owner_oidc_callback.php' => 'owner_oidc_callback.php',
-            'owner_onboarding.php' => 'owner_onboarding.php',
-            'owner_onboarding_attestation.php' => 'owner_onboarding_attestation.php',
-            'owner_onboarding_completion.php' => 'owner_onboarding_completion.php',
-            'owner_onboarding_draft.php' => 'owner_onboarding_draft.php',
-            'owner_onboarding_editor.php' => 'owner_onboarding_editor.php',
-            'owner_preview.php' => 'owner_preview.php',
-            'owner_profile.php' => 'owner_profile.php',
-            'owner_project_evidence.php' => 'owner_project_evidence.php',
-            'owner_projects.php' => 'owner_projects.php',
-            'owner_publication.php' => 'owner_publication.php',
-            'owner_register.php' => 'owner_register.php',
-            'owner_switch_account.php' => 'owner_switch_account.php',
-            'p.php' => 'public_portfolio.php',
-            'p_contact.php' => 'public_contact.php',
-            'p_media.php' => 'public_media.php',
-            'p_projects.php' => 'public_projects_json.php',
-            'signin.php' => 'signin.php',
-            'signup.php' => 'signup.php',
+            'index.php' => 'handlers/index.php',
+            'owner.php' => 'handlers/owner.php',
+            'owner_auth_retry.php' => 'handlers/owner_auth_retry.php',
+            'owner_evidence_hub.php' => 'handlers/owner_evidence_hub.php',
+            'owner_experiences.php' => 'handlers/owner_experiences.php',
+            'owner_login.php' => 'handlers/owner_login.php',
+            'owner_logout.php' => 'handlers/owner_logout.php',
+            'owner_media.php' => 'handlers/owner_media.php',
+            'owner_messages.php' => 'handlers/owner_messages.php',
+            'owner_oidc_callback.php' => 'handlers/owner_oidc_callback.php',
+            'owner_onboarding.php' => 'handlers/owner_onboarding.php',
+            'owner_onboarding_attestation.php' => 'handlers/owner_onboarding_attestation.php',
+            'owner_onboarding_completion.php' => 'handlers/owner_onboarding_completion.php',
+            'owner_onboarding_draft.php' => 'handlers/owner_onboarding_draft.php',
+            'owner_onboarding_editor.php' => 'handlers/owner_onboarding_editor.php',
+            'owner_preview.php' => 'handlers/owner_preview.php',
+            'owner_profile.php' => 'handlers/owner_profile.php',
+            'owner_project_evidence.php' => 'handlers/owner_project_evidence.php',
+            'owner_projects.php' => 'handlers/owner_projects.php',
+            'owner_publication.php' => 'handlers/owner_publication.php',
+            'owner_register.php' => 'handlers/owner_register.php',
+            'owner_switch_account.php' => 'handlers/owner_switch_account.php',
+            'p.php' => 'handlers/public_portfolio.php',
+            'p_contact.php' => 'handlers/public_contact.php',
+            'p_media.php' => 'handlers/public_media.php',
+            'p_projects.php' => 'handlers/public_projects_json.php',
+            'signin.php' => 'handlers/signin.php',
+            'signup.php' => 'handlers/signup.php',
         ],
         'patterns' => [
             ['pattern' => '#^/owner/evidence-hub/?$#', 'script' => 'owner_evidence_hub.php'],

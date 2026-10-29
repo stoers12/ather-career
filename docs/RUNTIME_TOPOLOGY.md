@@ -4,6 +4,8 @@ Status: ENG-04 Phase A design, **approved with the amendments in section 9** and
 
 **Superseded in part by ENG-09 ST-1:** the per-route `public/` front controllers and the vhost `RewriteRule`s described here were replaced by one front controller, `public/index.php`, and the route table `config/routes.php`. See [ARCHITECTURE.md — Routing](ARCHITECTURE.md#routing-eng-09). The filesystem and document-root boundary in this document is unchanged.
 
+**ENG-09 ST-2:** the 29 application request handlers now live under `/var/www/app/handlers/`; the application root contains no PHP files. URLs and the public document root remain unchanged.
+
 ## 1. Current state
 
 ### Evidence and boundaries

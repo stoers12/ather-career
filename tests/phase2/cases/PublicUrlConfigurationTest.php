@@ -64,7 +64,7 @@ final class PublicUrlConfigurationTest
 
         $urlSource = self::read('includes/public_url.php');
         $publicationSource = self::read('includes/owner_publication_presentation.php');
-        $publicationRoute = self::read('owner_publication.php');
+        $publicationRoute = self::read('handlers/owner_publication.php');
         $script = self::read('public/assets/js/admin.js');
         $stylesheet = self::read('public/assets/css/admin.css');
         $developmentCompose = self::read('docker-compose.yml');

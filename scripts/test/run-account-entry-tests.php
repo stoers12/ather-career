@@ -23,7 +23,7 @@ $render = static function (string $screen, array $query) use ($root): string {
     $verificationFixture = $screen;
     ob_start();
     try {
-        require $root . ($screen === 'signup' ? '/signup.php' : '/tests/phase2/support/email-verification-preview.php');
+        require $root . ($screen === 'signup' ? '/handlers/signup.php' : '/tests/phase2/support/email-verification-preview.php');
         return (string) ob_get_contents();
     } finally {
         ob_end_clean();

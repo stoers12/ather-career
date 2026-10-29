@@ -8,8 +8,8 @@ final class Auth0OidcStaticTest
     {
         $oidc = self::read('includes/auth0_oidc.php');
         $identity = self::read('includes/auth0_identity.php');
-        $start = self::read('owner_login.php');
-        $callback = self::read('owner_oidc_callback.php');
+        $start = self::read('handlers/owner_login.php');
+        $callback = self::read('handlers/owner_oidc_callback.php');
         $guard = self::read('scripts/check-production-security.php');
         $safeAccessLog = self::read('docker/apache/safe-access-log.conf');
         $developmentDockerfile = self::read('Dockerfile');

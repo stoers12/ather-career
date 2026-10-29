@@ -23,7 +23,7 @@ final class EvidenceHubOwnerPageModelTest
     {
         $root = PHASE2_REPOSITORY_ROOT . '/';
         phase2AssertSame('ab54f42a93b6e4eeacd97a2b416f261bf8ba3d280f2fecf205040d0aeecd7bd0', hash_file('sha256', $root . 'contracts/evidence-hub-contract-v1.schema.json'), 'Analytics v1 schema changed.');
-        $route = file_get_contents($root . 'owner_project_evidence.php');
+        $route = file_get_contents($root . 'handlers/owner_project_evidence.php');
         $presentation = file_get_contents($root . 'includes/evidence_hub_owner_page_presentation.php');
         $editPresentation = file_get_contents($root . 'includes/owner_project_evidence_presentation.php');
         $model = file_get_contents($root . 'includes/evidence_hub_owner_page_model.php');
@@ -43,8 +43,8 @@ final class EvidenceHubOwnerPageModelTest
             phase2Assert(str_contains($editPresentation . $presentation, $anchor) || str_contains($guidance, "'anchor' => '" . trim($anchor, '#') . "'"), "Evidence fragment {$anchor} is missing.");
         }
         phase2Assert(str_contains(file_get_contents($root . 'public/assets/js/evidence_hub.js'), 'targetCard()') && str_contains(file_get_contents($root . 'public/assets/js/evidence_hub.js'), 'revealFragment()'), 'Targeted project reveal is missing.');
-        RouteContract::assertRoute('/owner/projects/7/evidence', 'owner_project_evidence.php', null, 'Clean evidence route is missing.');
-        RouteContract::assertRoute('/owner/projects/7/evidence/', 'owner_project_evidence.php', null, 'Clean evidence route lost its optional trailing slash.');
+        RouteContract::assertRoute('/owner/projects/7/evidence', 'handlers/owner_project_evidence.php', null, 'Clean evidence route is missing.');
+        RouteContract::assertRoute('/owner/projects/7/evidence/', 'handlers/owner_project_evidence.php', null, 'Clean evidence route lost its optional trailing slash.');
         RouteContract::assertNoRoute('/owner/projects/0/evidence', 'Clean evidence route accepts a non-positive project id.');
     }
 

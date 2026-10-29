@@ -21,7 +21,7 @@ final class EvidenceHubOwnerRoutePresenterTest
     /** @param array<string, mixed> $fixtures */
     private static function routeAndWrapperContracts(array $fixtures): void
     {
-        $route = self::read('owner_evidence_hub.php');
+        $route = self::read('handlers/owner_evidence_hub.php');
         $canonical = $fixtures['canonical_path'];
         phase2Assert(is_string($canonical), 'Owner page fixture canonical path is invalid.');
 
@@ -34,7 +34,7 @@ final class EvidenceHubOwnerRoutePresenterTest
         phase2Assert(!preg_match('/\$_(?:GET|REQUEST|COOKIE)\b/', $route), 'Protected Evidence Hub route accepts request input outside its protected action boundary.');
         phase2Assert(!str_contains($route, "\$_POST['recommendation_key']") && !str_contains($route, "\$_POST['rule_version']") && !str_contains($route, "\$_POST['evidence_fingerprint']") && !str_contains($route, "\$_POST['target_ref']"), 'Protected Evidence Hub route accepts client recommendation authority.');
         foreach (['/owner/evidence-hub', '/owner/evidence-hub/', '/owner_evidence_hub.php'] as $path) {
-            RouteContract::assertRoute($path, 'owner_evidence_hub.php', null, "The Evidence Hub route is missing {$path}.");
+            RouteContract::assertRoute($path, 'handlers/owner_evidence_hub.php', null, "The Evidence Hub route is missing {$path}.");
             // Undo stays alive only for this request identity (ENG-09 design 7a.1).
             phase2AssertSame('owner_evidence_hub.php', RouteContract::resolve($path)['script'] ?? null, "{$path} lost the Evidence Hub request identity.");
         }
@@ -45,7 +45,7 @@ final class EvidenceHubOwnerRoutePresenterTest
 
     private static function ownerGuardsAndSafeConfigurationFailure(): void
     {
-        $route = self::read('owner_evidence_hub.php');
+        $route = self::read('handlers/owner_evidence_hub.php');
         phase2Assert(str_contains($route, 'catch (EvidenceHubHmacConfigurationException $exception)'), 'Missing or invalid HMAC configuration does not fail closed at the route boundary.');
         phase2Assert(str_contains($route, 'Evidence Hub is temporarily unavailable.'), 'HMAC configuration failure does not have a generic safe response.');
         phase2Assert(!str_contains($route, 'EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY'), 'Route source unnecessarily exposes the HMAC variable name.');
@@ -169,8 +169,8 @@ final class EvidenceHubOwnerRoutePresenterTest
         }
         phase2Assert(str_contains($layout, 'bool $themeCapable = false') && str_contains($layout, 'if ($themeCapable)') && str_contains($layout, "versionedAssetUrl('assets/js/owner_theme.js')") && str_contains($layout, "versionedAssetUrl('assets/js/admin.js')"), 'Shared Owner layout must load its theme resolver only for explicit theme-capable pages.');
         phase2Assert(strpos($layout, "versionedAssetUrl('assets/js/owner_theme.js')") > strpos($layout, '<body') && strpos($layout, "versionedAssetUrl('assets/js/owner_theme.js')") < strpos($layout, '<div class="admin-layout'), 'Owner theme must resolve before workspace content.');
-        phase2Assert(str_contains(self::read('owner_evidence_hub.php'), "ownerLayoutStart('Evidence Hub', 'evidence_hub', true)") && str_contains(self::read('owner_project_evidence.php'), "ownerLayoutStart('Edit project evidence', 'evidence_hub', true)"), 'Evidence Hub and its editor must explicitly opt in to dark theme capability.');
-        foreach (['owner_profile.php' => ['Personal Info', 'profile'], 'owner_projects.php' => ['Projects', 'projects'], 'owner_experiences.php' => ['Experience', 'experiences'], 'owner_messages.php' => ['Messages', 'messages'], 'owner_publication.php' => ['Publication', 'publication']] as $route => [$title, $active]) {
+        phase2Assert(str_contains(self::read('handlers/owner_evidence_hub.php'), "ownerLayoutStart('Evidence Hub', 'evidence_hub', true)") && str_contains(self::read('handlers/owner_project_evidence.php'), "ownerLayoutStart('Edit project evidence', 'evidence_hub', true)"), 'Evidence Hub and its editor must explicitly opt in to dark theme capability.');
+        foreach (['handlers/owner_profile.php' => ['Personal Info', 'profile'], 'handlers/owner_projects.php' => ['Projects', 'projects'], 'handlers/owner_experiences.php' => ['Experience', 'experiences'], 'handlers/owner_messages.php' => ['Messages', 'messages'], 'handlers/owner_publication.php' => ['Publication', 'publication']] as $route => [$title, $active]) {
             phase2Assert(str_contains(self::read($route), "ownerLayoutStart('{$title}', '{$active}', true, ['account_name' =>"), 'Portfolio workspace routes must explicitly opt into the shared theme with their own active page.');
         }
         foreach (['evidence-hub-mobile-close', 'Close navigation', 'evidence-hub-mobile-backdrop', 'aria-controls="evidence-hub-mobile-drawer"'] as $required) {

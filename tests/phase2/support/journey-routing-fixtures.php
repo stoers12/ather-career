@@ -5,7 +5,7 @@ if (PHP_SAPI!=='cli' || !is_file('/.dockerenv') || getenv('APP_ENV')!=='test' ||
 function journeyFixtureCopy(string $root): void
 {
     $app=realpath(__DIR__.'/../../..');
-    foreach (['includes','config','data'] as $directory) {
+    foreach (['handlers','includes','config','data'] as $directory) {
         $source=$app.'/'.$directory;
         $iterator=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source,FilesystemIterator::SKIP_DOTS),RecursiveIteratorIterator::SELF_FIRST);
         mkdir($root.'/'.$directory,0700,true);
@@ -15,7 +15,6 @@ function journeyFixtureCopy(string $root): void
             if ($file->isDir()) { mkdir($target,0700); } else { copy($file->getPathname(),$target); chmod($target,0600); }
         }
     }
-    foreach (glob($app.'/*.php') as $file) { copy($file,$root.'/'.basename($file)); chmod($root.'/'.basename($file),0600); }
     symlink($app.'/vendor',$root.'/vendor');
     symlink($app.'/public',$root.'/public');
     $control=var_export(dirname($root).'/documents.json',true);

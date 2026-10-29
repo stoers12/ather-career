@@ -39,18 +39,18 @@ final class LegacyBackendRemovalStaticTest
         }
 
         foreach ([
-            'owner.php',
-            'owner_login.php',
-            'owner_logout.php',
-            'owner_oidc_callback.php',
-            'owner_onboarding.php',
-            'owner_profile.php',
-            'owner_projects.php',
-            'owner_experiences.php',
-            'owner_messages.php',
-            'owner_publication.php',
-            'owner_preview.php',
-            'owner_media.php',
+            'handlers/owner.php',
+            'handlers/owner_login.php',
+            'handlers/owner_logout.php',
+            'handlers/owner_oidc_callback.php',
+            'handlers/owner_onboarding.php',
+            'handlers/owner_profile.php',
+            'handlers/owner_projects.php',
+            'handlers/owner_experiences.php',
+            'handlers/owner_messages.php',
+            'handlers/owner_publication.php',
+            'handlers/owner_preview.php',
+            'handlers/owner_media.php',
         ] as $path) {
             phase2Assert(is_file(PHASE2_REPOSITORY_ROOT . '/' . $path), "Owner/Auth0 route is missing: {$path}");
         }
@@ -70,7 +70,7 @@ final class LegacyBackendRemovalStaticTest
 
         foreach (['docker/apache/vhost.conf'] as $path) {
             phase2Assert(str_contains(self::read($path), 'RewriteRule ^ index.php [END]'), "The front controller is missing from {$path}.");
-            RouteContract::assertRoute('/p/ab-1', 'public_portfolio.php', ['slug' => 'ab-1'], 'Canonical /p/<slug> routing is missing from config/routes.php.');
+            RouteContract::assertRoute('/p/ab-1', 'handlers/public_portfolio.php', ['slug' => 'ab-1'], 'Canonical /p/<slug> routing is missing from config/routes.php.');
         }
     }
 
@@ -100,8 +100,9 @@ final class LegacyBackendRemovalStaticTest
 
     private static function runtimePhp(): string
     {
+        phase2Assert((glob(PHASE2_REPOSITORY_ROOT . '/*.php') ?: []) === [], 'Repository root must not contain PHP files.');
         $contents = [];
-        foreach (glob(PHASE2_REPOSITORY_ROOT . '/*.php') ?: [] as $path) {
+        foreach (glob(PHASE2_REPOSITORY_ROOT . '/handlers/*.php') ?: [] as $path) {
             $source = file_get_contents($path);
             phase2Assert(is_string($source), 'Runtime PHP source is unreadable: ' . $path);
             $contents[] = $source;

@@ -67,7 +67,7 @@ try {
         http_response_code(200);
         $_GET = ['lang' => $locale];
         ob_start();
-        require __DIR__ . '/../../signin.php';
+        require __DIR__ . '/../../handlers/signin.php';
         $html = (string) ob_get_clean();
         $check(str_contains($html, '<html lang="' . $locale . '" dir="' . $direction . '">'), 'Locale and direction must agree.');
         $check(str_contains($html, 'href="owner_login.php?method=google"'), 'Google must retain its existing OIDC route.');
@@ -84,7 +84,7 @@ try {
     }
     $_GET = ['lang' => ['en'], 'untrusted' => '<script>alert(1)</script>'];
     ob_start();
-    require __DIR__ . '/../../signin.php';
+    require __DIR__ . '/../../handlers/signin.php';
     $html = (string) ob_get_clean();
     $check(str_contains($html, '<html lang="ar" dir="rtl">') && !str_contains($html, 'alert(1)'), 'Structured locale input must fall back without reflection.');
 } catch (Throwable $exception) {

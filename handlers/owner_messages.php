@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/owner_session.php';
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/http.php';
-require_once __DIR__ . '/includes/owner_flow.php';
-require_once __DIR__ . '/includes/project_actions.php';
-require_once __DIR__ . '/includes/portfolio_scoped_data.php';
-require_once __DIR__ . '/includes/owner_layout.php';
+require_once dirname(__DIR__) . '/includes/owner_session.php';
+require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/includes/error_reporting.php';
+require_once dirname(__DIR__) . '/includes/http.php';
+require_once dirname(__DIR__) . '/includes/owner_flow.php';
+require_once dirname(__DIR__) . '/includes/project_actions.php';
+require_once dirname(__DIR__) . '/includes/portfolio_scoped_data.php';
+require_once dirname(__DIR__) . '/includes/owner_layout.php';
 
 startOwnerSession();
 httpRegisterExceptionBoundary('owner_messages.php');

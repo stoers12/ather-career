@@ -45,12 +45,12 @@ final class OwnerWorkspacePresentationTest
                 phase2Assert(ownerText('Full Name') === ($locale === 'ar' ? 'الاسم الكامل' : 'Full Name'), 'Field labels must resolve in the active workspace locale.');
                 phase2Assert(ownerText('Synthetic owner text') === 'Synthetic owner text', 'User/domain content must not be translated by UI copy lookup.');
             }
-            foreach (['owner_profile.php', 'owner_projects.php', 'owner_experiences.php', 'owner_publication.php'] as $route) {
+            foreach (['handlers/owner_profile.php', 'handlers/owner_projects.php', 'handlers/owner_experiences.php', 'handlers/owner_publication.php'] as $route) {
                 $view = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/' . $route);
                 phase2Assert(!preg_match('/href="owner_preview\.php(?:#[^"]*)?"/', $view), 'Page headers must not duplicate the shared toolbar preview.');
             }
-            phase2Assert(str_contains((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/owner_projects.php'), 'href="owner_projects.php?add=1"')
-                && str_contains((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/owner_experiences.php'), 'href="owner_experiences.php?add=1"'), 'Page-specific add actions must survive removal of duplicate previews.');
+            phase2Assert(str_contains((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/handlers/owner_projects.php'), 'href="owner_projects.php?add=1"')
+                && str_contains((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/handlers/owner_experiences.php'), 'href="owner_experiences.php?add=1"'), 'Page-specific add actions must survive removal of duplicate previews.');
             $_GET = [];
             $_COOKIE = ['ather_owner_locale' => 'en'];
             phase2AssertSame('en', ownerLocale(), 'A valid presentation preference must survive navigation without a lang query.');

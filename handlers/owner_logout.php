@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/owner_session.php';
-require_once __DIR__ . '/includes/csrf.php';
-require_once __DIR__ . '/includes/http.php';
-require_once __DIR__ . '/includes/auth0_logout.php';
+require_once dirname(__DIR__) . '/includes/owner_session.php';
+require_once dirname(__DIR__) . '/includes/csrf.php';
+require_once dirname(__DIR__) . '/includes/http.php';
+require_once dirname(__DIR__) . '/includes/auth0_logout.php';
 
 startOwnerSession();
 

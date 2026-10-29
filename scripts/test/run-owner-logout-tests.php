@@ -68,6 +68,9 @@ try {
     $environment = TestEnvironment::create();
     $root = $environment->namespaceRoot;
     mkdir($root . '/sessions', 0700);
+    mkdir($root . '/public', 0700);
+    symlink(dirname(__DIR__, 2), $root . '/app');
+    RouteContract::writeEntryScripts($root . '/public');
     session_save_path($root . '/sessions');
     ini_set('session.cache_limiter', '');
     putenv('SESSION_COOKIE_SECURE=0');
@@ -89,7 +92,7 @@ try {
         $env = array_merge(array_intersect_key(getenv(), array_flip(['PATH', 'SystemRoot', 'TEMP', 'TMP'])), $settings, $overrides);
         $process = proc_open([
             PHP_BINARY, '-d', 'session.save_path=' . $root . '/sessions', '-d', 'display_errors=0',
-            '-S', '127.0.0.1:' . $port, '-t', dirname(__DIR__, 2),
+            '-S', '127.0.0.1:' . $port, '-t', $root . '/public',
         ], [0 => ['pipe', 'r'], 1 => ['file', $root . '/private-http.log', 'a'], 2 => ['file', $root . '/private-http.log', 'a']], $pipes, null, $env);
         logoutAssert(is_resource($process), 'Logout child server unavailable.'); fclose($pipes[0]);
         for ($i = 0; $i < 100; ++$i) {

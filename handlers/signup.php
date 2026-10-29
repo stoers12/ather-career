@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/http.php';
-require_once __DIR__ . '/includes/presentation.php';
-require_once __DIR__ . '/includes/signin_copy.php';
-require_once __DIR__ . '/includes/signup_copy.php';
-require_once __DIR__ . '/includes/account_entry_icons.php';
+require_once dirname(__DIR__) . '/includes/http.php';
+require_once dirname(__DIR__) . '/includes/presentation.php';
+require_once dirname(__DIR__) . '/includes/signin_copy.php';
+require_once dirname(__DIR__) . '/includes/signup_copy.php';
+require_once dirname(__DIR__) . '/includes/account_entry_icons.php';
 
-require_once __DIR__ . '/includes/auth0_oidc.php';
-require_once __DIR__ . '/includes/owner_session.php';
-require_once __DIR__ . '/includes/csrf.php';
+require_once dirname(__DIR__) . '/includes/auth0_oidc.php';
+require_once dirname(__DIR__) . '/includes/owner_session.php';
+require_once dirname(__DIR__) . '/includes/csrf.php';
 
 httpRegisterExceptionBoundary('signup.php');
 httpRequireMethod(['GET', 'HEAD']);
 $locale = ($_GET['lang'] ?? null) === 'en' ? 'en' : 'ar';
-require_once __DIR__ . '/includes/authenticated_entry.php';
+require_once dirname(__DIR__) . '/includes/authenticated_entry.php';
 presentAuthenticatedEntryIfPresent($locale);
 $registrationEnabled = auth0RegistrationIsEnabled();
 if ($registrationEnabled) { startOwnerSession(); }

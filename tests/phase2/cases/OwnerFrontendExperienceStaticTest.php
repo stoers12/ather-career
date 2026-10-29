@@ -8,14 +8,14 @@ final class OwnerFrontendExperienceStaticTest
     {
         $layout = self::read('includes/owner_layout.php');
         $feedback = self::read('includes/owner_form_feedback.php');
-        $profile = self::read('owner_profile.php');
-        $projects = self::read('owner_projects.php');
-        $experiences = self::read('owner_experiences.php');
-        $publication = self::read('owner_publication.php');
+        $profile = self::read('handlers/owner_profile.php');
+        $projects = self::read('handlers/owner_projects.php');
+        $experiences = self::read('handlers/owner_experiences.php');
+        $publication = self::read('handlers/owner_publication.php');
         $publicationPresentation = self::read('includes/owner_publication_presentation.php');
-        $onboarding = self::read('owner_onboarding.php') . self::read('includes/owner_flow.php');
-        $messages = self::read('owner_messages.php');
-        $dashboard = self::read('owner.php');
+        $onboarding = self::read('handlers/owner_onboarding.php') . self::read('includes/owner_flow.php');
+        $messages = self::read('handlers/owner_messages.php');
+        $dashboard = self::read('handlers/owner.php');
         $javascript = self::read('public/assets/js/admin.js');
         $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
 

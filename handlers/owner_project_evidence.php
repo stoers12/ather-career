@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/owner_session.php';
-require_once __DIR__ . '/includes/csrf.php';
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/includes/http.php';
-require_once __DIR__ . '/includes/owner_flow.php';
-require_once __DIR__ . '/includes/owner_layout.php';
-require_once __DIR__ . '/includes/transaction.php';
-require_once __DIR__ . '/includes/project_evidence_repository.php';
-require_once __DIR__ . '/includes/evidence_hub_undo.php';
-require_once __DIR__ . '/includes/evidence_hub_owner_page_model.php';
-require_once __DIR__ . '/includes/evidence_hub_owner_page_presentation.php';
-require_once __DIR__ . '/includes/owner_project_evidence_presentation.php';
+require_once dirname(__DIR__) . '/includes/owner_session.php';
+require_once dirname(__DIR__) . '/includes/csrf.php';
+require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/includes/http.php';
+require_once dirname(__DIR__) . '/includes/owner_flow.php';
+require_once dirname(__DIR__) . '/includes/owner_layout.php';
+require_once dirname(__DIR__) . '/includes/transaction.php';
+require_once dirname(__DIR__) . '/includes/project_evidence_repository.php';
+require_once dirname(__DIR__) . '/includes/evidence_hub_undo.php';
+require_once dirname(__DIR__) . '/includes/evidence_hub_owner_page_model.php';
+require_once dirname(__DIR__) . '/includes/evidence_hub_owner_page_presentation.php';
+require_once dirname(__DIR__) . '/includes/owner_project_evidence_presentation.php';
 
 startOwnerSession();
 httpRegisterExceptionBoundary('owner_project_evidence.php');

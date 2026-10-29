@@ -14,8 +14,8 @@ final class OperationalSecurityStaticTest
         $backup = self::read('scripts/ops/backup-production.sh');
         $restore = self::read('scripts/ops/restore-production.sh');
         $recovery = self::read('scripts/ops/stage4c-recovery.php');
-        $contact = self::read('public_contact.php');
-        $readiness = self::read('ready.php');
+        $contact = self::read('handlers/public_contact.php');
+        $readiness = self::read('handlers/ready.php');
         $all = $session . $operations . $storage . $account . $logging . $backup . $restore;
 
         phase2Assert(str_contains($session, 'INTERNAL_SESSION_IDLE_TIMEOUT_SECONDS = 1800') && str_contains($session, 'INTERNAL_SESSION_ABSOLUTE_LIFETIME_SECONDS = 43200'), 'P2J-08 session policy is incorrect.');
@@ -40,7 +40,7 @@ final class OperationalSecurityStaticTest
         phase2Assert(str_contains($readiness, 'runtimeReadinessFailureReason()')
             && str_contains($readiness, "reportApplicationError(\$exception, 'ready.php', 'runtime_readiness')")
             && str_contains($readiness, 'http_response_code(503)')
-            && str_contains(self::read('public/ready.php'), "'/app/ready.php'")
+            && str_contains(self::read('public/ready.php'), "'/app/handlers/ready.php'")
             && !str_contains($readiness, 'getMessage()'), 'Database readiness endpoint is missing or leaks internal failure details.');
         phase2Assert(!preg_match('/OIDC|OAuth|PKCE|Auth0|Cognito|Entra/i', $all), 'P2J-08 introduced P2J-09 provider work.');
     }

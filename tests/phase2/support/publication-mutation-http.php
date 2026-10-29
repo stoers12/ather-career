@@ -1,29 +1,37 @@
 <?php
 declare(strict_types=1);
 // Included by the bounded mutation suite after its synthetic cohort setup.
-$app = realpath(__DIR__.'/../../..'); $privateApp = $root.'/http-app'; mkdir($privateApp,0700);
+$app = realpath(__DIR__.'/../../..'); $privateApp = $root.'/app'; mkdir($privateApp,0700);
 // Only database construction is instrumented. The real route, includes, policy
 // resolvers and all application behavior remain byte-identical to this checkout.
 foreach (['includes','vendor','data','public'] as $directory) {
     if (is_dir($app.'/'.$directory)) { symlink($app.'/'.$directory,$privateApp.'/'.$directory); }
 }
-symlink($app.'/public/assets',$privateApp.'/assets');
+$documentRoot=dirname($privateApp).'/public'; mkdir($documentRoot,0700);
+RouteContract::writeEntryScripts($documentRoot);
+symlink($app.'/public/assets',$documentRoot.'/assets');
+// These fixtures also request the former root-handler URLs.
+$routes=require PHASE2_REPOSITORY_ROOT.'/config/routes.php';
+foreach ($routes['scripts'] as $entry=>$handler) {
+    if ($entry!==basename($handler)) { completionAssert(copy($documentRoot.'/'.$entry,$documentRoot.'/'.basename($handler)),'Legacy fixture entry unavailable.'); }
+}
 mkdir($privateApp.'/config',0700);
 foreach (glob($app.'/config/*.php') as $file) { copy($file,$privateApp.'/config/'.basename($file)); }
-foreach (glob($app.'/*.php') as $file) { copy($file,$privateApp.'/'.basename($file)); }
+mkdir($privateApp.'/handlers',0700);
+foreach (glob($app.'/handlers/*.php') as $file) { copy($file,$privateApp.'/handlers/'.basename($file)); }
 $config = file_get_contents($app.'/config/database.php');
 completionAssert(substr_count($config,'new PDO(')===1,'Private PDO seam changed.');
 $changed = str_replace('new PDO(', 'new PublicationHttpDatabase(', $config);
 $changed .= "\nrequire_once ".var_export(__DIR__.'/publication-http-database.php',true).";\n";
 file_put_contents($privateApp.'/config/database.php',$changed);
-completionAssert(hash_file('sha256',$privateApp.'/owner_publication.php')===hash_file('sha256',$app.'/owner_publication.php'),'Route fixture differs from real route.');
+completionAssert(hash_file('sha256',$privateApp.'/handlers/owner_publication.php')===hash_file('sha256',$app.'/handlers/owner_publication.php'),'Route fixture differs from real route.');
 mkdir($root.'/control',0700); file_put_contents($root.'/control/mode','');
 $socket=stream_socket_server('tcp://127.0.0.1:0',$errno,$error); $address=stream_socket_get_name($socket,false); fclose($socket);
 $port=(int)substr($address,strrpos($address,':')+1);
 $env=getenv(); $env['SESSION_COOKIE_SECURE']='0'; $env['PUBLIC_BASE_URL']='https://publication-test.invalid';
 $env['RATE_LIMIT_STATE_DIR']=$root.'/limits'; $env['ATHERCAR_PUBLICATION_FIXTURE_CONTROL']=$root.'/control';
 foreach (['REGISTRATION','ONBOARDING_DRAFT_HTTP','ONBOARDING_ATTESTATION_HTTP','ONBOARDING_COMPLETION_HTTP'] as $gate) { $env['ATHERCAR_'.$gate.'_ENABLED']='0'; }
-$server=proc_open([PHP_BINARY,'-d','session.save_path='.$root.'/sessions','-d','display_errors=0','-S','127.0.0.1:'.$port,'-t',$privateApp],
+$server=proc_open([PHP_BINARY,'-d','session.save_path='.$root.'/sessions','-d','display_errors=0','-S','127.0.0.1:'.$port,'-t',$documentRoot],
     [0=>['pipe','r'],1=>['file',$root.'/private-http.log','a'],2=>['file',$root.'/private-http.log','a']],$pipes,null,$env);
 completionAssert(is_resource($server),'HTTP server unavailable.'); fclose($pipes[0]);
 $ready=false;

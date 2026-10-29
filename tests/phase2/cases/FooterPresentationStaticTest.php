@@ -8,8 +8,8 @@ final class FooterPresentationStaticTest
     {
         $presentation = self::read('includes/portfolio_presentation.php');
         $stylesheet = self::read('public/assets/css/portfolio.css');
-        $public = self::read('public_portfolio.php');
-        $preview = self::read('owner_preview.php');
+        $public = self::read('handlers/public_portfolio.php');
+        $preview = self::read('handlers/owner_preview.php');
 
         foreach ([
             '<footer class="portfolio-footer">',

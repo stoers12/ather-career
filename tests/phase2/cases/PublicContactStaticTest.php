@@ -7,8 +7,8 @@ final class PublicContactStaticTest
     public static function run(TestEnvironment $environment): void
     {
         $contact = self::read('includes/public_contact.php');
-        $route = self::read('public_contact.php');
-        $portfolio = self::read('public_portfolio.php');
+        $route = self::read('handlers/public_contact.php');
+        $portfolio = self::read('handlers/public_portfolio.php');
         $presentation = self::read('includes/portfolio_presentation.php');
         $vhost = self::read('docker/apache/vhost.conf');
 
@@ -22,7 +22,7 @@ final class PublicContactStaticTest
         phase2Assert(str_contains($presentation, '<form method="post"') && str_contains($presentation, 'action="<?php echo portfolioPresentationEscape($contactAction); ?>#contact"') && str_contains($presentation, 'contact_field_errors') && str_contains($presentation, 'aria-invalid="true"') && str_contains($presentation, 'portfolio-contact-field-error') && !str_contains($presentation, 'name="recipient_portfolio_id"') && !str_contains($presentation, 'name="portfolio_id"') && !str_contains($presentation, 'name="user_id"'), 'P2J-06 shared public form must preserve accessible field errors without accepting recipient authority.');
         phase2Assert(str_contains($presentation, '<p class="portfolio-section-kicker">CONTACT</p><h2 id="contact-title">Let’s start a conversation.</h2>') && str_contains($presentation, 'Have a project, role, or collaboration opportunity in mind?') && str_contains($presentation, '<h3 id="portfolio-contact-form-title">Send a message</h3>') && str_contains($presentation, 'portfolio-preview-note--contact') && str_contains($presentation, 'portfolioPresentationSocialIcon(\'Email\')') && !str_contains($presentation, 'CONTACT / 05') && !str_contains($presentation, 'Let’s build something useful.'), 'Contact presentation must use the approved neutral copy, form heading, and private-preview status row.');
         phase2Assert(str_contains($vhost, 'RewriteRule ^ index.php [END]'), 'P2J-06 public routes must reach the front controller.');
-        RouteContract::assertRoute('/p/ab-1/contact', 'public_contact.php', ['slug' => 'ab-1'], 'P2J-06 contact route is not wired through the production route table.');
+        RouteContract::assertRoute('/p/ab-1/contact', 'handlers/public_contact.php', ['slug' => 'ab-1'], 'P2J-06 contact route is not wired through the production route table.');
 
         require_once PHASE2_REPOSITORY_ROOT . '/includes/public_contact.php';
         require_once PHASE2_REPOSITORY_ROOT . '/includes/portfolio_presentation.php';

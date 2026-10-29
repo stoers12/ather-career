@@ -6,8 +6,8 @@ final class PortfolioPresentationStaticTest
 {
     public static function run(TestEnvironment $environment): void
     {
-        $public = self::read('public_portfolio.php');
-        $preview = self::read('owner_preview.php');
+        $public = self::read('handlers/public_portfolio.php');
+        $preview = self::read('handlers/owner_preview.php');
         $presentation = self::read('includes/portfolio_presentation.php');
         $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
         $lifecycle = self::read('includes/public_lifecycle.php');

@@ -10,7 +10,7 @@ final class HttpValidationContractTest
         $validation = self::read('includes/validation.php');
         $ownerFlow = self::read('includes/owner_flow.php');
         $ownerActions = self::read('includes/owner_actions.php');
-        $json = self::read('public_projects_json.php');
+        $json = self::read('handlers/public_projects_json.php');
 
         foreach (['httpRequireMethod', 'httpRedirectTargetIsSafe', 'httpAbortHtml', 'httpJsonResponse', 'httpRegisterExceptionBoundary'] as $helper) {
             phase2Assert(str_contains($http, "function {$helper}"), "HTTP contract helper is missing: {$helper}.");
@@ -22,21 +22,21 @@ final class HttpValidationContractTest
         phase2Assert(str_contains($json, "httpMethodIsAllowed(['GET'])") && str_contains($json, 'httpJsonResponse(405') && str_contains($json, 'httpJsonResponse(404') && str_contains($json, 'listPublicProjectJsonPayload'), 'The active JSON read route does not keep its explicit method and missing-resource contracts.');
 
         foreach ([
-            'index.php' => "httpRequireMethod(['GET', 'HEAD'])",
-            'owner.php' => "httpRequireMethod(['GET', 'HEAD'])",
-            'owner_profile.php' => "httpRequireMethod(['GET', 'HEAD', 'POST'])",
-            'owner_projects.php' => "httpRequireMethod(['GET', 'HEAD', 'POST'])",
-            'owner_experiences.php' => "httpRequireMethod(['GET', 'HEAD', 'POST'])",
-            'owner_publication.php' => "httpRequireMethod(['GET', 'HEAD', 'POST'])",
-            'owner_logout.php' => "httpRequireMethod(['POST'])",
-            'public_contact.php' => "httpRequireMethod(['POST'])",
-            'public_portfolio.php' => "httpRequireMethod(['GET', 'HEAD'])",
-            'public_media.php' => "httpRequireMethod(['GET', 'HEAD'])",
+            'handlers/index.php' => "httpRequireMethod(['GET', 'HEAD'])",
+            'handlers/owner.php' => "httpRequireMethod(['GET', 'HEAD'])",
+            'handlers/owner_profile.php' => "httpRequireMethod(['GET', 'HEAD', 'POST'])",
+            'handlers/owner_projects.php' => "httpRequireMethod(['GET', 'HEAD', 'POST'])",
+            'handlers/owner_experiences.php' => "httpRequireMethod(['GET', 'HEAD', 'POST'])",
+            'handlers/owner_publication.php' => "httpRequireMethod(['GET', 'HEAD', 'POST'])",
+            'handlers/owner_logout.php' => "httpRequireMethod(['POST'])",
+            'handlers/public_contact.php' => "httpRequireMethod(['POST'])",
+            'handlers/public_portfolio.php' => "httpRequireMethod(['GET', 'HEAD'])",
+            'handlers/public_media.php' => "httpRequireMethod(['GET', 'HEAD'])",
         ] as $route => $contract) {
             $source = self::read($route);
             phase2Assert(str_contains($source, $contract) && str_contains($source, 'httpRegisterExceptionBoundary'), "{$route} is missing its HTTP contract boundary.");
         }
-        phase2Assert(str_contains(self::read('ready.php'), "httpRequireMethod(['GET', 'HEAD'])"), 'Readiness no longer has an explicit safe method contract.');
+        phase2Assert(str_contains(self::read('handlers/ready.php'), "httpRequireMethod(['GET', 'HEAD'])"), 'Readiness no longer has an explicit safe method contract.');
         phase2Assert(str_contains(self::read('public/health.php'), "header('Allow: GET, HEAD')"), 'Standalone health endpoint no longer has an explicit safe method contract.');
 
         require_once PHASE2_REPOSITORY_ROOT . '/includes/http.php';
@@ -84,11 +84,11 @@ final class HttpValidationContractTest
         $runtime = self::runtimePhp();
         $approvedRedirects = [
             'includes/http.php' => "header('Location: ' . \$target, true, \$status)",
-            'owner_login.php' => "header('Location: ' . \$authorization['url'], true, 302)",
-            'owner_register.php' => "header('Location: ' . \$authorization['url'], true, 302)",
-            'owner_switch_account.php' => "header('Location: ' . \$authorization['url'], true, 302)",
-            'owner_auth_retry.php' => "header('Location: ' . \$authorization['url'], true, 302)",
-            'owner_logout.php' => "header('Location: ' . \$logoutUrl, true, 303)",
+            'handlers/owner_login.php' => "header('Location: ' . \$authorization['url'], true, 302)",
+            'handlers/owner_register.php' => "header('Location: ' . \$authorization['url'], true, 302)",
+            'handlers/owner_switch_account.php' => "header('Location: ' . \$authorization['url'], true, 302)",
+            'handlers/owner_auth_retry.php' => "header('Location: ' . \$authorization['url'], true, 302)",
+            'handlers/owner_logout.php' => "header('Location: ' . \$logoutUrl, true, 303)",
         ];
         phase2Assert(substr_count($runtime, "header('Location:") === count($approvedRedirects), 'Runtime redirect inventory changed.');
         foreach ($approvedRedirects as $route => $statement) {
@@ -98,7 +98,7 @@ final class HttpValidationContractTest
         // Both chooser entry points must prove the input boundary before any
         // redirect or local-session transition. The retry-only assertion
         // previously left the authenticated switch route uncovered.
-        $switch = self::read('owner_switch_account.php');
+        $switch = self::read('handlers/owner_switch_account.php');
         $switchOrder = [
             "httpRequireMethod(['POST'])",
             "\$_GET !== [] || \$_FILES !== [] || array_keys(\$_POST) !== ['csrf_token']",
@@ -122,7 +122,7 @@ final class HttpValidationContractTest
             && !preg_match('/returnTo|return_url|HTTP_HOST|REQUEST_SCHEME|error_description|error_uri/i', $switch),
             'Account-switch redirect accepted a request-controlled endpoint or return destination.');
 
-        $retry = self::read('owner_auth_retry.php');
+        $retry = self::read('handlers/owner_auth_retry.php');
         $oidc = self::read('includes/auth0_oidc.php');
         $recovery = self::read('includes/owner_auth_recovery.php');
         $requiredOrder = [
@@ -149,13 +149,14 @@ final class HttpValidationContractTest
             && str_contains($recovery, 'href="/owner_login.php"')
             && !preg_match('/\$_(?:GET|REQUEST|SERVER)\s*\[|\$_POST\s*\[(?![\'\"]csrf_token[\'\"])/', $retry)
             && !preg_match('/returnTo|return_url|HTTP_HOST|REQUEST_SCHEME|error_description|error_uri/i', $retry . $recovery), 'Recovery redirect must use validated discovery, configured callback, and fixed local destinations only.');
-        RouteContract::assertRoute('/p/ab-1', 'public_portfolio.php', ['slug' => 'ab-1'], 'Canonical public /p/<slug> routing is missing.');
+        RouteContract::assertRoute('/p/ab-1', 'handlers/public_portfolio.php', ['slug' => 'ab-1'], 'Canonical public /p/<slug> routing is missing.');
     }
 
     private static function runtimePhp(): string
     {
+        phase2Assert((glob(PHASE2_REPOSITORY_ROOT . '/*.php') ?: []) === [], 'Repository root must not contain PHP files.');
         $contents = [];
-        foreach (glob(PHASE2_REPOSITORY_ROOT . '/*.php') ?: [] as $path) {
+        foreach (glob(PHASE2_REPOSITORY_ROOT . '/handlers/*.php') ?: [] as $path) {
             $source = file_get_contents($path);
             phase2Assert(is_string($source), 'Runtime source is unreadable: ' . $path);
             $contents[] = $source;

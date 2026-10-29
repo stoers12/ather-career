@@ -27,7 +27,7 @@ final class EvidenceHubLocalizationTest
     private static function copyIsComplete(): void
     {
         $arabic = evidenceHubArabicCopy();
-        $sources = ['includes/evidence_hub_owner_page_presentation.php', 'includes/owner_project_evidence_presentation.php', 'includes/owner_layout.php', 'includes/evidence_hub_owner_presentation.php', 'owner_project_evidence.php'];
+        $sources = ['includes/evidence_hub_owner_page_presentation.php', 'includes/owner_project_evidence_presentation.php', 'includes/owner_layout.php', 'includes/evidence_hub_owner_presentation.php', 'handlers/owner_project_evidence.php'];
         $literals = [];
         foreach ($sources as $source) {
             $contents = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/' . $source);

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/onboarding_completion.php';
-require_once __DIR__ . '/includes/onboarding_completion_http.php';
-require_once __DIR__ . '/includes/owner_session.php';
-require_once __DIR__ . '/includes/csrf.php';
-require_once __DIR__ . '/config/database.php';
+require_once dirname(__DIR__) . '/includes/onboarding_completion.php';
+require_once dirname(__DIR__) . '/includes/onboarding_completion_http.php';
+require_once dirname(__DIR__) . '/includes/owner_session.php';
+require_once dirname(__DIR__) . '/includes/csrf.php';
+require_once dirname(__DIR__) . '/config/database.php';
 
 runtimeStartRequest('owner_onboarding_completion.php');
 set_exception_handler(static function (Throwable $error): never { onboardingCompletionHttpUnavailable(); });

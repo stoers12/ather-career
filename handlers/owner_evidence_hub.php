@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/owner_session.php';
-require_once __DIR__ . '/includes/csrf.php';
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/http.php';
-require_once __DIR__ . '/includes/owner_flow.php';
-require_once __DIR__ . '/includes/owner_layout.php';
-require_once __DIR__ . '/includes/evidence_hub_owner_presentation.php';
-require_once __DIR__ . '/includes/evidence_hub_owner_page_presentation.php';
-require_once __DIR__ . '/includes/evidence_hub_owner_recommendations.php';
-require_once __DIR__ . '/includes/evidence_hub_owner_page_model.php';
-require_once __DIR__ . '/includes/evidence_hub_recommendation_action_tokens.php';
-require_once __DIR__ . '/includes/evidence_hub_undo.php';
-require_once __DIR__ . '/includes/evidence_hub_technology_review_actions.php';
+require_once dirname(__DIR__) . '/includes/owner_session.php';
+require_once dirname(__DIR__) . '/includes/csrf.php';
+require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/includes/error_reporting.php';
+require_once dirname(__DIR__) . '/includes/http.php';
+require_once dirname(__DIR__) . '/includes/owner_flow.php';
+require_once dirname(__DIR__) . '/includes/owner_layout.php';
+require_once dirname(__DIR__) . '/includes/evidence_hub_owner_presentation.php';
+require_once dirname(__DIR__) . '/includes/evidence_hub_owner_page_presentation.php';
+require_once dirname(__DIR__) . '/includes/evidence_hub_owner_recommendations.php';
+require_once dirname(__DIR__) . '/includes/evidence_hub_owner_page_model.php';
+require_once dirname(__DIR__) . '/includes/evidence_hub_recommendation_action_tokens.php';
+require_once dirname(__DIR__) . '/includes/evidence_hub_undo.php';
+require_once dirname(__DIR__) . '/includes/evidence_hub_technology_review_actions.php';
 
 startOwnerSession();
 httpRegisterExceptionBoundary('owner_evidence_hub.php');

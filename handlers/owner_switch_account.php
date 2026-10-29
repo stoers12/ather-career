@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/includes/auth0_oidc.php';
-require_once __DIR__ . '/includes/csrf.php';
-require_once __DIR__ . '/includes/http.php';
-require_once __DIR__ . '/includes/owner_flow.php';
-require_once __DIR__ . '/includes/owner_session.php';
-require_once __DIR__ . '/includes/rate_limit.php';
-require_once __DIR__ . '/includes/security_events.php';
+require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/includes/auth0_oidc.php';
+require_once dirname(__DIR__) . '/includes/csrf.php';
+require_once dirname(__DIR__) . '/includes/http.php';
+require_once dirname(__DIR__) . '/includes/owner_flow.php';
+require_once dirname(__DIR__) . '/includes/owner_session.php';
+require_once dirname(__DIR__) . '/includes/rate_limit.php';
+require_once dirname(__DIR__) . '/includes/security_events.php';
 
 startOwnerSession();
 httpRegisterExceptionBoundary('owner_switch_account.php');

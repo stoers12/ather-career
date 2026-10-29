@@ -8,10 +8,10 @@ final class PublicLifecycleStaticTest
     {
         $migration = SplitSourceFile::read('database/migrate.php');
         $lifecycle = self::normalizeLineEndings(self::read('includes/public_lifecycle.php'));
-        $ownerRoute = self::read('owner_publication.php');
-        $publicRoute = self::read('public_portfolio.php');
-        $publicJson = self::read('public_projects_json.php');
-        $root = self::read('index.php');
+        $ownerRoute = self::read('handlers/owner_publication.php');
+        $publicRoute = self::read('handlers/public_portfolio.php');
+        $publicJson = self::read('handlers/public_projects_json.php');
+        $root = self::read('handlers/index.php');
         $developmentDockerfile = self::read('Dockerfile');
         $developmentVhost = self::read('docker/apache/vhost.conf');
         $productionVhost = self::read('docker/apache/vhost.conf');
@@ -55,14 +55,14 @@ final class PublicLifecycleStaticTest
             && !str_contains($vhost, 'RewriteRule ^/p/'), 'P2J-05 public routes must reach the single front controller, not per-route rewrites.');
         $slug = 'ab-1';
         foreach ([
-            ["/p/{$slug}/media/profile", 'public_media.php', ['slug' => $slug, 'type' => 'profile']],
-            ["/p/{$slug}/media/profile/", 'public_media.php', ['slug' => $slug, 'type' => 'profile']],
-            ["/p/{$slug}/media/project/12", 'public_media.php', ['slug' => $slug, 'type' => 'project', 'id' => '12']],
-            ["/p/{$slug}/projects.json", 'public_projects_json.php', ['slug' => $slug]],
-            ["/p/{$slug}/contact", 'public_contact.php', ['slug' => $slug]],
-            ["/p/{$slug}/", 'public_portfolio.php', ['slug' => $slug]],
-            ["/p/{$slug}", 'public_portfolio.php', ['slug' => $slug]],
-            ['/p/' . str_repeat('a', 64), 'public_portfolio.php', ['slug' => str_repeat('a', 64)]],
+            ["/p/{$slug}/media/profile", 'handlers/public_media.php', ['slug' => $slug, 'type' => 'profile']],
+            ["/p/{$slug}/media/profile/", 'handlers/public_media.php', ['slug' => $slug, 'type' => 'profile']],
+            ["/p/{$slug}/media/project/12", 'handlers/public_media.php', ['slug' => $slug, 'type' => 'project', 'id' => '12']],
+            ["/p/{$slug}/projects.json", 'handlers/public_projects_json.php', ['slug' => $slug]],
+            ["/p/{$slug}/contact", 'handlers/public_contact.php', ['slug' => $slug]],
+            ["/p/{$slug}/", 'handlers/public_portfolio.php', ['slug' => $slug]],
+            ["/p/{$slug}", 'handlers/public_portfolio.php', ['slug' => $slug]],
+            ['/p/' . str_repeat('a', 64), 'handlers/public_portfolio.php', ['slug' => str_repeat('a', 64)]],
         ] as [$path, $handler, $query]) {
             RouteContract::assertRoute($path, $handler, $query, "P2J-05 route contract is missing {$path}.");
         }
