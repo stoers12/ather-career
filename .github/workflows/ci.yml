@@ -21,13 +21,23 @@ jobs:
         run: |
           docker build --target development -t ather-career-ci-dev:${{ github.sha }} .
           docker build -f docker/phpunit-coverage.Dockerfile --build-arg BASE_IMAGE=ather-career-ci-dev:${{ github.sha }} -t ather-career-ci-coverage:${{ github.sha }} docker
-      - name: PHPUnit with line coverage
+      - name: PHPUnit and self-contained runners with line coverage
         run: |
-          mkdir -p coverage && chmod 0777 coverage
-          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD/coverage:/coverage" -w /var/www/app ather-career-ci-coverage:${{ github.sha }} \
-            -d pcov.enabled=1 -d pcov.directory=/var/www/app -d memory_limit=2G \
-            vendor/bin/phpunit --do-not-cache-result --coverage-clover /coverage/clover.xml --coverage-text=/coverage/summary.txt --only-summary-for-coverage-text
-          cat coverage/summary.txt
+          mkdir -p coverage/raw && chmod -R 0777 coverage
+          php() {
+            docker run --rm --network none --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e PHASE2_COVERAGE_DIR=/coverage/raw \
+              -v "$PWD/coverage:/coverage" -w /var/www/app ather-career-ci-coverage:${{ github.sha }} \
+              -d pcov.enabled=1 -d pcov.directory=/var/www/app -d memory_limit=2G "$@"
+          }
+          php vendor/bin/phpunit --do-not-cache-result --coverage-php /coverage/raw/phpunit.cov
+          # Runners that need no database or network; the rest are covered by the
+          # orchestrated jobs below but are not yet counted (docs/PHASE2_TESTING.md).
+          for runner in account-entry onboarding-editor onboarding-presentation owner-logout \
+                        owner-readiness-claim owner-readiness-session recovery-presentation signin; do
+            php -d auto_prepend_file=/var/www/app/tests/coverage/collect-process.php "scripts/test/run-${runner}-tests.php"
+          done
+          php vendor/bin/phpcov merge --clover /coverage/clover.xml --text /coverage/summary.txt /coverage/raw
+          cat coverage/summary.txt | head -n 12
       - uses: actions/upload-artifact@v4
         with:
           name: phpunit-coverage
