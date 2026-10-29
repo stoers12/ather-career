@@ -37,18 +37,23 @@ A PHP 8.3 / Apache / MySQL 8.4 multi-tenant portfolio platform. Owners sign in w
 
 ## Running tests
 
-Host PHP lacks `ext-intl`, so run PHP tests inside an application image. Use the newest local tag from `docker image ls ather-career-local`:
+Host PHP lacks `ext-intl`, so run PHP tests inside an application image. Use the newest local tag from `docker image ls ather-career-local`. The mounted checkout needs its own `vendor/` with development packages, because the image's `vendor/` is hidden by the mount:
 
 ```powershell
-docker run --rm --entrypoint php -v "<worktree>:/var/www/html:ro" -w /var/www/html `
+docker run --rm -v "<worktree>:/app" -w /app composer:2 install   # once per checkout
+docker run --rm --entrypoint php -v "<worktree>:/var/www/app:ro" -w /var/www/app `
   -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 ather-career-local:<tag> scripts/run-phase2-tests.php
+docker run --rm --entrypoint php -v "<worktree>:/var/www/app:ro" -w /var/www/app `
+  -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 ather-career-local:<tag> vendor/bin/phpunit --do-not-cache-result
 ```
+
+Write new PHP tests natively in PHPUnit under `tests/phpunit/`. Do not add classes to `tests/phase2/registry.php`. See [docs/PHASE2_TESTING.md](docs/PHASE2_TESTING.md#registry-and-phpunit).
 
 There are three levels of check:
 
 | Level | Command | Expected result |
 |---|---|---|
-| Fast loop, run after every change | the Phase 2 command above | `Phase 2 test foundation passed.` |
+| Fast loop, run after every change | the two commands above | `Phase 2 test foundation passed.` and PHPUnit `OK` |
 | Gate registration, when you touch gate wiring | `pwsh -NoProfile -File scripts/run-evidence-hub-required-gates.ps1 -RegistrationChallenge` | `REGISTRATION_CHALLENGES_PASSED` |
 | Full required gates, before the PR (about 10 minutes) | `pwsh -NoProfile -File scripts/run-evidence-hub-required-gates.ps1` | `REQUIRED_GATES_PASSED` |
 

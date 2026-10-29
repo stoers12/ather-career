@@ -13,6 +13,12 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-autoloader
 COPY src ./src
 RUN composer dump-autoload --no-dev --optimize --no-interaction
 
+# The development target also carries the dev tools (PHPUnit, PHPStan) so the
+# required gates can run them; the production target never does.
+FROM dependencies AS dev-dependencies
+RUN composer install --prefer-dist --no-interaction --no-autoloader \
+    && composer dump-autoload --optimize --no-interaction
+
 FROM php:8.3-apache AS runtime-base
 
 ENV VIPS_CONCURRENCY=1 \
@@ -46,7 +52,7 @@ RUN printf "upload_max_filesize=12M\npost_max_size=16M\n" > /usr/local/etc/php/c
 # Self-contained for the required gates; dev Compose bind-mounts the checkout
 # over /var/www/app and /var/www/public so edits are live.
 COPY . /var/www/app/
-COPY --from=dependencies /app/vendor /var/www/app/vendor
+COPY --from=dev-dependencies /app/vendor /var/www/app/vendor
 RUN mkdir -p /var/www/public /var/www/app/runtime/rate-limit \
     && cp -a /var/www/app/public/. /var/www/public/ \
     && chown -R www-data:www-data /var/www/app/runtime

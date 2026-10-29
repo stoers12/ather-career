@@ -13,6 +13,26 @@ jobs:
         shell: pwsh
         run: ./scripts/test/test-release-local.ps1
 
+  phpunit-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the development image with PCOV
+        run: |
+          docker build --target development -t ather-career-ci-dev:${{ github.sha }} .
+          docker build -f docker/phpunit-coverage.Dockerfile --build-arg BASE_IMAGE=ather-career-ci-dev:${{ github.sha }} -t ather-career-ci-coverage:${{ github.sha }} docker
+      - name: PHPUnit with line coverage
+        run: |
+          mkdir -p coverage && chmod 0777 coverage
+          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD/coverage:/coverage" -w /var/www/app ather-career-ci-coverage:${{ github.sha }} \
+            -d pcov.enabled=1 -d pcov.directory=/var/www/app -d memory_limit=2G \
+            vendor/bin/phpunit --do-not-cache-result --coverage-clover /coverage/clover.xml --coverage-text=/coverage/summary.txt --only-summary-for-coverage-text
+          cat coverage/summary.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-coverage
+          path: coverage/
+
   production-smoke:
     runs-on: ubuntu-latest
     env:
@@ -72,6 +92,7 @@ jobs:
       - name: Phase 2 test foundation
         run: |
           docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/run-phase2-tests.php
+          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" vendor/bin/phpunit --do-not-cache-result
           docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/test/run-signin-tests.php
           docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/test/run-owner-readiness-claim-tests.php
           docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/test/run-owner-readiness-session-tests.php
