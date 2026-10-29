@@ -6,6 +6,8 @@ Status: ENG-04 Phase A design, **approved with the amendments in section 9** and
 
 **ENG-09 ST-2:** the 29 application request handlers now live under `/var/www/app/handlers/`; the application root contains no PHP files. URLs and the public document root remain unchanged.
 
+**Paths moved by ENG-09 ST-4:** `tests/phpunit/` → `tests/Unit/`; `tests/phase2/cases/`, `bootstrap.php` and `registry.php` → `tests/Legacy/` (cases retain `cases/`); `scripts/test/` → `tests/Integration/`, with browser drivers and dedicated fixtures in `tests/Browser/`; `tests/phase2/support/` → `tests/Support/`, with Playwright gates and dedicated browser pages in `tests/Browser/`; `tests/phase2/fixtures/` → `tests/Support/fixtures/`; `tests/coverage/` → `tests/Support/`. Historical paths below are preserved.
+
 ## 1. Current state
 
 ### Evidence and boundaries

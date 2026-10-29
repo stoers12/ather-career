@@ -65,7 +65,7 @@ The authorized temporary experiment recorded Google A reaching its expected four
 | `includes/auth0_oidc.php`, `owner_login.php` | Small method-selection extension into the existing authorization path. |
 | `index.php` | Three existing-account destinations only. |
 | `Dockerfile.production` | Copy `signin.css` to the production public root; existing public-tree/font/JS copy already covers the other assets. |
-| `scripts/test/run-signin-tests.php`, `.github/workflows/ci.yml` | Synthetic contract checks and production HTTP smoke assertions; no gates weakened or bypassed. |
+| `tests/Integration/run-signin-tests.php`, `.github/workflows/ci.yml` | Synthetic contract checks and production HTTP smoke assertions; no gates weakened or bypassed. |
 | This record, `HTTP_CONTRACTS.md`, `LANDING-IMPLEMENTATION.md` | Current route/entry-link behavior, provenance, differences and honest verification limits. |
 
 Clean Code review kept rendering, escaped copy, icon definitions and authentication responsibilities separate. Theme code and authorization generation are reused rather than duplicated. No new framework, dependency, speculative abstraction or unrelated refactor was introduced. Final review corrected test-wiring whitespace/encoding and the new SVG geometry before publication; accepted Landing appearance was not altered.

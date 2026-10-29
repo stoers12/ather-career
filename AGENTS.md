@@ -18,8 +18,8 @@ A PHP 8.3 / Apache / MySQL 8.4 multi-tenant portfolio platform. Owners sign in w
 - `src/` holds namespaced classes (`Ather\`, PSR-4, Composer autoload via `includes/autoload.php`). Modules move there one card at a time and keep their `includes/` functions as one-line wrappers; follow [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - `contracts/` holds versioned JSON: `evidence-hub-contract-vN.schema.json` and `evidence-hub-taxonomy-vN.json`.
 - `database/migrations/NNN_name.sql` is applied in order by `database/migrate.php`. Every additive table gets a `database/rollback/NNN_name.sql` companion.
-- `tests/phase2/cases/*Test.php` are unit and static tests, registered in `scripts/run-phase2-tests.php`. `tests/phase2/support/` holds fixtures, SQLite schemas and the Playwright `*.cjs` browser gates.
-- `scripts/` keeps the Phase 2, required-gates and production-security entry points at its root; see the [scripts layout](scripts/README.md) for `test/`, `ci/`, `ops/`, `tools/` and the approved `archive/`.
+- `tests/Unit/` holds native PHPUnit tests. `tests/Legacy/cases/*Test.php` are legacy cases registered in `tests/Legacy/registry.php`, run by both PHPUnit and `scripts/run-phase2-tests.php`. `tests/Integration/` holds MySQL/HTTP rehearsals and workers, `tests/Browser/` holds Playwright drivers and dedicated browser fixtures, and `tests/Support/` holds shared helpers, fixtures, SQLite schemas and the coverage collector.
+- `scripts/` keeps the Phase 2, required-gates and production-security entry points at its root; see the [scripts layout](scripts/README.md) for `ci/`, `ops/`, `tools/` and the approved `archive/`.
 - `docs/EVIDENCE_HUB_0_LITE.md` is the authoritative technical description of Evidence Hub. Update it when its behavior changes.
 
 ## Workflow (mandatory)
@@ -47,7 +47,7 @@ docker run --rm --entrypoint php -v "<worktree>:/var/www/app:ro" -w /var/www/app
   -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 ather-career-local:<tag> vendor/bin/phpunit --do-not-cache-result
 ```
 
-Write new PHP tests natively in PHPUnit under `tests/phpunit/`. Do not add classes to `tests/phase2/registry.php`. See [docs/PHASE2_TESTING.md](docs/PHASE2_TESTING.md#registry-and-phpunit).
+Write new PHP tests natively in PHPUnit under `tests/Unit/`. Do not add classes to `tests/Legacy/registry.php`. See [docs/PHASE2_TESTING.md](docs/PHASE2_TESTING.md#registry-and-phpunit).
 
 There are three levels of check:
 

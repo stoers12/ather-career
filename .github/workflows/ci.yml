@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Release script safety (no Docker)
         shell: pwsh
-        run: ./scripts/test/test-release-local.ps1
+        run: ./tests/Integration/test-release-local.ps1
 
   phpunit-coverage:
     runs-on: ubuntu-latest
@@ -34,7 +34,7 @@ jobs:
           # orchestrated jobs below but are not yet counted (docs/PHASE2_TESTING.md).
           for runner in account-entry onboarding-editor onboarding-presentation owner-logout \
                         owner-readiness-claim owner-readiness-session recovery-presentation signin; do
-            php -d auto_prepend_file=/var/www/app/tests/coverage/collect-process.php "scripts/test/run-${runner}-tests.php"
+            php -d auto_prepend_file=/var/www/app/tests/Support/collect-process.php "tests/Integration/run-${runner}-tests.php"
           done
           php vendor/bin/phpcov merge --clover /coverage/clover.xml --text /coverage/summary.txt /coverage/raw
           cat coverage/summary.txt | head -n 12
@@ -91,8 +91,8 @@ jobs:
 
       - name: Verify OIDC issuer CSP startup guard in Apache and Caddy
         run: |
-          docker run --rm --entrypoint /bin/sh -v "$PWD/scripts/test/test-oidc-issuer-guard.sh:/test-oidc-issuer-guard.sh:ro" "$PORTFOLIO_PRODUCTION_IMAGE" /test-oidc-issuer-guard.sh /usr/local/bin/validate-oidc-issuer.sh
-          docker run --rm --entrypoint /bin/sh -v "$PWD/scripts/test/test-oidc-issuer-guard.sh:/test-oidc-issuer-guard.sh:ro" -v "$PWD/docker/validate-oidc-issuer.sh:/etc/caddy/validate-oidc-issuer.sh:ro" caddy@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648 /test-oidc-issuer-guard.sh /etc/caddy/validate-oidc-issuer.sh
+          docker run --rm --entrypoint /bin/sh -v "$PWD/tests/Integration/test-oidc-issuer-guard.sh:/test-oidc-issuer-guard.sh:ro" "$PORTFOLIO_PRODUCTION_IMAGE" /test-oidc-issuer-guard.sh /usr/local/bin/validate-oidc-issuer.sh
+          docker run --rm --entrypoint /bin/sh -v "$PWD/tests/Integration/test-oidc-issuer-guard.sh:/test-oidc-issuer-guard.sh:ro" -v "$PWD/docker/validate-oidc-issuer.sh:/etc/caddy/validate-oidc-issuer.sh:ro" caddy@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648 /test-oidc-issuer-guard.sh /etc/caddy/validate-oidc-issuer.sh
 
       - name: Verify PHP and libvips dependencies
         run: |
@@ -103,13 +103,13 @@ jobs:
         run: |
           docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/run-phase2-tests.php
           docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" vendor/bin/phpunit --do-not-cache-result
-          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/test/run-signin-tests.php
-          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/test/run-owner-readiness-claim-tests.php
-          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/test/run-owner-readiness-session-tests.php
-          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/test/run-owner-logout-tests.php
-          docker run --rm --entrypoint php -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/test/run-account-entry-tests.php
-          docker run --rm --entrypoint php -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/test/run-recovery-presentation-tests.php
-          docker run --rm --entrypoint php -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" scripts/test/run-onboarding-presentation-tests.php
+          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" tests/Integration/run-signin-tests.php
+          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" tests/Integration/run-owner-readiness-claim-tests.php
+          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" tests/Integration/run-owner-readiness-session-tests.php
+          docker run --rm --entrypoint php -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" tests/Integration/run-owner-logout-tests.php
+          docker run --rm --entrypoint php -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" tests/Integration/run-account-entry-tests.php
+          docker run --rm --entrypoint php -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" tests/Integration/run-recovery-presentation-tests.php
+          docker run --rm --entrypoint php -v "$PWD:/workspace:ro" -w /workspace "$PORTFOLIO_PRODUCTION_IMAGE" tests/Integration/run-onboarding-presentation-tests.php
 
       - name: Start isolated CI database
         run: docker compose -p ather-career-ci -f docker-compose.production.yml up -d --no-build db
@@ -129,7 +129,7 @@ jobs:
           docker compose -p ather-career-ci -f docker-compose.production.yml run --rm --no-deps --entrypoint php \
             -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e ATHERCAR_TEST_DB_HOST=db -e DB_PORT=3306 \
             -e "ATHERCAR_TEST_DB_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" \
-            web scripts/test/run-owner-readiness-creation-route-tests.php
+            web tests/Integration/run-owner-readiness-creation-route-tests.php
 
       - name: Create fresh V1 rehearsal database
         run: |
@@ -174,11 +174,11 @@ jobs:
               return "$exit_code"
             fi
           }
-          rehearse scripts/test/run-phase2-ownership-rehearsal.php
+          rehearse tests/Integration/run-phase2-ownership-rehearsal.php
           ledger=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(version ORDER BY version SEPARATOR ',') FROM \`$REHEARSAL_DB_NAME\`.schema_migrations;")
           test "$ledger" = '001,002,003,004' || { echo 'Ownership rehearsal migration ledger is not exactly 001–004.' >&2; exit 1; }
           echo 'PASS ownership migration checkpoint 001–004'
-          rehearse scripts/test/run-phase2-public-lifecycle-rehearsal.php
+          rehearse tests/Integration/run-phase2-public-lifecycle-rehearsal.php
           expected=$(find database/migrations -maxdepth 1 -type f -name '[0-9][0-9][0-9]_*.sql' -printf '%f\n' | sed 's/_.*//' | sort | paste -sd, -)
           [[ "$expected" =~ ^[0-9]{3}(,[0-9]{3})*$ ]] || { echo 'Checked-in migration list is invalid.' >&2; exit 1; }
           ledger=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(version ORDER BY version SEPARATOR ',') FROM \`$REHEARSAL_DB_NAME\`.schema_migrations;")
@@ -189,9 +189,9 @@ jobs:
           columns=$(docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf -N -B -e "SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY COLUMN_NAME SEPARATOR ',') FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '$REHEARSAL_DB_NAME' AND TABLE_NAME = 'projects' AND COLUMN_NAME IN ('technologies', 'problem_statement', 'personal_role', 'measurable_outcome');")
           test "$columns" = 'measurable_outcome,personal_role,problem_statement,technologies' || { echo 'Required project technology or evidence columns are missing.' >&2; exit 1; }
           echo 'PASS complete migration ledger and required project columns'
-          rehearse scripts/test/run-phase2-tenant-authorization-rehearsal.php
-          rehearse scripts/test/run-phase2-experience-rehearsal.php
-          rehearse scripts/test/run-phase2-auth0-rehearsal.php
+          rehearse tests/Integration/run-phase2-tenant-authorization-rehearsal.php
+          rehearse tests/Integration/run-phase2-experience-rehearsal.php
+          rehearse tests/Integration/run-phase2-auth0-rehearsal.php
           # Give this registration rehearsal a generated, database-scoped user.
           REGISTRATION_DB_USER="reg_$(openssl rand -hex 8)"
           REGISTRATION_DB_PASSWORD="$(openssl rand -hex 32)"
@@ -205,37 +205,37 @@ jobs:
           trap cleanup_registration_user EXIT
           docker exec ather-career-ci-db-1 mysql --defaults-extra-file=/tmp/ather-career-ci-mysql.cnf \
             -e "CREATE USER '$REGISTRATION_DB_USER'@'%' IDENTIFIED BY '$REGISTRATION_DB_PASSWORD'; GRANT ALL PRIVILEGES ON \`$REHEARSAL_DB_NAME\`.* TO '$REGISTRATION_DB_USER'@'%';"
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-profile-version-tests.php
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-profile-version-route-tests.php
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-final-profile-tests.php
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-final-profile-route-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-profile-version-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-profile-version-route-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-final-profile-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-final-profile-route-tests.php
           # The 017 upgrade fixture needs version-1 rows before owner-flow edits them.
-          rehearse scripts/test/run-phase2-owner-flow-rehearsal.php
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-registration-core-rehearsal.php
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-onboarding-attestation-tests.php
+          rehearse tests/Integration/run-phase2-owner-flow-rehearsal.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-registration-core-rehearsal.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-onboarding-attestation-tests.php
           # Draft suites cover current Profile catalogs and historical exact-retry compatibility.
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-onboarding-draft-tests.php
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-onboarding-draft-route-tests.php
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-onboarding-editor-tests.php
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-onboarding-presentation-tests.php
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-registration-routing-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-onboarding-draft-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-onboarding-draft-route-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-onboarding-editor-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-onboarding-presentation-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-registration-routing-tests.php
 
           # Completion owns its transaction; production policies stay unavailable.
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-onboarding-completion-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-onboarding-completion-tests.php
 
           # Private HTTP fixture copies supply synthetic documents; production stays null/off.
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-onboarding-attestation-route-tests.php
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-onboarding-completion-route-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-onboarding-attestation-route-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-onboarding-completion-route-tests.php
 
           # Routing and D1 entry tests use guarded synthetic cohorts and preserve the frozen set.
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-owner-journey-route-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-owner-journey-route-tests.php
 
           # Current publication authorization, owned transactions and real HTTP
           # interleavings use isolated synthetic owners and verify full cleanup.
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-publication-mutation-tests.php
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-project-publication-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-publication-mutation-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-project-publication-tests.php
           # Per-type visibility migration, current Profile CAS and public projection.
-          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse scripts/test/run-contact-visibility-tests.php
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-contact-visibility-tests.php
 
       - name: Authenticated draft editor browser checks
         run: |
@@ -262,14 +262,14 @@ jobs:
             -p 127.0.0.1:8099:8080 -p 127.0.0.1:8100:8081 -v "$EDITOR_EVIDENCE:/evidence" \
             -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e "DB_NAME=$REHEARSAL_DB_NAME" -e "ATHERCAR_TEST_DB_NAME=$REHEARSAL_DB_NAME" \
             -e "DB_USER=$EDITOR_DB_USER" -e "DB_PASSWORD=$EDITOR_DB_PASSWORD" -e ATHERCAR_EDITOR_EVIDENCE_DIR=/evidence \
-            web scripts/test/run-onboarding-editor-browser-fixture.php
+            web tests/Browser/run-onboarding-editor-browser-fixture.php
           for _ in $(seq 1 120); do test -f "$EDITOR_EVIDENCE/private-context.json" && break; sleep 1; done
           test -f "$EDITOR_EVIDENCE/private-context.json"
           APP_ENV=test ATHERCAR_TEST_MODE=1 \
             ATHERCAR_PLAYWRIGHT_MODULE="$RUNNER_TEMP/ather-editor-tools/node_modules/playwright" \
             ATHERCAR_EDITOR_BASE_URL=http://127.0.0.1:8099 ATHERCAR_EDITOR_OFF_URL=http://127.0.0.1:8100 \
             ATHERCAR_EDITOR_CONTAINER=ather-career-ci-editor ATHERCAR_EDITOR_APP_ROOT=/var/www/app \
-            ATHERCAR_EDITOR_EVIDENCE_DIR="$EDITOR_EVIDENCE" node scripts/test/run-onboarding-editor-browser-tests.mjs
+            ATHERCAR_EDITOR_EVIDENCE_DIR="$EDITOR_EVIDENCE" node tests/Browser/run-onboarding-editor-browser-tests.mjs
           touch "$EDITOR_EVIDENCE/stop"
           test "$(docker wait ather-career-ci-editor)" = 0
           docker logs ather-career-ci-editor
@@ -350,7 +350,7 @@ jobs:
             -p 127.0.0.1:8101:8082 -v "$EDITOR_EVIDENCE:/evidence" \
             -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e "DB_NAME=$REHEARSAL_DB_NAME" -e "ATHERCAR_TEST_DB_NAME=$REHEARSAL_DB_NAME" \
             -e "DB_USER=$EDITOR_DB_USER" -e "DB_PASSWORD=$EDITOR_DB_PASSWORD" -e ATHERCAR_FINAL_PROFILE_BROWSER_EVIDENCE=/evidence \
-            web scripts/test/run-final-profile-route-tests.php
+            web tests/Integration/run-final-profile-route-tests.php
           PROFILE_FIXTURE_STARTED=1
           for _ in $(seq 1 120); do
             test -s "$EDITOR_EVIDENCE/private-profile-context.json" && test "$(stat -c '%a' "$EDITOR_EVIDENCE/private-profile-context.json")" = 600 && break
@@ -375,7 +375,7 @@ jobs:
           APP_ENV=test ATHERCAR_TEST_MODE=1 \
             ATHERCAR_PLAYWRIGHT_MODULE="$RUNNER_TEMP/ather-editor-tools/node_modules/playwright" \
             ATHERCAR_FINAL_PROFILE_BASE_URL=http://127.0.0.1:8101 \
-            ATHERCAR_FINAL_PROFILE_BROWSER_EVIDENCE="$EDITOR_EVIDENCE" node scripts/test/run-final-profile-browser-tests.mjs
+            ATHERCAR_FINAL_PROFILE_BROWSER_EVIDENCE="$EDITOR_EVIDENCE" node tests/Browser/run-final-profile-browser-tests.mjs
 
       - name: Private project publication controls browser checks
         run: |
@@ -453,7 +453,7 @@ jobs:
             -p 127.0.0.1:8104:8082 -v "$EDITOR_EVIDENCE:/evidence" \
             -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e "DB_NAME=$REHEARSAL_DB_NAME" -e "ATHERCAR_TEST_DB_NAME=$REHEARSAL_DB_NAME" \
             -e "DB_USER=$EDITOR_DB_USER" -e "DB_PASSWORD=$EDITOR_DB_PASSWORD" -e ATHERCAR_PROJECT_PUBLICATION_BROWSER_EVIDENCE=/evidence \
-            web scripts/test/run-project-publication-tests.php
+            web tests/Integration/run-project-publication-tests.php
           PROFILE_FIXTURE_STARTED=1
           for _ in $(seq 1 120); do
             test -s "$EDITOR_EVIDENCE/private-project-context.json" && test "$(stat -c '%a' "$EDITOR_EVIDENCE/private-project-context.json")" = 600 && break
@@ -478,7 +478,7 @@ jobs:
           APP_ENV=test ATHERCAR_TEST_MODE=1 \
             ATHERCAR_PLAYWRIGHT_MODULE="$RUNNER_TEMP/ather-editor-tools/node_modules/playwright" \
             ATHERCAR_PROJECT_PUBLICATION_BASE_URL=http://127.0.0.1:8104 \
-            ATHERCAR_PROJECT_PUBLICATION_BROWSER_EVIDENCE="$EDITOR_EVIDENCE" node scripts/test/run-project-publication-browser-tests.mjs
+            ATHERCAR_PROJECT_PUBLICATION_BROWSER_EVIDENCE="$EDITOR_EVIDENCE" node tests/Browser/run-project-publication-browser-tests.mjs
 
       - name: Authenticated attestation editor browser checks
         run: |
@@ -556,7 +556,7 @@ jobs:
             -p 127.0.0.1:8102:8080 -p 127.0.0.1:8103:8081 -p 127.0.0.1:8104:8082 -v "$EDITOR_EVIDENCE:/evidence" \
             -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e "DB_NAME=$REHEARSAL_DB_NAME" -e "ATHERCAR_TEST_DB_NAME=$REHEARSAL_DB_NAME" \
             -e "DB_USER=$EDITOR_DB_USER" -e "DB_PASSWORD=$EDITOR_DB_PASSWORD" -e ATHERCAR_EDITOR_EVIDENCE_DIR=/evidence \
-            web scripts/test/run-onboarding-editor-browser-fixture.php --attestations
+            web tests/Browser/run-onboarding-editor-browser-fixture.php --attestations
           ATTESTATION_FIXTURE_STARTED=1
           for _ in $(seq 1 120); do
             test -s "$EDITOR_EVIDENCE/private-context.json" && test "$(stat -c '%a' "$EDITOR_EVIDENCE/private-context.json")" = 600 && break
@@ -582,7 +582,7 @@ jobs:
             ATHERCAR_PLAYWRIGHT_MODULE="$RUNNER_TEMP/ather-editor-tools/node_modules/playwright" \
             ATHERCAR_ATTESTATION_BROWSER_BASE_URL=http://127.0.0.1:8102 ATHERCAR_ATTESTATION_BROWSER_NULL_URL=http://127.0.0.1:8103 ATHERCAR_ATTESTATION_BROWSER_OFF_URL=http://127.0.0.1:8104 \
             ATHERCAR_EDITOR_CONTAINER=ather-career-ci-attestation-editor ATHERCAR_EDITOR_APP_ROOT=/var/www/app \
-            ATHERCAR_EDITOR_EVIDENCE_DIR="$EDITOR_EVIDENCE" node scripts/test/run-onboarding-attestation-browser-tests.mjs
+            ATHERCAR_EDITOR_EVIDENCE_DIR="$EDITOR_EVIDENCE" node tests/Browser/run-onboarding-attestation-browser-tests.mjs
 
       - name: Authenticated completion editor browser checks
         run: |
@@ -660,7 +660,7 @@ jobs:
             -p 127.0.0.1:8105:8080 -p 127.0.0.1:8106:8081 -p 127.0.0.1:8107:8082 -v "$EDITOR_EVIDENCE:/evidence" \
             -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 -e "DB_NAME=$REHEARSAL_DB_NAME" -e "ATHERCAR_TEST_DB_NAME=$REHEARSAL_DB_NAME" \
             -e "DB_USER=$EDITOR_DB_USER" -e "DB_PASSWORD=$EDITOR_DB_PASSWORD" -e ATHERCAR_EDITOR_EVIDENCE_DIR=/evidence \
-            web scripts/test/run-onboarding-completion-browser-fixture.php
+            web tests/Browser/run-onboarding-completion-browser-fixture.php
           COMPLETION_FIXTURE_STARTED=1
           for _ in $(seq 1 120); do
             test -s "$EDITOR_EVIDENCE/private-context.json" && test "$(stat -c '%a' "$EDITOR_EVIDENCE/private-context.json")" = 600 && break
@@ -686,7 +686,7 @@ jobs:
             ATHERCAR_PLAYWRIGHT_MODULE="$RUNNER_TEMP/ather-editor-tools/node_modules/playwright" \
             ATHERCAR_COMPLETION_BROWSER_BASE_URL=http://127.0.0.1:8105 ATHERCAR_COMPLETION_BROWSER_NULL_URL=http://127.0.0.1:8106 ATHERCAR_COMPLETION_BROWSER_OFF_URL=http://127.0.0.1:8107 \
             ATHERCAR_EDITOR_CONTAINER=ather-career-ci-completion-editor ATHERCAR_EDITOR_APP_ROOT=/var/www/app \
-            ATHERCAR_EDITOR_EVIDENCE_DIR="$EDITOR_EVIDENCE" node scripts/test/run-onboarding-completion-browser-tests.mjs
+            ATHERCAR_EDITOR_EVIDENCE_DIR="$EDITOR_EVIDENCE" node tests/Browser/run-onboarding-completion-browser-tests.mjs
           # Includes pause/resume, explicit Dashboard and D1 entries; same private fixture and cleanup.
 
       - name: Remove isolated rehearsal database
@@ -726,7 +726,7 @@ jobs:
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php scripts/check-production-security.php
 
       - name: Verify startup on restored migrations 001-024
-        run: bash scripts/test/check-restored-startup-idempotence.sh
+        run: bash tests/Integration/check-restored-startup-idempotence.sh
 
       - name: Seed isolated public HTTP fixture
         run: |
@@ -806,7 +806,7 @@ jobs:
           for method in GET POST; do test "$(curl -sS -o /dev/null -w '%{http_code}' -X "$method" http://127.0.0.1:8098/owner_onboarding_attestation.php)" = 404; done
           for method in GET POST; do test "$(curl -sS -o /dev/null -w '%{http_code}' -X "$method" http://127.0.0.1:8098/owner_onboarding_completion.php)" = 404; done
           test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8098/owner_onboarding_editor.php)" = 404
-          for route in /verification-pending.php /verification-success.php /verification-resent.php /verification-expired.php /verification-error.php /account-disabled.php /tests/phase2/support/email-verification-preview.php /forgot-password.php /reset-password.php /tests/phase2/support/recovery-preview.php /onboarding-preview.php /tests/phase2/support/onboarding-preview.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done
+          for route in /verification-pending.php /verification-success.php /verification-resent.php /verification-expired.php /verification-error.php /account-disabled.php /tests/Support/email-verification-preview.php /forgot-password.php /reset-password.php /tests/Support/recovery-preview.php /onboarding-preview.php /tests/Support/onboarding-preview.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done
           test "$(curl -g -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8098/owner_login.php?method[]=google')" = 400
           for route in /admin.php /login.php /logout.php /personal_info.php /projects.php /messages.php /api/projects.php; do test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8098${route}")" = 404; done
           curl --fail http://127.0.0.1:8098/p/a-public

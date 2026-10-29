@@ -25,8 +25,8 @@ Apache serves files that exist under `public/` directly: `index.php`, the `healt
 - **Unknown paths:** they get Apache's default 404 document byte-for-byte.
 - **Apache variables:** the internal rewrite renames request variables with a `REDIRECT_` prefix, so any Apache rule keyed on a request variable must check both names. The Auth0 callback Referrer-Policy does.
 - **Verification:**
-  - `tests/phpunit/RouterTest.php` covers the table.
-  - `tests/phase2/support/RouteContract.php` lets static contracts assert routing behavior instead of configuration text.
+  - `tests/Unit/RouterTest.php` covers the table.
+  - `tests/Support/RouteContract.php` lets static contracts assert routing behavior instead of configuration text.
 
 ## Where `vendor/` comes from
 
@@ -65,7 +65,7 @@ Keep PHP files in `includes/`, `src/` and `database/` under about 600 lines. Whe
 
 1. **The original file stays the entry point.** Every caller keeps requiring it. It `require_once`s its parts and keeps the declarations that define its public surface: constants, exceptions and the main entry functions.
 2. **Each part starts with a marker line** `// Loaded by <entry>.php.`, written exactly like that, after `declare(strict_types=1)`. Parts only declare functions. They are never required directly.
-3. **Static tests read split files with `SplitSourceFile::read('<dir>/<entry>.php')`** (in `tests/phase2/support/`). It returns the entry followed by every marked sibling part, and it fails if a marked part is not required by its entry. That keeps negative guards, such as "never reads `$_GET`" or "no clock access", covering moved code.
+3. **Static tests read split files with `SplitSourceFile::read('<dir>/<entry>.php')`** (in `tests/Support/`). It returns the entry followed by every marked sibling part, and it fails if a marked part is not required by its entry. That keeps negative guards, such as "never reads `$_GET`" or "no clock access", covering moved code.
 4. **Pure moves only.** Every function, constant and class must be byte-identical and appear exactly once across the new files, including line endings (LF; `.gitattributes` enforces `*.php eol=lf`). Prove it mechanically, not by reading the diff.
 5. **Behavior evidence matches the risk.** A presentation or validation split needs the full required gates. A `database/` split also needs a differential migration rehearsal: the old and new code run the production migration sequence, a refused contract, an injected failure with retry, and argument errors against fresh disposable MySQL databases. The transcripts, schema and row data (timestamps masked) must be identical.
 

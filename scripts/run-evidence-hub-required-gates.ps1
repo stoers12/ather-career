@@ -167,12 +167,12 @@ function Assert-RequiredGateRegistry([string[]]$Registry) {
     $expected = @(
         'EvidenceHubRecommendationActionHttpMySqlTest',
         'EvidenceHubRecommendationDispositionMySqlTest',
-        'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceTextRules110Test', 'EvidenceProjectTextRules110Test', 'EvidenceHubContractV9Test', 'EvidenceTextOwnerHintsTest', 'scripts/test/check-evidence-edit-http.php::textRules110', 'tests/phase2/support/evidence-hub-text-rules-visual.cjs', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle',
-        'tests/phase2/support/evidence-hub-owner-visual.cjs',
-        'tests/phase2/support/evidence-hub-owner-actions-visual.cjs',
-        'tests/phase2/support/evidence-hub-editor-writing-visual.cjs',
-        'tests/phase2/support/evidence-hub-technology-review-visual.cjs',
-        'tests/phase2/support/evidence-hub-skill-evidence-visual.cjs'
+        'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceTextRules110Test', 'EvidenceProjectTextRules110Test', 'EvidenceHubContractV9Test', 'EvidenceTextOwnerHintsTest', 'tests/Integration/check-evidence-edit-http.php::textRules110', 'tests/Browser/evidence-hub-text-rules-visual.cjs', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle',
+        'tests/Browser/evidence-hub-owner-visual.cjs',
+        'tests/Browser/evidence-hub-owner-actions-visual.cjs',
+        'tests/Browser/evidence-hub-editor-writing-visual.cjs',
+        'tests/Browser/evidence-hub-technology-review-visual.cjs',
+        'tests/Browser/evidence-hub-skill-evidence-visual.cjs'
     )
     if (($Registry | Select-Object -Unique).Count -ne $Registry.Count) { Fail-Gate 'registration' 'duplicate required-gate identifier' }
     foreach ($identifier in $expected) {
@@ -279,7 +279,7 @@ function Invoke-DisposableHttpStatus([string]$Url, [string]$Method = 'GET', [has
 # Probe real internal files that exist in the image: each must be refused, while
 # every kind of published asset and the liveness probe must be served directly.
 function Assert-PublicBoundary([string]$BaseUrl, [string]$Label) {
-    foreach ($path in @('/tests/phase2/cases/AccountSelectionStaticTest.php', '/scripts/README.md', '/scripts/check-production-security.php', '/docs/README.md', '/vendor/autoload.php', '/vendor/composer/installed.json', '/composer.json', '/composer.lock', '/phpstan.neon.dist', '/contracts/evidence-hub-contract-v1.schema.json', '/data/profile-catalog/catalog.json', '/config/database.php', '/includes/presentation.php', '/src/EvidenceHub/Text/EvidenceTextEvaluator.php', '/src/', '/database/portfolio_db.sql', '/docker/production-entrypoint.sh', '/Dockerfile', '/docker-compose.yml', '/.env', '/.git/HEAD', '/public/index.php', '/app/index.php', '/tests/', '/vendor/', '/includes/')) {
+    foreach ($path in @('/tests/Legacy/cases/AccountSelectionStaticTest.php', '/scripts/README.md', '/scripts/check-production-security.php', '/docs/README.md', '/vendor/autoload.php', '/vendor/composer/installed.json', '/composer.json', '/composer.lock', '/phpstan.neon.dist', '/contracts/evidence-hub-contract-v1.schema.json', '/data/profile-catalog/catalog.json', '/config/database.php', '/includes/presentation.php', '/src/EvidenceHub/Text/EvidenceTextEvaluator.php', '/src/', '/database/portfolio_db.sql', '/docker/production-entrypoint.sh', '/Dockerfile', '/docker-compose.yml', '/.env', '/.git/HEAD', '/public/index.php', '/app/index.php', '/tests/', '/vendor/', '/includes/')) {
         $status = Invoke-DisposableHttpStatus "$BaseUrl$path"
         if ($status -notin @('403', '404')) { Fail-Gate 'public boundary' "$Label served internal path $path with status $status" }
     }
@@ -374,13 +374,13 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         $repeat = & docker run --rm --network $network --entrypoint php @baseEnvironment $Image database/migrate.php 2>&1
         if ($LASTEXITCODE -ne 0 -or ($repeat -join "`n") -notmatch 'No pending migrations\.') { Fail-Gate 'migration repeat' 'No pending migrations. was not reported after migration 012' }
         Invoke-Tool 'docker' @('exec', '-e', "MYSQL_PWD=$databasePassword", $database, 'mysql', '-u', 'root', '-e', "CREATE DATABASE $timestampDatabaseName")
-        Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', "DB_NAME=$timestampDatabaseName", '-e', 'DB_USER=root', '-e', "DB_PASSWORD=$databasePassword", '-e', 'EVIDENCE_HUB_TIMESTAMP_MYSQL_TEST=1', $Image, 'scripts/test/run-evidence-hub-mysql-timestamp-test.php'))
-        Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_R3_MYSQL_TEST=1', $Image, 'scripts/test/run-evidence-hub-mysql-disposition-test.php'))
-        Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_TEST=1', $Image, 'scripts/test/run-evidence-hub-http-action-test.php', '--seed'))
+        Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', "DB_NAME=$timestampDatabaseName", '-e', 'DB_USER=root', '-e', "DB_PASSWORD=$databasePassword", '-e', 'EVIDENCE_HUB_TIMESTAMP_MYSQL_TEST=1', $Image, 'tests/Integration/run-evidence-hub-mysql-timestamp-test.php'))
+        Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_R3_MYSQL_TEST=1', $Image, 'tests/Integration/run-evidence-hub-mysql-disposition-test.php'))
+        Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_TEST=1', $Image, 'tests/Integration/run-evidence-hub-http-action-test.php', '--seed'))
         # These fixtures model existing owners. Seal their legacy ownership while no Apache/writers are running.
         Invoke-Tool 'docker' (@('run', '--rm', '--network', $network, '--entrypoint', 'php') + $baseEnvironment + @($Image, 'database/capture-owner-journey-cutover.php', '--confirm-exclusive-maintenance', "--database=$databaseName"))
         $webBootstrapEnvironment = @('-e', 'EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP=1', '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_NONCE_A=$bootstrapNonceA", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_SUBJECT_A=$bootstrapSubjectA", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_NONCE_B=$bootstrapNonceB", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_SUBJECT_B=$bootstrapSubjectB", '-e', "EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP_STATE_DIR=$bootstrapState")
-        Invoke-Tool 'docker' (@('run', '--detach', '--name', $web, '--network', $network, '-p', "127.0.0.1:${port}:80", '-v', "${bridge}:/tmp/bridge", '-v', "$(Join-Path $Root 'tests/phase2/support/apache-gate-fixtures.conf'):/etc/apache2/conf-enabled/zzzz-gate-fixtures.conf:ro", '-e', 'EVIDENCE_HUB_VISUAL_TEST=1') + $webBootstrapEnvironment + $baseEnvironment + @($Image))
+        Invoke-Tool 'docker' (@('run', '--detach', '--name', $web, '--network', $network, '-p', "127.0.0.1:${port}:80", '-v', "${bridge}:/tmp/bridge", '-v', "$(Join-Path $Root 'tests/Support/apache-gate-fixtures.conf'):/etc/apache2/conf-enabled/zzzz-gate-fixtures.conf:ro", '-e', 'EVIDENCE_HUB_VISUAL_TEST=1') + $webBootstrapEnvironment + $baseEnvironment + @($Image))
         for ($attempt = 0; $attempt -lt 60; $attempt++) {
             try { $health = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "http://127.0.0.1:$port/ready.php"; if ($health.StatusCode -eq 200) { break } } catch { }
             Start-Sleep -Milliseconds 1000
@@ -395,7 +395,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         Invoke-Tool 'docker' @('exec', $web, 'install', '-d', '-m', '0700', '-o', 'www-data', '-g', 'www-data', $bootstrapState)
         # The bootstrap handler lives with the application code; a one-line
         # front controller (the public/ shim pattern) exposes it temporarily.
-        Invoke-Tool 'docker' @('cp', (Join-Path $Root 'tests/phase2/support/evidence-hub-web-session-bootstrap.php'), "${web}:/var/www/app/$bootstrapPath")
+        Invoke-Tool 'docker' @('cp', (Join-Path $Root 'tests/Support/evidence-hub-web-session-bootstrap.php'), "${web}:/var/www/app/$bootstrapPath")
         $bootstrapShim = Join-Path $Temporary 'bootstrap-front-controller.php'
         [IO.File]::WriteAllText($bootstrapShim, "<?php`nrequire dirname(__DIR__) . '/app/$bootstrapPath';`n", [Text.UTF8Encoding]::new($false))
         Invoke-Tool 'docker' @('cp', $bootstrapShim, "${web}:/var/www/public/$bootstrapPath")
@@ -424,7 +424,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
         [IO.File]::WriteAllLines($invalidJar, [string[]]$invalidLines, [Text.UTF8Encoding]::new($false))
         Restore-LinuxCookieJarOwnership $Temporary 'before-http'
         if ($IsLinux) { Invoke-Tool 'docker' @('exec', $web, 'sh', '-ec', 'uid=$(id -u); gid=$(id -g); printf "COOKIE_JAR_WRITER consumer=http uid=%s gid=%s\n" "$uid" "$gid"') }
-        Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_TEST=1', '-e', 'EVIDENCE_HUB_HTTP_ACTION_BASE_URL=http://127.0.0.1', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_INVALID=/tmp/bridge/fabricated.cookiejar', $web, 'php', 'scripts/test/run-evidence-hub-http-action-test.php'))
+        Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_TEST=1', '-e', 'EVIDENCE_HUB_HTTP_ACTION_BASE_URL=http://127.0.0.1', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_INVALID=/tmp/bridge/fabricated.cookiejar', $web, 'php', 'tests/Integration/run-evidence-hub-http-action-test.php'))
         Restore-LinuxCookieJarOwnership $Temporary 'after-http'
         if ($null -ne $Playwright) {
             $sessionLine = Get-Content -LiteralPath $ownerAJar | Where-Object { $_ -match '(^|\t)portfolio_owner_session\t' -or $_ -match '^#HttpOnly_.*\tportfolio_owner_session\t' } | Select-Object -First 1
@@ -432,17 +432,17 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
             if ([string]::IsNullOrWhiteSpace($actionSession)) { Fail-Gate 'action visual session' 'Owner A native cookie jar did not contain an application session.' }
             Protect-GateSecret $actionSession
             $env:PLAYWRIGHT_MODULE = $Playwright.Module; $env:EVIDENCE_HUB_EDGE_EXECUTABLE = $Chromium; $env:EVIDENCE_HUB_BROWSER_PROFILE = $profile; $env:EVIDENCE_HUB_VISUAL_BASE_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_TEST_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_SESSION_COOKIE = $actionSession
-            Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-visual.cjs'), $screenshots)
-            Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs'))
-            Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-editor-writing-visual.cjs'))
-            Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-technology-review-visual.cjs'))
-            Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-skill-evidence-visual.cjs'))
-            Invoke-Tool 'node' @((Join-Path $Root 'tests/phase2/support/evidence-hub-text-rules-visual.cjs'))
+            Invoke-Tool 'node' @((Join-Path $Root 'tests/Browser/evidence-hub-owner-visual.cjs'), $screenshots)
+            Invoke-Tool 'node' @((Join-Path $Root 'tests/Browser/evidence-hub-owner-actions-visual.cjs'))
+            Invoke-Tool 'node' @((Join-Path $Root 'tests/Browser/evidence-hub-editor-writing-visual.cjs'))
+            Invoke-Tool 'node' @((Join-Path $Root 'tests/Browser/evidence-hub-technology-review-visual.cjs'))
+            Invoke-Tool 'node' @((Join-Path $Root 'tests/Browser/evidence-hub-skill-evidence-visual.cjs'))
+            Invoke-Tool 'node' @((Join-Path $Root 'tests/Browser/evidence-hub-text-rules-visual.cjs'))
         }
         Restore-LinuxCookieJarOwnership $Temporary 'before-editor'
         if ($IsLinux) { Invoke-Tool 'docker' @('exec', $web, 'sh', '-ec', 'uid=$(id -u); gid=$(id -g); printf "COOKIE_JAR_WRITER consumer=editor uid=%s gid=%s\n" "$uid" "$gid"') }
-        Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', $web, 'php', 'scripts/test/check-evidence-edit-http.php'))
-        Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', $web, 'php', 'scripts/test/check-evidence-technology-review-http.php'))
+        Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', $web, 'php', 'tests/Integration/check-evidence-edit-http.php'))
+        Invoke-Tool 'docker' (@('exec') + $baseEnvironment + @('-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_A=/tmp/bridge/owner-a.cookiejar', '-e', 'EVIDENCE_HUB_HTTP_ACTION_COOKIE_JAR_B=/tmp/bridge/owner-b.cookiejar', $web, 'php', 'tests/Integration/check-evidence-technology-review-http.php'))
         Restore-LinuxCookieJarOwnership $Temporary 'after-editor'
     } finally {
         & docker exec $web rm -rf $bootstrapState 2>$null | Out-Null
@@ -467,12 +467,12 @@ function Invoke-RequiredGates {
         $registry = @(
             'EvidenceHubRecommendationActionHttpMySqlTest',
             'EvidenceHubRecommendationDispositionMySqlTest',
-            'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceTextRules110Test', 'EvidenceProjectTextRules110Test', 'EvidenceHubContractV9Test', 'EvidenceTextOwnerHintsTest', 'scripts/test/check-evidence-edit-http.php::textRules110', 'tests/phase2/support/evidence-hub-text-rules-visual.cjs', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle',
-            'tests/phase2/support/evidence-hub-owner-visual.cjs',
-            'tests/phase2/support/evidence-hub-owner-actions-visual.cjs',
-            'tests/phase2/support/evidence-hub-editor-writing-visual.cjs',
-            'tests/phase2/support/evidence-hub-technology-review-visual.cjs',
-            'tests/phase2/support/evidence-hub-skill-evidence-visual.cjs'
+            'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceTextRules110Test', 'EvidenceProjectTextRules110Test', 'EvidenceHubContractV9Test', 'EvidenceTextOwnerHintsTest', 'tests/Integration/check-evidence-edit-http.php::textRules110', 'tests/Browser/evidence-hub-text-rules-visual.cjs', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle',
+            'tests/Browser/evidence-hub-owner-visual.cjs',
+            'tests/Browser/evidence-hub-owner-actions-visual.cjs',
+            'tests/Browser/evidence-hub-editor-writing-visual.cjs',
+            'tests/Browser/evidence-hub-technology-review-visual.cjs',
+            'tests/Browser/evidence-hub-skill-evidence-visual.cjs'
         )
         Assert-RequiredGateRegistry $registry
         Invoke-RequiredGateRegistryChallenges $registry
@@ -487,7 +487,7 @@ function Invoke-RequiredGates {
         # Composer autoloader for src/, which a fresh checkout does not have.
         & docker run --rm --entrypoint php -w /var/www/app -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 $devImage scripts/run-phase2-tests.php
         if ($LASTEXITCODE -ne 0) { Fail-Gate 'Phase-2' 'fast deterministic suite failed' }
-        # The development image carries PHPUnit: the same registry plus native tests/phpunit tests.
+        # The development image carries PHPUnit: the same registry plus native tests/Unit tests.
         & docker run --rm --entrypoint php -w /var/www/app -e APP_ENV=test -e ATHERCAR_TEST_MODE=1 $devImage vendor/bin/phpunit --do-not-cache-result
         if ($LASTEXITCODE -ne 0) { Fail-Gate 'PHPUnit' 'registered Phase 2 cases or native PHPUnit tests failed' }
         $playwright = New-TemporaryPlaywright $resolvedRoot
@@ -524,7 +524,7 @@ function Invoke-FocusedTwoOwnerGate {
 }
 
 if ($IdentityChallenge -or $RegistrationChallenge) {
-    $registry = @('EvidenceHubRecommendationActionHttpMySqlTest', 'EvidenceHubRecommendationDispositionMySqlTest', 'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceTextRules110Test', 'EvidenceProjectTextRules110Test', 'EvidenceHubContractV9Test', 'EvidenceTextOwnerHintsTest', 'scripts/test/check-evidence-edit-http.php::textRules110', 'tests/phase2/support/evidence-hub-text-rules-visual.cjs', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle', 'tests/phase2/support/evidence-hub-owner-visual.cjs', 'tests/phase2/support/evidence-hub-owner-actions-visual.cjs', 'tests/phase2/support/evidence-hub-editor-writing-visual.cjs', 'tests/phase2/support/evidence-hub-technology-review-visual.cjs', 'tests/phase2/support/evidence-hub-skill-evidence-visual.cjs')
+    $registry = @('EvidenceHubRecommendationActionHttpMySqlTest', 'EvidenceHubRecommendationDispositionMySqlTest', 'EvidenceHubTimestampMySqlTest', 'EvidenceHubSkillEvidenceTest', 'EvidenceHubContractV8Test', 'EvidenceTextRules110Test', 'EvidenceProjectTextRules110Test', 'EvidenceHubContractV9Test', 'EvidenceTextOwnerHintsTest', 'tests/Integration/check-evidence-edit-http.php::textRules110', 'tests/Browser/evidence-hub-text-rules-visual.cjs', 'EvidenceHubRecommendationDispositionMySqlTest::skillEvidenceLifecycle', 'EvidenceHubRecommendationActionHttpMySqlTest::skillEvidenceLifecycle', 'tests/Browser/evidence-hub-owner-visual.cjs', 'tests/Browser/evidence-hub-owner-actions-visual.cjs', 'tests/Browser/evidence-hub-editor-writing-visual.cjs', 'tests/Browser/evidence-hub-technology-review-visual.cjs', 'tests/Browser/evidence-hub-skill-evidence-visual.cjs')
     if ($RegistrationChallenge) { Invoke-RequiredGateRegistryChallenges $registry; Write-Host 'REGISTRATION_CHALLENGES_PASSED' }
     if ($IdentityChallenge) { Write-Host 'Identity challenge is exercised by Assert-CurrentSourceIdentity against a deliberately stale disposable image.' }
     exit 0

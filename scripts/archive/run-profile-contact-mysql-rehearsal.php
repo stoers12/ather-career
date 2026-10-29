@@ -9,7 +9,7 @@ if (PHP_SAPI !== 'cli' || getenv('APP_ENV') !== 'test' || getenv('ATHERCAR_TEST_
     throw new RuntimeException('A dedicated disposable contact rehearsal database is required.');
 }
 require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../tests/phase2/bootstrap.php';
+require_once __DIR__ . '/../../tests/Legacy/bootstrap.php';
 require_once __DIR__ . '/../../includes/owner_actions.php';
 require_once __DIR__ . '/../../includes/public_lifecycle.php';
 

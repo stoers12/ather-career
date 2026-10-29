@@ -94,7 +94,7 @@ never accepted.
 
 ## Verification contract
 
-`scripts/test/run-phase2-stage2c-integrity-rehearsal.php` is an integration
+`tests/Integration/run-phase2-stage2c-integrity-rehearsal.php` is an integration
 rehearsal for a disposable database and storage namespace. It covers own and
 foreign Profile, Skill, Project, Experience, Message, private-media, public
 media, slug, and publication access; malformed collection rejection; duplicate
