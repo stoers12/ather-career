@@ -23,7 +23,7 @@ Apache serves files that exist under `public/` directly: `index.php`, the `healt
   - **Scripts:** every former entry such as `/owner_projects.php` keeps working, with an optional trailing PATH_INFO as under Apache.
   - **Patterns:** the pretty URLs `/owner/evidence-hub`, `/owner/projects/{id}/evidence` and `/p/{slug}/…`. A pattern that defines a query replaces the request's own, as the former rewrites did without QSA.
 - **Request identity:** behind the front controller every script is `index.php`, so code that identified a request by its script reads `Ather\Http\CurrentRoute::entryScript()` instead. Evidence Hub Undo depends on this.
-- **Unknown paths:** they get Apache's default 404 document byte-for-byte.
+- **Unknown paths:** status 404 and the route table's `not_found` handler (`handlers/not_found.php`): Ather's English page with links home and to sign-in, styled by `public/assets/css/not_found.css` under the strict CSP. It needs no session or database and writes no application log line. Apache's access log still records the request.
 - **Apache variables:** the internal rewrite renames request variables with a `REDIRECT_` prefix, so any Apache rule keyed on a request variable must check both names. The Auth0 callback Referrer-Policy does.
 - **Verification:**
   - `tests/Unit/RouterTest.php` covers the table.

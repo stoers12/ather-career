@@ -292,15 +292,22 @@ function Assert-PublicBoundary([string]$BaseUrl, [string]$Label) {
         if ($status -ne '404') { Fail-Gate 'public boundary' "$Label still serves retired root asset $path (status $status)" }
     }
     # Front controller (ENG-09): the Auth0 callback keeps no-referrer through the
-    # internal rewrite, and unknown paths keep Apache's default 404 exactly.
+    # internal rewrite, and unknown paths get Ather's 404 page with the full
+    # security headers, served without a database or session.
     $callback = Invoke-WebRequest -UseBasicParsing -MaximumRedirection 0 -SkipHttpErrorCheck -TimeoutSec 10 "$BaseUrl/owner_oidc_callback.php"
     if ("$($callback.Headers['Referrer-Policy'])" -ne 'no-referrer') { Fail-Gate 'public boundary' "$Label OIDC callback lost Referrer-Policy no-referrer" }
     $signin = Invoke-WebRequest -UseBasicParsing -MaximumRedirection 0 -SkipHttpErrorCheck -TimeoutSec 10 "$BaseUrl/signin.php"
     if ("$($signin.Headers['Referrer-Policy'])" -ne 'strict-origin-when-cross-origin') { Fail-Gate 'public boundary' "$Label default Referrer-Policy changed" }
     $missing = Invoke-WebRequest -UseBasicParsing -MaximumRedirection 0 -SkipHttpErrorCheck -TimeoutSec 10 "$BaseUrl/no-such-page"
-    if ($missing.StatusCode -ne 404 -or "$($missing.Headers['Content-Type'])" -ne 'text/html; charset=iso-8859-1' -or $missing.Headers.ContainsKey('X-Powered-By') -or
-        -not "$($missing.Content)".Contains('<p>The requested URL was not found on this server.</p>')) {
-        Fail-Gate 'public boundary' "$Label unknown paths no longer get the Apache-identical 404"
+    if ($missing.StatusCode -ne 404 -or "$($missing.Headers['Content-Type'])" -ne 'text/html; charset=utf-8' -or $missing.Headers.ContainsKey('X-Powered-By') -or
+        "$($missing.Headers['Cache-Control'])" -ne 'no-store' -or -not $missing.Headers.ContainsKey('Content-Security-Policy') -or
+        -not "$($missing.Content)".Contains('<h1 id="nf-title">This page doesn''t exist</h1>')) {
+        Fail-Gate 'public boundary' "$Label unknown paths no longer get Ather's 404 page"
+    }
+    $stylesheet = [regex]::Match("$($missing.Content)", 'href="(/assets/css/not_found\.css\?v=[0-9a-f]{16})"').Groups[1].Value
+    $style = if ($stylesheet) { Invoke-WebRequest -UseBasicParsing -MaximumRedirection 0 -SkipHttpErrorCheck -TimeoutSec 10 "$BaseUrl$stylesheet" } else { $null }
+    if ($null -eq $style -or $style.StatusCode -ne 200 -or "$($style.Headers['Content-Type'])" -notlike 'text/css*') {
+        Fail-Gate 'public boundary' "$Label 404 page stylesheet is not served"
     }
     Write-Host "PASS public boundary ($Label)"
 }
