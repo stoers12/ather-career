@@ -106,6 +106,17 @@ final class DesignSystemTest extends TestCase
         }
     }
 
+    public function testIconsRenderLikeTheReference(): void
+    {
+        require_once PHASE2_REPOSITORY_ROOT . '/includes/ather_icons.php';
+        $house = atherIcon('house');
+        self::assertStringStartsWith('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"', $house);
+        self::assertStringContainsString('class="lucide lucide-house" aria-hidden="true" focusable="false">', $house);
+        self::assertStringEndsWith('</svg>', $house);
+        $this->expectException(InvalidArgumentException::class);
+        atherIcon('not-a-reference-icon');
+    }
+
     /** @return iterable<string, array{string, list<array{string, string, float}>}> */
     public static function palettes(): iterable
     {
