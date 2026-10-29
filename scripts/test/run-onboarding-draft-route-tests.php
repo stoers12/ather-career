@@ -132,7 +132,7 @@ try {
     // bypassed by the common method helper's case normalization.
     foreach (['get', 'post'] as $method) {
         $source = '$_SERVER["REQUEST_METHOD"]=$argv[1]; putenv("ATHERCAR_ONBOARDING_DRAFT_HTTP_ENABLED=1"); putenv("DB_PORT=invalid"); register_shutdown_function(static function (): void { fwrite(STDERR, "STATUS=".http_response_code()); }); require $argv[2];';
-        $child = proc_open([PHP_BINARY, '-r', $source, $method, __DIR__ . '/../../owner_onboarding_draft.php'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $child = proc_open([PHP_BINARY, '-r', $source, $method, __DIR__ . '/../../handlers/owner_onboarding_draft.php'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         draftRouteAssert(is_resource($child), 'Case-sensitive method test process unavailable.'); fclose($pipes[0]);
         $body = stream_get_contents($pipes[1]); $diagnostic = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
         draftRouteAssert(proc_close($child) === 0 && str_contains($diagnostic, 'STATUS=405') && json_decode($body, true, 8, JSON_THROW_ON_ERROR)['code'] === 'method_not_allowed', 'Lowercase method bypassed the exact HTTP method guard.');
