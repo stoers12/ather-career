@@ -44,32 +44,30 @@ final class PublicLifecycleStaticTest
         // production public-route contract below is also the development contract.
         phase2Assert(substr_count($developmentDockerfile, 'COPY docker/apache/vhost.conf /etc/apache2/sites-available/000-default.conf') === 1
             && str_contains($developmentDockerfile, 'FROM runtime-base AS development') && str_contains($developmentDockerfile, 'FROM runtime-base AS production'), 'P2J-05 development and production must share one vhost.');
-        self::assertPublicRouteContract($productionVhost, [
-            '/p_media.php?slug=$1&type=profile',
-            '/p_media.php?slug=$1&type=project&id=$2',
-            '/p_projects.php?slug=$1',
-            '/p_contact.php?slug=$1',
-            '/p.php?slug=$1',
-        ], 'Production');
+        self::assertPublicRouteContract($productionVhost);
         phase2Assert(str_contains($developmentVhost, 'Options -Indexes +FollowSymLinks') && str_contains($developmentVhost, 'AllowOverride None'), 'P2J-05 Owner development public routes must retain no-directory-listing and must not enable .htaccess overrides.');
     }
 
-    /** @param list<string> $targets */
-    private static function assertPublicRouteContract(string $vhost, array $targets, string $environment): void
+    /** The /p/<slug> URLs route through the front controller exactly as the former vhost rewrites did (ENG-09). */
+    private static function assertPublicRouteContract(string $vhost): void
     {
-        $slug = '([a-z0-9][a-z0-9-]{1,62}[a-z0-9])';
-        $expectedPatterns = [
-            "^/p/{$slug}/media/profile/?$",
-            "^/p/{$slug}/media/project/([1-9][0-9]*)/?$",
-            "^/p/{$slug}/projects\\.json$",
-            "^/p/{$slug}/contact/?$",
-            "^/p/{$slug}/?$",
-        ];
-
-        phase2Assert(str_contains($vhost, 'RewriteEngine On'), "P2J-05 {$environment} public routes must enable rewriting.");
-        foreach ($expectedPatterns as $index => $pattern) {
-            $rule = "RewriteRule {$pattern} {$targets[$index]} [END,NE]";
-            phase2Assert(str_contains($vhost, $rule), "P2J-05 {$environment} route contract is missing {$rule}.");
+        phase2Assert(str_contains($vhost, 'RewriteCond %{REQUEST_FILENAME} !-f') && str_contains($vhost, 'RewriteRule ^ index.php [END]')
+            && !str_contains($vhost, 'RewriteRule ^/p/'), 'P2J-05 public routes must reach the single front controller, not per-route rewrites.');
+        $slug = 'ab-1';
+        foreach ([
+            ["/p/{$slug}/media/profile", 'public_media.php', ['slug' => $slug, 'type' => 'profile']],
+            ["/p/{$slug}/media/profile/", 'public_media.php', ['slug' => $slug, 'type' => 'profile']],
+            ["/p/{$slug}/media/project/12", 'public_media.php', ['slug' => $slug, 'type' => 'project', 'id' => '12']],
+            ["/p/{$slug}/projects.json", 'public_projects_json.php', ['slug' => $slug]],
+            ["/p/{$slug}/contact", 'public_contact.php', ['slug' => $slug]],
+            ["/p/{$slug}/", 'public_portfolio.php', ['slug' => $slug]],
+            ["/p/{$slug}", 'public_portfolio.php', ['slug' => $slug]],
+            ['/p/' . str_repeat('a', 64), 'public_portfolio.php', ['slug' => str_repeat('a', 64)]],
+        ] as [$path, $handler, $query]) {
+            RouteContract::assertRoute($path, $handler, $query, "P2J-05 route contract is missing {$path}.");
+        }
+        foreach (['/p/ab', '/p/Ab-1', '/p/-ab', '/p/ab-', '/p/' . str_repeat('a', 65), "/p/{$slug}/media/project/0", "/p/{$slug}/projects.json/", "/p/{$slug}/unknown"] as $path) {
+            RouteContract::assertNoRoute($path, "P2J-05 public routes accept a path the former rewrites refused: {$path}");
         }
     }
 

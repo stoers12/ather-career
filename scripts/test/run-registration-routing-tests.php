@@ -180,7 +180,7 @@ try {
     mkdir($root, 0700); mkdir($root . '/sessions', 0700); mkdir($root . '/rate', 0700); mkdir($root . '/http', 0700); mkdir($root . '/http/public', 0700);
     file_put_contents($root . '/mock-marker', 'private-loopback-test');
     symlink(realpath(__DIR__ . '/../..'), $root . '/http/app');
-    foreach (glob(__DIR__ . '/../../public/*.php') as $shim) { copy($shim, $root . '/http/public/' . basename($shim)); }
+    RouteContract::writeEntryScripts($root . '/http/public');
     $router = <<<'PHP'
 <?php
 // Test-only middleware can make session storage fail; production never reads these files.

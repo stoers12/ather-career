@@ -63,7 +63,7 @@ $db = getDatabaseConnection(); $initial = profileTestSnapshot($db); $users = [];
 try {
     profileTestAssert(is_file('/.dockerenv'), 'HTTP fixtures require disposable Docker.');
     $environment = TestEnvironment::create(); $root = $environment->namespaceRoot . '/profile-http'; mkdir($root); mkdir($root . '/sessions'); mkdir($root . '/public'); mkdir($root . '/limits');
-    symlink(realpath(__DIR__ . '/../..'), $root . '/app'); foreach (glob(__DIR__.'/../../public/*.php') as $shim) { copy($shim,$root.'/public/'.basename($shim)); }
+    symlink(realpath(__DIR__ . '/../..'), $root . '/app'); RouteContract::writeEntryScripts($root.'/public');
     symlink(realpath(__DIR__.'/../../public/assets'),$root.'/public/assets');
     $png = $root . '/synthetic.png'; profileTestPng($png);
     session_save_path($root . '/sessions'); session_name(OWNER_SESSION_NAME); ini_set('session.cache_limiter', '');

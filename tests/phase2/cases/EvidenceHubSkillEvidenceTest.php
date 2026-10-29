@@ -171,7 +171,7 @@ final class EvidenceHubSkillEvidenceTest
         $otherModel = buildAuthorizedEvidenceHubOwnerPageModel($database, $other, $otherState, self::HMAC);
         $otherIndex = array_search('add_skill_evidence', array_column($otherState['contract']['recommendations'], 'rule_id'), true);
         phase2Assert(is_int($otherIndex) && $otherModel['recommendations'][$otherIndex]['skill_display_name'] === 'Vue.js', 'Owner B received a foreign skill context.');
-        foreach (['public_projects_json.php', 'public/p_projects.php', 'includes/public_lifecycle.php', 'public/assets/js/portfolio.js'] as $file) {
+        foreach (['public_projects_json.php', 'public/index.php', 'config/routes.php', 'includes/public_lifecycle.php', 'public/assets/js/portfolio.js'] as $file) {
             $source = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/' . $file);
             phase2Assert(!str_contains($source, 'add_skill_evidence') && !str_contains($source, 'evidence_hub_owner_recommendations'), "{$file}: a private recommendation reached a visitor route.");
         }

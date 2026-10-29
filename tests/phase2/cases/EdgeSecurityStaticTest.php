@@ -72,9 +72,10 @@ final class EdgeSecurityStaticTest
         phase2Assert(substr_count($apache, 'Header always set Content-Security-Policy') === 1
             && substr_count($apache, 'Header always set X-Frame-Options') === 1
             && substr_count($apache, 'Header always set Permissions-Policy') === 1, 'The Apache effective header matrix has duplicate authoritative values.');
+        // Both names: behind the front controller the variable arrives as REDIRECT_ather_oidc_callback (ENG-09).
         phase2Assert(substr_count($apache, 'Header always set Referrer-Policy') === 2
-            && str_contains($apache, 'env=!ather_oidc_callback')
-            && str_contains($apache, 'env=ather_oidc_callback'), 'OIDC callback Referrer-Policy rules are not mutually exclusive.');
+            && str_contains($apache, "\"expr=-z reqenv('ather_oidc_callback') && -z reqenv('REDIRECT_ather_oidc_callback')\"")
+            && str_contains($apache, "\"expr=-n reqenv('ather_oidc_callback') || -n reqenv('REDIRECT_ather_oidc_callback')\""), 'OIDC callback Referrer-Policy rules are not mutually exclusive.');
 
         $originalServer = $_SERVER;
         $originalTrusted = getenv('TRUSTED_PROXY_CIDRS');

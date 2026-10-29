@@ -107,7 +107,7 @@ try {
     $root = $environment->namespaceRoot . '/draft-http';
     mkdir($root, 0700); mkdir($root . '/sessions', 0700); mkdir($root . '/http', 0700); mkdir($root . '/http/public', 0700);
     symlink(realpath(__DIR__ . '/../..'), $root . '/http/app');
-    copy(__DIR__ . '/../../public/owner_onboarding_draft.php', $root . '/http/public/owner_onboarding_draft.php');
+    RouteContract::writeEntryScripts($root . '/http/public', ['owner_onboarding_draft.php']);
     $socket = stream_socket_server('tcp://127.0.0.1:0', $errno, $message);
     draftRouteAssert(is_resource($socket), 'Loopback port unavailable.');
     $address = stream_socket_get_name($socket, false); fclose($socket); $port = (int) substr($address, strrpos($address, ':') + 1);

@@ -76,8 +76,11 @@ final class PublicProjectJsonContractTest
             phase2Assert(str_contains($lifecycle, "\$project['image_url'] = publicProjectMediaUrl(\$normalizedSlug, \$projectId);") && str_contains($lifecycle, 'publicProjectPresentationIsReadable'), 'Public JSON mapper does not build its image URL through the approved readable-media helper.');
             phase2Assert(str_contains($lifecycle, "return '/p/' . rawurlencode(\$slug) . '/media/project/' . \$projectId;"), 'Public image URLs are not restricted to the public Project media route.');
             phase2Assert(!str_contains($frontend, 'projects.json') && !str_contains($frontend, 'image_path'), 'A browser JSON consumer still depends on a raw Project media path.');
-            phase2Assert(str_contains($productionVhost, '/projects\\.json$ /p_projects.php?slug=$1 [END,NE]'), 'Canonical Project JSON route is missing.');
-            phase2Assert(!str_contains($developmentVhost, 'projects\\.json.*') && !str_contains($productionVhost, 'projects\\.json.*'), 'A broad Project JSON catch-all rewrite was introduced.');
+            RouteContract::assertRoute('/p/ab-1/projects.json', 'public_projects_json.php', ['slug' => 'ab-1'], 'Canonical Project JSON route is missing.');
+            foreach (['/p/ab-1/projects.json/', '/p/ab-1/projects.jsonx', '/p/ab-1/x/projects.json'] as $broad) {
+                RouteContract::assertNoRoute($broad, "A broad Project JSON route accepts {$broad}.");
+            }
+            phase2Assert(!str_contains($developmentVhost, 'projects\\.json') && !str_contains($productionVhost, 'projects\\.json'), 'Project JSON routing moved to config/routes.php; the vhost must not keep a rewrite.');
             phase2Assert(str_contains($documentation, 'non-matching path') && str_contains($documentation, 'managed-media paths'), 'HTTP documentation does not state JSON route and media disclosure boundaries.');
         } finally {
             putenv('ATHERCAR_STORAGE_ROOT' . (is_string($previousStorageRoot) ? '=' . $previousStorageRoot : ''));

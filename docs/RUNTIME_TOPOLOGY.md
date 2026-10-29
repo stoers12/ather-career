@@ -2,6 +2,8 @@
 
 Status: ENG-04 Phase A design, **approved with the amendments in section 9** and **implemented by ENG-04 Phase B** (single multi-stage `Dockerfile`, shared `docker/apache/vhost.conf`, assets under `public/assets/`, public-boundary gate). Section 9 is binding where it differs from sections 1–8; sections 1 and 4 describe the pre-Phase-B state. Verified on 2026-10-28 against `origin/main` at `3817dbf`. This document describes Phase B; it implements no runtime changes and authorizes no deployment. Phase A changes only this file and the documentation index.
 
+**Superseded in part by ENG-09 ST-1:** the per-route `public/` front controllers and the vhost `RewriteRule`s described here were replaced by one front controller, `public/index.php`, and the route table `config/routes.php`. See [ARCHITECTURE.md — Routing](ARCHITECTURE.md#routing-eng-09). The filesystem and document-root boundary in this document is unchanged.
+
 ## 1. Current state
 
 ### Evidence and boundaries

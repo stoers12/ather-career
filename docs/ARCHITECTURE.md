@@ -6,12 +6,26 @@ This note describes where PHP code lives and the rule for moving a module from p
 
 | Path | Holds | Loaded by |
 |---|---|---|
-| `*.php` (root) | Thin routes: authentication, CSRF, request shape, then a call into `includes/`. | A one-line front controller in `public/`. |
+| `*.php` (root) | Thin request handlers: authentication, CSRF, request shape, then a call into `includes/`. | `public/index.php`, the single front controller, through the route table `config/routes.php`. |
 | `includes/` | Procedural domain logic, repositories and, for migrated modules, compatibility wrappers. | `require_once`. |
 | `src/` | Namespaced classes under `Ather\`, one class per file (PSR-4). | Composer's autoloader only. |
 | `vendor/` | Composer packages and the generated autoloader. Never committed. | `includes/autoload.php`. |
 
 `includes/autoload.php` is the single entry to Composer's autoloader. It fails with a clear message when `vendor/` is missing instead of letting a class lookup fail later.
+
+## Routing (ENG-09)
+
+Apache serves files that exist under `public/` directly: `index.php`, the `health.php` and `ready.php` probes, and `assets/`. It rewrites every other request to `public/index.php`. That front controller resolves the path through `config/routes.php` with `Ather\Http\Router`, then loads the handler at file scope, exactly as the former per-route `public/` scripts did.
+
+- **Two kinds of route:**
+  - **Scripts:** every former entry such as `/owner_projects.php` keeps working, with an optional trailing PATH_INFO as under Apache.
+  - **Patterns:** the pretty URLs `/owner/evidence-hub`, `/owner/projects/{id}/evidence` and `/p/{slug}/…`. A pattern that defines a query replaces the request's own, as the former rewrites did without QSA.
+- **Request identity:** behind the front controller every script is `index.php`, so code that identified a request by its script reads `Ather\Http\CurrentRoute::entryScript()` instead. Evidence Hub Undo depends on this.
+- **Unknown paths:** they get Apache's default 404 document byte-for-byte.
+- **Apache variables:** the internal rewrite renames request variables with a `REDIRECT_` prefix, so any Apache rule keyed on a request variable must check both names. The Auth0 callback Referrer-Policy does.
+- **Verification:**
+  - `tests/phpunit/RouterTest.php` covers the table.
+  - `tests/phase2/support/RouteContract.php` lets static contracts assert routing behavior instead of configuration text.
 
 ## Where `vendor/` comes from
 

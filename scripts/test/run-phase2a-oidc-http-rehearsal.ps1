@@ -294,8 +294,8 @@ function Initialize-RunWebRoot([string]$sourceRoot, [string]$webRootPath, [strin
             'includes/owner_layout.php', 'includes/owner_session.php',
             'includes/session.php', 'owner_login.php', 'owner_onboarding.php',
             'owner_oidc_callback.php', 'owner_auth_retry.php',
-            'owner_switch_account.php', 'public/owner_auth_retry.php',
-            'public/owner_switch_account.php', 'public/assets/css/style.css'
+            'owner_switch_account.php', 'public/index.php', 'config/routes.php',
+            'public/assets/css/style.css'
         )
         foreach ($relative in $candidateFiles) {
             $original = Join-Path $sourceRoot $relative
