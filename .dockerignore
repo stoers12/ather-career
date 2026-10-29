@@ -36,4 +36,4 @@ CLEANUP-EXECUTION-MANIFEST-*.md
 
 # PHPUnit result cache and local coverage output.
 runtime/phpunit/
-coverage/
+/coverage/
