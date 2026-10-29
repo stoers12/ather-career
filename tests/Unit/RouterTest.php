@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Ather\Http\FrontController;
 use Ather\Http\Router;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -74,8 +73,9 @@ final class RouterTest extends TestCase
         // ready.php is served by public/ready.php directly, so readiness never depends on the router.
         self::assertSame([], glob(PHASE2_REPOSITORY_ROOT . '/*.php') ?: [], 'Repository root must not contain PHP files');
         $handlers = array_map(static fn (string $path): string => 'handlers/' . basename($path), glob(PHASE2_REPOSITORY_ROOT . '/handlers/*.php') ?: []);
-        self::assertCount(29, $handlers);
-        self::assertSame(['handlers/ready.php'], array_values(array_diff($handlers, array_values($routes['scripts']))), 'A handler has no route');
+        self::assertCount(30, $handlers);
+        $routed = [...array_values($routes['scripts']), $routes['not_found']];
+        self::assertSame(['handlers/ready.php'], array_values(array_diff($handlers, $routed)), 'A handler has no route');
     }
 
     public function testPublicHoldsOnlyTheFrontControllerAndProbes(): void
@@ -86,9 +86,24 @@ final class RouterTest extends TestCase
         self::assertSame(['health.php', 'index.php', 'ready.php'], $files);
     }
 
-    public function testNotFoundBodyMatchesApacheDefault(): void
+    public function testUnknownPathsRenderAtherNotFoundPage(): void
     {
-        self::assertSame(236, strlen(FrontController::NOT_FOUND_BODY));
-        self::assertStringContainsString('<p>The requested URL was not found on this server.</p>', FrontController::NOT_FOUND_BODY);
+        $routes = require PHASE2_REPOSITORY_ROOT . '/config/routes.php';
+        self::assertSame('handlers/not_found.php', $routes['not_found']);
+        self::assertNull(self::router()->match('/not_found.php'), 'The 404 page must not be an addressable entry');
+
+        ob_start();
+        require PHASE2_REPOSITORY_ROOT . '/' . $routes['not_found'];
+        $html = (string) ob_get_clean();
+
+        // Visitors may land here, so the page is English and works under the
+        // strict CSP: an external stylesheet only, no inline style or script.
+        self::assertStringContainsString('<html lang="en" dir="ltr">', $html);
+        self::assertStringContainsString('<meta name="robots" content="noindex">', $html);
+        self::assertMatchesRegularExpression('#<link rel="stylesheet" href="/assets/css/not_found\.css\?v=[0-9a-f]{16}">#', $html);
+        self::assertStringContainsString('<h1 id="nf-title">This page doesn\'t exist</h1>', $html);
+        self::assertStringContainsString('<a class="nf-action nf-action-primary" href="/">', $html);
+        self::assertStringContainsString('<a class="nf-action" href="/signin.php">', $html);
+        self::assertDoesNotMatchRegularExpression('#<script|<style|\sstyle=#i', $html);
     }
 }

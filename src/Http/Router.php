@@ -17,7 +17,8 @@ final class Router
     /**
      * @param array{
      *     scripts: array<string, string>,
-     *     patterns: list<array{pattern: string, script: string, query?: array<string, string>}>
+     *     patterns: list<array{pattern: string, script: string, query?: array<string, string>}>,
+     *     not_found: string
      * } $routes
      */
     public function __construct(private readonly array $routes)

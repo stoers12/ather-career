@@ -13,6 +13,8 @@ declare(strict_types=1);
  * - patterns: the pretty URLs that docker/apache/vhost.conf used to rewrite, in
  *   the same order (first match wins). A query replaces the request's own, as
  *   the former rewrites did; {name} inserts the named capture.
+ * - not_found: the handler for every other path. The front controller sets
+ *   status 404 before loading it.
  *
  * Adding a page: add the handler in handlers/ and one line here; nothing in
  * public/.
@@ -62,5 +64,6 @@ return (static function (): array {
             ['pattern' => '#^/p/' . $slug . '/contact/?$#', 'script' => 'p_contact.php', 'query' => ['slug' => '{slug}']],
             ['pattern' => '#^/p/' . $slug . '/?$#', 'script' => 'p.php', 'query' => ['slug' => '{slug}']],
         ],
+        'not_found' => 'handlers/not_found.php',
     ];
 })();

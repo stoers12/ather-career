@@ -14,6 +14,4 @@ require_once $atherApplicationRoot . '/includes/autoload.php';
 
 $atherHandler = Ather\Http\FrontController::resolve($atherApplicationRoot, require $atherApplicationRoot . '/config/routes.php');
 unset($atherApplicationRoot);
-if ($atherHandler !== null) {
-    require $atherHandler;
-}
+require $atherHandler;
