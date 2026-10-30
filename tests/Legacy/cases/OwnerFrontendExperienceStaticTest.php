@@ -9,7 +9,7 @@ final class OwnerFrontendExperienceStaticTest
         $layout = self::read('includes/owner_layout.php');
         $feedback = self::read('includes/owner_form_feedback.php');
         $profile = self::read('handlers/owner_profile.php') . self::read('includes/owner_profile_presentation.php');
-        $projects = self::read('handlers/owner_projects.php');
+        $projects = self::read('handlers/owner_projects.php') . self::read('includes/owner_projects_presentation.php') . self::read('includes/owner_projects_components.php');
         $experiences = self::read('handlers/owner_experiences.php');
         $publication = self::read('handlers/owner_publication.php');
         $publicationPresentation = self::read('includes/owner_publication_presentation.php');

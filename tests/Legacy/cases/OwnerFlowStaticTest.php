@@ -47,16 +47,16 @@ final class OwnerFlowStaticTest
             && str_contains($adminScript, "getElementById('profile-form')")
             && str_contains($adminScript, 'formState(profileForm)'), 'Owner profile unsaved-change protection is not wired end to end.');
         foreach (['handlers/owner_profile.php', 'handlers/owner_projects.php', 'handlers/owner_experiences.php', 'includes/owner_publication_presentation.php'] as $route) {
-            phase2Assert(str_contains(self::read($route) . ($route === 'handlers/owner_profile.php' ? self::read('includes/owner_profile_presentation.php') : ''), 'data-confirm='), "{$route} bypasses the shared confirmation dialog for a material action.");
+            phase2Assert(str_contains(self::read($route) . ($route === 'handlers/owner_profile.php' ? self::read('includes/owner_profile_presentation.php') : ($route === 'handlers/owner_projects.php' ? self::read('includes/owner_projects_presentation.php') : '')), 'data-confirm='), "{$route} bypasses the shared confirmation dialog for a material action.");
         }
         self::optionalProjectGithubUrl();
     }
 
     private static function optionalProjectGithubUrl(): void
     {
-        $form = self::read('handlers/owner_projects.php');
+        $form = self::read('handlers/owner_projects.php') . self::read('includes/owner_projects_presentation.php') . self::read('includes/owner_projects_components.php');
         phase2Assert(str_contains($form, "ownerText('GitHub URL')")
-            && str_contains($form, "ownerText('(optional)')")
+            && str_contains($form, "ownerProjectsField('github_url', ownerText('GitHub URL'), 'url', \$editingProject, \$fieldErrors, false,")
             && str_contains($form, "ownerText('Leave blank to hide the public GitHub link.')"), 'Owner form must localize the optional GitHub label and its visibility explanation.');
         phase2Assert(!preg_match('/id="github_url"[^>]*\srequired(?:\s|>)/', $form), 'Owner form still requires a GitHub URL.');
         require_once PHASE2_REPOSITORY_ROOT . '/includes/owner_actions.php';
