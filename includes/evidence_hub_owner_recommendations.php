@@ -49,6 +49,40 @@ function buildAuthorizedEvidenceHubOwnerRecommendationState(
 }
 
 /**
+ * Every claimed skill without project technology evidence (B-07 / FE-07 B2),
+ * using exactly the facts behind `add_skill_evidence`: canonical, deduplicated,
+ * owner mappings applied, unknown skill labels excluded. Display names come from
+ * the live taxonomy; raw skill text and target identities never leave here.
+ * Independent of recommendation ranking and dispositions.
+ *
+ * @return list<array{canonical_id: string, display_name: string}>
+ */
+function listAuthorizedEvidenceHubSkillGaps(PDO $database, AuthorizedPortfolioContext $context): array
+{
+    $taxonomy = loadEvidenceHubOwnerTaxonomy();
+    $facts = buildEvidenceHubOwnerRecommendationFacts(
+        $context,
+        loadAuthorizedEvidenceHubOwnerEvaluatedProjects($database, $context),
+        $taxonomy,
+        // Publication facts do not affect skill claims; constants avoid an unrelated read.
+        ['portfolio_published' => false, 'publication_prerequisites_met' => false],
+        loadAuthorizedTechnologyOwnerMappings($database, $context),
+        array_column(listAuthorizedSkills($database, $context), 'skill_name'),
+    )['facts'];
+    $gaps = [];
+    foreach ($facts['skill_claims'] ?? [] as $claim) {
+        $entry = evidenceHubTaxonomyEntryById($taxonomy, $claim['canonical_id']);
+        if (!is_array($entry) || !is_string($entry['display_name'] ?? null)) {
+            throw new RuntimeException('Evidence Hub skill gap taxonomy entry is unavailable.');
+        }
+        $gaps[] = ['canonical_id' => $claim['canonical_id'], 'display_name' => $entry['display_name']];
+    }
+    usort($gaps, static fn (array $left, array $right): int => [strtolower($left['display_name']), $left['canonical_id']] <=> [strtolower($right['display_name']), $right['canonical_id']]);
+
+    return $gaps;
+}
+
+/**
  * System-boundary convenience for a later protected route. The pure core
  * still receives decoded bytes as an explicit argument above.
  *

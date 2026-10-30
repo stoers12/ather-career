@@ -11,6 +11,7 @@ require_once dirname(__DIR__) . '/includes/owner_layout.php';
 require_once dirname(__DIR__) . '/includes/transaction.php';
 require_once dirname(__DIR__) . '/includes/project_evidence_repository.php';
 require_once dirname(__DIR__) . '/includes/project_evidence_source_repository.php';
+require_once dirname(__DIR__) . '/includes/project_evidence_view.php';
 require_once dirname(__DIR__) . '/includes/evidence_hub_undo.php';
 require_once dirname(__DIR__) . '/includes/evidence_hub_owner_page_model.php';
 require_once dirname(__DIR__) . '/includes/evidence_hub_owner_page_presentation.php';
@@ -42,6 +43,8 @@ $values = [];
 $sources = [];
 $sourceValues = ['title' => '', 'url' => '', 'note' => ''];
 $sourceErrors = [];
+// Server view mode (B-07): GET ?mode=write[&part=...] writes; anything else reads.
+$view = projectEvidenceViewFromQuery($_GET);
 try {
     $database = getDatabaseConnection();
     $context = requireOwnerPortfolioContext($database);
@@ -76,6 +79,7 @@ try {
                     httpRedirect('/owner/projects/' . $projectId . '/evidence#sources', 303);
                 }
             }
+            $view = ['mode' => 'read', 'part' => null];
             http_response_code(422);
         } elseif ($action === 'remove_source') {
             $sourceId = authorizationPositiveInteger($_POST['source_id'] ?? null);
@@ -119,6 +123,7 @@ try {
             header('Cache-Control: no-store');
             httpRedirect('/owner/evidence-hub#project-' . $projectId, 303);
         }
+        $view = projectEvidenceViewAfterTextError($fieldErrors);
         http_response_code(422);
     }
     $sources = listAuthorizedProjectEvidenceSources($database, $context, $projectId);
@@ -133,7 +138,6 @@ if ($databaseError !== '' || !is_array($project)) {
     $locale = ownerLocale();
     ?><div class="evidence-hub-editor" dir="<?php echo evidenceHubDirection($locale); ?>"><h1><?php echo ownerEscapeHtml(evidenceHubText('Edit project evidence', $locale)); ?></h1><p role="alert"><?php echo ownerEscapeHtml(evidenceHubText($databaseError, $locale)); ?></p></div><?php
 } else {
-    renderOwnerProjectEvidenceForm($project, $values, $fieldErrors, null, ownerLocale());
-    renderOwnerProjectEvidenceSources($project['id'], $sources, $sourceValues, $sourceErrors, ownerLocale());
+    renderOwnerProjectEvidencePage($project, $values, $fieldErrors, $sources, $sourceValues, $sourceErrors, $view, ownerLocale());
 }
 ownerLayoutEnd();
