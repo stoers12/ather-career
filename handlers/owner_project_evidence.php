@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/includes/owner_flow.php';
 require_once dirname(__DIR__) . '/includes/owner_layout.php';
 require_once dirname(__DIR__) . '/includes/transaction.php';
 require_once dirname(__DIR__) . '/includes/project_evidence_repository.php';
+require_once dirname(__DIR__) . '/includes/project_evidence_source_repository.php';
 require_once dirname(__DIR__) . '/includes/evidence_hub_undo.php';
 require_once dirname(__DIR__) . '/includes/evidence_hub_owner_page_model.php';
 require_once dirname(__DIR__) . '/includes/evidence_hub_owner_page_presentation.php';
@@ -38,6 +39,9 @@ $fieldErrors = [];
 $databaseError = '';
 $project = null;
 $values = [];
+$sources = [];
+$sourceValues = ['title' => '', 'url' => '', 'note' => ''];
+$sourceErrors = [];
 try {
     $database = getDatabaseConnection();
     $context = requireOwnerPortfolioContext($database);
@@ -46,7 +50,47 @@ try {
         httpAbortHtml(404, 'Project not found.');
     }
     $values = $project['values'];
-    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && is_array($_POST) && array_key_exists('action', $_POST)) {
+        // Evidence sources (B-06): their own forms, distinguished by `action`.
+        requireValidCsrfToken($_POST['csrf_token'] ?? null);
+        $action = $_POST['action'];
+        if ($action === 'add_source') {
+            if (array_diff(array_keys($_POST), ['csrf_token', 'action', 'title', 'url', 'note']) !== []) {
+                httpAbortHtml(422, 'Invalid evidence source submission.');
+            }
+            $validation = validateProjectEvidenceSourceSubmission($_POST);
+            $sourceValues = $validation['values'];
+            $sourceErrors = $validation['errors'];
+            if ($validation['source'] !== null) {
+                try {
+                    $added = runDatabaseTransaction($database, static fn (): ?int => addAuthorizedProjectEvidenceSource($database, $context, $projectId, $validation['source']));
+                } catch (ProjectEvidenceSourceLimitException) {
+                    $added = false;
+                    $sourceErrors['source_limit'] = 'This project already has 10 sources. Remove one before adding another.';
+                }
+                if ($added === null) {
+                    httpAbortHtml(404, 'Project not found.');
+                }
+                if (is_int($added)) {
+                    header('Cache-Control: no-store');
+                    httpRedirect('/owner/projects/' . $projectId . '/evidence#sources', 303);
+                }
+            }
+            http_response_code(422);
+        } elseif ($action === 'remove_source') {
+            $sourceId = authorizationPositiveInteger($_POST['source_id'] ?? null);
+            if (array_diff(array_keys($_POST), ['csrf_token', 'action', 'source_id']) !== [] || $sourceId === null) {
+                httpAbortHtml(422, 'Invalid evidence source submission.');
+            }
+            if (!removeAuthorizedProjectEvidenceSource($database, $context, $projectId, $sourceId)) {
+                httpAbortHtml(404, 'Source not found.');
+            }
+            header('Cache-Control: no-store');
+            httpRedirect('/owner/projects/' . $projectId . '/evidence#sources', 303);
+        } else {
+            httpAbortHtml(422, 'Invalid evidence source submission.');
+        }
+    } elseif (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         requireValidCsrfToken($_POST['csrf_token'] ?? null);
         $expected = ['csrf_token', 'problem', 'personal_role', 'measurable_outcome'];
         if (!is_array($_POST) || array_diff(array_keys($_POST), $expected) !== [] || array_diff($expected, array_keys($_POST)) !== []) {
@@ -77,6 +121,7 @@ try {
         }
         http_response_code(422);
     }
+    $sources = listAuthorizedProjectEvidenceSources($database, $context, $projectId);
 } catch (PDOException | DatabaseConfigurationException $exception) {
     reportApplicationError($exception, 'owner_project_evidence.php', 'project_evidence_request');
     http_response_code(503);
@@ -89,5 +134,6 @@ if ($databaseError !== '' || !is_array($project)) {
     ?><div class="evidence-hub-editor" dir="<?php echo evidenceHubDirection($locale); ?>"><h1><?php echo ownerEscapeHtml(evidenceHubText('Edit project evidence', $locale)); ?></h1><p role="alert"><?php echo ownerEscapeHtml(evidenceHubText($databaseError, $locale)); ?></p></div><?php
 } else {
     renderOwnerProjectEvidenceForm($project, $values, $fieldErrors, null, ownerLocale());
+    renderOwnerProjectEvidenceSources($project['id'], $sources, $sourceValues, $sourceErrors, ownerLocale());
 }
 ownerLayoutEnd();

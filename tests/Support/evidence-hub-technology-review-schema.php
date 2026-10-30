@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * SQLite equivalents of migrations 023 and 024 for in-memory Owner tests. A
+ * SQLite equivalents of migrations 023, 024 and 027 for in-memory Owner tests. A
  * partial unique index stands in for MySQL's generated pending-label column;
  * the MySQL definitions themselves are proven by the disposable MySQL gates.
  */
@@ -28,5 +28,14 @@ function phase2EvidenceHubTechnologyReviewSqliteSchema(): string
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             state_changed_at TEXT NULL
         );
-        CREATE UNIQUE INDEX uq_technology_proposals_pending ON technology_proposals (portfolio_id, label_digest) WHERE state = 'pending';";
+        CREATE UNIQUE INDEX uq_technology_proposals_pending ON technology_proposals (portfolio_id, label_digest) WHERE state = 'pending';
+        CREATE TABLE project_evidence_sources (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            portfolio_id INTEGER NOT NULL,
+            project_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            url TEXT NOT NULL,
+            note TEXT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );";
 }

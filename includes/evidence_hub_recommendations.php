@@ -121,6 +121,27 @@ function buildEvidenceHubRecommendationCandidates(array $scopedFacts, string $op
         );
     }
 
+    // Evidence sources (B-06): only present from contract v10. A Project whose
+    // three written parts are complete but that has no source gets one nudge.
+    $completeProjects = [];
+    foreach ($facts['projects'] as $project) {
+        $completeProjects[$project['target_identity']] = evidenceHubProjectEvidenceIsComplete($project['field_completeness_states']);
+    }
+    foreach ($facts['project_sources'] ?? [] as $sources) {
+        if (!$completeProjects[$sources['target_identity']] || $sources['source_count'] !== 0) {
+            continue;
+        }
+        $candidates[] = evidenceHubRecommendationCandidate(
+            $opaqueTargetHmacMaterial,
+            $facts['tenant_scope_ref'],
+            'add_evidence_source',
+            'project',
+            $sources['target_identity'],
+            ['evidence_complete' => true, 'source_count' => 0],
+            ['PROJECT_EVIDENCE_SOURCE_MISSING'],
+        );
+    }
+
     return $candidates;
 }
 
@@ -336,6 +357,7 @@ function evidenceHubRecommendationPriority(string $ruleId): int
         'review_unmapped_technology' => 3,
         'complete_portfolio_publication' => 4,
         'add_skill_evidence' => 5,
+        'add_evidence_source' => 6,
         default => throw new EvidenceHubRecommendationInvariantException('unsupported_rule_id'),
     };
 }

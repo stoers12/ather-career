@@ -20,7 +20,7 @@ $facts = buildEvidenceHubOwnerRecommendationFacts($context, [], $taxonomy, ['por
 $candidates = buildEvidenceHubRecommendationCandidates($facts['facts'], 'skill-visual-synthetic-hmac');
 $skill = array_values(array_filter($candidates, static fn (array $candidate): bool => $candidate['rule_id'] === 'add_skill_evidence'));
 $recommendations = filterEvidenceHubRecommendationCandidates($skill, [], 1767225600);
-$contract = mapEvidenceHubOwnerContract(buildEvidenceHubOwnerCoreFromEvaluatedProjects([], 'not_configured', [], 0), $recommendations);
+$contract = mapEvidenceHubOwnerContract(buildEvidenceHubOwnerCoreFromEvaluatedProjects([], 'not_configured', [], 0, null, []), $recommendations);
 $model = [
     'projects' => [],
     'technologies' => evidenceHubOwnerPageTechnologies([]),

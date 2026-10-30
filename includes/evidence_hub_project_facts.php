@@ -95,6 +95,32 @@ function loadAuthorizedEvidenceHubPublishedProjectCount(PDO $database, Authorize
     return (int) $statement->fetchColumn();
 }
 
+/** Evidence sources per Project (B-06), keyed by Project id; Projects without sources are absent. @return array<int, int> */
+function loadAuthorizedEvidenceHubSourceCounts(PDO $database, AuthorizedPortfolioContext $context): array
+{
+    $statement = $database->prepare(
+        'SELECT project_evidence_sources.project_id, COUNT(*) AS source_count
+         FROM project_evidence_sources
+         JOIN projects ON projects.id = project_evidence_sources.project_id
+         JOIN portfolios ON portfolios.id = projects.portfolio_id
+         WHERE project_evidence_sources.portfolio_id = :authorized_portfolio_id
+           AND projects.portfolio_id = :project_portfolio_id
+           AND portfolios.owner_user_id = :authorized_user_id
+         GROUP BY project_evidence_sources.project_id'
+    );
+    $statement->execute([
+        'authorized_portfolio_id' => $context->portfolioId,
+        'project_portfolio_id' => $context->portfolioId,
+        'authorized_user_id' => $context->userId,
+    ]);
+    $counts = [];
+    foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $counts[(int) $row['project_id']] = (int) $row['source_count'];
+    }
+
+    return $counts;
+}
+
 function loadAuthorizedEvidenceHubPublicationState(PDO $database, AuthorizedPortfolioContext $context): string
 {
     $statement = $database->prepare(

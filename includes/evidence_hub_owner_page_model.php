@@ -9,6 +9,7 @@ require_once __DIR__ . '/evidence_hub_owner_recommendations.php';
 require_once __DIR__ . '/evidence_hub_technology_review.php';
 require_once __DIR__ . '/evidence_hub_technology_review_repository.php';
 require_once __DIR__ . '/project_evidence_repository.php';
+require_once __DIR__ . '/project_evidence_source_repository.php';
 
 /**
  * Private presentation facts. Raw evidence text stays in this server-side
@@ -28,6 +29,7 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
     $opaqueTargetHmacMaterial ??= evidenceHubOpaqueTargetHmacKeyFromEnvironment();
     $taxonomy = loadEvidenceHubOwnerTaxonomy();
     $ownerMappings = loadAuthorizedTechnologyOwnerMappings($database, $context);
+    $sourcesByProject = listAuthorizedPortfolioEvidenceSources($database, $context);
     $driver = $database->getAttribute(PDO::ATTR_DRIVER_NAME);
     $epoch = static function (string $column) use ($driver): string {
         return match ($driver) {
@@ -104,6 +106,9 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
             'updated_epoch' => $updated,
             'fields' => $fields,
             'edit_url' => '/owner_projects.php?edit=' . $id,
+            // Evidence sources (B-06): Owner-private links, already validated when added.
+            'sources' => $sourcesByProject[$id] ?? [],
+            'sources_url' => '/owner/projects/' . $id . '/evidence#sources',
         ];
         $activityAt = $updated ?? (($record['updated_storage'] ?? null) === null ? $created : null);
         if ($count === 3 && $activityAt !== null) {
@@ -157,6 +162,7 @@ function buildAuthorizedEvidenceHubOwnerPageModel(
                 $recommendation['rule_id'] === 'add_skill_evidence' => null,
                 $associated === null => null,
                 $recommendation['rule_id'] === 'complete_project_evidence' => '/owner/projects/' . $associated['id'] . '/evidence',
+                $recommendation['rule_id'] === 'add_evidence_source' => '/owner/projects/' . $associated['id'] . '/evidence#sources',
                 default => $associated['edit_url'],
             },
         ];

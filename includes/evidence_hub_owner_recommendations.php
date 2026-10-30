@@ -26,7 +26,8 @@ function buildAuthorizedEvidenceHubOwnerRecommendationState(
     $taxonomy = loadEvidenceHubOwnerTaxonomy();
     $ownerMappings = loadAuthorizedTechnologyOwnerMappings($database, $context);
     $skillNames = array_column(listAuthorizedSkills($database, $context), 'skill_name');
-    $factsAndAssociations = buildEvidenceHubOwnerRecommendationFacts($context, $projects, $taxonomy, loadAuthorizedEvidenceHubRecommendationPublicationFacts($database, $context), $ownerMappings, $skillNames);
+    $sourceCounts = evidenceHubContractSupportsEvidenceSources(EVIDENCE_HUB_OWNER_CONTRACT_VERSION) ? loadAuthorizedEvidenceHubSourceCounts($database, $context) : null;
+    $factsAndAssociations = buildEvidenceHubOwnerRecommendationFacts($context, $projects, $taxonomy, loadAuthorizedEvidenceHubRecommendationPublicationFacts($database, $context), $ownerMappings, $skillNames, $sourceCounts);
     $candidates = buildEvidenceHubRecommendationCandidates($factsAndAssociations['facts'], $opaqueTargetHmacMaterial);
     $resourceAssociations = evidenceHubOwnerRecommendationResourceAssociations(
         $candidates,
@@ -41,7 +42,7 @@ function buildAuthorizedEvidenceHubOwnerRecommendationState(
     );
 
     return [
-        'contract' => mapEvidenceHubOwnerContract(buildEvidenceHubOwnerCoreFromEvaluatedProjects($projects, $publicationState, $ownerMappings, loadAuthorizedEvidenceHubPublishedProjectCount($database, $context), EVIDENCE_HUB_OWNER_CONTRACT_VERSION), $visible),
+        'contract' => mapEvidenceHubOwnerContract(buildEvidenceHubOwnerCoreFromEvaluatedProjects($projects, $publicationState, $ownerMappings, loadAuthorizedEvidenceHubPublishedProjectCount($database, $context), EVIDENCE_HUB_OWNER_CONTRACT_VERSION, $sourceCounts), $visible),
         'current_candidates' => $candidates,
         'resource_associations' => $resourceAssociations,
     ];
@@ -100,6 +101,7 @@ function resolveAuthorizedEvidenceHubOwnerRecommendation(array $state, string $r
  * @param array{portfolio_published: bool, publication_prerequisites_met: bool} $publicationFacts
  * @param array<string, string> $ownerMappings an Owner-mapped label is no longer a review candidate
  * @param list<string> $skillNames Owner skill labels, resolved locally and never emitted
+ * @param ?array<int, int> $sourceCounts evidence sources per Project id; null before contract v10
  * @return array{facts: array<string, mixed>, target_associations: array<string, array{target_type: string, project_refs: list<int>, canonical_id?: string}>}
  */
 function buildEvidenceHubOwnerRecommendationFacts(
@@ -109,6 +111,7 @@ function buildEvidenceHubOwnerRecommendationFacts(
     array $publicationFacts,
     array $ownerMappings = [],
     array $skillNames = [],
+    ?array $sourceCounts = null,
 ): array {
     if (!array_is_list($skillNames)) {
         throw new InvalidArgumentException('Evidence Hub skill names must be a list.');
@@ -204,6 +207,16 @@ function buildEvidenceHubOwnerRecommendationFacts(
     ];
     if ($skillFacts !== []) {
         $facts['skill_claims'] = array_values($skillFacts);
+    }
+    if ($sourceCounts !== null) {
+        // Evidence sources (B-06): one count per Project, sorted like the other target lists.
+        $projectSources = [];
+        foreach ($projects as $project) {
+            $identity = evidenceHubOwnerInternalTargetIdentity('project', $context->portfolioId . ':' . $project['project_ref']);
+            $projectSources[$identity] = ['target_identity' => $identity, 'source_count' => $sourceCounts[$project['project_ref']] ?? 0];
+        }
+        ksort($projectSources, SORT_STRING);
+        $facts['project_sources'] = array_values($projectSources);
     }
 
     return ['facts' => $facts, 'target_associations' => $targetAssociations];
