@@ -84,6 +84,14 @@ final class OwnerProfilePresentationTest extends TestCase
         self::assertSame(1, $photo->query('//details[@class="owner-profile-photo" and @open]')->length);
     }
 
+    public function testFailedSaveRevealsRetainedAdditionalDetails(): void
+    {
+        $failed = $this->render('en', true, '', 'linkedin_url');
+        self::assertSame(1, $failed->query('//details[@class="owner-profile-extra" and @open]')->length, 'A 409/422 re-render must show the retained additional details');
+        $fresh = $this->render('en');
+        self::assertSame(1, $fresh->query('//details[@class="owner-profile-extra" and not(@open)]')->length, 'A normal load keeps the additional details collapsed');
+    }
+
     public function testServerSuccessMessageIsTheOnlySavedIndicator(): void
     {
         $x = $this->render('en', false, 'Personal information saved successfully.');

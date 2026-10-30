@@ -52,7 +52,13 @@ function renderOwnerProfilePage(array $profile, ?int $profileId, string $profile
             </div>
         <?php endforeach; ?>
         </div>
-        <details class="owner-profile-extra"<?php echo array_intersect(array_keys($fieldErrors), ['hero_headline', 'phone_primary', 'phone_secondary', 'public_phone_visible', ...FINAL_PROFILE_FIELDS]) !== [] ? ' open' : ''; ?>><summary><?php echo $copy('additional'); ?></summary><div class="form-grid">
+        <?php
+        // Open when it holds an error, or when a failed save (409/422) re-renders retained, unsaved input,
+        // so the Owner always sees what they typed before deciding how to recover.
+        $extraOpen = (isset($profile['_submitted_profile_version']) && $errors !== [])
+            || array_intersect(array_keys($fieldErrors), ['hero_headline', 'phone_primary', 'phone_secondary', 'public_phone_visible', ...FINAL_PROFILE_FIELDS]) !== [];
+        ?>
+        <details class="owner-profile-extra"<?php echo $extraOpen ? ' open' : ''; ?>><summary><?php echo $copy('additional'); ?></summary><div class="form-grid">
         <label class="form-field form-field-full" for="hero_headline"><span><?php echo ownerEscapeHtml(ownerText('Hero headline')); ?> <em><?php echo ownerEscapeHtml(ownerText('(optional)')); ?></em></span><input type="text" id="hero_headline" dir="auto" name="hero_headline" value="<?php echo ownerEscapeHtml((string) $profile['hero_headline']); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS['hero_headline']; ?>"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, 'hero_headline', 'hero-headline-help'); ?>><small id="hero-headline-help" class="form-hint"><?php echo ownerEscapeHtml(ownerText('Describe what you build, solve, or contribute in one concise professional statement.')); ?></small><?php ownerRenderFieldError($fieldErrors, 'hero_headline'); ?></label>
         <?php foreach (['phone_primary' => 'Primary Phone', 'phone_secondary' => 'Secondary Phone'] as $field => $label): ?>
             <label class="form-field" for="<?php echo $field; ?>"><span><?php echo ownerEscapeHtml(ownerText($label)); ?></span><input type="<?php echo $field === 'email' ? 'email' : 'text'; ?>" dir="auto" id="<?php echo $field; ?>" name="<?php echo $field; ?>" value="<?php echo ownerEscapeHtml((string) $profile[$field]); ?>" maxlength="<?php echo PERSONAL_INFO_FIELD_MAX_LENGTHS[$field]; ?>"<?php echo ownerFieldAccessibilityAttributes($fieldErrors, $field, $field . '-help'); ?>><small class="form-hint" id="<?php echo $field; ?>-help"><?php echo $copy('hint_' . $field); ?></small><?php ownerRenderFieldError($fieldErrors, $field); ?></label>

@@ -109,3 +109,28 @@ PROFILE_ROUTE_REHEARSALS_PASSED
 ```
 
 Re-run results: PHPUnit `OK (125 tests, 423 assertions)`; `Phase 2 test foundation passed.`; PHPStan only the 22 known unmatched ignore patterns, no new errors; full required gates `REQUIRED_GATES_PASSED`.
+
+## Second CI follow-up: final-profile browser job
+
+CI `Private final-profile controls browser checks` failed in both runs with `FAIL final-profile browser exact values [select-country]: TimeoutError`. A local reproduction of that job reproduced it exactly. It used a disposable MySQL 8.4, `tests/Integration/run-final-profile-route-tests.php` in browser-fixture mode, and `tests/Browser/run-final-profile-browser-tests.mjs` with Playwright 1.58.0 sharing the fixture's loopback, as CI does.
+
+**Root cause:** the country, language, status and specialization selects, both phones and the phone-visibility checkbox now sit in the collapsed **Additional details** disclosure. The browser test drove them as always-visible controls, so Playwright waited for visibility. The disclosure collapses again after every save or reload.
+
+**Changes:**
+
+| Change | Why |
+| --- | --- |
+| `run-final-profile-browser-tests.mjs`: a `revealed(page, id)` helper | It opens any closed ancestor `<details>` through its summary, as a user does, before every interaction (fill, select, check, focus, bounds) with a control inside it. Reads (`inputValue`, `isChecked`, attributes) are unchanged. No check was removed or weakened. |
+| The same test: a new conflict assertion | After the two-tab 409, the retained country and specialization must be visible. |
+| `owner_profile_presentation.php`: Additional details opens server-side after a failed profile save (409/422) | A 409/422 re-render carries retained, unsaved input in that disclosure. A collapsed disclosure hid the owner's own unsaved changes. Errors inside it already opened it; a failed save now does too. A normal load stays collapsed. |
+| `OwnerProfilePresentationTest`: `testFailedSaveRevealsRetainedAdditionalDetails` | Locks both states. |
+
+**Local evidence:**
+- The reproduced CI browser job passes all six stages, including the new conflict assertion.
+- Both profile route rehearsals pass with empty before/after data diffs.
+- PHPUnit `OK (126 tests, 425 assertions)`.
+- `Phase 2 test foundation passed.`
+- PHPStan reports only the 22 known entries.
+- Full required gates: `REQUIRED_GATES_PASSED`.
+
+`run-onboarding-completion-browser-tests.mjs` only reads the visible `full_name` on this page, so it is unaffected.
