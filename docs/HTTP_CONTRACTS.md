@@ -23,7 +23,7 @@ shape; missing, inactive, or unpublished Portfolios return JSON `404`.
 
 Public Project JSON is an explicit allow-list, not a database-row
 serialization. It contains only presentation fields, an optional valid HTTP(S)
-`github_url` when one is stored, and an optional `image_url`, emitted only for an already-readable presentation asset and using
+`github_url` and `live_url` when each is stored, and an optional `image_url`, emitted only for an already-readable presentation asset and using
 the scoped public Portfolio-media route. Raw managed-media paths, storage
 keys, Owner identifiers, publication state, and operational metadata are never
 public JSON fields. There are no active JSON

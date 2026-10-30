@@ -12,7 +12,7 @@ final class PublicProjectJsonContractTest
         $database->exec(
             "CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT NOT NULL);
              CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT, is_published INTEGER NOT NULL);
-             CREATE TABLE projects (is_published INTEGER NOT NULL DEFAULT 0, id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT, category TEXT, description TEXT, github_url TEXT, image_path TEXT, technologies TEXT, created_at TEXT NOT NULL)"
+             CREATE TABLE projects (is_published INTEGER NOT NULL DEFAULT 0, id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT, category TEXT, description TEXT, github_url TEXT, live_url TEXT, image_path TEXT, technologies TEXT, created_at TEXT NOT NULL)"
         );
 
         $storageRoot = $environment->storageRoot . DIRECTORY_SEPARATOR . 'json-public-media';
@@ -29,10 +29,10 @@ final class PublicProjectJsonContractTest
         $database->exec(
             "INSERT INTO users (id, account_status) VALUES (1, 'active'), (2, 'active');
              INSERT INTO portfolios (id, owner_user_id, public_slug, is_published) VALUES (10, 1, 'public-owner', 1), (20, 2, 'draft-owner', 0);
-             INSERT INTO projects (id, portfolio_id, title, category, description, github_url, image_path, technologies, created_at) VALUES
-                (100, 10, 'Published image', 'Web', 'Published description', 'https://example.test/project', 'portfolios/10/projects/managed-private.png', '[\"PHP\", \"UTF-8 ✓\"]', '2026-01-02'),
-                (101, 10, 'Published no image', 'Data', 'No image description', NULL, NULL, '[]', '2026-01-01'),
-                (200, 20, 'Draft image', 'Private', 'Draft description', '', 'portfolios/20/projects/draft-private.webp', '[]', '2026-01-03')"
+             INSERT INTO projects (id, portfolio_id, title, category, description, github_url, live_url, image_path, technologies, created_at) VALUES
+                (100, 10, 'Published image', 'Web', 'Published description', 'https://example.test/project', 'https://demo.example.test/live', 'portfolios/10/projects/managed-private.png', '[\"PHP\", \"UTF-8 ✓\"]', '2026-01-02'),
+                (101, 10, 'Published no image', 'Data', 'No image description', NULL, 'javascript:alert(1)', NULL, '[]', '2026-01-01'),
+                (200, 20, 'Draft image', 'Private', 'Draft description', '', 'https://draft.example.test/', 'portfolios/20/projects/draft-private.webp', '[]', '2026-01-03')"
         );
 
         $database->exec('UPDATE projects SET is_published=1 WHERE portfolio_id=10');
@@ -44,7 +44,7 @@ final class PublicProjectJsonContractTest
 
             $withImage = $projects[0];
             phase2AssertSame(
-            ['title', 'category', 'description', 'github_url', 'technologies', 'image_url'],
+            ['title', 'category', 'description', 'github_url', 'live_url', 'technologies', 'image_url'],
             array_keys($withImage),
             'Public Project JSON field allow-list changed or leaked a field.'
         );
@@ -59,6 +59,9 @@ final class PublicProjectJsonContractTest
             phase2AssertSame(['title', 'category', 'description', 'technologies'], array_keys($withoutImage), 'A Project without GitHub or image exposed an optional field.');
             phase2AssertSame('https://example.test/project', $withImage['github_url'], 'Existing GitHub URL changed in public JSON.');
             phase2Assert(!array_key_exists('github_url', $withoutImage), 'Absent GitHub URL must be omitted from public JSON.');
+            phase2AssertSame('https://demo.example.test/live', $withImage['live_url'], 'A safe live project URL did not reach public JSON.');
+            phase2Assert(!array_key_exists('live_url', $withoutImage), 'An unsafe stored live URL reached public JSON.');
+            phase2Assert(!str_contains(json_encode($projects, JSON_THROW_ON_ERROR), 'draft.example.test'), 'An unpublished Portfolio live URL reached public JSON.');
             phase2Assert(!array_key_exists('image_url', $withoutImage), 'An image-less Project exposed an image URL.');
             phase2Assert(resolvePublicReadContext($database, 'draft-owner') === null, 'Unpublished Portfolio Projects resolved through the public JSON context.');
             phase2AssertSame(null, normalizePublicSlug('invalid_slug'), 'A non-canonical route slug entered the JSON application contract.');

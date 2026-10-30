@@ -50,7 +50,7 @@ function ownerFlowSnapshot(PDO $database, int $portfolioId): array
     foreach ([
         'personal_info' => 'SELECT id, full_name, profile_image_path FROM personal_info WHERE portfolio_id = :portfolio_id ORDER BY id',
         'skills' => 'SELECT id, skill_name FROM skills WHERE portfolio_id = :portfolio_id ORDER BY id',
-        'projects' => 'SELECT id, title, category, description, github_url, image_path FROM projects WHERE portfolio_id = :portfolio_id ORDER BY id',
+        'projects' => 'SELECT id, title, category, description, github_url, live_url, image_path FROM projects WHERE portfolio_id = :portfolio_id ORDER BY id',
         'messages' => 'SELECT id, name, email, message, read_at FROM messages WHERE recipient_portfolio_id = :portfolio_id ORDER BY id',
     ] as $resource => $query) {
         $statement = $database->prepare($query);
@@ -268,7 +268,7 @@ try {
 
     $foreignProject = handleAuthorizedProjectAction($database, $contextA, [
         'action' => 'update', 'id' => (string) $projectB, 'portfolio_id' => (string) $portfolioB,
-        'title' => 'A Overwrote B', 'category' => 'Owner Test', 'description' => 'Foreign update.', 'github_url' => 'https://example.test/foreign',
+        'title' => 'A Overwrote B', 'category' => 'Owner Test', 'description' => 'Foreign update.', 'github_url' => 'https://example.test/foreign', 'live_url' => 'https://example.test/foreign-live',
     ], []);
     phase2Assert($foreignProject['errors'] !== [], 'A foreign project update was accepted.');
     $foreignProjectDelete = handleAuthorizedProjectAction($database, $contextA, ['action' => 'delete', 'id' => (string) $projectB], []);
@@ -292,6 +292,33 @@ try {
     phase2AssertSame('owner_projects.php', $createProject['redirect'], 'Project creation did not PRG.');
     $createdProjects = array_values(array_filter(listAuthorizedProjects($database, $contextA), static fn (array $project): bool => $project['title'] === 'A Created Project'));
     phase2AssertSame(['SQL'], $createdProjects[0]['technologies'] ?? null, 'Owner Project creation did not persist technologies.');
+
+    // Live project URL (B-04): saved; kept by a form without the field; unsafe rejected; cleared by an empty value.
+    $liveUrlOf = static function () use ($database, $contextA, $projectA): ?string {
+        $project = findAuthorizedProject($database, $contextA, $projectA);
+        phase2Assert(is_array($project) && array_key_exists('live_url', $project), 'Owner project read omitted live_url.');
+        return $project['live_url'];
+    };
+    $liveFields = ['action' => 'update', 'id' => (string) $projectA, 'title' => 'A Project Updated', 'category' => 'Owner Test', 'description' => 'A update only.', 'github_url' => 'https://example.test/a-project-updated', 'technologies' => ''];
+    phase2AssertSame('owner_projects.php', handleAuthorizedProjectAction($database, $contextA, [...$liveFields, 'live_url' => ' https://demo.example.test/a '], [])['redirect'], 'A live project URL was not saved.');
+    phase2AssertSame('https://demo.example.test/a', $liveUrlOf(), 'The live project URL was not trimmed and stored.');
+    phase2AssertSame('owner_projects.php', handleAuthorizedProjectAction($database, $contextA, [...$liveFields, 'description' => 'Edited by a form without the live field.'], [])['redirect'], 'An edit without the live field failed.');
+    phase2AssertSame('https://demo.example.test/a', $liveUrlOf(), 'A form without the live field erased the saved link.');
+    foreach (['javascript:alert(1)', 'ftp://example.test/file', 'https://' . str_repeat('a', PROJECT_LIVE_URL_MAX_LENGTH) . '.test'] as $unsafeLiveUrl) {
+        $rejected = handleAuthorizedProjectAction($database, $contextA, [...$liveFields, 'live_url' => $unsafeLiveUrl], []);
+        phase2Assert(isset($rejected['field_errors']['live_url']) && $rejected['status'] === 422 && $rejected['redirect'] === null, 'An unsafe or oversized live URL was accepted.');
+        phase2AssertSame('https://demo.example.test/a', $liveUrlOf(), 'A rejected live URL changed the stored link.');
+    }
+    phase2AssertSame('owner_projects.php', handleAuthorizedProjectAction($database, $contextA, [...$liveFields, 'live_url' => ''], [])['redirect'], 'Clearing the live URL failed.');
+    phase2AssertSame(null, $liveUrlOf(), 'An empty live field did not clear the link.');
+    $createWithLive = handleAuthorizedProjectAction($database, $contextA, [
+        'action' => 'add', 'title' => 'A Live Project', 'category' => 'Owner Test', 'description' => 'Created with a live link.', 'github_url' => '', 'live_url' => 'https://demo.example.test/new', 'technologies' => '',
+    ], []);
+    phase2AssertSame('owner_projects.php', $createWithLive['redirect'], 'Project creation with a live URL did not PRG.');
+    $liveProjects = array_values(array_filter(listAuthorizedProjects($database, $contextA), static fn (array $project): bool => $project['title'] === 'A Live Project'));
+    phase2AssertSame('https://demo.example.test/new', $liveProjects[0]['live_url'] ?? null, 'Project creation did not persist the live URL.');
+    phase2Assert(deleteAuthorizedProject($database, $contextA, (int) $liveProjects[0]['id']), 'The live URL fixture project could not be removed.');
+    $passed[] = 'T-OWNER-PROJECT-LIVE-URL';
 
     phase2AssertSame(null, findAuthorizedMessage($database, $contextA, $messageBId), 'A read B message through an owner route candidate.');
     phase2AssertSame(false, setAuthorizedMessageRead($database, $contextA, $messageBId, true), 'A marked B message read.');
