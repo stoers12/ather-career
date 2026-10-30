@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/owner_projects_copy.php';
+
 /** @param array<string, mixed> $project */
 function ownerProjectsCover(array $project): void
 {
@@ -21,12 +23,12 @@ function ownerProjectsTags(array $technologies): void
 /** @param array<string, mixed> $project @param array<string, string> $errors */
 function ownerProjectsField(string $name, string $label, string $type, array $project, array $errors, bool $required, ?int $maximum, string $escapedHint): void
 {
-    $optional = ownerLocale() === 'ar' ? 'اختياري' : 'Optional';
-    $requiredLabel = ownerLocale() === 'ar' ? 'مطلوب' : 'Required';
+    $optional = ownerProjectsCopy('optional', ownerLocale());
+    $requiredLabel = ownerProjectsCopy('required', ownerLocale());
     ?>
     <div class="form-field">
         <label for="<?php echo ownerEscapeHtml($name); ?>"><?php echo ownerEscapeHtml($label); ?> <em><?php echo $required ? ownerEscapeHtml($requiredLabel) : ownerEscapeHtml($optional); ?></em><?php if ($required): ?><span class="visually-hidden"><?php ownerRenderRequiredIndicator(); ?></span><?php endif; ?></label>
-        <?php if ($type === 'textarea'): ?><textarea id="<?php echo ownerEscapeHtml($name); ?>" name="<?php echo ownerEscapeHtml($name); ?>" dir="auto"<?php echo $required ? ' required' : ''; ?><?php echo ownerFieldAccessibilityAttributes($errors, $name, $name . '-help'); ?>><?php echo ownerEscapeHtml((string) ($project[$name] ?? '')); ?></textarea>
+        <?php if ($type === 'textarea'): ?><textarea id="<?php echo ownerEscapeHtml($name); ?>" name="<?php echo ownerEscapeHtml($name); ?>" rows="6" dir="auto"<?php echo $required ? ' required' : ''; ?><?php echo ownerFieldAccessibilityAttributes($errors, $name, $name . '-help'); ?>><?php echo ownerEscapeHtml((string) ($project[$name] ?? '')); ?></textarea>
         <?php else: ?><input type="<?php echo ownerEscapeHtml($type); ?>" id="<?php echo ownerEscapeHtml($name); ?>" name="<?php echo ownerEscapeHtml($name); ?>" value="<?php echo ownerEscapeHtml((string) ($project[$name] ?? '')); ?>" dir="<?php echo $type === 'url' ? 'ltr' : 'auto'; ?>"<?php echo $maximum !== null ? ' maxlength="' . $maximum . '"' : ''; ?><?php echo $required ? ' required' : ''; ?><?php echo ownerFieldAccessibilityAttributes($errors, $name, $name . '-help'); ?>><?php endif; ?>
         <small id="<?php echo ownerEscapeHtml($name); ?>-help" class="form-hint"><?php echo $escapedHint; ?></small>
         <?php ownerRenderFieldError($errors, $name); ?>

@@ -49,6 +49,21 @@ module.exports = async function (browser, base, out, contrast) {
         assert.equal(await page.locator('[data-project-step]:visible').count(), 1);
         await page.locator('[data-project-step-link="1"]').focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Enter');
         assert.equal(await page.locator('#project-step-2').isVisible(), true);
+        assert.equal(await page.locator('.owner-project-file-trigger').textContent(), locale === 'ar' ? 'اختيار صورة' : 'Choose image');
+        const imageInput = page.locator('#project_image');
+        await imageInput.focus();
+        assert.equal(await imageInput.evaluate(n => n === document.activeElement), true, 'the native picker remains keyboard focusable');
+        assert.equal(await page.locator('.owner-project-file-trigger').evaluate(n => getComputedStyle(n).outlineStyle), 'solid', 'native input focus is visible on the localized trigger');
+        const chooser = page.waitForEvent('filechooser');
+        await page.keyboard.press('Enter');
+        await (await chooser).setFiles({ name: 'رسم-$&-<x>.png', mimeType: 'image/png', buffer: Buffer.from('synthetic file selection only') });
+        assert.equal(await page.locator('#project-image-status').textContent(), locale === 'ar' ? 'تم اختيار: رسم-$&-<x>.png. يستمر التحقق عند الحفظ.' : 'Selected: رسم-$&-<x>.png. Validation continues when you save.');
+        assert.equal(await page.locator('#project-image-status x').count(), 0, 'filenames are text rather than markup');
+        await imageInput.setInputFiles([]);
+        assert.equal(await page.locator('#project-image-status').textContent(), '');
+        const technologiesFits = await page.locator('#technologies').evaluate(n => n.rows >= 6 && n.clientHeight >= 6 * parseFloat(getComputedStyle(n).lineHeight) && n.scrollHeight <= n.clientHeight);
+        assert.equal(technologiesFits, true, 'several technologies fit without clipping the third line');
+
         for (const number of [1, 2, 3]) {
             await step(page, number); await contrast(page);
             if (locale === 'ar' && theme === 'light') await capture(page, `project-editor-ar-light-step-${number}-1440`);
@@ -92,11 +107,20 @@ module.exports = async function (browser, base, out, contrast) {
         assert.equal(await p.locator('[data-project-step]:visible').count(), 3);
         assert.equal(await p.locator('[data-project-preview]').isVisible(), false);
         assert.equal(await p.locator('[data-project-next]').isVisible(), false);
+        assert.equal(await p.locator('.owner-project-file-trigger').textContent(), locale === 'ar' ? 'اختيار صورة' : 'Choose image');
+        await p.locator('#project_image').focus();
+        assert.equal(await p.locator('#project_image').evaluate(n => n === document.activeElement), true);
+        const nativeChooser = p.waitForEvent('filechooser');
+        await p.keyboard.press('Enter');
+        await (await nativeChooser).setFiles({ name: 'native-no-js.png', mimeType: 'image/png', buffer: Buffer.from('native file payload') });
+        assert.equal(await p.locator('.owner-project-form').evaluate(f => new FormData(f).get('project_image').name), 'native-no-js.png', 'native selection remains in the complete multipart payload without JavaScript');
+        assert.equal(await p.locator('#technologies').evaluate(n => n.rows >= 6 && n.scrollHeight <= n.clientHeight), true, 'no-JS technologies retain a sensible height');
+
         assert.equal(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
         if (locale === 'ar') await capture(p, `project-editor-no-js-ar-${theme}-390`);
         await native.close();
     }
-    console.log('OWNER_PROJECTS_VISUAL_PASSED: real filter/search counts; +N search; grid/list; keyboard menu; native no-JS; steps; escaped preview; 422 focus; AA contrast; ar/en themes and large text at 390 768 1280 1920 2560.');
+    console.log('OWNER_PROJECTS_VISUAL_PASSED: real filter/search counts; +N search; grid/list; keyboard menu; native no-JS; steps; escaped preview; localized keyboard/no-JS picker and filename status; six-row technologies; 422 focus; AA contrast; ar/en themes and large text at 390 768 1280 1920 2560.');
     const session = process.env.EVIDENCE_HUB_ACTION_SESSION_COOKIE;
     if (process.env.EVIDENCE_HUB_ACTION_TEST_URL) assert.ok(session);
     if (!session) return;

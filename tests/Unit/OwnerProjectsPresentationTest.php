@@ -43,11 +43,17 @@ final class OwnerProjectsPresentationTest extends TestCase
             }
             foreach (['title', 'category', 'description'] as $field) self::assertSame(1, $x->query('//*[@id="' . $field . '" and @required]')->length);
             self::assertSame(0, $x->query('//*[@name="github_url" or @name="live_url" or @name="technologies"][@required]')->length);
-            self::assertSame(1, $x->query('//input[@name="live_url" and @type="url" and @maxlength="500" and @aria-invalid="true" and contains(@aria-describedby,"owner-field-error-live_url")]')->length);
+            self::assertSame(1, $x->query('//input[@name="live_url" and @type="url" and @maxlength="' . PROJECT_LIVE_URL_MAX_LENGTH . '" and @aria-invalid="true" and contains(@aria-describedby,"owner-field-error-live_url")]')->length);
             self::assertSame('https://example.test/?a="b"', $x->evaluate('string(//input[@name="live_url"]/@value)'));
             self::assertSame('<img src=x onerror=alert(1)> "عنوان"', $x->evaluate('string(//input[@name="title"]/@value)'));
             self::assertSame(0, $x->query('//script | //*[@onerror] | //*[@style]')->length);
             self::assertSame(1, $x->query('//a[@href="owner_publication.php"]')->length);
+            self::assertSame(1, $x->query('//textarea[@name="technologies" and @rows="6"]')->length);
+            self::assertSame($locale === 'ar' ? 'اختيار صورة' : 'Choose image', $x->evaluate('string(//label[@class="button-secondary owner-project-file-trigger"])'));
+            self::assertSame(1, $x->query('//input[@type="file" and @aria-labelledby="project-image-label" and not(@hidden) and not(@tabindex="-1")]')->length);
+            self::assertStringContainsString('{filename}', $x->evaluate('string(//input[@type="file"]/@data-project-image-selected)'));
+            self::assertStringContainsString('{maximum}', $x->evaluate('string(//input[@type="file"]/@data-project-image-too-large)'));
+
         }
     }
 

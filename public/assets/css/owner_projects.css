@@ -81,3 +81,10 @@
 .owner-project-edit { gap: 7px; }
 .owner-project-private-note { display: flex; align-items: center; gap: 7px; }
 @media (pointer:coarse) { .owner-projects :is(a,button,summary) { min-inline-size: 44px; min-block-size: 44px; } .owner-projects .checkbox-field { min-block-size: 44px; align-items: center; } }
+
+/* Preserve native file selection and keyboard focus without browser-language chrome. */
+.owner-project-file-picker { position: relative; display: inline-flex; max-inline-size: 100%; }
+.owner-project-form .owner-project-file-picker input[type="file"] { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; padding: 0; opacity: 0; cursor: pointer; }
+.owner-project-fields .owner-project-file-trigger { margin: 0; min-block-size: 48px; }
+.owner-project-file-picker:focus-within .owner-project-file-trigger { outline: 2px solid var(--admin-primary); outline-offset: 3px; }
+.owner-project-form textarea#technologies { min-block-size: 11em; }

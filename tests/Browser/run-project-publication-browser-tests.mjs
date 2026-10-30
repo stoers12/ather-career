@@ -38,9 +38,9 @@ try {
   await card.getByRole('link',{name:'Edit',exact:true}).click();
   await p.locator('#description').fill('Browser content edit preserves choice');
   await Promise.all([p.waitForNavigation(),p.getByRole('button',{name:'Save project',exact:true}).click()]);
+  await card.locator('.owner-project-publication > summary').click();
   check(await form.getByRole('button',{name:'Hide project',exact:true}).count()===1,'Content edit reset choice');
   console.log('PASS project-publication browser ordinary content edit preserves separate publication choice');
-  await card.locator('.owner-project-publication > summary').click();
   stage='responsive controls';
   for (const width of [1440,1024,768,390,320]) {
     await p.setViewportSize({width,height:1000});
