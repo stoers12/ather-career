@@ -665,6 +665,10 @@ function Invoke-ProductionSmokeRun([int]$Number, [string]$Head) {
         Assert-HttpStatus $projectMedia @(200) 'project media'
         Assert-Smoke ($projectMedia.Headers -match '(?im)^Content-Type:\s*image/(jpeg|png|webp)' -and $projectMedia.Bytes.Length -gt 32) 'Project media is not a real image response.'
         Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/p/$slug/media/project/999999") @(404) 'unknown project media'
+        $caseStudy = Invoke-SmokeHttp -Url "$baseUrl/p/$slug/projects/$($fixture.project_id)"
+        Assert-HttpStatus $caseStudy @(200) 'project case study page'
+        Assert-Smoke ($caseStudy.Body -match 'Smoke Media Project' -and $caseStudy.Body -notmatch '/var/lib/ather-career/storage|portfolios/[0-9]+/(profile|projects)') 'The case study page lost its project or exposed private storage.'
+        Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/p/$slug/projects/999999") @(404) 'unknown project case study'
         Assert-Smoke ($portfolio.Body -notmatch '/var/lib/ather-career/storage|portfolios/[0-9]+/(profile|projects)') 'Private media storage was exposed in public markup.'
 
         $projectsResponse = Invoke-SmokeHttp -Url "$baseUrl/p/$slug/projects.json"
@@ -692,7 +696,7 @@ function Invoke-ProductionSmokeRun([int]$Number, [string]$Head) {
 
         $unpublished = Invoke-SmokeFixture $web $project 'unpublish' $slug
         Assert-Smoke ([int]$unpublished.is_published -eq 0) 'The synthetic Portfolio did not unpublish.'
-        foreach ($path in @("/p/$slug", "/p/$slug/media/profile", "/p/$slug/media/project/$($fixture.project_id)", "/p/$slug/projects.json")) {
+        foreach ($path in @("/p/$slug", "/p/$slug/media/profile", "/p/$slug/media/project/$($fixture.project_id)", "/p/$slug/projects/$($fixture.project_id)", "/p/$slug/projects.json")) {
             Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl$path") @(404) "unpublished $path"
         }
         Assert-HttpStatus (Invoke-SmokeHttp -Url "$baseUrl/p/$slug/contact") @(405) 'unpublished Contact GET'

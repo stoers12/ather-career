@@ -119,4 +119,6 @@ access. Refresh/resend/onboarding controls are natively disabled. See the
 [implementation and prerequisite record](archive/SIGNUP-VERIFICATION-IMPLEMENTATION.md).
 
 
+Project case study page: `/p/<slug>/projects/<id>` (GET/HEAD) renders one Project. Unknown, malformed, draft, foreign, inactive-owner or unpublished-Portfolio requests all receive the same HTML `404`; a database failure receives `503`. The Owner preview equivalent is `/owner_preview.php?project=<id>`, which also shows the Owner's drafts and is `noindex`. See [the contract](contracts/public-project-page.md).
+
 Per-project publication: public HTML, project JSON and project media share current active-owner, published-Portfolio, matching-project and project.is_published=1 eligibility. A project flag alone grants no public access. Private project metadata/keys are not serialized; authorized Owner preview/media remain independent. The Projects page has a separate CSRF-protected publication POST; uncertain commit acknowledgement requires explicit reload/review, never automatic replay.

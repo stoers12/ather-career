@@ -51,6 +51,7 @@ function runtimeRouteCategory(string $route): string
         'index.php' => 'landing',
         'public_portfolio.php' => 'public_portfolio',
         'public_projects_json.php' => 'public_projects_json',
+        'public_project.php' => 'public_project',
         'public_contact.php' => 'public_contact',
         'public_media.php' => 'public_media',
         'owner_login.php' => 'owner_login',

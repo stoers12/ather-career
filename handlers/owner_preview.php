@@ -14,6 +14,28 @@ startOwnerSession();
 httpRegisterExceptionBoundary('owner_preview.php');
 httpRequireMethod(['GET', 'HEAD']);
 
+// ?project={id}: preview of one case study page, published or draft (B-05).
+if (array_key_exists('project', $_GET)) {
+    require_once dirname(__DIR__) . '/includes/owner_preview_project.php';
+    require_once dirname(__DIR__) . '/includes/public_project_presentation.php';
+    try {
+        $database = getDatabaseConnection();
+        $page = ownerPreviewProjectPageData($database, requireOwnerPortfolioContext($database), $_GET['project']);
+    } catch (PDOException | DatabaseConfigurationException $exception) {
+        reportApplicationError($exception, 'owner_preview.php', 'owner_preview_project_load');
+        httpSetHtmlResponse(503);
+        httpRenderStatusPage('Preview unavailable', 'Private preview is temporarily unavailable.');
+        exit;
+    }
+    if ($page === null) {
+        httpSetHtmlResponse(404);
+        httpRenderStatusPage('Project not found', 'Project not found.');
+        exit;
+    }
+    renderPublicProjectPage($page);
+    exit;
+}
+
 $profile = null;
 $skills = [];
 $projects = [];

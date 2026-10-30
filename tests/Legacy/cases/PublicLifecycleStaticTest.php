@@ -59,6 +59,7 @@ final class PublicLifecycleStaticTest
             ["/p/{$slug}/media/profile/", 'handlers/public_media.php', ['slug' => $slug, 'type' => 'profile']],
             ["/p/{$slug}/media/project/12", 'handlers/public_media.php', ['slug' => $slug, 'type' => 'project', 'id' => '12']],
             ["/p/{$slug}/projects.json", 'handlers/public_projects_json.php', ['slug' => $slug]],
+            ["/p/{$slug}/projects/12", 'handlers/public_project.php', ['slug' => $slug, 'id' => '12']],
             ["/p/{$slug}/contact", 'handlers/public_contact.php', ['slug' => $slug]],
             ["/p/{$slug}/", 'handlers/public_portfolio.php', ['slug' => $slug]],
             ["/p/{$slug}", 'handlers/public_portfolio.php', ['slug' => $slug]],
@@ -66,7 +67,7 @@ final class PublicLifecycleStaticTest
         ] as [$path, $handler, $query]) {
             RouteContract::assertRoute($path, $handler, $query, "P2J-05 route contract is missing {$path}.");
         }
-        foreach (['/p/ab', '/p/Ab-1', '/p/-ab', '/p/ab-', '/p/' . str_repeat('a', 65), "/p/{$slug}/media/project/0", "/p/{$slug}/projects.json/", "/p/{$slug}/unknown"] as $path) {
+        foreach (['/p/ab', '/p/Ab-1', '/p/-ab', '/p/ab-', '/p/' . str_repeat('a', 65), "/p/{$slug}/media/project/0", "/p/{$slug}/projects.json/", "/p/{$slug}/projects/0", "/p/{$slug}/unknown"] as $path) {
             RouteContract::assertNoRoute($path, "P2J-05 public routes accept a path the former rewrites refused: {$path}");
         }
     }

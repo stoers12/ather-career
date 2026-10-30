@@ -393,6 +393,7 @@ try {
         '/public_portfolio.php?slug=e2e-tenant-a',
         '/public_media.php?slug=e2e-tenant-a&type=profile',
         '/public_projects_json.php?slug=e2e-tenant-a',
+        '/public_project.php?slug=e2e-tenant-a&id=' . $aResources['project_ids'][0],
     ] as $path) {
         phase2AssertSame(404, publicationLifecycleE2eHttpRequest($server['port'], $path)['status'], 'Private Portfolio endpoint exposed data: ' . $path);
     }
@@ -502,6 +503,34 @@ try {
     }
     $passed[] = 'T-E2E-PUBLIC-MEDIA-ISOLATION';
 
+    // Case study page (B-05): one published Project of this published Portfolio, nothing else.
+    $caseStudyPath = '/public_project.php?slug=e2e-tenant-a&id=';
+    $caseStudy = publicationLifecycleE2eHttpRequest($server['port'], $caseStudyPath . $aResources['project_ids'][0]);
+    phase2AssertSame(200, $caseStudy['status'], 'Published A case study page was unavailable.');
+    phase2Assert(str_contains($caseStudy['body'], 'E2E A Media Project')
+        && str_contains($caseStudy['body'], 'href="https://example.test/a-media" rel="noopener noreferrer"')
+        && str_contains($caseStudy['body'], 'src="/p/e2e-tenant-a/media/project/' . $aResources['project_ids'][0] . '"')
+        && str_contains($caseStudy['body'], '<link rel="canonical" href="https://localhost:8443/p/e2e-tenant-a/projects/' . $aResources['project_ids'][0] . '">')
+        && !str_contains($caseStudy['body'], 'E2E B')
+        && !str_contains($caseStudy['body'], $storageRoot), 'Case study page content was not tenant-scoped or safe.');
+    foreach ([
+        $caseStudyPath . $bResources['project_ids'][0],
+        $caseStudyPath . '0',
+        $caseStudyPath . 'not-a-number',
+        $caseStudyPath . '999999',
+        '/public_project.php?slug=bad--slug&id=' . $aResources['project_ids'][0],
+        '/public_project.php?slug=e2e-tenant-b&id=' . $aResources['project_ids'][0],
+    ] as $path) {
+        phase2AssertSame(404, publicationLifecycleE2eHttpRequest($server['port'], $path)['status'], 'Case study isolation failed: ' . $path);
+    }
+    $setTextProjectPublished = static fn (int $published) => $database->prepare('UPDATE projects SET is_published=? WHERE id=?')->execute([$published, $aResources['project_ids'][1]]);
+    $setTextProjectPublished(0);
+    phase2AssertSame(404, publicationLifecycleE2eHttpRequest($server['port'], $caseStudyPath . $aResources['project_ids'][1])['status'], 'A draft Project case study was public.');
+    $setTextProjectPublished(1);
+    phase2AssertSame(200, publicationLifecycleE2eHttpRequest($server['port'], $caseStudyPath . $aResources['project_ids'][1])['status'], 'A republished Project case study was unavailable.');
+    phase2AssertSame(405, publicationLifecycleE2eHttpRequest($server['port'], $caseStudyPath . $aResources['project_ids'][0], 'POST', [])['status'], 'Case study page accepted POST.');
+    $passed[] = 'T-E2E-PUBLIC-CASE-STUDY';
+
     $jsonResponse = publicationLifecycleE2eHttpRequest($server['port'], '/public_projects_json.php?slug=e2e-tenant-a');
     $decodedProjects = json_decode($jsonResponse['body'], true);
     phase2AssertSame(200, $jsonResponse['status'], 'Published A projects JSON did not return 200.');
@@ -585,6 +614,7 @@ try {
         '/public_media.php?slug=e2e-tenant-a&type=profile',
         '/public_media.php?slug=e2e-tenant-a&type=project&id=' . $aResources['project_ids'][0],
         '/public_projects_json.php?slug=e2e-tenant-a',
+        '/public_project.php?slug=e2e-tenant-a&id=' . $aResources['project_ids'][0],
     ] as $path) {
         phase2AssertSame(404, publicationLifecycleE2eHttpRequest($server['port'], $path)['status'], 'Unpublished A endpoint remained available: ' . $path);
     }
@@ -623,6 +653,7 @@ try {
         '/public_portfolio.php?slug=e2e-inactive',
         '/public_media.php?slug=e2e-inactive&type=profile',
         '/public_projects_json.php?slug=e2e-inactive',
+        '/public_project.php?slug=e2e-inactive&id=' . $inactiveResources['project_ids'][0],
     ] as $path) {
         phase2AssertSame(404, publicationLifecycleE2eHttpRequest($server['port'], $path)['status'], 'Inactive owner endpoint was available: ' . $path);
     }
