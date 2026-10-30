@@ -17,6 +17,18 @@
             navigationToggle.focus();
         });
     }
+    document.querySelectorAll('.owner-account-menu, .dashboard-guide').forEach(function (disclosure) {
+        disclosure.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape' || !disclosure.open) return;
+            event.preventDefault();
+            event.stopPropagation();
+            disclosure.open = false;
+            disclosure.querySelector('summary').focus();
+        });
+        document.addEventListener('click', function (event) {
+            if (disclosure.open && !disclosure.contains(event.target)) disclosure.open = false;
+        });
+    });
     var modal;
     var lastActiveElement;
     function confirmAction(message, callback, title, actionLabel) {
