@@ -15,11 +15,12 @@ try {
   context=await browser.newContext({viewport:{width:1440,height:1000}});
   await context.addCookies([{name:fixture.cookie.Name,value:fixture.cookie.Value,url:base,httpOnly:true,sameSite:'Lax'}]);
   const p=await context.newPage(); await p.goto(base+'/owner_projects.php?lang=en');
-  const card=p.locator('.admin-project-grid article').filter({has:p.getByRole('heading',{name:'Project Alpha',exact:true})});
+  const card=p.locator('.owner-project-grid article').filter({has:p.getByRole('heading',{name:'Project Alpha',exact:true})});
   const form=card.locator('.project-publication-form');
   stage='explicit keyboard controls';
   check(await card.count()===1 && await form.count()===1,'Independent control missing');
   check((await card.locator('.project-publication-status').textContent()).includes('Published'),'Stored public status missing');
+  await card.locator('.owner-project-publication > summary').click();
   await form.getByRole('button',{name:'Hide project',exact:true}).focus();
   await Promise.all([p.waitForNavigation(),p.keyboard.press('Enter')]);
   check((await card.locator('.project-publication-status').textContent()).includes('Private project'),'Hide was not saved');
@@ -27,6 +28,7 @@ try {
   check((await p.request.get(media)).status()===404,'Hidden image remained public');
   check((await (await p.request.get(base+'/p/'+fixture.slug+'/projects.json')).json()).projects.length===0,'Hidden JSON remained public');
   await p.reload();
+  await card.locator('.owner-project-publication > summary').click();
   await Promise.all([p.waitForNavigation(),form.getByRole('button',{name:'Show in public Portfolio',exact:true}).click()]);
   check((await p.request.get(media)).status()===200,'Published existing image unavailable');
   check((await (await p.request.get(base+'/p/'+fixture.slug+'/projects.json')).json()).projects.length===1,'Mixed JSON projection wrong');
@@ -35,7 +37,8 @@ try {
   stage='content preservation';
   await card.getByRole('link',{name:'Edit',exact:true}).click();
   await p.locator('#description').fill('Browser content edit preserves choice');
-  await Promise.all([p.waitForNavigation(),p.getByRole('button',{name:'Update Project',exact:true}).click()]);
+  await Promise.all([p.waitForNavigation(),p.getByRole('button',{name:'Save project',exact:true}).click()]);
+  await card.locator('.owner-project-publication > summary').click();
   check(await form.getByRole('button',{name:'Hide project',exact:true}).count()===1,'Content edit reset choice');
   console.log('PASS project-publication browser ordinary content edit preserves separate publication choice');
   stage='responsive controls';

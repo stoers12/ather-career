@@ -234,10 +234,10 @@
             }
             if (Number.isFinite(projectImageMaxBytes) && file.size > projectImageMaxBytes) {
                 projectImageInput.value = '';
-                projectImageStatus.textContent = 'Choose a project image no larger than ' + Math.round(projectImageMaxBytes / (1024 * 1024)) + ' MB.';
+                projectImageStatus.textContent = (projectImageInput.dataset.projectImageTooLarge || 'Choose a project image no larger than {maximum} MB.').replace('{maximum}', String(Math.round(projectImageMaxBytes / (1024 * 1024))));
                 return;
             }
-            projectImageStatus.textContent = 'Selected: ' + file.name + '. Validation continues when you save.';
+            projectImageStatus.textContent = (projectImageInput.dataset.projectImageSelected || 'Selected: {filename}. Validation continues when you save.').replace('{filename}', function () { return file.name; });
         });
     }
 

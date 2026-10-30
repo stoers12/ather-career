@@ -38,12 +38,10 @@ function routingProjectInvitation(PDO $database, \GuzzleHttp\Client $browser, in
         $xpath = new DOMXPath($form);
         $forms = $xpath->query('//form[@action="owner_projects.php" and translate(@method,"post","POST")="POST"][input[@name="action" and @value="add"]]');
         routingAssert($forms->length === 1 && $xpath->query('.//input[@name="id"]', $forms->item(0))->length === 0, 'Rendered invitation did not open the add-mode form.');
-        routingAssert($xpath->query('.//input[@name="title" and @value=""]', $forms->item(0))->length === 1 && str_contains($formPage, 'Add New Project'), 'Add form inherited an existing project or lost its heading.');
+        routingAssert($xpath->query('.//input[@name="title" and @value=""]', $forms->item(0))->length === 1 && $xpath->query('//h1[normalize-space(.)="Give your work a place to be seen."]')->length === 1, 'Add form inherited an existing project or lost its heading.');
         routingAssert($xpath->query('.//input[@name="csrf_token" and string-length(@value)=64]', $forms->item(0))->length === 1, 'Authorized add form lost its CSRF control.');
         $projects = routingProjectRead($database, $browser, '/owner_projects.php');
-        foreach ([$formPage, $projects] as $page) {
-            routingAssert(str_contains($page, 'Add your first project') === !$hasProject && str_contains($page, 'No projects yet') === !$hasProject, 'Projects empty-state invitation does not match the owner project rows.');
-        }
+        routingAssert(str_contains($projects, 'Add your first project') === !$hasProject && str_contains($projects, 'No projects yet') === !$hasProject, 'Projects list empty-state invitation does not match the owner project rows.');
     };
     $check(false);
     echo "PASS routing ONBOARD-UI-003 completed zero-project owner follows rendered Dashboard Add Project to authorized add form; GET preserves all rows\n";
