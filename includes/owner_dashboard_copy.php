@@ -56,6 +56,9 @@ function ownerDashboardCopy(string $key, string $locale): string
         // Redesigned shell (ق-33), wording from the reference.
         'collapse_sidebar' => ['ar' => 'طي الشريط الجانبي', 'en' => 'Collapse sidebar'],
         'expand_sidebar' => ['ar' => 'توسيع الشريط الجانبي', 'en' => 'Expand sidebar'],
+        'nav_settings' => ['ar' => 'الإعدادات', 'en' => 'Settings'],
+        'nav_help' => ['ar' => 'المساعدة', 'en' => 'Help'],
+        'messages_unread' => ['ar' => 'الرسائل، %d رسائل غير مقروءة', 'en' => 'Messages, %d unread'],
         'nav_dashboard' => ['ar' => 'الرئيسية', 'en' => 'Overview'],
         'nav_profile' => ['ar' => 'الملف المهني', 'en' => 'Profile'],
         'nav_projects' => ['ar' => 'المشاريع', 'en' => 'Projects'],
@@ -75,7 +78,6 @@ function ownerDashboardCopy(string $key, string $locale): string
         'sign_out' => ['ar' => 'تسجيل الخروج', 'en' => 'Sign out'],
         'preview_portfolio' => ['ar' => 'معاينة البورتفوليو', 'en' => 'Preview portfolio'],
         'publish_share' => ['ar' => 'النشر والمشاركة', 'en' => 'Publishing & sharing'],
-        'language_arabic' => ['ar' => 'عربي', 'en' => 'عربي'],
         'crumb_settings' => ['ar' => 'الإعدادات', 'en' => 'Settings'],
         'crumb_dashboard' => ['ar' => 'نظرة عامة', 'en' => 'Overview'],
         'crumb_profile' => ['ar' => 'الملف الشخصي', 'en' => 'Profile'],
