@@ -41,12 +41,12 @@ async function main() {
             const errors = [];
             page.on('pageerror', e => errors.push(e.message));
             await page.goto(url(locale)); await ready(page);
-            assert.equal(await page.locator('.owner-nav-item').count(), 7);
+            assert.equal(await page.locator('.owner-nav-item').count(), 9);
             assert.equal(await page.locator('.owner-nav-item[aria-current="page"]').count(), 1);
             assert.equal(await page.locator('[data-owner-sidebar-toggle]').isVisible(), true);
             assert.equal(await page.locator('.owner-themes button:visible').count(), 1);
             assert.equal(await page.locator('script:not([src]), [style]').count(), 0, 'CSP requires external scripts/styles');
-            assert.equal(await page.locator('.owner-language').isVisible(), true, 'FE-01 keeps language switching');
+            assert.equal(await page.locator('.owner-language').count(), 0, 'FE-02 moves language switching to Settings');
             const arrowTransforms = await page.locator('.dashboard-link svg, .dashboard-next .dashboard-button svg').evaluateAll(nodes => nodes.map(n => {
                 const matrix = new DOMMatrix(getComputedStyle(n).transform);
                 return [matrix.a, matrix.b, matrix.c, matrix.d];
@@ -146,7 +146,7 @@ async function main() {
             await page.locator('.owner-account').click();
             await page.mouse.move(0, 0);
             if (locale === 'ar') await page.screenshot({ path: path.join(out, 'overview-ar-no-js-390.png'), fullPage: true });
-            assert.equal(await page.locator('.owner-nav-item:visible').count(), 7);
+            assert.equal(await page.locator('.owner-nav-item:visible').count(), 9);
             await context.close();
         }
         const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: 'reduce' });
@@ -190,6 +190,7 @@ async function main() {
         assert.equal(await restrictedPage.locator('body').getAttribute('data-evidence-hub-theme'), 'dark');
         assert.deepEqual(restrictedErrors, []);
         await restricted.close();
+        await require('./owner-settings-checks.cjs')(browser, base, out, contrast);
         console.log('OWNER_WORKSPACE_VISUAL_PASSED: 20 layout combinations; compact persistence; mobile keyboard; native no-JS forms; B-01 states; AA contrast; coarse targets; short viewport; denied storage; locale arrow direction; single-line Evidence Hub.');
     } finally { await browser.close(); }
 }

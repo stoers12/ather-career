@@ -1,0 +1,69 @@
+/* Settings uses the shared workspace tokens and native GET links/disclosures. */
+.owner-settings-heading { margin-block-end: 24px; }
+.owner-settings-eyebrow { display: block; margin-block-end: 8px; color: var(--owner-gold); font-size: calc(11px * var(--owner-text-scale, 1)); }
+.owner-settings-heading h1 { font-size: calc(32px * var(--owner-text-scale, 1)); line-height: 1.4; letter-spacing: -.7px; }
+.owner-settings-heading > p { margin-block-start: 8px; color: var(--admin-muted); font-size: calc(14px * var(--owner-text-scale, 1)); }
+.owner-settings-layout { display: grid; grid-template-columns: 156px minmax(0,1fr); gap: 24px; align-items: start; }
+.owner-settings-nav { display: flex; flex-direction: column; gap: 5px; padding-block-start: 8px; }
+.owner-settings-nav a { display: flex; align-items: center; gap: 8px; padding: 11px 10px; min-block-size: 44px; border-radius: 6px; color: var(--admin-text); font-size: calc(12px * var(--owner-text-scale, 1)); line-height: 1.65; text-decoration: none; }
+.owner-settings-nav svg { inline-size: 16px; block-size: 16px; }
+.owner-settings-nav a:hover, .owner-settings-nav a[aria-current="location"] { background: var(--owner-soft); color: var(--admin-primary); }
+.owner-settings-body { min-inline-size: 0; }
+.owner-settings-card { margin-block-end: 20px; padding: 27px; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-surface); scroll-margin-block-start: 20px; }
+.owner-settings-card > header { padding-block-end: 22px; }
+.owner-settings-card > header h2 { font-size: calc(23px * var(--owner-text-scale, 1)); letter-spacing: -.3px; }
+.owner-settings-card > header p { margin-block-start: 7px; font-size: calc(13px * var(--owner-text-scale, 1)); color: var(--admin-muted); }
+.owner-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-block: 23px; border-block-start: 1px solid var(--admin-border); }
+.owner-setting-description { flex: 1; min-inline-size: 0; }
+.owner-setting-description :is(h3,label) { display: block; font-size: calc(14px * var(--owner-text-scale, 1)); font-weight: 600; }
+.owner-setting-description p { max-inline-size: 40ch; margin-block-start: 6px; font-size: calc(12px * var(--owner-text-scale, 1)); color: var(--admin-muted); }
+.owner-pref-select { flex-shrink: 0; inline-size: 170px; max-inline-size: 100%; min-block-size: 44px; padding: 8px 12px; border: 1px solid var(--admin-input-border); border-radius: 6px; background: var(--admin-bg); color: var(--admin-text); font-size: calc(13px * var(--owner-text-scale, 1)); }
+.owner-language-options { display: flex; flex-shrink: 0; gap: 4px; max-inline-size: 100%; padding: 3px; border: 1px solid var(--admin-input-border); border-radius: 6px; background: var(--admin-bg); }
+.owner-language-options a { display: inline-flex; align-items: center; justify-content: center; min-block-size: 36px; padding: 4px 10px; border-radius: 4px; color: var(--admin-text); font-size: calc(13px * var(--owner-text-scale, 1)); text-decoration: none; }
+.owner-language-options a:hover, .owner-language-options a[aria-current="true"] { background: var(--owner-soft); color: var(--admin-primary); }
+.owner-public-language { padding: 3px 7px; border-radius: 3px; background: var(--owner-soft); color: var(--admin-primary); font-size: calc(11px * var(--owner-text-scale, 1)); }
+.owner-theme-fieldset { min-inline-size: 0; margin: 0; padding: 0 0 23px; border: 0; }
+.owner-theme-fieldset legend { margin-block-end: 13px; font-size: calc(14px * var(--owner-text-scale, 1)); font-weight: 600; }
+.owner-theme-choices { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.owner-theme-choice { position: relative; min-inline-size: 0; padding: 8px; border: 1px solid var(--admin-input-border); border-radius: 7px; background: var(--admin-bg); cursor: pointer; }
+.owner-theme-choice:has(input:checked) { border-color: var(--admin-primary); background: var(--owner-soft); }
+.owner-theme-choice:has(input:focus-visible) { outline: 3px solid var(--owner-focus); outline-offset: 3px; }
+.owner-theme-choice input { position: absolute; inset-block-start: 10px; inset-inline-end: 10px; z-index: 1; inline-size: 16px; block-size: 16px; margin: 0; accent-color: var(--admin-primary); }
+.owner-theme-choice > span:last-child { display: flex; align-items: center; justify-content: center; gap: 6px; min-block-size: 35px; padding-block: 10px 2px; font-size: calc(12px * var(--owner-text-scale, 1)); line-height: 1.6; text-align: center; }
+.owner-theme-choice svg { inline-size: 14px; block-size: 14px; }
+.owner-theme-mini { --preview-bg: #f5f6f2; --preview-ink: #d2dbd2; display: flex; gap: 8px; block-size: 68px; padding: 10px 7px; overflow: hidden; border-radius: 3px; background: var(--preview-bg); }
+.owner-theme-mini[data-sample="dark"] { --preview-bg: #18251f; --preview-ink: #52685b; }
+.owner-theme-mini[data-sample="system"] { background: linear-gradient(110deg,#f5f6f2 50%,#18251f 50%); }
+.owner-mini-sidebar { inline-size: 18%; border-radius: 2px; background: #1b382b; }
+.owner-mini-layout { display: flex; flex: 1; flex-wrap: wrap; align-content: center; gap: 6px; }
+.owner-mini-layout b { inline-size: 43%; block-size: 14px; border-radius: 2px; background: var(--preview-ink); }
+.owner-mini-layout b:first-child { inline-size: 65%; block-size: 5px; }
+.owner-setting-hint { margin-block-start: 13px; color: var(--admin-muted); font-size: calc(12px * var(--owner-text-scale, 1)); }
+.owner-preference-status { display: flex; align-items: center; gap: 7px; margin-block-start: 16px; color: var(--admin-muted); font-size: calc(12px * var(--owner-text-scale, 1)); }
+.owner-preference-status svg { inline-size: 14px; block-size: 14px; color: var(--admin-primary); }
+.owner-settings-question { padding-block: 21px; border-block-start: 1px solid var(--admin-border); }
+.owner-settings-question summary { font-size: calc(14px * var(--owner-text-scale, 1)); font-weight: 600; cursor: pointer; }
+.owner-settings-question p { margin-block-start: 12px; color: var(--admin-muted); font-size: calc(13px * var(--owner-text-scale, 1)); }
+.owner-workspace-page[data-owner-settings-section="help"] [data-owner-settings-panel="appearance"], .owner-workspace-page[data-owner-settings-section="appearance"] [data-owner-settings-panel="help"] { display: none; }
+@media (max-width:1000px) {
+    .owner-settings-layout { grid-template-columns: minmax(0,1fr); gap: 20px; }
+    .owner-settings-nav { flex-direction: row; flex-wrap: wrap; padding: 0; }
+    .owner-settings-nav a { padding: 9px 11px; }
+}
+@media (max-width:660px) {
+    .owner-settings-heading h1 { font-size: calc(29px * var(--owner-text-scale, 1)); }
+    .owner-settings-heading > p { font-size: calc(13px * var(--owner-text-scale, 1)); }
+    .owner-settings-card { padding: 23px 18px; }
+    .owner-settings-card > header h2 { font-size: calc(22px * var(--owner-text-scale, 1)); }
+    .owner-setting-row { flex-direction: column; align-items: stretch; gap: 14px; }
+    .owner-setting-row > :not(.owner-setting-description) { align-self: flex-start; }
+    .owner-pref-select { inline-size: 185px; }
+    .owner-theme-choices { gap: 7px; }
+    .owner-theme-choice { padding: 6px; }
+    .owner-theme-mini { block-size: 55px; padding: 7px 5px; gap: 4px; }
+    .owner-mini-layout { gap: 4px; }
+    .owner-theme-choice > span:last-child { flex-direction: column; gap: 3px; }
+}
+@media (pointer:coarse) {
+    .owner-language-options a, .owner-theme-choice > span:last-child, .owner-settings-question summary { min-block-size: 44px; }
+}

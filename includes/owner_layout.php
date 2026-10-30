@@ -6,6 +6,7 @@ require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/presentation.php';
 require_once __DIR__ . '/owner_dashboard_copy.php';
 require_once __DIR__ . '/evidence_hub_copy.php';
+require_once __DIR__ . '/owner_flow.php';
 
 function ownerEscapeHtml(string $value): string
 {
@@ -19,6 +20,7 @@ function ownerLayoutStart(string $title, string $activePage, bool $themeCapable 
 {
     $isEvidenceHub = $activePage === 'evidence_hub';
     $isDashboard = $activePage === 'dashboard';
+    $isSettings = $activePage === 'settings';
     $isEvidenceHubOverview = $isEvidenceHub && $title === 'Evidence Hub';
     $locale = ($workspace['locale'] ?? ownerLocale()) === 'en' ? 'en' : 'ar';
     $workspace['locale'] = $locale;
@@ -47,13 +49,14 @@ function ownerLayoutStart(string $title, string $activePage, bool $themeCapable 
     <?php else: ?>
     <link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_workspace.css'); ?>">
     <?php if ($isDashboard): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_dashboard.css'); ?>"><?php endif; ?>
+    <?php if ($isSettings): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_settings.css'); ?>"><?php endif; ?>
     <?php endif; ?>
     <script src="<?php echo versionedAssetUrl('assets/js/admin.js'); ?>" defer></script>
     <?php if ($isEvidenceHub): ?>
     <script src="<?php echo versionedAssetUrl('assets/js/evidence_hub.js'); ?>" defer></script>
     <?php endif; ?>
 </head>
-<body class="<?php echo $isEvidenceHub ? 'evidence-hub-page' : 'owner-workspace-page' . ($isDashboard ? ' owner-dashboard-page' : ''); ?>"<?php if (!$isEvidenceHub): ?> data-owner-confirm-title="<?php echo ownerEscapeHtml(ownerText('Are you sure?')); ?>" data-owner-confirm-cancel="<?php echo ownerEscapeHtml(ownerText('Cancel')); ?>" data-owner-confirm-action="<?php echo ownerEscapeHtml(ownerText('Continue')); ?>"<?php endif; ?>>
+<body class="<?php echo $isEvidenceHub ? 'evidence-hub-page' : 'owner-workspace-page' . ($isDashboard ? ' owner-dashboard-page' : '') . ($isSettings ? ' owner-settings-page' : ''); ?>"<?php if (!$isEvidenceHub): ?> data-owner-confirm-title="<?php echo ownerEscapeHtml(ownerText('Are you sure?')); ?>" data-owner-confirm-cancel="<?php echo ownerEscapeHtml(ownerText('Cancel')); ?>" data-owner-confirm-action="<?php echo ownerEscapeHtml(ownerText('Continue')); ?>"<?php endif; ?>>
 <?php if ($themeCapable): ?>
 <script src="<?php echo versionedAssetUrl('assets/js/owner_theme.js'); ?>"></script>
 <?php endif; ?>
@@ -93,14 +96,18 @@ function ownerNavigation(string $activePage, array $workspace = []): void
         'publication' => ['/owner_publication.php', 'owner-send'],
         'messages' => ['/owner_messages.php', 'owner-mail'],
         'evidence_hub' => ['/owner/evidence-hub', 'book-open-check'],
+        'settings' => ['/owner_settings.php', 'settings'],
+        'help' => ['/owner_settings.php', 'circle-help'],
     ];
     $groups = ['group_portfolio' => ['profile', 'projects', 'experiences'], 'group_sharing' => ['publication', 'messages']];
     $accountName = trim((string) ($workspace['account_name'] ?? ''));
     $initials = mb_strtoupper(mb_substr((string) (preg_split('/\s+/u', $accountName)[0] ?? ''), 0, 2, 'UTF-8'), 'UTF-8');
-    $item = static function (string $key) use ($activePage, $copy, $links, $locale): void {
+    $unread = ownerWorkspaceUnreadMessageCount();
+    $item = static function (string $key) use ($activePage, $copy, $links, $locale, $unread): void {
         [$href, $icon] = $links[$key];
         $current = $activePage === $key;
-        ?><a aria-label="<?php echo $copy('nav_' . $key); ?>" title="<?php echo $copy('nav_' . $key); ?>" class="owner-nav-item<?php echo $current ? ' active' : ''; ?>" href="<?php echo $href; ?><?php echo $key === 'evidence_hub' ? '' : '?lang=' . $locale; ?>"<?php echo $current ? ' aria-current="page"' : ''; ?>><?php echo evidenceHubOwnerIcon($icon); ?><span><?php echo $copy('nav_' . $key); ?></span><?php if ($key === 'evidence_hub'): ?><span class="owner-nav-badge"><?php echo $copy('private'); ?></span><?php endif; ?></a><?php
+        $label = $key === 'messages' && $unread !== null && $unread > 0 ? sprintf($copy('messages_unread'), $unread) : $copy('nav_' . $key);
+        ?><a aria-label="<?php echo ownerEscapeHtml($label); ?>" title="<?php echo $copy('nav_' . $key); ?>" class="owner-nav-item<?php echo $current ? ' active' : ''; ?>" href="<?php echo $href; ?><?php echo $key === 'evidence_hub' ? '' : '?lang=' . $locale; ?><?php echo $key === 'help' ? '#help' : ''; ?>"<?php echo $current ? ' aria-current="page"' : ''; ?>><?php echo evidenceHubOwnerIcon($icon); ?><span><?php echo $copy('nav_' . $key); ?></span><?php if ($key === 'messages' && $unread !== null && $unread > 0): ?><span class="owner-unread-badge" aria-hidden="true"><?php echo $unread; ?></span><?php endif; ?><?php if ($key === 'evidence_hub'): ?><span class="owner-nav-badge"><?php echo $copy('private'); ?></span><?php endif; ?></a><?php
     };
     ?>
     <a class="skip-link admin-skip-link" href="#main-content"><?php echo $copy('skip'); ?></a>
@@ -121,6 +128,8 @@ function ownerNavigation(string $activePage, array $workspace = []): void
                 <?php endforeach; ?>
                 <div class="owner-nav-separator" aria-hidden="true"></div>
                 <?php $item('evidence_hub'); ?>
+                <div class="owner-nav-separator" aria-hidden="true"></div>
+                <div class="owner-nav-utilities"><?php $item('settings'); $item('help'); ?></div>
             </nav>
             <div class="sidebar-footer">
                 <details class="owner-account-menu">
@@ -145,7 +154,7 @@ function ownerNavigation(string $activePage, array $workspace = []): void
 function ownerWorkspaceToolbar(string $locale, string $activePage = ''): void
 {
     $copy = static fn (string $key): string => ownerDashboardCopy($key, $locale);
-    $alternate = $locale === 'ar' ? 'en' : 'ar';
+
     $crumb = in_array($activePage, ['dashboard', 'profile', 'projects', 'experiences', 'messages', 'publication', 'settings'], true) ? $copy('crumb_' . $activePage) : '';
     ?>
     <header class="owner-toolbar" aria-label="<?php echo ownerEscapeHtml(ownerText('Workspace tools')); ?>">
@@ -155,7 +164,7 @@ function ownerWorkspaceToolbar(string $locale, string $activePage = ''): void
         <?php else: ?>
         <a class="owner-preview" href="/owner_preview.php"><?php echo evidenceHubOwnerIcon('eye'); ?><span><?php echo $copy('preview_portfolio'); ?></span></a>
         <?php endif; ?>
-        <a class="owner-language" href="<?php echo ownerEscapeHtml(ownerLanguageUrl($alternate)); ?>" lang="<?php echo $alternate; ?>" hreflang="<?php echo $alternate; ?>"><?php echo $locale === 'ar' ? 'EN' : $copy('language_arabic'); ?></a>
+
         <div class="owner-themes" role="group" aria-label="<?php echo ownerEscapeHtml(ownerText('Appearance')); ?>">
             <?php foreach (['dark' => 'moon', 'light' => 'sun'] as $theme => $icon): ?>
             <button type="button" data-owner-theme="<?php echo $theme; ?>" aria-label="<?php echo $copy($theme); ?>" aria-pressed="false"><?php echo evidenceHubOwnerIcon($icon); ?></button>
@@ -251,6 +260,8 @@ function evidenceHubOwnerIcon(string $name): string
      * "AS IS" AND THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES AND LIABILITY.
      */
     $paths = [
+        'monitor' => '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>',
+        'sliders-horizontal' => '<path d="M21 4h-7m-4 0H3m18 8h-9m-4 0H3m18 8h-5m-4 0H3M14 2v4m-6 4v4m8 4v4"/>',
         'owner-house' => '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
         'owner-folder-open' => '<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>',
         'owner-briefcase-business' => '<path d="M12 12h.01"/><path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><path d="M22 13a18.15 18.15 0 0 1-20 0"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
