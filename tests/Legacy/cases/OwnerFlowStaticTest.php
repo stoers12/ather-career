@@ -33,7 +33,7 @@ final class OwnerFlowStaticTest
             'updateAuthorizedProject',
             'deleteAuthorizedProject',
             'findAuthorizedMessage',
-            'authorizedPortfolioDashboardAggregate',
+            'ownerDashboardPageData',
         ] as $required) {
             phase2Assert(str_contains($ownerActions . self::read('handlers/owner.php') . self::read('handlers/owner_profile.php') . self::read('handlers/owner_messages.php'), $required), "P2J-04 owner flow is missing {$required} scoped access.");
         }

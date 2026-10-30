@@ -173,7 +173,8 @@ function Assert-RequiredGateRegistry([string[]]$Registry) {
         'tests/Browser/evidence-hub-owner-actions-visual.cjs',
         'tests/Browser/evidence-hub-editor-writing-visual.cjs',
         'tests/Browser/evidence-hub-technology-review-visual.cjs',
-        'tests/Browser/evidence-hub-skill-evidence-visual.cjs'
+        'tests/Browser/evidence-hub-skill-evidence-visual.cjs',
+        'tests/Browser/owner-workspace-visual.cjs'
     )
     if (($Registry | Select-Object -Unique).Count -ne $Registry.Count) { Fail-Gate 'registration' 'duplicate required-gate identifier' }
     foreach ($identifier in $expected) {
@@ -440,6 +441,7 @@ function Invoke-RequiredMySqlAndBrowserGates([string]$Root, [string]$Image, [has
             if ([string]::IsNullOrWhiteSpace($actionSession)) { Fail-Gate 'action visual session' 'Owner A native cookie jar did not contain an application session.' }
             Protect-GateSecret $actionSession
             $env:PLAYWRIGHT_MODULE = $Playwright.Module; $env:EVIDENCE_HUB_EDGE_EXECUTABLE = $Chromium; $env:EVIDENCE_HUB_BROWSER_PROFILE = $profile; $env:EVIDENCE_HUB_VISUAL_BASE_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_TEST_URL = "http://127.0.0.1:$port"; $env:EVIDENCE_HUB_ACTION_SESSION_COOKIE = $actionSession
+            Invoke-Tool 'node' @((Join-Path $Root 'tests/Browser/owner-workspace-visual.cjs'), $screenshots)
             Invoke-Tool 'node' @((Join-Path $Root 'tests/Browser/evidence-hub-owner-visual.cjs'), $screenshots)
             Invoke-Tool 'node' @((Join-Path $Root 'tests/Browser/evidence-hub-owner-actions-visual.cjs'))
             Invoke-Tool 'node' @((Join-Path $Root 'tests/Browser/evidence-hub-editor-writing-visual.cjs'))
@@ -480,7 +482,8 @@ function Invoke-RequiredGates {
             'tests/Browser/evidence-hub-owner-actions-visual.cjs',
             'tests/Browser/evidence-hub-editor-writing-visual.cjs',
             'tests/Browser/evidence-hub-technology-review-visual.cjs',
-            'tests/Browser/evidence-hub-skill-evidence-visual.cjs'
+            'tests/Browser/evidence-hub-skill-evidence-visual.cjs',
+            'tests/Browser/owner-workspace-visual.cjs'
         )
         Assert-RequiredGateRegistry $registry
         Invoke-RequiredGateRegistryChallenges $registry

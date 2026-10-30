@@ -15,7 +15,7 @@ final class OwnerFrontendExperienceStaticTest
         $publicationPresentation = self::read('includes/owner_publication_presentation.php');
         $onboarding = self::read('handlers/owner_onboarding.php') . self::read('includes/owner_flow.php');
         $messages = self::read('handlers/owner_messages.php');
-        $dashboard = self::read('handlers/owner.php');
+        $dashboard = self::read('includes/owner_dashboard_presentation.php');
         $javascript = self::read('public/assets/js/admin.js');
         $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
 
@@ -43,7 +43,7 @@ final class OwnerFrontendExperienceStaticTest
         phase2Assert(str_contains($projects, 'name="remove_image"') && str_contains($javascript, "document.querySelectorAll('input[name=\"remove_image\"]')"), 'Project-image removal is missing the existing keyboard-accessible confirmation.');
         phase2Assert(str_contains($projects, 'No projects yet') && str_contains($projects, 'Add your first project'), 'Projects empty state does not provide the supported next action.');
         phase2Assert(str_contains($profile, 'No skills added yet') && str_contains($experiences, 'No experience records yet') && str_contains($messages, 'Your inbox is clear'), 'Owner collection empty states are incomplete.');
-        phase2Assert(str_contains($dashboard, 'owner_experiences.php?add=1') && str_contains($dashboard, 'owner_publication.php'), 'Dashboard quick actions omit active Owner workflows.');
+        phase2Assert(str_contains($layout, '/owner_experiences.php') && str_contains($dashboard, '/owner_publication.php') && str_contains($dashboard, '/owner_projects.php?add=1'), 'Overview and shared navigation must retain experience, publication and project workflows.');
         $profileUpdateStart = strpos($scopedData, 'function updateAuthorizedPersonalInfo');
         $profileUpdateEnd = strpos($scopedData, '/** @return list<array<string, mixed>>', $profileUpdateStart ?: 0);
         $profileUpdate = $profileUpdateStart === false || $profileUpdateEnd === false ? '' : substr($scopedData, $profileUpdateStart, $profileUpdateEnd - $profileUpdateStart);
