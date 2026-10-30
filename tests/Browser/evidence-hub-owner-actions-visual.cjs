@@ -197,6 +197,7 @@ const watchdog = setTimeout(async () => {
         expectState(errors.length === 0, 'browser-errors', `expected no browser errors; received ${errors.length}`);
 
         if (watchdogTimedOut) fail('watchdog', 'step watchdog timed out');
+        await require('./evidence-hub-views-browser.cjs')(page, baseUrl);
         console.log('PASS Evidence Hub R4 real Edge actions');
     } catch (error) {
         failureCheckpoint ??= checkpoint;

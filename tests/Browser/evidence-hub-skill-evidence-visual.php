@@ -22,6 +22,7 @@ $skill = array_values(array_filter($candidates, static fn (array $candidate): bo
 $recommendations = filterEvidenceHubRecommendationCandidates($skill, [], 1767225600);
 $contract = mapEvidenceHubOwnerContract(buildEvidenceHubOwnerCoreFromEvaluatedProjects([], 'not_configured', [], 0, null, []), $recommendations);
 $model = [
+    'skill_gaps' => ($_GET['gaps'] ?? '') === 'empty' ? [] : [['canonical_id' => 'tech.go', 'display_name' => 'Go'], ['canonical_id' => 'tech.react', 'display_name' => 'React'], ['canonical_id' => 'tech.rust', 'display_name' => 'Rust'], ['canonical_id' => 'tech.vue', 'display_name' => 'Vue.js']],
     'projects' => [],
     'technologies' => evidenceHubOwnerPageTechnologies([]),
     'technology_review' => evidenceHubOwnerPageTechnologyReview([], [], $taxonomy, static fn (string $digest): string => $digest),

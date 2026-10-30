@@ -154,7 +154,8 @@ final class EvidenceHubSkillEvidenceTest
             $review = $locale === 'ar' ? 'راجع المهارات' : 'Review skills';
             phase2Assert(str_contains($html, $title) && str_contains($html, '<bdi dir="auto">React</bdi>'), "{$locale}: canonical skill context is missing or not isolated.");
             phase2Assert(str_contains($html, 'href="/owner_projects.php?add=1"') && str_contains($html, 'href="/owner_profile.php#skills">' . $review . '</a>'), "{$locale}: skill recommendation links are missing.");
-            phase2AssertSame(1, substr_count($html, 'href="/owner_profile.php#skills">'), "{$locale}: the secondary skill link escaped its card.");
+            preg_match('/<div id="records".*?<div id="insights"/s', $html, $recordLayer);
+            phase2AssertSame(1, substr_count($recordLayer[0] ?? '', 'href="/owner_profile.php#skills">'), "{$locale}: the secondary skill link escaped its card.");
             phase2Assert(!str_contains($html, 'React.js'), "{$locale}: raw skill text was rendered instead of the taxonomy name.");
             $skill = $state['contract']['recommendations'][$index];
             phase2Assert(!str_contains($html, $skill['target']['opaque_target_ref']) && !str_contains($html, $skill['recommendation_key']) && !str_contains($html, $skill['evidence_fingerprint']), "{$locale}: private recommendation identity was rendered.");

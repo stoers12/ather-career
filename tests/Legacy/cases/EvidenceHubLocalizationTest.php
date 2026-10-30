@@ -127,7 +127,7 @@ final class EvidenceHubLocalizationTest
         phase2AssertSame($english, $unsupported, 'An unsupported locale changed the Evidence Hub page.');
         phase2Assert(preg_match(self::ARABIC, $english) !== 1, 'English Evidence Hub page contains Arabic interface text.');
         phase2Assert(str_contains($english, 'dir="ltr"') && !str_contains($english, 'dir="rtl"'), 'English Evidence Hub page is not left-to-right.');
-        foreach (['dir="rtl"', 'ابنِ بورتفوليو يثق به الآخرون.', 'الخطوات التالية المقترحة', 'تم تجاهل التوصية.', 'تقنية غير مصنّفة واحدة', 'صحّح الإملاء في مشروع:', 'اربطها بتقنية معروفة', 'ربطتها أنت', 'قيد المراجعة', 'أُطر العمل', 'مشروعان', 'دورك الشخصي', 'أضف وصفًا محددًا لهذا الدليل.', 'data-label-single="المشروع {position} من {total}"'] as $required) {
+        foreach (['dir="rtl"', 'مركز الأدلة', 'الخطوات التالية المقترحة', 'تم تجاهل التوصية.', 'تقنية غير مصنّفة واحدة', 'صحّح الإملاء في مشروع:', 'اربطها بتقنية معروفة', 'ربطتها أنت', 'قيد المراجعة', 'أُطر العمل', 'مشروعان', 'دورك الشخصي', 'أضف وصفًا محددًا لهذا الدليل.', 'data-label-single="المشروع {position} من {total}"'] as $required) {
             phase2Assert(str_contains($arabic, $required) || str_contains($arabic, htmlspecialchars($required, ENT_QUOTES, 'UTF-8')), "Arabic Evidence Hub page is missing {$required}.");
         }
         foreach (['Recommended next steps', 'Needs attention', 'Project evidence', 'Add a specific account of this evidence.', 'Recommendation dismissed.'] as $english) {

@@ -12,6 +12,7 @@ require_once __DIR__ . '/../../includes/evidence_hub_owner_recommendations.php';
 require_once __DIR__ . '/../../includes/evidence_hub_owner_page_model.php';
 require_once __DIR__ . '/../../includes/evidence_hub_owner_page_presentation.php';
 require_once __DIR__ . '/../../includes/owner_layout.php';
+require_once __DIR__ . '/../../includes/project_evidence_view.php';
 require_once __DIR__ . '/../../includes/csrf.php';
 
 $database = (new ReflectionMethod(EvidenceHubContractV7Test::class,'database'))->invoke(null);
@@ -25,5 +26,12 @@ $model = buildAuthorizedEvidenceHubOwnerPageModel($database,$context,$state,'tex
 $locale = ($_GET['lang'] ?? null) === 'ar' ? 'ar' : 'en';
 $_SESSION = ['csrf_token'=>str_repeat('a',64)];
 ownerLayoutStart('Evidence Hub','evidence_hub',true,['locale'=>$locale]);
+$model['technology_review'] ??= ['unmapped' => [], 'owner_mapped' => [], 'proposals' => [], 'categories' => [], 'map_options' => []];
+$model['skill_gaps'] ??= [];
+foreach ($model['projects'] as &$visualProject) {
+    $visualUrls = projectEvidenceViewUrls($visualProject['id']);
+    $visualProject += ['evidence_read_url' => $visualUrls['read'], 'evidence_write_url' => $visualUrls['write'], 'sources_url' => $visualUrls['sources'], 'sources' => []];
+}
+unset($visualProject);
 renderEvidenceHubOwnerPage($state['contract'],$model,[],'',['kind'=>'none'],$locale);
 ownerLayoutEnd();

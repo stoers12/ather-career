@@ -28,6 +28,10 @@ if (!baseUrl || !executablePath) throw new Error('Skill evidence browser test co
                 assert.equal(await card.locator('input[name="action"][value="dismiss"]').count(), 1);
                 assert.equal(await page.evaluate(() => document.body.scrollWidth <= innerWidth), true, `${locale}/${width}: no horizontal overflow`);
                 assert.deepEqual(errors, [], `${locale}/${width}: no browser errors`);
+                assert.deepEqual(await page.locator('#skills-without-evidence li').allTextContents(), ['Go','React','Rust','Vue.js'], 'Full Insights gap list is independent of the one recommendation');
+                assert.equal(/tech\.(go|react|rust|vue)/.test(await page.locator('#skills-without-evidence').innerHTML()), false, 'Gap identities remain private');
+                await page.goto(`${baseUrl}/tests/Browser/evidence-hub-skill-evidence-visual.php?lang=${locale}&gaps=empty`);
+                assert.equal(await page.locator('#skills-without-evidence li').count(), 0, 'Empty gaps are distinct from recommendations');
                 await context.close();
             }
         }

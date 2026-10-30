@@ -22,6 +22,18 @@ $evaluations = [
     'measurable_outcome' => $status('measurable_outcome', 'unavailable', ['EMPTY_NORMALIZED_VALUE']),
 ];
 $_SESSION = ['csrf_token' => str_repeat('a', 64)];
-ownerLayoutStart('Edit project evidence', 'evidence_hub', true);
-renderOwnerProjectEvidenceForm($project, $project['values'], [], $evaluations);
+$locale = ($_GET['lang'] ?? 'en') === 'ar' ? 'ar' : 'en';
+$view = projectEvidenceViewFromQuery($_GET);
+$errors = [];
+if (($_GET['scenario'] ?? '') === 'error') {
+    $errors = ['personal_role' => 'Please enter text for this field.'];
+    $view = projectEvidenceViewAfterTextError($errors);
+}
+$sources = [['id' => 1, 'title' => 'Reporting contribution', 'url' => 'https://example.com/contribution?ref=record&part=1', 'note' => 'A synthetic report showing the pipeline.']];
+if (($_GET['scenario'] ?? '') === 'empty') $sources = [];
+if (($_GET['scenario'] ?? '') === 'limit') {
+    $sources = array_map(static fn (int $id): array => ['id' => $id, 'title' => 'Synthetic source ' . $id, 'url' => 'https://example.com/' . $id, 'note' => null], range(1, 10));
+}
+ownerLayoutStart('Edit project evidence', 'evidence_hub', true, ['locale' => $locale]);
+renderOwnerProjectEvidencePage($project, $project['values'], $errors, $sources, ['title' => '', 'url' => '', 'note' => ''], [], $view, $locale);
 ownerLayoutEnd();

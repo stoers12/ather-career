@@ -6,7 +6,7 @@ const path = require('node:path');
 const { chromium } = require(process.env.ATHER_PLAYWRIGHT_MODULE || 'playwright');
 
 const base = process.env.ATHER_VISUAL_BASE || 'http://127.0.0.1:8765';
-const url = `${base}/tests/Browser/owner-project-evidence-visual.php`;
+const url = `${base}/tests/Browser/owner-project-evidence-visual.php?mode=write&part=measurable_outcome`;
 const output = process.env.ATHER_VISUAL_OUT || path.join(process.env.TEMP || '/tmp', 'ather-evidence-hub-editor-action-review');
 
 function channels(value) {
@@ -75,7 +75,7 @@ async function darkEditor(browser, width, height, mode, capture) {
         const cancel = actions.getByRole('link', { name: 'Cancel' });
         await save.scrollIntoViewIfNeeded();
         await page.mouse.move(250, 100);
-        const formBackground = await form.evaluate(element => getComputedStyle(element).backgroundColor);
+        const formBackground = await page.locator('.evidence-hub-writing-paper').evaluate(element => getComputedStyle(element).backgroundColor);
         const darkSurface = await page.locator('body').evaluate(element => {
             const sample = document.createElement('div');
             sample.style.background = 'var(--eh-surface)';
@@ -87,7 +87,7 @@ async function darkEditor(browser, width, height, mode, capture) {
         assert.equal(formBackground, darkSurface, `${width}px dark editor form surface`);
         const cancelDefault = await appearance(cancel);
         const saveDefault = await appearance(save);
-        assert.equal(cancelDefault.background, formBackground, `${width}px Cancel does not sit on the dark form`);
+        assert.equal(cancelDefault.background, 'rgb(18, 27, 25)', `${width}px Cancel sits on the reference canvas footer`);
         if (capture) await screenshot(page, `${screenshotPrefix}-actions-default.png`);
 
         const saveBefore = await appearance(save);
@@ -98,6 +98,9 @@ async function darkEditor(browser, width, height, mode, capture) {
         await page.mouse.move(250, 100);
         const lastTextarea = page.locator('.evidence-hub-editor textarea').last();
         await lastTextarea.focus();
+        await page.keyboard.press('Tab');
+        assert.equal(await page.locator('[data-evidence-previous]').evaluate(element => document.activeElement === element), true, 'Step navigation remains keyboard reachable');
+        await page.keyboard.press('Tab');
         await page.keyboard.press('Tab');
         assert.equal(await save.evaluate(element => document.activeElement === element), true, 'Tab from last field must focus Save');
         const focusColor = await page.locator('body').evaluate(element => {
@@ -110,17 +113,19 @@ async function darkEditor(browser, width, height, mode, capture) {
         });
         const saveFocus = await appearance(save);
         assert.equal(saveFocus.outline, focusColor, 'Save must have green focus');
-        assert.equal(saveFocus.outlineWidth, '3px');
+        assert.equal(saveFocus.outlineWidth, '2px');
         assert.ok(!saveFocus.shadow.includes('29, 78, 216'), 'Save has a blue focus shadow');
         if (capture) await screenshot(page, `${screenshotPrefix}-save-focus.png`);
         await page.keyboard.press('Tab');
         assert.equal(await cancel.evaluate(element => document.activeElement === element), true, 'Tab from Save must focus Cancel');
         const cancelFocus = await appearance(cancel);
         assert.equal(cancelFocus.outline, focusColor, 'Cancel must have green focus');
-        assert.equal(cancelFocus.outlineWidth, '3px');
+        assert.equal(cancelFocus.outlineWidth, '2px');
         if (capture) await screenshot(page, `${screenshotPrefix}-cancel-focus.png`);
         await page.keyboard.press('Shift+Tab');
         assert.equal(await save.evaluate(element => document.activeElement === element), true, 'Shift+Tab from Cancel must focus Save');
+        await page.keyboard.press('Shift+Tab');
+        await page.keyboard.press('Shift+Tab');
         await page.keyboard.press('Shift+Tab');
         assert.equal(await lastTextarea.evaluate(element => document.activeElement === element), true, 'Shift+Tab from Save must focus the last field');
         await page.locator('h1').click();
@@ -129,8 +134,8 @@ async function darkEditor(browser, width, height, mode, capture) {
         await cancel.hover();
         const cancelHover = await appearance(cancel);
         stable(cancelBefore, cancelHover, 'Cancel');
-        assert.equal(cancelHover.background, saveHover.background, 'Cancel must use the mint hover surface');
-        assert.equal(cancelHover.text, saveHover.text, 'Cancel must use readable dark-green hover text');
+        assert.equal(cancelHover.background, 'rgb(46, 66, 49)', 'Cancel uses the reference soft hover surface');
+        assert.equal(cancelHover.text, 'rgb(184, 212, 170)', 'Cancel uses readable reference green hover text');
         if (capture) await screenshot(page, `${screenshotPrefix}-cancel-hover.png`);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${width}px dark editor horizontal overflow`);
         if (width === 320) {
@@ -162,14 +167,14 @@ async function main() {
         const light = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'light', reducedMotion: 'reduce' });
         const lightPage = await light.newPage();
         await lightPage.goto(url, { waitUntil: 'networkidle' });
-        await lightPage.getByRole('button', { name: 'Save evidence' }).scrollIntoViewIfNeeded();
-        assert.equal(await lightPage.locator('.evidence-hub-editor form').evaluate(element => getComputedStyle(element).backgroundColor), 'rgb(255, 255, 255)', 'Light editor form surface changed');
+        await lightPage.locator('.evidence-hub-editor-actions').getByRole('button', { name: 'Save evidence' }).scrollIntoViewIfNeeded();
+        assert.equal(await lightPage.locator('.evidence-hub-writing-paper').evaluate(element => getComputedStyle(element).backgroundColor), 'rgb(255, 255, 255)', 'Light editor form surface changed');
         await screenshot(lightPage, 'light-editor-actions-default.png');
         await light.close();
         const noScript = await browser.newContext({ viewport: { width: 320, height: 700 }, javaScriptEnabled: false });
         const noScriptPage = await noScript.newPage();
         await noScriptPage.goto(url, { waitUntil: 'networkidle' });
-        assert.equal(await noScriptPage.getByRole('button', { name: 'Save evidence' }).isVisible(), true);
+        assert.equal(await noScriptPage.locator('.evidence-hub-editor-actions').getByRole('button', { name: 'Save evidence' }).isVisible(), true);
         assert.equal(await noScriptPage.getByRole('link', { name: 'Cancel' }).isVisible(), true);
         assert.equal(await noScriptPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'No-JavaScript editor overflow');
         await noScript.close();

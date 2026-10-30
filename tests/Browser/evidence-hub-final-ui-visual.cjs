@@ -23,6 +23,7 @@ class Cdp {
                 this.pending.delete(message.id);
                 message.error ? reject(new Error(message.error.message)) : resolve(message.result || {});
             }
+            if (message.method === 'Fetch.requestPaused') this.send('Fetch.fulfillRequest', { requestId: message.params.requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: 'text/html; charset=utf-8' }], body: Buffer.from('<!doctype html><html lang="en"><title>Record navigation fixture</title><body><h1>Guarded record navigation fixture</h1></body></html>').toString('base64') });
             if (message.method === 'Runtime.exceptionThrown') this.errors.push('page exception');
             if (message.method === 'Network.requestWillBeSent') this.requests.push(message.params.request.url);
             if (message.method === 'Network.loadingFailed' && !message.params.canceled) this.errors.push(`request failed: ${message.params.errorText}`);
@@ -85,9 +86,10 @@ async function screenshot(cdp, name) {
 }
 
 async function close(cdp) {
-    assert.deepEqual(cdp.errors, [], 'Browser/page/request errors occurred.');
+    const errors = [...cdp.errors];
     cdp.socket.close();
     await fetch(`${endpoint}/json/close/${cdp.targetId}`);
+    assert.deepEqual(errors, [], 'Browser/page/request errors occurred.');
 }
 
 async function state(cdp) {
@@ -217,7 +219,7 @@ async function main() {
             assert.equal(item.nextDisabled, false);
             assert.equal(item.duplicateIds, 0);
             if (width <= 390) assert.ok(item.prev.y >= item.track.bottom - 1, 'Mobile controls are not below the card.');
-            else assert.ok(item.prev.x <= item.track.x && item.next.right >= item.track.right, 'Desktop arrows are not at card-row edges.');
+            else assert.ok(item.prev.y >= item.track.bottom - 1 && item.next.y >= item.track.bottom - 1, 'Navigator controls remain below the record row.');
             await screenshot(cdp, `${width}-${theme}-${collapsed ? 'collapsed' : 'expanded'}`);
             await cdp.evaluate('document.getElementById("project-evidence").scrollIntoView({block:"start"})');
             await screenshot(cdp, `${width}-${theme}-${collapsed ? 'collapsed' : 'expanded'}-projects`);
@@ -230,11 +232,11 @@ async function main() {
             await navigate(cdp, fixture('mixed', count));
             const item = await state(cdp);
             assert.equal(item.recommendationCount, count);
-            assert.equal(item.gridColumns, count);
+            assert.equal(item.gridColumns, 1, 'Reference recommendations are actionable full-width rows');
             assert.equal(item.documentWidth <= 1440, true);
             const widths = await cdp.evaluate(`(() => { const grid=document.querySelector('.evidence-hub-recommendation-grid'); const section=grid.closest('.evidence-hub-section'); const cards=[...grid.querySelectorAll('.evidence-hub-recommendation-card')]; const s=section.getBoundingClientRect(); const r=cards.map(c=>c.getBoundingClientRect()); return {sectionWidth:s.width, cardWidths:r.map(v=>v.width), left:r[0].left-s.left, right:s.right-r[r.length-1].right}; })()`);
             if (count === 1) {
-                assert.ok(widths.cardWidths[0] <= 620 && widths.cardWidths[0] < widths.sectionWidth * .8, 'One recommendation stretched too wide.');
+                assert.ok(Math.abs(widths.cardWidths[0] - widths.sectionWidth) <= 2, 'A recommendation uses the reference row width.');
                 assert.ok(Math.abs(widths.left - widths.right) <= 2, 'One recommendation is not centered.');
             }
             if (count === 2) {
@@ -362,9 +364,13 @@ async function main() {
         assert.equal((await menuState(menuPaths, 1)).triggerFocused, true, 'Rerendered menu lost its project trigger.');
         await openMenuWithKey(menuPaths, 1, 'Enter');
         assert.equal(await menuPaths.evaluate('document.querySelector("#project-1 .evidence-hub-project-options a").getAttribute("href")'), '/owner/projects/1/evidence');
+        // This standalone server has guarded synthetic pages, not an authenticated database.
+        // Intercept only the real read-link destination; the HTTP gates exercise its authorization and body.
+        await menuPaths.send('Fetch.enable', { patterns: [{ urlPattern: base + '/owner/projects/1/evidence', requestStage: 'Request' }] });
         await menuPaths.evaluate('document.querySelector("#project-1 .evidence-hub-project-options a").click()');
         await new Promise(resolve => setTimeout(resolve, 250));
         assert.equal(menuPaths.requests.some(request => request.includes('/owner/projects/1/evidence')), true, 'Menu selection did not follow the editor route.');
+        assert.equal(await menuPaths.evaluate('document.querySelector("h1")?.textContent'), 'Guarded record navigation fixture', 'The read link completes navigation in the standalone fixture transport');
         checks.push('menu-filters-outside-selection-rerender');
     } finally { await close(menuPaths); }
     for (const feedback of ['saved', 'undone', 'conflict', 'unavailable']) {

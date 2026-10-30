@@ -48,6 +48,7 @@ const feedback = page => page.locator('#evidence-hub-action-feedback').textConte
         expectState(new URL(page.url()).hash === '#technologies', 'mapping did not return to the technologies section');
         expectState(await feedback(page) === 'Technology mapped.', 'mapping feedback is missing');
         expectState(await reviewItem(page).count() === 0, 'a mapped label is still offered for review');
+        await page.locator('[data-evidence-layer=insights]').click();
         const ownerMapped = page.locator('.evidence-hub-technology-owner-mapped li').filter({ hasText: seededLabel });
         expectState(await ownerMapped.count() === 1 && (await ownerMapped.textContent()).includes('React'), 'the mapping is not listed under technologies you mapped');
         expectState(await page.locator('.evidence-hub-technology-pill').filter({ hasText: 'React' }).locator('.evidence-hub-technology-owner-tag').isVisible(), 'the technology map does not mark the Owner mapping');

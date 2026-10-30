@@ -68,7 +68,7 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     await same(nav.getByRole('link', { name: 'Evidence Hub', exact: true }).getAttribute('href'), '/owner/evidence-hub', 'canonical Evidence Hub route');
     await same(nav.locator('[aria-current="page"]').count(), 1, 'one current page');
     await same(nav.locator('[aria-current="page"]').innerText(), 'Evidence Hub', 'Evidence Hub is the active item');
-    for (const item of ['Overview', 'Projects', 'Credentials']) {
+    for (const item of ['Credentials']) {
         const future = nav.getByRole('button', { name: item, exact: true });
         await same(future.getAttribute('aria-disabled'), 'true', `${item} is disabled`);
         await same(future.getAttribute('tabindex'), '0', `${item} remains keyboard focusable`);
@@ -84,7 +84,8 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     await same(page.locator('.evidence-hub-sidebar-back').getAttribute('href'), '/owner.php', 'canonical dashboard destination');
     await same(back.getAttribute('aria-label'), 'Back to dashboard', 'back link accessible name');
     await back.hover(); await same(tooltip.innerText(), 'Back to dashboard', 'back link tooltip');
-    await same(aside.locator('nav a[href="/owner.php"]').count(), 0, 'dashboard is not a green navigation destination');
+    await same(aside.locator('nav a[href="/owner.php"]').count(), 1, 'Overview uses the existing dashboard route');
+    await same(nav.getByRole('link', { name: 'Projects', exact: true }).getAttribute('href'), '/owner_projects.php', 'Projects uses the existing project route');
     await same(aside.locator('.evidence-hub-owner-context').innerText().then(x => x.replace(/\s+/g, ' ').trim()), 'Portfolio owner Private workspace', 'safe footer context only');
     await same(aside.locator('.evidence-hub-owner-context').isVisible(), true, 'owner workspace details are visible in the expanded sidebar');
     await same(account.evaluate(n => n.open), false, 'account disclosure starts closed');
@@ -111,26 +112,25 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     await same(aside.locator('.evidence-hub-sidebar nav svg').evaluateAll(nodes => nodes.every(n => n.getAttribute('aria-hidden') === 'true' && n.getAttribute('viewBox') === '0 0 24 24' && n.getAttribute('stroke') === 'currentColor')), true, 'Lucide SVG semantics and style');
 
     const expanded = await metrics();
-    assert.ok(Math.abs(expanded.rail.width - 232) < 1, 'expanded rail is 232px');
-    assert.ok(expanded.header.height >= 116 && expanded.header.height <= 124, 'expanded header gives the collapse control its own space');
+    assert.ok(Math.abs(expanded.rail.width - 228) < 1, 'expanded rail is 228px');
+    assert.ok(expanded.header.height >= 140 && expanded.header.height <= 148, 'expanded header gives the collapse control its own space');
     assert.ok(expanded.gap >= 10 && expanded.gap <= 18, 'workspace starts below the header');
     for (const item of expanded.items) assert.ok(item.height >= 46 && item.height <= 50, '48px navigation rows');
     const brand = aside.locator('.evidence-hub-brand');
-    await same(brand.locator('small').innerText(), 'Evidence Hub', 'brand secondary line');
+    await same(brand.locator('small').innerText(), 'EVIDENCE WORKSPACE', 'brand secondary line');
     await same(brand.getAttribute('aria-label'), 'Ather — Evidence Hub', 'accessible brand label');
     const logo = brand.locator('.evidence-hub-brand-logo');
-    await same(logo.getAttribute('src'), '/assets/images/ather-navbar-logo.png', 'official sidebar logo asset');
-    await same(logo.getAttribute('alt'), '', 'logo is decorative because its link has an accessible brand name');
-    await same(logo.evaluate(n => n.complete && n.naturalWidth === 880 && n.naturalHeight === 155), true, 'official logo loads at its natural 880×155 aspect ratio');
+    await same(logo.innerText(), 'ATHER', 'reference wordmark');
+    await same(logo.getAttribute('aria-hidden'), 'true', 'wordmark is decorative because its link names the brand');
     const [logoBox, subtitleBox, groupBox, backBox, collapseBox] = await Promise.all([
         logo.boundingBox(), brand.locator('small').boundingBox(), nav.locator('.nav-group-label').boundingBox(), back.boundingBox(), toggle.boundingBox(),
     ]);
-    assert.ok(Math.abs(logoBox.x + logoBox.width * 9 / 880 - groupBox.x) <= 2, 'visible logo edge aligns with workspace inset after PNG transparency');
+    assert.ok(Math.abs(logoBox.x - groupBox.x) <= 2, 'wordmark aligns with workspace inset');
     assert.ok(Math.abs(subtitleBox.x - groupBox.x) <= 1, 'subtitle aligns with workspace inset');
     assert.ok(collapseBox.x >= logoBox.x + logoBox.width + 12, 'collapse control clears the logo');
     assert.ok(collapseBox.y >= backBox.y + backBox.height + 8, 'collapse control clears the back link');
     assert.ok(collapseBox.y + collapseBox.height <= groupBox.y - 12, 'collapse control clears WORKSPACE');
-    await same(brand.innerText(), 'Evidence Hub', 'logo wordmark is not duplicated as text');
+    await same(brand.innerText().then(text => text.replace(/\s+/g, ' ').trim()), 'ATHER EVIDENCE WORKSPACE', 'one reference wordmark and workspace subtitle');
     await same(root.evaluate(n => n.getAttribute('data-evidence-hub-theme')), 'light', 'light theme baseline');
     const railColor = () => aside.evaluate(n => getComputedStyle(n).backgroundColor);
     const active = nav.locator('[aria-current="page"]');
@@ -139,13 +139,13 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     await page.evaluate(() => localStorage.setItem('ather.evidenceHub.theme', 'dark'));
     await page.reload();
     await same(root.evaluate(n => n.getAttribute('data-evidence-hub-theme')), 'dark', 'dark theme');
-    await same(railColor(), 'rgb(18, 43, 32)', 'sidebar stays dark green in dark theme');
+    await same(railColor(), 'rgb(22, 54, 41)', 'sidebar stays dark green in dark theme');
     assert.deepEqual(await activeStyle(), selectedLight, 'selected-state parity across themes');
     await page.waitForTimeout(200);
     await page.screenshot({ path: path.join(output, 'r11-expanded-dark.png') });
     await page.evaluate(() => localStorage.setItem('ather.evidenceHub.theme', 'light'));
     await page.reload();
-    await same(railColor(), 'rgb(18, 43, 32)', 'sidebar stays dark green in light theme');
+    await same(railColor(), 'rgb(22, 54, 41)', 'sidebar stays dark green in light theme');
     await page.screenshot({ path: path.join(output, 'r11-expanded-light.png') });
 
     await page.evaluate(() => document.activeElement?.blur());
@@ -164,7 +164,7 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     await same(toggle.locator('[data-evidence-hub-panel-state="open"] svg rect').count(), 1, 'Lucide PanelLeftOpen icon');
     await same(page.evaluate(() => localStorage.getItem('ather.evidenceHub.sidebarCollapsed')), 'true', 'collapsed preference is browser local');
     await same(brand.getAttribute('data-sidebar-tooltip'), 'Ather — Evidence Hub', 'collapsed brand tooltip');
-    for (const item of ['Overview', 'Projects', 'Credentials']) {
+    for (const item of ['Credentials']) {
         const future = nav.getByRole('button', { name: item, exact: true });
         await future.hover(); await same(tooltip.innerText(), 'Coming soon', 'collapsed future tooltip');
         await future.focus(); await same(tooltip.isVisible(), true, 'collapsed future keyboard tooltip');
@@ -212,7 +212,7 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
 
     for (const width of [1440, 1280, 1101]) {
         await setViewportAndSettle(page, width, 900);
-        const rail = await aside.boundingBox(); assert.ok(rail && Math.abs(rail.width - 232) < 1, `${width}px uses expanded desktop rail`);
+        const rail = await aside.boundingBox(); assert.ok(rail && Math.abs(rail.width - 228) < 1, `${width}px uses expanded desktop rail`);
         await same(page.locator('#evidence-hub-mobile-toggle').isVisible(), false, `${width}px is desktop`);
     }
     for (const width of [1100, 1024, 768, 390, 360, 320]) {

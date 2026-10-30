@@ -50,7 +50,7 @@ try {
             requireHttp($bootstrap['status'] === 204, "Synthetic owner {$owner} could not authenticate.");
         }
     }
-    $get = httpEvidenceRequest('GET', $route, null, $cookieA);
+    $get = httpEvidenceRequest('GET', $route . '?mode=write', null, $cookieA);
     requireHttp($get['status'] === 200 && str_contains($get['body'], 'Edit project evidence'), 'Owner GET did not render Evidence edit.');
     requireHttp(str_contains($get['headers'], 'Cache-Control: no-store') && str_contains($get['headers'], 'X-Request-ID:'), 'Private GET lacks no-store or request ID.');
     requireHttp(str_contains($get['body'], '&lt;script&gt;unsafe&lt;/script&gt;') && !str_contains($get['body'], '<script>unsafe</script>'), 'Project title was not escaped.');
@@ -93,13 +93,13 @@ try {
     requireHttp($after['updated_at'] !== $before['updated_at'], 'Meaningful evidence edit did not advance updated_at.');
     $hub = httpEvidenceRequest('GET', '/owner/evidence-hub', null, $cookieA);
     requireHttp($hub['status'] === 200 && str_contains($hub['body'], 'Evidence saved successfully') && str_contains($hub['body'], 'Undo last evidence update') && str_contains($hub['body'], 'id="project-' . $projectId . '"'), 'Immediate Undo success panel or return card is missing.');
-    $savedEditor = httpEvidenceRequest('GET', $route, null, $cookieA);
+    $savedEditor = httpEvidenceRequest('GET', $route . '?mode=write', null, $cookieA);
     requireHttp(preg_match('/data-evidence-writing-hint="outcome_without_number"[^>]*data-hint-when="absent">/', $savedEditor['body']) === 1 && str_contains($savedEditor['body'], 'data-evidence-insert-starter'), 'Saved outcome without digits did not render the non-blocking number hint and starter controls.');
     $unchanged = $fields;
     $unchanged['problem'] = '  ' . $fields['problem'] . '  ';
     requireHttp(httpEvidenceRequest('POST', $route, $unchanged, $cookieA)['status'] === 303, 'Equivalent normalized POST did not use PRG.');
     requireHttp($read()['updated_at'] === $after['updated_at'], 'Equivalent normalized POST advanced updated_at.');
-    $arabic = httpEvidenceRequest('GET', $route, null, $cookieA, [], 'ar');
+    $arabic = httpEvidenceRequest('GET', $route . '?mode=write', null, $cookieA, [], 'ar');
     requireHttp($arabic['status'] === 200 && str_contains($arabic['body'], '<html lang="ar" dir="rtl">') && str_contains($arabic['body'], 'تعديل أدلة المشروع') && str_contains($arabic['body'], $fields['problem']), 'Arabic Owner locale did not render the localized editor with unchanged owner content.');
     $arabicInvalid = httpEvidenceRequest('POST', $route, $invalid, $cookieA, [], 'ar');
     requireHttp($arabicInvalid['status'] === 422 && str_contains($arabicInvalid['body'], 'راجع الحقول المحددة') && !str_contains($arabicInvalid['body'], 'Review the highlighted fields'), 'Arabic validation summary is not localized.');
@@ -110,7 +110,7 @@ try {
         $starters[$key] = $field['starter'];
     }
     requireHttp(httpEvidenceRequest('POST', $route, $starters, $cookieA)['status'] === 303, 'Unedited starters were not accepted as storable text.');
-    $starterEditor = httpEvidenceRequest('GET', $route, null, $cookieA);
+    $starterEditor = httpEvidenceRequest('GET', $route . '?mode=write', null, $cookieA);
     requireHttp(substr_count($starterEditor['body'], 'evidence-hub-state--needs_attention') === 3 && !str_contains($starterEditor['body'], 'evidence-hub-state--complete'), 'Unedited starters were counted as complete evidence.');
     echo "PASS Evidence edit HTTP auth, tenant, CSRF, validation, atomic save, PRG, unchanged timestamp, and writing aids\n";
 } finally {

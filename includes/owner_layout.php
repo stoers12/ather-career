@@ -66,7 +66,7 @@ function ownerLayoutStart(string $title, string $activePage, bool $themeCapable 
     <script src="<?php echo versionedAssetUrl('assets/js/evidence_hub.js'); ?>" defer></script>
     <?php endif; ?>
 </head>
-<body class="<?php echo $isEvidenceHub ? 'evidence-hub-page' : 'owner-workspace-page' . ($isDashboard ? ' owner-dashboard-page' : '') . ($isSettings ? ' owner-settings-page' : ''); ?>"<?php if (!$isEvidenceHub): ?> data-owner-confirm-title="<?php echo ownerEscapeHtml(ownerText('Are you sure?')); ?>" data-owner-confirm-cancel="<?php echo ownerEscapeHtml(ownerText('Cancel')); ?>" data-owner-confirm-action="<?php echo ownerEscapeHtml(ownerText('Continue')); ?>"<?php endif; ?>>
+<body class="<?php echo $isEvidenceHub ? 'evidence-hub-page' : 'owner-workspace-page' . ($isDashboard ? ' owner-dashboard-page' : '') . ($isSettings ? ' owner-settings-page' : ''); ?>"<?php if ($isEvidenceHub): ?> data-owner-confirm-title="<?php echo ownerEscapeHtml(evidenceHubText('Are you sure?', $locale)); ?>" data-owner-confirm-cancel="<?php echo ownerEscapeHtml(evidenceHubText('Cancel', $locale)); ?>" data-owner-confirm-action="<?php echo ownerEscapeHtml(evidenceHubText('Continue', $locale)); ?>"<?php else: ?> data-owner-confirm-title="<?php echo ownerEscapeHtml(ownerText('Are you sure?')); ?>" data-owner-confirm-cancel="<?php echo ownerEscapeHtml(ownerText('Cancel')); ?>" data-owner-confirm-action="<?php echo ownerEscapeHtml(ownerText('Continue')); ?>"<?php endif; ?>>
 <?php if ($themeCapable): ?>
 <script src="<?php echo versionedAssetUrl('assets/js/owner_theme.js'); ?>"></script>
 <?php endif; ?>
@@ -81,6 +81,10 @@ function ownerLayoutStart(string $title, string $activePage, bool $themeCapable 
                 <?php if ($isEvidenceHubOverview): ?>
                 <nav class="evidence-hub-section-nav" aria-label="<?php echo $hubText('Evidence Hub sections'); ?>"><a href="#next-steps"><?php echo $hubText('Next steps'); ?></a><a href="#overview"><?php echo $hubText('Overview'); ?></a><a href="#project-evidence"><?php echo $hubText('Project evidence'); ?></a><a href="#technologies"><?php echo $hubText('Technologies'); ?></a><a href="#progress"><?php echo $hubText('Progress'); ?></a></nav>
                 <?php endif; ?>
+                <div class="evidence-hub-themes" role="group" aria-label="<?php echo $hubText('Appearance'); ?>">
+                    <button type="button" data-owner-theme="light" hidden aria-label="<?php echo $hubText('Light appearance'); ?>" aria-pressed="false"><?php echo evidenceHubOwnerIcon('sun'); ?></button>
+                    <button type="button" data-owner-theme="dark" hidden aria-label="<?php echo $hubText('Dark appearance'); ?>" aria-pressed="false"><?php echo evidenceHubOwnerIcon('moon'); ?></button>
+                </div>
                 <a class="evidence-hub-language" href="<?php echo ownerEscapeHtml(ownerLanguageUrl($alternate)); ?>" lang="<?php echo $alternate; ?>" hreflang="<?php echo $alternate; ?>" aria-label="<?php echo $hubText('Interface language'); ?>: <?php echo ownerEscapeHtml(evidenceHubLanguageName($alternate)); ?>"><?php echo ownerEscapeHtml(evidenceHubLanguageName($alternate)); ?></a>
             </div>
         </header>
@@ -189,8 +193,8 @@ function ownerEvidenceHubNavigation(string $locale = 'en'): void
     $t = static fn (string $english): string => ownerEscapeHtml(evidenceHubText($english, $locale));
     $dashboardHref = '/owner.php';
     $workspaceLinks = [
-        ['overview', 'Overview', 'layout-dashboard', null],
-        ['projects', 'Projects', 'folder-kanban', null],
+        ['overview', 'Overview', 'layout-dashboard', '/owner.php'],
+        ['projects', 'Projects', 'folder-kanban', '/owner_projects.php'],
         ['evidence_hub', 'Evidence Hub', 'blocks', '/owner/evidence-hub'],
         ['credentials', 'Credentials', 'badge-check', null],
     ];
@@ -202,8 +206,8 @@ function ownerEvidenceHubNavigation(string $locale = 'en'): void
     <aside class="admin-sidebar evidence-hub-sidebar" id="evidence-hub-mobile-drawer" aria-label="<?php echo $t('Owner navigation'); ?>">
         <div class="evidence-hub-sidebar-head">
             <a class="admin-brand evidence-hub-brand" href="<?php echo ownerEscapeHtml($dashboardHref); ?>" aria-label="<?php echo $t('Ather — Evidence Hub'); ?>" data-sidebar-tooltip="<?php echo $t('Ather — Evidence Hub'); ?>">
-                <img class="evidence-hub-brand-logo" src="/assets/images/ather-navbar-logo.png" alt="" width="880" height="155" decoding="async">
-                <span class="evidence-hub-brand-copy"><small><?php echo $t('Evidence Hub'); ?></small></span>
+                <span class="evidence-hub-brand-logo" aria-hidden="true">ATHER</span>
+                <span class="evidence-hub-brand-copy"><small><?php echo $t('EVIDENCE WORKSPACE'); ?></small></span>
             </a>
             <a class="evidence-hub-sidebar-back" href="<?php echo ownerEscapeHtml($dashboardHref); ?>" aria-label="<?php echo $t('Back to dashboard'); ?>" data-sidebar-tooltip="<?php echo $t('Back to dashboard'); ?>" data-sidebar-tooltip-always="true">
                 <?php echo evidenceHubOwnerIcon('arrow-left'); ?><span class="visually-hidden"><?php echo $t('Back to dashboard'); ?></span>
@@ -219,7 +223,7 @@ function ownerEvidenceHubNavigation(string $locale = 'en'): void
             <span class="nav-group-label evidence-hub-sidebar-label"><?php echo $t('WORKSPACE'); ?></span>
             <?php foreach ($workspaceLinks as [$key, $label, $icon, $href]): ?>
                 <?php if ($href !== null): ?>
-                <a class="<?php echo $key === 'evidence_hub' ? 'active' : ''; ?>" href="<?php echo ownerEscapeHtml($href); ?>" aria-current="page" data-sidebar-tooltip="<?php echo $t($label); ?>">
+                <a class="<?php echo $key === 'evidence_hub' ? 'active' : ''; ?>" href="<?php echo ownerEscapeHtml($href); ?>"<?php echo $key === 'evidence_hub' ? ' aria-current="page"' : ''; ?> data-sidebar-tooltip="<?php echo $t($label); ?>">
                     <?php echo evidenceHubOwnerIcon($icon); ?><span class="evidence-hub-sidebar-label"><?php echo $t($label); ?></span>
                 </a>
                 <?php else: ?>
