@@ -19,6 +19,7 @@ $locale = ownerLocale();
 $_COOKIE['ather_owner_locale'] = $locale;
 $_SERVER['REQUEST_URI'] = '/owner_profile.php?lang=' . $locale;
 $error = ($_GET['state'] ?? '') === 'error';
+if ($error) $profile['linkedin_url'] = 'ftp://example.invalid/not-http';
 ownerLayoutStart('Personal Info', 'profile', true, ['account_name' => $profile['full_name'], 'locale' => $locale]);
 renderOwnerProfilePage($profile, 1, '7', 73, [['id' => 1, 'skill_name' => 'Python'], ['id' => 2, 'skill_name' => 'REST API']], '', $error ? ['Please provide a valid LinkedIn URL.'] : [], $error ? ['linkedin_url' => 'Please provide a valid LinkedIn URL.'] : [], null, '');
 ownerLayoutEnd();
