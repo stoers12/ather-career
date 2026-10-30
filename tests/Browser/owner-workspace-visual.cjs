@@ -47,6 +47,26 @@ async function main() {
             assert.equal(await page.locator('.owner-themes button:visible').count(), 1);
             assert.equal(await page.locator('script:not([src]), [style]').count(), 0, 'CSP requires external scripts/styles');
             assert.equal(await page.locator('.owner-language').isVisible(), true, 'FE-01 keeps language switching');
+            const arrowTransforms = await page.locator('.dashboard-link svg, .dashboard-next .dashboard-button svg').evaluateAll(nodes => nodes.map(n => {
+                const matrix = new DOMMatrix(getComputedStyle(n).transform);
+                return [matrix.a, matrix.b, matrix.c, matrix.d];
+            }));
+            assert.equal(arrowTransforms.length, 6, 'all five dashboard links and the next-step arrow are checked');
+            arrowTransforms.forEach(matrix => assert.deepEqual(matrix, [locale === 'en' ? -1 : 1, 0, 0, 1], `${locale}/${theme}: dashboard arrows point forward`));
+            const hub = page.locator('.owner-nav-item[href="/owner/evidence-hub"]');
+            const hubLabel = await hub.locator(':scope > span').first().evaluate(n => {
+                const range = document.createRange();
+                range.selectNodeContents(n);
+                return { lines: range.getClientRects().length, height: n.getBoundingClientRect().height, lineHeight: parseFloat(getComputedStyle(n).lineHeight) };
+            });
+            assert.equal(hubLabel.lines, 1, `${locale}/${theme}: Evidence Hub label occupies one line at 1440px`);
+            assert.ok(hubLabel.height <= hubLabel.lineHeight + 1, 'Evidence Hub label is not wrapped or clipped');
+            assert.equal(await hub.locator('.owner-nav-badge').isVisible(), true, 'Private badge remains visible');
+            const hubFits = await hub.evaluate(n => {
+                const item = n.getBoundingClientRect();
+                return [...n.children].every(child => { const r = child.getBoundingClientRect(); return r.left >= item.left && r.right <= item.right; });
+            });
+            assert.equal(hubFits, true, 'label, icon and badge fit within the unchanged sidebar width');
             await contrast(page);
             await capture(page, `overview-${locale}-${theme}-1440`);
             if (locale === 'ar') {
@@ -170,7 +190,7 @@ async function main() {
         assert.equal(await restrictedPage.locator('body').getAttribute('data-evidence-hub-theme'), 'dark');
         assert.deepEqual(restrictedErrors, []);
         await restricted.close();
-        console.log('OWNER_WORKSPACE_VISUAL_PASSED: 20 layout combinations; compact persistence; mobile keyboard; native no-JS forms; B-01 states; AA contrast; coarse targets; short viewport; denied storage.');
+        console.log('OWNER_WORKSPACE_VISUAL_PASSED: 20 layout combinations; compact persistence; mobile keyboard; native no-JS forms; B-01 states; AA contrast; coarse targets; short viewport; denied storage; locale arrow direction; single-line Evidence Hub.');
     } finally { await browser.close(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

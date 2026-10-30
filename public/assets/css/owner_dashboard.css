@@ -14,6 +14,7 @@
 .owner-dashboard-page .dashboard-link { display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; color: var(--admin-primary); font-size: 13px; font-weight: 500; text-decoration: none; }
 .owner-dashboard-page .dashboard-link:hover { text-decoration: underline; text-underline-offset: 4px; }
 .owner-dashboard-page .dashboard-link svg { inline-size: 15px; block-size: 15px; }
+.owner-dashboard-page:dir(ltr) .dashboard-link svg, .owner-dashboard-page:dir(ltr) .dashboard-next .dashboard-button svg { transform: scaleX(-1); }
 .owner-dashboard-page .dashboard-services-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 2px 0 15px; }
 .owner-dashboard-page .dashboard-services-heading h2, .owner-dashboard-page .dashboard-lower h2 { font-size: 18px; }
 .owner-dashboard-page .dashboard-guide { position: relative; color: var(--admin-muted); font-size: 12px; }

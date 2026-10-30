@@ -15,6 +15,8 @@ Production `/owner.php` loads only `ownerDashboardPageData($database, $context)`
 - Evidence Hub retains its separate shell and assets, as required by the integration guide and its protected design track. This slice does not restyle its analytics or remove actions. Settings remains available at its existing route, with the shared toolbar, pending FE-02's page design and navigation item.
 - Project tile monograms are derived from the actual project title; the reference's arbitrary demo tile letters are not hard-coded.
 
+The PR #81 review follow-up mirrors the existing dashboard link and next-step icons only in English (→ / ↗), including where the supplied English PNG shows backward arrows. Arabic icons are unchanged. The expanded Evidence Hub item uses tighter flex spacing and keeps its full label and Private badge on one line within the same 228px rail. Compact and 390px menu styling is unchanged. Shared-shell collapse/expand arrows already reverse correctly by locale; its group/account chevrons are vertical.
+
 ## Verification
 
 | Check | Output |
@@ -28,7 +30,7 @@ Production `/owner.php` loads only `ownerDashboardPageData($database, $context)`
 | Workspace browser gate | `OWNER_WORKSPACE_VISUAL_PASSED` |
 | Whitespace / encoding | `git diff --check`; changed text files use LF, UTF-8 without BOM |
 
-The new browser gate is registered and executed by `scripts/run-evidence-hub-required-gates.ps1`, using its disposable Apache, Playwright 1.58.2 and Chromium 1208. It checks ar/en × light/dark × 390/768/1280/1920/2560px; compact persistence and group restoration; denied storage; menu/account Escape and focus; native no-JS account forms; B-01 states; long mixed-direction text; AA text contrast; coarse targets; and short-window navigation with 12 temporary entries.
+The new browser gate is registered and executed by `scripts/run-evidence-hub-required-gates.ps1`, using its disposable Apache, Playwright 1.58.2 and Chromium 1208. It checks ar/en × light/dark × 390/768/1280/1920/2560px; compact persistence and group restoration; denied storage; locale arrow transforms and single-line Evidence Hub labels; menu/account Escape and focus; native no-JS account forms; B-01 states; long mixed-direction text; AA text contrast; coarse targets; and short-window navigation with 12 temporary entries.
 
 The existing workspace DOM assertion now finds the same seven real links inside native groups. Its exact routes, active item, escaped name and POST/CSRF checks remain. The flow assertion names B-01's loader instead of the retired dashboard aggregate; the frontend assertion follows the new presentation file and checks Experience in shared navigation rather than the old dashboard quick-action row. The integrated journey's first-name selector and single Add project link are preserved.
 

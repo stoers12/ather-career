@@ -114,6 +114,8 @@
 .owner-workspace-page .owner-compact-wordmark { display: none; }
 .owner-workspace-page .owner-nav-group:not([open]) > summary svg { transform: rotate(180deg); }
 @media (min-width:801px) {
+    .owner-workspace-page:not([data-owner-sidebar="compact"]) .owner-nav-item[href="/owner/evidence-hub"] { gap: 8px; }
+    .owner-workspace-page:not([data-owner-sidebar="compact"]) .owner-nav-item[href="/owner/evidence-hub"] > span { flex-shrink: 0; white-space: nowrap; }
     .owner-workspace-page[data-owner-sidebar="compact"] { --owner-sidebar-width: 72px; }
     .owner-workspace-page[data-owner-sidebar="compact"] .admin-sidebar { padding: 22px 10px; gap: 20px; }
     .owner-workspace-page[data-owner-sidebar="compact"] .owner-brand-row { display: grid; justify-items: center; gap: 18px; padding-block-end: 0; }
