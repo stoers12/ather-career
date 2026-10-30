@@ -18,6 +18,7 @@ require_once __DIR__ . '/onboarding_completions.php';
 require_once __DIR__ . '/owner_journey_cutover.php';
 require_once __DIR__ . '/profile_contact_types.php';
 require_once __DIR__ . '/project_publication.php';
+require_once __DIR__ . '/message_read_state.php';
 require_once __DIR__ . '/migration_schema_inspection.php';
 require_once __DIR__ . '/legacy_schema_migrations.php';
 
@@ -220,6 +221,7 @@ function recordMigration(PDO $database, array $migration): void
 
 function executeSqlMigration(PDO $database, array $migration): void
 {
+    if ($migration['version'] === '025' && $migration['name'] === 'message_read_state') { executeMessageReadStateMigration($database); return; }
     if ($migration['version'] === '022' && $migration['name'] === 'project_publication') { executeProjectPublicationMigration($database); return; }
     if ($migration['version'] === '021' && $migration['name'] === 'profile_contact_types') { executeProfileContactTypesMigration($database); return; }
     if ($migration['version'] === '020' && $migration['name'] === 'owner_journey_cutover') { executeOwnerJourneyCutoverMigration($database); return; }

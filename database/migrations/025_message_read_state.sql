@@ -1,0 +1,5 @@
+-- Guarded additive migration in database/message_read_state.php.
+-- Adds messages.read_at: NULL means the Owner has not opened the message.
+-- Messages received before this migration were already visible in the inbox,
+-- so they are marked read at their creation time (owner decision, B-03).
+-- A retry after interrupted DDL leaves every existing read_at unchanged.
