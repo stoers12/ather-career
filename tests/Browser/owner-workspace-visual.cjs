@@ -191,6 +191,7 @@ async function main() {
         assert.deepEqual(restrictedErrors, []);
         await restricted.close();
         await require('./owner-settings-checks.cjs')(browser, base, out, contrast);
+        await require('./owner-profile-checks.cjs')(browser, base, out, contrast);
         console.log('OWNER_WORKSPACE_VISUAL_PASSED: 20 layout combinations; compact persistence; mobile keyboard; native no-JS forms; B-01 states; AA contrast; coarse targets; short viewport; denied storage; locale arrow direction; single-line Evidence Hub.');
     } finally { await browser.close(); }
 }

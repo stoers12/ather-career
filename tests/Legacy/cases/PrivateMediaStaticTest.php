@@ -16,7 +16,7 @@ final class PrivateMediaStaticTest
         $profilePresentation = self::read('includes/profile_presentation.php');
         $projectPresentation = self::read('includes/project_presentation.php');
         $processor = self::read('includes/image_processor.php');
-        $ownerProfile = self::read('handlers/owner_profile.php');
+        $ownerProfile = self::read('handlers/owner_profile.php') . self::read('includes/owner_profile_presentation.php');
         $ownerProjects = self::read('handlers/owner_projects.php');
         $adminScript = self::read('public/assets/js/admin.js');
         $vhost = self::read('docker/apache/vhost.conf');

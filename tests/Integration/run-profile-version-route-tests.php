@@ -85,7 +85,7 @@ try {
     $typed = '  Unsaved <name>  '; $secrets[] = $typed;
     $body = profilePost($tab2, $old + ['full_name' => $typed, 'public_email_present' => '1', 'public_email_visible' => '1'], 409);
     profileTestAssert(str_contains($body, 'value="  Unsaved &lt;name&gt;  "') && str_contains($body, 'name="expected_profile_version" value="1"')
-        && preg_match('/name="public_email_visible"[^>]* checked/', $body) === 1 && str_contains($body, 'Reload saved profile'), 'Conflict discarded input/choice/version or lacks explicit recovery.');
+        && preg_match('/name="public_email_visible"[^>]* checked/', $body) === 1 && str_contains($body, 'class="owner-profile-reload"><a href="owner_profile.php">'), 'Conflict discarded input/choice/version or lacks explicit recovery.');
     profileTestAssert($db->query("SELECT full_name FROM personal_info WHERE id=$id")->fetchColumn() === 'New current name', 'Stale form overwrote current name.');
     $form = profileForm($browserA); profilePost($browserA, $form + ['full_name' => 'New current name'], 303);
     profileTestAssert((int) profileForm($browserA)['expected_profile_version'] === (int) $form['expected_profile_version'] + 1, 'HTTP same-value save did not increment.');
@@ -183,7 +183,7 @@ try {
     $limitContext = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser($a), $portfolios[0]);
     for ($i = 0; $i <= OWNER_UPLOAD_RATE_LIMIT_ATTEMPTS; $i++) { if (!consumeOwnerUploadRateLimit($limitContext)['allowed']) { break; } }
     $body = profileUpload($browserA, $oldUpload, $png, 429);
-    profileTestAssert(str_contains($body, 'name="expected_profile_version" value="' . $oldUpload['expected_profile_version'] . '"') && str_contains($body, 'Reload saved profile'), 'Rate-limit denial rebound old upload to a fresh version.');
+    profileTestAssert(str_contains($body, 'name="expected_profile_version" value="' . $oldUpload['expected_profile_version'] . '"') && str_contains($body, 'class="owner-profile-reload"><a href="owner_profile.php">'), 'Rate-limit denial rebound old upload to a fresh version.');
     echo "PASS profile HTTP pre-handler upload rejection retains original token and explicit reload requirement\n";
     proc_terminate($process); proc_close($process); $process = null;
     $log = file_get_contents($root . '/private-http.log');

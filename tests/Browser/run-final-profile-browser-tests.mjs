@@ -13,6 +13,14 @@ let browser, context, diagnosticPage, stage='startup', operation='launch-browser
 function check(value,message) { if (!value) { const e=new Error('Assertion'); e.safeMessage=message; throw e; } }
 const form=p=>p.locator('form').filter({has:p.locator('input[name="action"][value="save_profile"]')});
 const version=p=>form(p).locator('[name="expected_profile_version"]').inputValue();
+// The Profile groups the final-profile and phone controls in a collapsed native disclosure.
+// Open it as a user would (its summary) before interacting; reads need no reveal.
+async function revealed(p,id) {
+  const control=p.locator('#'+id);
+  const closed=control.locator('xpath=ancestor::details[not(@open)]');
+  while (await closed.count()) await closed.first().locator(':scope > summary').click();
+  return control;
+}
 const labelFailure=label=>error=>{ error.safeOperation=label; throw error; };
 async function failureDiagnostics(p) {
   if (!p || p.isClosed()) return {available:false};
@@ -69,10 +77,10 @@ try {
 
   stage='exact values';
   const exact='  تخصص e\u0301 😀  ';
-  operation='select-country'; await p.locator('#country_code').selectOption('JO');
-  operation='select-profile-language'; await p.locator('#preferred_language').selectOption('ar');
-  operation='select-professional-status'; await p.locator('#professional_status').selectOption('student');
-  operation='fill-exact-specialization'; await p.locator('#specialization').fill(exact); await save(p);
+  operation='select-country'; await (await revealed(p,'country_code')).selectOption('JO');
+  operation='select-profile-language'; await (await revealed(p,'preferred_language')).selectOption('ar');
+  operation='select-professional-status'; await (await revealed(p,'professional_status')).selectOption('student');
+  operation='fill-exact-specialization'; await (await revealed(p,'specialization')).fill(exact); await save(p);
   operation='reload-exact-values';
   await p.reload();
   operation='verify-exact-values';
@@ -85,14 +93,14 @@ try {
   operation='fill-profile-email';
   await p.locator('#email').fill('browser-contact@example.test');
   operation='fill-primary-phone';
-  await p.locator('#phone_primary').fill('+962 79 456 7890');
+  await (await revealed(p,'phone_primary')).fill('+962 79 456 7890');
   operation='fill-secondary-phone';
-  await p.locator('#phone_secondary').fill('+962 78 765 4321');
+  await (await revealed(p,'phone_secondary')).fill('+962 78 765 4321');
   for (const id of ['public_email_visible','public_phone_visible']) {
     operation='inspect-contact-checkbox';
     check(await p.locator('label[for="'+id+'"]').count()===1 && await p.locator('#'+id).getAttribute('aria-describedby')===id+'-help','Independent checkbox label/help missing');
     check(!await p.locator('#'+id).isChecked(),'New Profile contact did not default private');
-    operation='focus-contact-checkbox'; await p.locator('#'+id).focus();
+    operation='focus-contact-checkbox'; await (await revealed(p,id)).focus();
     operation='toggle-contact-checkbox'; await p.keyboard.press('Space');
     check(await p.locator('#'+id).isChecked(),'Independent checkbox is not keyboard operable');
     operation='restore-contact-checkbox'; await p.keyboard.press('Space');
@@ -101,7 +109,7 @@ try {
   check(await p.locator('[name="public_contact_visible"],[name="public_contact_present"],[name="public_phone_secondary_visible"]').count()===0,'Retired/secondary visibility control appeared');
   for (const [email,phone] of [[false,false],[true,false],[false,true],[true,true]]) {
     operation='set-email-visibility'; await p.locator('#public_email_visible').setChecked(email);
-    operation='set-phone-visibility'; await p.locator('#public_phone_visible').setChecked(phone); await save(p);
+    operation='set-phone-visibility'; await (await revealed(p,'public_phone_visible')).setChecked(phone); await save(p);
     operation='reload-contact-visibility'; await p.reload();
     operation='verify-contact-visibility';
     check(await p.locator('#public_email_visible').isChecked()===email && await p.locator('#public_phone_visible').isChecked()===phone,'Save/reload coupled the contact choices');
@@ -111,35 +119,36 @@ try {
 
   stage='boundaries and errors';
   operation='fill-unicode-boundary';
-  await p.locator('#specialization').fill('😀'.repeat(150)); await save(p);
+  await (await revealed(p,'specialization')).fill('😀'.repeat(150)); await save(p);
   operation='verify-unicode-boundary';
   check(await p.locator('#specialization').inputValue()==='😀'.repeat(150),'HTML UTF-16 maxlength blocked valid 150 code points');
   operation='read-profile-version'; const token=await version(p);
-  operation='fill-invalid-specialization'; await p.locator('#specialization').fill('   '); await save(p,422);
+  operation='fill-invalid-specialization'; await (await revealed(p,'specialization')).fill('   '); await save(p,422);
   operation='verify-validation-retention';
   check(await p.locator('#specialization').inputValue()==='   ' && await version(p)===token && await p.locator('#specialization').getAttribute('aria-invalid')==='true','Validation lost input/token/accessibility');
   operation='capture-validation-screenshot'; await p.screenshot({path:path.join(shots,'profile-error-desktop.png'),fullPage:true});
   operation='clear-specialization';
-  await p.locator('#specialization').fill(''); await save(p);
+  await (await revealed(p,'specialization')).fill(''); await save(p);
   operation='verify-cleared-specialization';
   check(await p.locator('#specialization').inputValue()==='','Explicit clear not reflected');
-  operation='restore-exact-specialization'; await p.locator('#specialization').fill(exact); await save(p);
+  operation='restore-exact-specialization'; await (await revealed(p,'specialization')).fill(exact); await save(p);
   console.log('PASS final-profile browser Unicode boundary, bilingual validation, original token and explicit clear');
 
   stage='two tabs'; operation='open-second-profile-tab';
   const tab=await context.newPage(); diagnosticPage=tab; await tab.goto(base+'/owner_profile.php');
   operation='read-stale-profile-version'; const stale=await version(tab);
   diagnosticPage=p; operation='fill-current-specialization';
-  await p.locator('#specialization').fill('Current private specialization'); await save(p);
+  await (await revealed(p,'specialization')).fill('Current private specialization'); await save(p);
   diagnosticPage=tab;
   operation='check-conflicting-email-visibility'; await tab.locator('#public_email_visible').check();
-  operation='uncheck-conflicting-phone-visibility'; await tab.locator('#public_phone_visible').uncheck();
-  operation='select-conflicting-country'; await tab.locator('#country_code').selectOption('EG');
-  operation='fill-conflicting-specialization'; await tab.locator('#specialization').fill('Unsaved private specialization'); await save(tab,409);
+  operation='uncheck-conflicting-phone-visibility'; await (await revealed(tab,'public_phone_visible')).uncheck();
+  operation='select-conflicting-country'; await (await revealed(tab,'country_code')).selectOption('EG');
+  operation='fill-conflicting-specialization'; await (await revealed(tab,'specialization')).fill('Unsaved private specialization'); await save(tab,409);
   operation='verify-conflict-retention';
   check(await version(tab)===stale && await tab.locator('#country_code').inputValue()==='EG' && await tab.locator('#specialization').inputValue()==='Unsaved private specialization','Conflict lost choices/input/original version');
   check(await tab.locator('#public_email_visible').isChecked() && !await tab.locator('#public_phone_visible').isChecked(),'Conflict discarded independent visibility choices');
   check(await tab.getByRole('link',{name:/Reload saved profile/}).count()===1,'Explicit conflict recovery missing');
+  check(await tab.locator('#country_code').isVisible() && await tab.locator('#specialization').isVisible(),'Conflict hid the retained additional details');
   operation='set-mobile-conflict-viewport'; await tab.setViewportSize({width:390,height:844});
   operation='verify-mobile-conflict';
   check(tab.viewportSize().width===390 && tab.viewportSize().height===844,'Conflict screenshot is not at the mobile viewport');
@@ -149,7 +158,7 @@ try {
   operation='capture-mobile-conflict'; await tab.screenshot({path:path.join(shots,'profile-conflict-mobile.png'),fullPage:true});
   operation='close-conflict-tab'; await tab.close();
   diagnosticPage=p; operation='reload-after-conflict'; await p.reload();
-  operation='restore-specialization-after-conflict'; await p.locator('#specialization').fill(exact); await save(p);
+  operation='restore-specialization-after-conflict'; await (await revealed(p,'specialization')).fill(exact); await save(p);
   console.log('PASS final-profile browser two-tab conflict retains new choices and original version without replay');
 
   stage='responsive controls';
@@ -158,7 +167,7 @@ try {
     await p.setViewportSize({width,height:1000});
     for (const id of ['country_code','preferred_language','professional_status','specialization','public_email_visible','public_phone_visible']) {
       operation='inspect-responsive-control-bounds';
-      const box=await p.locator('#'+id).boundingBox(); check(box && box.x>=0 && box.x+box.width<=width+1,'Control exceeds viewport');
+      const box=await (await revealed(p,id)).boundingBox(); check(box && box.x>=0 && box.x+box.width<=width+1,'Control exceeds viewport');
       operation='focus-responsive-control'; await p.locator('#'+id).focus();
       operation='verify-responsive-focus';
       check(await p.locator('#'+id).evaluate(e=>document.activeElement===e),'Control cannot receive keyboard focus');

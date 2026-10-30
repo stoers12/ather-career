@@ -1,0 +1,69 @@
+/* Profile keeps the shared workspace tokens, controls and native forms. */
+.owner-profile-heading { margin-block-end: 27px; }
+.owner-profile-heading h1 { font-size: calc(32px * var(--owner-text-scale,1)); line-height: 1.4; }
+.owner-profile-heading p { margin-block-start: 8px; color: var(--admin-muted); font-size: calc(13px * var(--owner-text-scale,1)); }
+.owner-profile-identity { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; min-block-size: 94px; padding: 20px; margin-block-end: 20px; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-surface); }
+.owner-profile-avatar { display: grid; place-items: center; flex: 0 0 52px; inline-size: 52px; block-size: 52px; overflow: hidden; border-radius: 50%; background: var(--owner-soft); color: var(--admin-primary); font: 23px Georgia,serif; }
+.owner-profile-avatar img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+.owner-profile-name { min-inline-size: 0; max-inline-size: 100%; }
+.owner-profile-name h2 { font-size: calc(16px * var(--owner-text-scale,1)); }
+.owner-profile-name p { margin-block-start: 3px; color: var(--admin-muted); font-size: calc(12px * var(--owner-text-scale,1)); }
+.owner-profile .completion { display: grid; gap: 6px; inline-size: 160px; margin-inline-start: auto; }
+.owner-profile .completion-header { display: flex; justify-content: space-between; gap: 14px; font-size: calc(11px * var(--owner-text-scale,1)); }
+.owner-profile progress { inline-size: 100%; block-size: 6px; border: 0; border-radius: 8px; accent-color: var(--admin-primary); }
+.owner-profile progress::-webkit-progress-bar { background: var(--owner-soft); border-radius: 8px; }
+.owner-profile progress::-webkit-progress-value { background: var(--admin-primary); border-radius: 8px; }
+.owner-profile-photo { min-inline-size: 0; max-inline-size: 100%; }
+.owner-profile-photo summary { padding: 8px 10px; border: 1px solid var(--admin-border); border-radius: 6px; color: var(--admin-primary); font-size: calc(12px * var(--owner-text-scale,1)); cursor: pointer; }
+.owner-profile-photo[open] { flex-basis: 100%; }
+.owner-profile-photo-body { padding-block-start: 18px; }
+.profile-photo-controls h2 { font-size: calc(16px * var(--owner-text-scale,1)); }
+.profile-photo-controls .photo-intro { color: var(--admin-muted); font-size: calc(12px * var(--owner-text-scale,1)); }
+.profile-photo-controls form { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin-block-start: 12px; }
+.profile-photo-controls .form-field { flex: 1 1 250px; }
+.owner-profile-nav { display: flex; flex-wrap: wrap; gap: 18px; border-block-end: 1px solid var(--admin-border); margin-block-end: 20px; }
+.owner-profile-nav a { display: inline-flex; align-items: center; min-block-size: 56px; padding: 12px 3px; border-block-end: 2px solid transparent; color: var(--admin-muted); font-size: calc(13px * var(--owner-text-scale,1)); text-decoration: none; }
+.owner-profile-nav a:hover, .owner-profile-nav a[aria-current="location"] { color: var(--admin-primary); border-color: var(--admin-primary); }
+.owner-profile-form, .owner-profile-skills { min-inline-size: 0; padding: 25px; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-surface); }
+.owner-profile-form { margin: 0; }
+.owner-profile-panel { scroll-margin-block-start: 20px; }
+.owner-profile-panel:not([hidden]) + .owner-profile-panel:not([hidden]) { margin-block-start: 24px; padding-block-start: 24px; border-block-start: 1px solid var(--admin-border); }
+.owner-profile-panel .form-grid { gap: 26px 16px; }
+.owner-profile .form-field > span:first-child { font-size: calc(13px * var(--owner-text-scale,1)); }
+.owner-profile :is(input:not([type="hidden"]):not([type="checkbox"]),textarea,select) { min-block-size: 48px; border-color: var(--admin-input-border); border-radius: 6px; font-size: calc(14px * var(--owner-text-scale,1)); }
+.owner-profile textarea { min-block-size: 112px; }
+.owner-profile :is(input,textarea,select)[aria-invalid="true"] { border-color: var(--admin-danger); }
+.owner-profile .form-hint { font-size: calc(11px * var(--owner-text-scale,1)); }
+.owner-profile .checkbox-field { align-items: center; min-block-size: 44px; font-size: calc(13px * var(--owner-text-scale,1)); }
+.owner-profile .form-field-full:has(.checkbox-field) { padding: 13px 18px; border: 1px solid var(--admin-border); border-radius: 7px; background: var(--admin-raised); }
+.owner-profile-extra { margin-block-start: 20px; }
+.owner-profile-extra summary { min-block-size: 44px; padding-block: 9px; font-size: calc(12px * var(--owner-text-scale,1)); color: var(--admin-primary); cursor: pointer; }
+.owner-profile-extra > .form-grid { margin-block-start: 18px; }
+.owner-profile-save { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-block-start: 22px; padding-block-start: 18px; border-block-start: 1px solid var(--admin-border); }
+.owner-profile-save-status { display: inline-flex; align-items: center; gap: 6px; margin-inline-end: auto; max-inline-size: 100%; color: var(--admin-muted); font-size: calc(11px * var(--owner-text-scale,1)); }
+.owner-profile-save svg { inline-size: 16px; block-size: 16px; }
+.owner-profile-save :is(a,button) { font-size: calc(12px * var(--owner-text-scale,1)); border-radius: 6px; }
+.owner-profile-save .button-link { border-color: transparent; background: transparent; }
+.owner-profile-reload { margin-block-end: 20px; }
+.owner-profile-skills .section-heading-row { margin-block: 0 20px; }
+.owner-profile-skills .skills-chips { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,340px),1fr)); gap: 12px; margin-block-end: 24px; }
+.owner-profile-skills .skill-row { display: flex; align-items: start; gap: 8px; min-inline-size: 0; padding: 12px; border: 1px solid var(--admin-border); border-radius: 7px; background: var(--admin-raised); }
+.owner-profile-skills .skill-row form { margin: 0; }
+.owner-profile-skills .skill-row form:first-child { display: grid; flex: 1; min-inline-size: 0; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+.owner-profile-skills .skill-row .field-error { grid-column: 1/-1; }
+.owner-profile-skills .skill-add-form { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin: 0; max-inline-size: 620px; }
+.owner-profile-skills .skill-add-form .form-field { flex: 1 1 220px; }
+@media (max-width:800px) {
+    .owner-profile-heading h1 { font-size: calc(29px * var(--owner-text-scale,1)); }
+    .owner-profile-identity { padding: 18px; }
+    .owner-profile .completion { inline-size: 100%; margin: 0; }
+    .owner-profile-nav { gap: 9px; }
+    .owner-profile-nav a { font-size: calc(12px * var(--owner-text-scale,1)); }
+    .owner-profile-form, .owner-profile-skills { padding: 20px 17px; }
+    .owner-profile-save-status { flex-basis: 100%; }
+    .owner-profile-save :is(a,button) { flex: 1; }
+    .owner-profile-skills .skill-row { flex-wrap: wrap; }
+    .owner-profile-skills .skill-row form:first-child { flex-basis: 100%; }
+    .owner-profile :is(input:not([type="hidden"]):not([type="checkbox"]),textarea,select) { font-size: calc(16px * var(--owner-text-scale,1)); }
+}
+@media (pointer:coarse) { .owner-profile-photo summary { min-block-size: 44px; } }

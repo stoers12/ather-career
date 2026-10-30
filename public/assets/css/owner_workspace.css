@@ -192,25 +192,10 @@
 .owner-workspace-page :where(.button-secondary,.button-link):hover { background: var(--owner-soft); border-color: var(--admin-primary); }
 .owner-workspace-page :where(.button-danger) { color: var(--admin-danger); border-color: var(--admin-danger); }
 .owner-workspace-page :where(.button-danger):hover { color: var(--admin-danger-hover); background: var(--owner-soft); }
-.owner-workspace-page :where(.profile-photo-card,.project-form-card,.publication-card,.message-card,.profile-summary) { padding: 22px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface); box-shadow: var(--admin-shadow); }
-.owner-workspace-page :where(.profile-photo-card,.project-form-card,.profile-summary) { margin-block-end: 20px; }
-.owner-workspace-page .profile-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
-.owner-workspace-page .profile-summary > div { min-inline-size: 0; max-inline-size: 100%; overflow-wrap: anywhere; }
-.owner-workspace-page .profile-photo-preview img { inline-size: 100%; block-size: 100%; object-fit: cover; }
-.owner-workspace-page .profile-summary strong, .owner-workspace-page .profile-summary span { display: block; }
-.owner-workspace-page :where(.muted,.form-hint,.photo-intro,.message-meta) { color: var(--admin-muted); font-size: calc(14px * var(--owner-text-scale, 1)); }
-.owner-workspace-page .completion { display: grid; gap: 7px; min-inline-size: 180px; margin-inline-start: auto; }
-.owner-workspace-page .completion-header { display: flex; justify-content: space-between; gap: 14px; font-size: calc(13px * var(--owner-text-scale, 1)); }
-.owner-workspace-page .completion progress { inline-size: 100%; block-size: 8px; border: 0; border-radius: 8px; accent-color: var(--admin-primary); }
-.owner-workspace-page .completion progress::-webkit-progress-bar { background: var(--owner-soft); border-radius: 8px; }
-.owner-workspace-page .completion progress::-webkit-progress-value { background: var(--admin-primary); border-radius: 8px; }
-.owner-workspace-page .profile-photo-card { display: flex; align-items: start; gap: 20px; }
-.owner-workspace-page .profile-photo-preview { display: grid; flex: 0 0 112px; place-items: center; overflow: hidden; inline-size: 112px; block-size: 112px; border-radius: 50%; background: var(--owner-soft); color: var(--admin-primary); font-size: calc(36px * var(--owner-text-scale, 1)); }
-.owner-workspace-page .profile-photo-controls { min-inline-size: 0; }
-.owner-workspace-page .profile-photo-controls h2 { margin-block-end: 6px; }
-.owner-workspace-page .profile-photo-controls form { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; margin-block: 12px 0; }
-.owner-workspace-page .profile-photo-controls .form-field { flex: 1 1 260px; }
-.owner-workspace-page :where(.profile-form,.project-form,.skill-add-form,.publication-primary-action,.publication-destructive-action) { margin: 0; }
+.owner-workspace-page :where(.project-form-card,.publication-card,.message-card) { padding: 22px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface); box-shadow: var(--admin-shadow); }
+.owner-workspace-page :where(.project-form-card) { margin-block-end: 20px; }
+.owner-workspace-page :where(.muted,.form-hint,.message-meta) { color: var(--admin-muted); font-size: calc(14px * var(--owner-text-scale, 1)); }
+.owner-workspace-page :where(.profile-form,.project-form,.publication-primary-action,.publication-destructive-action) { margin: 0; }
 .owner-workspace-page .profile-form { margin-block-end: 24px; padding: 22px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface); }
 .owner-workspace-page .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px 20px; }
 .owner-workspace-page .form-field { display: block; min-inline-size: 0; }
@@ -232,13 +217,6 @@
 .owner-workspace-page .form-card-heading p { margin-block-start: 6px; color: var(--admin-muted); }
 .owner-workspace-page .current-project-image { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .owner-workspace-page .admin-preview { display: block; inline-size: 112px; block-size: 72px; object-fit: cover; border: 1px solid var(--admin-border); border-radius: 8px; }
-.owner-workspace-page .skills-chips { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,290px),1fr)); gap: 12px; margin-block-end: 16px; }
-.owner-workspace-page .skill-row { display: flex; align-items: start; min-inline-size: 0; max-inline-size: 100%; gap: 8px; padding: 10px; border: 1px solid var(--admin-border); border-radius: 10px; background: var(--owner-soft); font-size: calc(14px * var(--owner-text-scale, 1)); }
-.owner-workspace-page .skill-row form { margin: 0; }
-.owner-workspace-page .skill-row form:first-child { display: grid; flex: 1; min-inline-size: 0; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
-.owner-workspace-page .skill-row .field-error { grid-column: 1/-1; }
-.owner-workspace-page .skill-add-form { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; max-inline-size: 620px; }
-.owner-workspace-page .skill-add-form .form-field { flex: 1 1 220px; }
 .owner-workspace-page .section-heading-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-block: 24px 14px; }
 .owner-workspace-page .section-heading-row > div { min-inline-size: 0; }
 .owner-workspace-page .search-field { display: block; max-inline-size: 100%; }
@@ -299,10 +277,7 @@
     .owner-workspace-page .admin-page-header { gap: 16px; margin-block-end: 20px; }
     .owner-workspace-page .admin-page-header-actions { inline-size: 100%; }
     .owner-workspace-page .form-grid, .owner-workspace-page .admin-project-grid { grid-template-columns: minmax(0,1fr); }
-    .owner-workspace-page :where(.profile-photo-card,.project-form-card,.publication-card,.message-card,.profile-summary,.profile-form) { padding: 18px; }
-    .owner-workspace-page .profile-photo-card { flex-direction: column; }
-    .owner-workspace-page .profile-summary { align-items: start; }
-    .owner-workspace-page .completion { inline-size: 100%; min-inline-size: 0; margin: 0; }
+    .owner-workspace-page :where(.project-form-card,.publication-card,.message-card,.profile-form) { padding: 18px; }
     .owner-workspace-page .card-actions { align-items: stretch; }
     .owner-workspace-page .card-actions form { inline-size: 100%; }
     .owner-workspace-page .form-actions > :where(a,button) { flex: 1 1 130px; }

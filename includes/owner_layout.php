@@ -21,6 +21,7 @@ function ownerLayoutStart(string $title, string $activePage, bool $themeCapable 
     $isEvidenceHub = $activePage === 'evidence_hub';
     $isDashboard = $activePage === 'dashboard';
     $isSettings = $activePage === 'settings';
+    $isProfile = $activePage === 'profile';
     $isEvidenceHubOverview = $isEvidenceHub && $title === 'Evidence Hub';
     $locale = ($workspace['locale'] ?? ownerLocale()) === 'en' ? 'en' : 'ar';
     $workspace['locale'] = $locale;
@@ -51,7 +52,9 @@ function ownerLayoutStart(string $title, string $activePage, bool $themeCapable 
     <?php if ($isDashboard): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_dashboard.css'); ?>"><?php endif; ?>
     <?php if ($isSettings): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_settings.css'); ?>"><?php endif; ?>
     <?php endif; ?>
+    <?php if ($isProfile): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_profile.css'); ?>"><?php endif; ?>
     <script src="<?php echo versionedAssetUrl('assets/js/admin.js'); ?>" defer></script>
+    <?php if ($isProfile): ?><script src="<?php echo versionedAssetUrl('assets/js/owner_profile.js'); ?>" defer></script><?php endif; ?>
     <?php if ($isEvidenceHub): ?>
     <script src="<?php echo versionedAssetUrl('assets/js/evidence_hub.js'); ?>" defer></script>
     <?php endif; ?>
