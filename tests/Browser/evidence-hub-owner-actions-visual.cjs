@@ -186,6 +186,8 @@ const watchdog = setTimeout(async () => {
         const postDismissCount = await actionableCards(page).count();
         console.log(`POST_DISMISS_ACTIONABLE_CANDIDATE_COUNT=${postDismissCount}`);
         expectState(postDismissCount === postSnoozeCount - 1, 'dismiss-recommendation-removed', `expected ${postSnoozeCount - 1} remaining actionable recommendations; received ${postDismissCount}`);
+        expectState(await page.getByRole('heading', { name: 'No current recommendations', exact: true }).isVisible(), 'empty-next-steps', 'Empty recommendations must describe only current recommendations');
+        expectState(await page.locator('.evidence-hub-completion-ring').count() === 0 && Number(await page.locator('#overview progress').getAttribute('value')) < 10000, 'incomplete-after-disposition', 'Dismissing all next steps must not claim 100% evidence');
         expectState(errors.length === 0, 'dismiss-browser-errors', `expected no browser errors; received ${errors.length}`);
 
         await page.setViewportSize({ width: 1280, height: 800 });
@@ -197,6 +199,7 @@ const watchdog = setTimeout(async () => {
         expectState(errors.length === 0, 'browser-errors', `expected no browser errors; received ${errors.length}`);
 
         if (watchdogTimedOut) fail('watchdog', 'step watchdog timed out');
+        await require('./evidence-hub-views-browser.cjs')(page, baseUrl);
         console.log('PASS Evidence Hub R4 real Edge actions');
     } catch (error) {
         failureCheckpoint ??= checkpoint;

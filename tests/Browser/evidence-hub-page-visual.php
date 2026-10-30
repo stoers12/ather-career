@@ -9,6 +9,7 @@ if (PHP_SAPI !== 'cli' && getenv('EVIDENCE_HUB_VISUAL_TEST') !== '1') {
 
 require_once __DIR__ . '/../../includes/evidence_hub_recommendations.php';
 require_once __DIR__ . '/../../includes/owner_layout.php';
+require_once __DIR__ . '/../../includes/project_evidence_view.php';
 require_once __DIR__ . '/../../includes/evidence_hub_owner_page_presentation.php';
 require_once __DIR__ . '/../../includes/evidence_hub_contract_mapper.php';
 require_once __DIR__ . '/../Support/evidence-hub-partial-visual-facts.php';
@@ -91,8 +92,8 @@ if ($variant === 'partial') {
         $model['recommendations'][] = [
             'project_title' => $recommendation['rule_id'] === 'complete_portfolio_publication' ? null : 'Customer reporting platform',
             'edit_url' => match ($recommendation['rule_id']) {
-                'complete_project_evidence' => '/owner/projects/8/evidence',
-                'review_unmapped_technology' => '/owner_projects.php?edit=8',
+                'complete_project_evidence' => '/owner/projects/8/evidence?mode=write',
+                'review_unmapped_technology' => '#technologies',
                 default => null,
             },
         ];
@@ -106,6 +107,14 @@ if ($variant === 'partial') {
 }
 $tokens = array_fill(0, count($contract['recommendations']), ['snooze' => 'visual-snooze-token', 'dismiss' => 'visual-dismiss-token']);
 $_SESSION = ['csrf_token' => str_repeat('a', 64)];
-ownerLayoutStart('Evidence Hub', 'evidence_hub', true);
-renderEvidenceHubOwnerPage($contract, $model, $tokens);
+$locale = ($_GET['lang'] ?? 'en') === 'ar' ? 'ar' : 'en';
+ownerLayoutStart('Evidence Hub', 'evidence_hub', true, ['locale' => $locale]);
+$model['technology_review'] = $partialFacts['technology_review'] ?? ['unmapped' => [], 'owner_mapped' => [], 'proposals' => [], 'categories' => [], 'mapping_options' => []];
+$model['skill_gaps'] ??= [];
+foreach ($model['projects'] as &$visualProject) {
+    $visualUrls = projectEvidenceViewUrls($visualProject['id']);
+    $visualProject += ['evidence_read_url' => $visualUrls['read'], 'evidence_write_url' => $visualUrls['write'], 'sources_url' => $visualUrls['sources'], 'sources' => []];
+}
+unset($visualProject);
+renderEvidenceHubOwnerPage($contract, $model, $tokens, '', ['kind' => 'none'], $locale);
 ownerLayoutEnd();

@@ -36,9 +36,10 @@ const hintVisible = (page, id) => page.locator(`#measurable-outcome [data-eviden
         await page.goto(`${baseUrl}/owner/evidence-hub`, { waitUntil: 'domcontentloaded' });
         const editHref = await page.locator('a[href^="/owner/projects/"][href$="/evidence"]').first().getAttribute('href');
         expectState(/^\/owner\/projects\/[1-9][0-9]*\/evidence$/.test(editHref || ''), 'hub exposes a canonical evidence edit link');
-        const response = await page.goto(`${baseUrl}${editHref}`, { waitUntil: 'domcontentloaded' });
+        const response = await page.goto(`${baseUrl}${editHref}?mode=write&part=measurable_outcome`, { waitUntil: 'domcontentloaded' });
         expectState(response?.status() === 200, `editor returned ${response?.status() ?? 'none'}`);
 
+        await page.locator('[data-evidence-step=measurable_outcome]').click();
         mark('starter-insert');
         const textarea = page.locator('#evidence-measurable-outcome');
         const insert = page.locator('#measurable-outcome [data-evidence-insert-starter]');
@@ -70,7 +71,7 @@ const hintVisible = (page, id) => page.locator(`#measurable-outcome [data-eviden
         const noJsContext = await context.browser().newContext({ javaScriptEnabled: false });
         await noJsContext.addCookies(ownerCookies);
         const noJs = await noJsContext.newPage();
-        await noJs.goto(`${baseUrl}${editHref}`, { waitUntil: 'domcontentloaded' });
+        await noJs.goto(`${baseUrl}${editHref}?mode=write&part=measurable_outcome`, { waitUntil: 'domcontentloaded' });
         expectState(await noJs.locator('#measurable-outcome [data-evidence-starter] bdi').textContent() === outcomeStarter, 'starter text is not readable without JavaScript');
         expectState(!await noJs.locator('#measurable-outcome [data-evidence-insert-starter]').isVisible(), 'insert control must stay hidden without JavaScript');
         await noJsContext.close();

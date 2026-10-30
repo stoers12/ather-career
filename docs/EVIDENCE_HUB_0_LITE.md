@@ -2,6 +2,14 @@
 
 Evidence Hub (مركز الأدلة / تحليلات مسارك) is a private future Owner capability. EVIDENCE-HUB-1A adds private project evidence storage and a deterministic internal text evaluator. EVIDENCE-HUB-1B.1 adds only internal Owner-scoped aggregation hardening, factual progress semantics, and exact taxonomy mapping; it adds no route, UI, recommendation, integration, worker, job, or dependency.
 
+## FE-07 private presentation (D1–D5, B-07)
+
+The Owner route now has **Records** and **Your path insights**, in the separate Evidence workspace shell. Native anchors expose both layers without JavaScript; enhanced tabs switch locally without consuming immediate Undo with another request. Existing section and project fragments remain usable. Records retain the bounded keyboard carousel, three recommendation actions, real three-field quality states/reasons, source counts and client-only filters. Empty recommendations do not imply complete evidence. Insights retain coverage, confidence and its basis/sample detail, maturity, factual progress/publication counts, the technology map and all technology review forms. The complete `skill_gaps` list is supplied by B-07 independently of recommendations and dispositions; only display names are rendered. Credentials remains visibly unavailable.
+
+The private record route honours [B-07 view modes](contracts/evidence-hub-views.md): canonical **Read** contains saved text and native source forms; **Write** contains exactly the existing three-field evidence form and no source actions. Its four-part stepper retains all fields in one form, and Sources explains saving first. Without scripts all four parts are stacked. A text rejection opens/focuses the first invalid part and retains unsaved status. Writing aids remain guidance only; quality badges show the last server assessment. A frontend departure warning protects edited text, including inserted starters. Text save still returns to the hub with immediate Undo; the saved card links to source management. Following another page ends the Undo opportunity as before. Source addition saves immediately and has no text-Undo claim.
+
+The final reference palette is scoped to `body.evidence-hub-page`, with the existing appearance resolver and system-dark fallback when scripts are unavailable. Owner locale is explicit through `evidenceHubText()`. The unchanged privacy boundary and disclosure apply to every layer and record. No rule, mapper, schema, live switch, request handling, validation, authorization or database behavior changes in this slice. The approved capability mapping and test preservation plan remain in [COMPARISON.md](reviews/fe-07/COMPARISON.md); implementation verification and visual differences are recorded in [the review README](reviews/fe-07/README.md).
+
 ## Repository inventory and approved gaps
 
 | Fact | Source | Status | Contract treatment |

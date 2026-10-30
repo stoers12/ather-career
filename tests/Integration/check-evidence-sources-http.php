@@ -51,6 +51,17 @@ try {
     $csrfA = $csrf($page);
     $csrfB = $csrf($get($cookieB, $projectB));
 
+    // Native save -> hub/Undo -> Read/Sources: source forms never coexist with editable text.
+    $write = httpEvidenceRequest('GET', $route($projectA) . '?mode=write&part=personal_role', null, $cookieA);
+    requireHttp($write['status'] === 200 && substr_count($write['body'], '<textarea') === 3 && !str_contains($write['body'], 'value="add_source"') && !str_contains($write['body'], 'value="remove_source"'), 'Write mode exposes a source mutation or loses text fields.');
+    $evidence = ['csrf_token' => $csrfA, 'problem' => 'Synthetic source journey context.', 'personal_role' => 'I prepared the synthetic report.', 'measurable_outcome' => 'A report was available for review.'];
+    $textSaved = $post($cookieA, $projectA, $evidence);
+    requireHttp($textSaved['status'] === 303 && str_contains($textSaved['headers'], 'Location: /owner/evidence-hub#project-' . $projectA), 'Text did not save before managing sources.');
+    $savedHub = httpEvidenceRequest('GET', '/owner/evidence-hub', null, $cookieA);
+    requireHttp(str_contains($savedHub['body'], 'Undo last evidence update'), 'The native save journey lost immediate Undo.');
+    $savedRead = $get($cookieA, $projectA);
+    requireHttp(!str_contains($savedRead['body'], '<textarea') && str_contains($savedRead['body'], 'Synthetic source journey context.'), 'Read/Sources does not contain only saved text.');
+
     $add = ['csrf_token' => $csrfA, 'action' => 'add_source', 'title' => ' Synthetic report ', 'url' => 'https://example.test/report?a=1&b=2', 'note' => ''];
     requireHttp($post($cookieA, $projectA, ['csrf_token' => str_repeat('0', 64)] + $add)['status'] === 403, 'Invalid CSRF was accepted.');
     requireHttp($post($cookieB, $projectA, ['csrf_token' => $csrfB] + $add)['status'] === 404, 'Owner B added a source to Owner A\'s project.');
@@ -67,6 +78,9 @@ try {
     requireHttp(count($stored) === 1 && (int) $stored[0]['project_id'] === $projectA && $stored[0]['title'] === 'Synthetic report' && $stored[0]['url'] === 'https://example.test/report?a=1&b=2' && $stored[0]['note'] === null, 'The source was not stored once, trimmed, with a NULL note.');
     $after = $get($cookieA, $projectA);
     requireHttp(str_contains($after['body'], 'href="https://example.test/report?a=1&amp;b=2" rel="noopener noreferrer"') && str_contains($after['body'], '1 of 10 sources'), 'The editor does not list the added source.');
+    $persistedText = $database->prepare('SELECT problem_statement, personal_role, measurable_outcome FROM projects WHERE id = :id AND portfolio_id = :portfolio');
+    $persistedText->execute(['id' => $projectA, 'portfolio' => $portfolioA]);
+    requireHttp($persistedText->fetch(PDO::FETCH_ASSOC) === ['problem_statement' => $evidence['problem'], 'personal_role' => $evidence['personal_role'], 'measurable_outcome' => $evidence['measurable_outcome']], 'A source action discarded the text saved before it.');
     requireHttp(!str_contains($get($cookieB, $projectB)['body'], 'example.test/report'), 'The source crossed into Owner B.');
     $hub = httpEvidenceRequest('GET', '/owner/evidence-hub', null, $cookieA);
     requireHttp($hub['status'] === 200 && str_contains($hub['body'], 'Manage sources') && str_contains($hub['body'], 'href="/owner/projects/' . $projectA . '/evidence#sources"'), 'The Evidence Hub does not summarize the project\'s sources.');

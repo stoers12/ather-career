@@ -16,7 +16,7 @@ const hints = {
             const response = await page.goto(`${baseUrl}/tests/Browser/evidence-hub-text-rules-visual.php?lang=${locale}`);
             assert.equal(response.status(),200,`${locale}/${width}: fixture response`);
             assert.equal(await page.locator('html').getAttribute('dir'),locale === 'ar' ? 'rtl' : 'ltr');
-            for (const summary of await page.locator('.evidence-hub-project-disclosure > summary').all()) await summary.click();
+            for (const summary of await page.locator('.evidence-hub-project-disclosure > summary').all()) { if (!await summary.evaluate(node => node.parentElement.open)) await summary.click(); }
             for (const hint of hints[locale]) {
                 const message = page.getByText(hint,{ exact: true }).first();
                 assert.equal(await message.isVisible(),true,`${locale}/${width}: localized hint visible without JavaScript`);

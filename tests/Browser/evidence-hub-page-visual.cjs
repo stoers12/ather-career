@@ -41,28 +41,30 @@ async function main() {
             await context.close();
         }
         const hub = variant => `${base}/tests/Browser/evidence-hub-page-visual.php?variant=${variant}`;
-        const edit = `${base}/tests/Browser/owner-project-evidence-visual.php`;
+        const edit = `${base}/tests/Browser/owner-project-evidence-visual.php?mode=write`;
         await shot('partial-desktop-light-1440x900', hub('partial'), 1440, 900, false, async page => {
-            if (await page.locator('.evidence-hub-project-card:visible').count() !== 6) throw new Error('Initial project count is not six');
-            if (!(await page.locator('.evidence-hub-show-more').isVisible())) throw new Error('Show more is missing');
+            if (await page.locator('.evidence-hub-project-card').count() !== 8) throw new Error('Project inventory changed');
+            await page.locator('[data-evidence-carousel-next]').click();
+            await page.locator('[data-evidence-carousel-next]').focus();
+            await page.keyboard.press('End');
+            if (!await page.locator('#project-1').evaluate(node => !node.inert)) throw new Error('Navigator cannot reach the last record');
+
         });
         await shot('partial-desktop-dark-1440x900', hub('partial'), 1440, 900, true);
         await shot('zero-desktop-light-1440x900', hub('zero'), 1440, 900);
         await shot('ready-desktop-light-1440x900', hub('ready'), 1440, 900, false, async page => {
-            if (await page.locator('.evidence-hub-show-more').isVisible()) {
-                const state = await page.locator('.evidence-hub-show-more').evaluate(button => ({ hidden: button.hidden, display: getComputedStyle(button).display }));
-                throw new Error(`Show more appears with three projects: ${JSON.stringify(state)}`);
-            }
+            if (await page.locator('[data-evidence-carousel-navigation]').isVisible()) throw new Error('Navigator appears unnecessarily with three projects');
         });
         await shot('partial-mobile-light-390x844', hub('partial'), 390, 844);
         await shot('partial-mobile-dark-390x844', hub('partial'), 390, 844, true);
         await shot('partial-mobile-light-320x700', hub('partial'), 320, 700);
         await shot('project-expanded', hub('partial'), 1440, 900, false, async page => {
-            await page.locator('#project-8 summary').click();
+            await page.locator('#project-8 .evidence-hub-project-disclosure summary').click();
+            await page.locator('#project-8 .evidence-hub-project-disclosure summary').click();
             await page.locator('#project-8').scrollIntoViewIfNeeded();
         }, false);
         await shot('project-filter-complete', hub('partial'), 1440, 900, false, async page => {
-            await page.getByRole('button', { name: 'Complete', exact: true }).click();
+            await page.locator('[data-evidence-filter=complete]').click();
             if (await page.locator('.evidence-hub-project-card:visible').count() !== 1) throw new Error('Complete filter is wrong');
             await page.locator('#project-evidence').scrollIntoViewIfNeeded();
         }, false);
@@ -71,6 +73,7 @@ async function main() {
             await page.locator('#next-steps').scrollIntoViewIfNeeded();
         }, false);
         await shot('technologies-and-progress', hub('partial'), 1440, 900, false, async page => {
+            await page.locator('[data-evidence-layer=insights]').click();
             await page.locator('#technologies').scrollIntoViewIfNeeded();
         }, false);
         await shot('evidence-edit-desktop-light', edit, 1440, 900);
@@ -88,6 +91,7 @@ async function main() {
         await targetPage.goto(hub('partial') + '#project-1', { waitUntil: 'networkidle' });
         if (!(await targetPage.locator('#project-1').isVisible())) throw new Error('Targeted project was hidden');
         await targetContext.close();
+        await require('./evidence-hub-views-visual.cjs')(browser, base, output);
         console.log(JSON.stringify({ result: 'PASS', screenshots: shots }, null, 2));
     } finally {
         await browser.close();

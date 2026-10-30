@@ -138,7 +138,7 @@ final class EvidenceHubOwnerRoutePresenterTest
     {
         $layout = self::read('includes/owner_layout.php');
         $presentation = self::read('includes/evidence_hub_owner_presentation.php');
-        foreach (["['evidence_hub', 'Evidence Hub', 'blocks', '/owner/evidence-hub']", 'aria-current="page"', 'href="#main-content"', 'Back to dashboard'] as $required) {
+        foreach (["['evidence_hub', 'Evidence Hub', 'book-open-check', '/owner/evidence-hub']", 'aria-current="page"', 'href="#main-content"', 'Back to dashboard'] as $required) {
             phase2Assert(str_contains($layout, $required), "Owner navigation accessibility is missing {$required}.");
         }
         foreach (['aria-labelledby="evidence-hub-status-title"', 'aria-labelledby="evidence-hub-technology-title"', 'aria-labelledby="evidence-hub-recommendations-title"', 'aria-label="Evidence Hub recommendation"', 'ownerEscapeHtml'] as $required) {
@@ -195,11 +195,11 @@ final class EvidenceHubOwnerRoutePresenterTest
         }
         $css = self::read('public/assets/css/evidence_hub.css');
         phase2Assert(str_contains($css, 'unicode-bidi:isolate'), 'Evidence Hub numeric bidi isolation is missing.');
-        foreach (['--eh-canvas', '--eh-primary', '--eh-danger', '232px', '78px', 'evidence-hub-topbar', '@media (max-width: 1100px)', 'prefers-reduced-motion', '[data-bidi-number]', '44px', 'data-evidence-hub-theme="dark"', 'data-sidebar-tooltip', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock', 'grid-template-columns: 1fr;', 'evidence-hub-recommendation-accent', 'evidence-hub-technology-grid--count-1'] as $required) {
+        foreach (['--eh-canvas', '--eh-primary', '--eh-danger', '228px', '78px', 'evidence-hub-topbar', '@media (max-width:1100px)', 'prefers-reduced-motion', '[data-bidi-number]', '44px', 'data-evidence-hub-theme="dark"', 'data-sidebar-tooltip', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock', 'grid-template-columns:minmax(0,1fr)', 'evidence-hub-recommendation-grid', 'evidence-hub-technology-review'] as $required) {
             phase2Assert(str_contains($css, $required), "Evidence Hub presentation CSS is missing {$required}.");
         }
         phase2Assert(!str_contains($css . $javascript, '799px'), 'Evidence Hub retains a stale 799px responsive authority.');
-        phase2Assert(str_contains($css, 'grid-template-columns: 232px minmax(0, 1fr)') && str_contains($css, 'border-right: 1px solid'), 'Evidence Hub rail is not authored as a left-side LTR rail.');
+        phase2Assert(str_contains($css, 'grid-template-columns:228px minmax(0,1fr)') && str_contains($css, 'border-right: 1px solid'), 'Evidence Hub rail is not authored as a left-side LTR rail.');
         phase2Assert(!str_contains($css, 'grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;'), 'Evidence Hub retains the rejected two-column recommendation layout.');
         foreach (['setMobileDrawer', 'mobileReturnFocus', 'mainContent.inert', 'evidence-hub-mobile-backdrop', 'evidence-hub-mobile-scroll-lock'] as $required) {
             phase2Assert(str_contains($javascript, $required), "Evidence Hub mobile drawer state is missing {$required}.");

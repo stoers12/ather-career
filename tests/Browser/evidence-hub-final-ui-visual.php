@@ -12,6 +12,8 @@ require_once __DIR__ . '/../../includes/evidence_hub_owner_page_model.php';
 require_once __DIR__ . '/../../includes/evidence_hub_owner_page_presentation.php';
 require_once __DIR__ . '/../../includes/evidence_hub_recommendations.php';
 require_once __DIR__ . '/../../includes/owner_layout.php';
+require_once __DIR__ . '/../../includes/project_evidence_view.php';
+require_once __DIR__ . '/../Support/evidence-hub-technology-review-schema.php';
 
 $input = PHP_SAPI === 'cli' ? array_combine(['scenario', 'recommendations', 'feedback'], array_pad(array_slice($argv, 1), 3, '')) : $_GET;
 $scenario = $input['scenario'] ?? 'complete';
@@ -26,6 +28,8 @@ if (!in_array($scenario, ['complete', 'mixed'], true)
 
 $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL DEFAULT 0); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, is_published INTEGER NOT NULL DEFAULT 0, title TEXT NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL); INSERT INTO portfolios (id,owner_user_id) VALUES (10,1)');
+$database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
+$database->exec('CREATE TABLE skills (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, skill_name TEXT NOT NULL, created_at TEXT NOT NULL)');
 $complete = [
     'problem_statement' => 'Manual weekly reporting delayed operational decisions because the team reconciled multiple sources by hand.',
     'personal_role' => 'I designed the reporting pipeline and implemented validation checks across each imported data source.',
@@ -53,7 +57,7 @@ foreach ([1, 2, 3, 4] as $index) {
 }
 $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 10);
 $evaluated = loadAuthorizedEvidenceHubOwnerEvaluatedProjects($database, $context);
-$core = buildEvidenceHubOwnerCoreFromEvaluatedProjects($evaluated, 'not_configured');
+$core = buildEvidenceHubOwnerCoreFromEvaluatedProjects($evaluated, 'not_configured', [], 0, null, []);
 $recommendations = [];
 if ($count !== '0') {
     $recommendations = buildEvidenceHubRecommendations([
@@ -73,18 +77,26 @@ if ($count !== '0') {
     ], [], 1767225600, 'visual-final-synthetic-hmac');
     $recommendations = array_slice($recommendations, 0, (int) $count);
 }
-$contract = mapEvidenceHubContractV4($core, $recommendations);
+$contract = mapEvidenceHubOwnerContract($core, $recommendations);
 $model = buildAuthorizedEvidenceHubOwnerPageModel($database, $context, ['contract' => ['recommendations' => []]], 'visual-final-synthetic-hmac');
 foreach ($recommendations as $recommendation) {
     $model['recommendations'][] = [
         'project_title' => 'Project 2',
-        'edit_url' => $recommendation['rule_id'] === 'complete_project_evidence' ? '/owner/projects/2/evidence' : '/owner_projects.php?edit=2',
+        'edit_url' => $recommendation['rule_id'] === 'complete_project_evidence' ? '/owner/projects/2/evidence?mode=write' : '#technologies',
     ];
 }
 $tokens = array_fill(0, count($recommendations), ['snooze' => str_repeat('a', 64), 'dismiss' => str_repeat('b', 64)]);
 $undoFeedback = ['kind' => $feedback];
 if ($feedback === 'saved') $undoFeedback['token'] = str_repeat('c', 64);
 $_SESSION = ['csrf_token' => str_repeat('d', 64)];
-ownerLayoutStart('Evidence Hub', 'evidence_hub', true);
-renderEvidenceHubOwnerPage($contract, $model, $tokens, '', $undoFeedback);
+$locale = ($_GET['lang'] ?? 'en') === 'ar' ? 'ar' : 'en';
+ownerLayoutStart('Evidence Hub', 'evidence_hub', true, ['locale' => $locale]);
+$model['technology_review'] ??= ['unmapped' => [], 'owner_mapped' => [], 'proposals' => [], 'categories' => [], 'map_options' => []];
+$model['skill_gaps'] ??= [];
+foreach ($model['projects'] as &$visualProject) {
+    $visualUrls = projectEvidenceViewUrls($visualProject['id']);
+    $visualProject += ['evidence_read_url' => $visualUrls['read'], 'evidence_write_url' => $visualUrls['write'], 'sources_url' => $visualUrls['sources'], 'sources' => []];
+}
+unset($visualProject);
+renderEvidenceHubOwnerPage($contract, $model, $tokens, '', $undoFeedback, $locale);
 ownerLayoutEnd();
