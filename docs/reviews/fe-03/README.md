@@ -33,7 +33,7 @@ No assertion was removed or weakened. The following static checks now inspect th
 | `PrivateMediaStaticTest` | Existing Profile minimum/configured maximum/normalization guidance assertions inspect handler + template; media security and image-processing assertions are unchanged. |
 | `OwnerWorkspacePresentationTest` | The duplicate-preview absence check also inspects the extracted Profile template, preserving coverage of the moved markup. |
 
-`HttpValidationContractTest` and the final-profile route checks remain unchanged and pass. New native PHPUnit coverage verifies one save form/all original fields, all three visible no-JS panels, original version tokens and IDs, visibility choices, multipart/CSRF forms, escaping including confirmation text, error associations, no-JS error disclosures and truthful saved state.
+`HttpValidationContractTest` remains unchanged and passes. The four locale-sensitive route-rehearsal assertions are updated as listed in the review follow-up below. New native PHPUnit coverage verifies one save form/all original fields, all three visible no-JS panels, original version tokens and IDs, visibility choices, multipart/CSRF forms, escaping including confirmation text, error associations, no-JS error disclosures and truthful saved state.
 
 ## Verification
 
@@ -44,6 +44,7 @@ No assertion was removed or weakened. The following static checks now inspect th
 | PHPStan | Only the 22 known unmatched baseline-ignore entries; no new errors |
 | JavaScript syntax | Profile controller and extended workspace/browser drivers passed |
 | Full required gates | `REQUIRED_GATES_PASSED` |
+| CI-only Profile route rehearsals (run separately) | `PROFILE_ROUTE_REHEARSALS_PASSED` |
 | Authenticated Profile lifecycle | `OWNER_PROFILE_ACTIONS_PASSED` |
 | Profile visuals | `OWNER_PROFILE_VISUAL_PASSED` |
 | Existing workspace/Settings/unread checks | Passed |
@@ -71,3 +72,40 @@ Reference left; result right. The only supplied reference is 1440 Arabic Basic i
 | 390 Arabic Basic information | [Compare](profile-ar-light-390.png) | [Compare](profile-ar-dark-390.png) |
 | 390 Arabic without JavaScript | [Compare](profile-ar-no-js-390.png) | Default light fallback |
 | 1440 Arabic validation error | [Compare](profile-ar-validation-1440.png) | — |
+
+## Review follow-up — locale-neutral recovery assertions
+
+The CI-only route rehearsal clients omit a locale and receive Arabic. Keep the improved localized recovery copy; check the explicit saved-page link using `class="owner-profile-reload"><a href="owner_profile.php">` instead of English wording. These are the only four assertion changes:
+
+| Rehearsal assertion | Preserved rule |
+| --- | --- |
+| `tests/Integration/run-profile-version-route-tests.php:88` | Conflict retains escaped typed input, original version `1`, checked email visibility and an explicit recovery link. |
+| `tests/Integration/run-profile-version-route-tests.php:186` | Pre-handler upload rejection retains the original upload version and an explicit recovery link. |
+| `tests/Integration/run-final-profile-route-tests.php:100` | Conflict retains escaped typed input, original version `1`, checked email visibility and an explicit recovery link. |
+| `tests/Integration/run-final-profile-route-tests.php:203` | Pre-handler upload rejection retains the original upload version and an explicit recovery link. |
+
+Every other condition in these assertions is unchanged. Both route rehearsals are run locally in a separate disposable MySQL 8.4 database, with a database-scoped user and synthetic fixtures. They are not part of the required gates, so their PASS output is reported separately alongside PHPUnit, Phase 2, PHPStan and the full gates. No application copy or runtime code changes in this follow-up.
+
+Local rehearsal output (the shared cutover seal was initialized before the snapshots; both suites verified complete cleanup):
+
+```text
+# tests/Integration/run-profile-version-route-tests.php
+PASS profile real HTTP loaded tokens, two-tab conflict, retained text/visibility/original version, explicit recovery and same-value saves
+PASS profile HTTP omitted fields, explicit NULL clears, deliberate visibility, invalid/missing tokens, malformed patches and exhaustion
+PASS contact-types real HTTP four-combination saves reloads public HTML mailto tel contact errors JSON and private preview; per-type off malformed old aggregate409 retention and CSRF
+PASS profile HTTP account isolation, CSRF, idle/absolute expiration, revocation and disabled authorization without new readiness gates
+PASS profile real multipart upload/remove, text preservation and confirmed SQL rollback media cleanup
+PASS profile HTTP pre-handler upload rejection retains original token and explicit reload requirement
+PASS profile HTTP private logs and complete process/session/file/database fixture cleanup
+# tests/Integration/run-final-profile-route-tests.php
+PASS profile real HTTP loaded tokens, two-tab conflict, retained text/visibility/original version, explicit recovery and same-value saves
+PASS final-profile real HTTP save/clear/omit/reload, exact Unicode, malformed/forged input, retired preservation, stale retention and public exclusion
+PASS profile HTTP omitted fields, explicit NULL clears, deliberate visibility, invalid/missing tokens, malformed patches and exhaustion
+PASS profile HTTP account isolation, CSRF, idle/absolute expiration, revocation and disabled authorization without new readiness gates
+PASS profile real multipart upload/remove, text preservation and confirmed SQL rollback media cleanup
+PASS profile HTTP pre-handler upload rejection retains original token and explicit reload requirement
+PASS final-profile HTTP private logs and complete process/session/file/database fixture cleanup
+PROFILE_ROUTE_REHEARSALS_PASSED
+```
+
+Re-run results: PHPUnit `OK (125 tests, 423 assertions)`; `Phase 2 test foundation passed.`; PHPStan only the 22 known unmatched ignore patterns, no new errors; full required gates `REQUIRED_GATES_PASSED`.
