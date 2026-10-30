@@ -1,0 +1,34 @@
+/* Publishing uses the shared workspace palette and native forms. */
+.owner-publication .publication-card { display: grid; gap: 24px; inline-size: min(100%, 640px); padding: 22px; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-surface); box-shadow: none; }
+.owner-publication .publication-status { display: flex; align-items: flex-start; gap: 12px; padding: 24px 22px; border-radius: 8px; background: var(--admin-raised); border: 0; }
+.owner-publication .publication-status--published { background: var(--owner-soft); }
+.owner-publication .publication-status--offline { background: var(--owner-gold-bg); }
+.publication-status > svg { inline-size: 18px; block-size: 18px; margin-block-start: 5px; color: var(--admin-primary); }
+.publication-status p { margin-block-start: 8px; color: var(--admin-muted); font-size: calc(13px * var(--owner-text-scale, 1)); }
+.publication-url-block { min-inline-size: 0; }
+.publication-url-label { margin-block-end: 8px; color: var(--admin-muted); font-size: calc(12px * var(--owner-text-scale, 1)); }
+.publication-url-row { display: flex; align-items: stretch; gap: 8px; }
+.publication-public-url { flex: 1; min-inline-size: 0; margin: 0; padding: 11px 13px; border: 1px solid var(--admin-input-border); border-radius: 5px; overflow-wrap:anywhere; color: var(--admin-text); }
+.publication-public-url code { font: inherit; }
+.publication-copy-link svg { inline-size: 17px; block-size: 17px; }
+.publication-copy-feedback { margin-block-start: 5px; color: var(--admin-primary); font-size: calc(12px * var(--owner-text-scale, 1)); }
+.publication-copy-feedback:empty { display: none; }
+.publication-copy-feedback.error { color: var(--admin-danger); }
+.publication-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.owner-publication :is(a,button) { min-height:44px; }
+.publication-private-note { display: flex; align-items: center; gap: 7px; color: var(--admin-muted); font-size: calc(12px * var(--owner-text-scale, 1)); }
+.publication-private-note svg { inline-size: 15px; block-size: 15px; }
+.publication-stop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-block-start: 18px; border-block-start: 1px solid var(--admin-border); }
+.publication-stop h3 { font-size: calc(16px * var(--owner-text-scale, 1)); }
+.publication-stop p { color: var(--admin-muted); font-size: calc(12px * var(--owner-text-scale, 1)); }
+.publication-destructive-action, .publication-primary-action { margin: 0; }
+.publication-slug-form { display: grid; gap: 16px; }
+.publication-slug-form > button { justify-self: start; }
+.publication-slug-form label em { color: var(--admin-muted); font-size: calc(11px * var(--owner-text-scale, 1)); font-style: normal; font-weight: 400; }
+@media (max-width:600px) {
+    .owner-publication .publication-card { padding: 18px; gap: 20px; }
+    .owner-publication .publication-status { padding: 18px; }
+    .publication-url-row { flex-wrap: wrap; }
+    .publication-public-url { flex-basis: 100%; }
+    .publication-actions { align-items: stretch; flex-direction: column; }
+}

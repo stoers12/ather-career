@@ -16,9 +16,13 @@ async function installRoutes(page, variant) {
     await page.route('http://publication.test/**', route => {
         const url = new URL(route.request().url());
         if (url.pathname === '/') return route.fulfill({ contentType: 'text/html', body: html });
-        if (url.pathname === '/assets/css/style.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'public/assets/css/style.css')) });
-        if (url.pathname === '/assets/css/admin.css') return route.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(root, 'public/assets/css/admin.css')) });
-        if (url.pathname === '/assets/js/admin.js') return route.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'public/assets/js/admin.js')) });
+        if (url.pathname.startsWith('/assets/')) {
+            const file = path.resolve(root, 'public', '.' + url.pathname);
+            if (file.startsWith(path.join(root, 'public', 'assets') + path.sep) && fs.existsSync(file)) {
+                const type = { '.css': 'text/css', '.js': 'application/javascript', '.woff2': 'font/woff2', '.png': 'image/png' }[path.extname(file)];
+                if (type) return route.fulfill({ contentType: type, body: fs.readFileSync(file) });
+            }
+        }
         return route.fulfill({ status: 204, body: '' });
     });
 }
@@ -47,7 +51,7 @@ async function newClipboardPage(browser, shouldFail = false) {
         await installRoutes(published, 'published');
         await published.goto('http://publication.test/');
         const expectedUrl = 'https://localhost:8443/p/momen-qasim-al-omari';
-        const view = published.getByRole('link', { name: 'View Portfolio' });
+        const view = published.getByRole('link', { name: 'View Portfolio', exact: true });
         const copy = published.getByRole('button', { name: 'Copy Link' });
         const feedback = published.locator('#publication-copy-feedback');
         assert.equal(await view.getAttribute('href'), expectedUrl, 'View Portfolio URL');
@@ -74,7 +78,7 @@ async function newClipboardPage(browser, shouldFail = false) {
         await installRoutes(noJavaScript, 'published');
         await noJavaScript.goto('http://publication.test/');
         assert.equal(await noJavaScript.locator('#publication-public-url').textContent(), expectedUrl, 'No-JavaScript URL remains readable');
-        assert.equal(await noJavaScript.getByRole('link', { name: 'View Portfolio' }).getAttribute('href'), expectedUrl, 'No-JavaScript View Portfolio remains usable');
+        assert.equal(await noJavaScript.getByRole('link', { name: 'View Portfolio', exact: true }).getAttribute('href'), expectedUrl, 'No-JavaScript View Portfolio remains usable');
         assert.equal(await noJavaScript.getByRole('button', { name: 'Copy Link' }).isHidden(), true, 'No-JavaScript Copy control stays hidden');
         await noJavaScript.close();
 

@@ -58,8 +58,8 @@ async function simulatedRestore(page,form,button,label){
    if(!content){res.writeHead(404);res.end();return;}res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'private, no-store'});res.end(content);return;
   }
   if(url.pathname==='/admin.js'){res.writeHead(200,{'Content-Type':'text/javascript'});res.end(script);return;}
-  const file=path.resolve(root,'.'+url.pathname);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!['.css','.js','.png','.ttf'].includes(path.extname(file))){res.writeHead(404);res.end();return;}
-  const types={'.css':'text/css','.js':'text/javascript','.png':'image/png','.ttf':'font/ttf'};res.writeHead(200,{'Content-Type':types[path.extname(file)]});fs.createReadStream(file).pipe(res);
+  const file=path.resolve(root, url.pathname.startsWith('/assets/') ? 'public' : '.', '.' + url.pathname);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!['.css','.js','.png','.ttf','.woff2'].includes(path.extname(file))){res.writeHead(404);res.end();return;}
+  const types={'.css':'text/css','.js':'text/javascript','.png':'image/png','.ttf':'font/ttf','.woff2':'font/woff2'};res.writeHead(200,{'Content-Type':types[path.extname(file)]});fs.createReadStream(file).pipe(res);
  });
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
  // Allow an actual browser history/BFCache return, and report persisted rather than assuming it.
@@ -74,18 +74,19 @@ async function simulatedRestore(page,form,button,label){
    await visit();const toggle=p.locator('[data-owner-nav-toggle]'),nav=p.locator('#owner-navigation');
    for(const target of ['toggle','link','switch','logout']){
     await toggle.click();assert.equal(await toggle.getAttribute('aria-expanded'),'true');assert.equal(await nav.isVisible(),true);
+    if(['switch','logout'].includes(target))await p.locator('.owner-account-menu > summary').click();
     const focused=target==='toggle'?toggle:target==='link'?nav.locator('nav a').first():nav.locator('form[action="/owner_'+(target==='switch'?'switch_account':'logout')+'.php"] button');
-    await focused.focus();await p.keyboard.press('Escape');assert.equal(await toggle.getAttribute('aria-expanded'),'false',locale+width+target+' ARIA');assert.equal(await nav.isVisible(),false,locale+width+target+' visibility');assert.equal(await toggle.evaluate(e=>e===document.activeElement),true,locale+width+target+' focus');
+    await focused.focus();await p.keyboard.press('Escape');if(['switch','logout'].includes(target)){assert.equal(await p.locator('.owner-account-menu').evaluate(n=>n.open),false);assert.equal(await p.locator('.owner-account-menu > summary').evaluate(n=>n===document.activeElement),true);await p.keyboard.press('Escape');}assert.equal(await toggle.getAttribute('aria-expanded'),'false',locale+width+target+' ARIA');assert.equal(await nav.isVisible(),false,locale+width+target+' visibility');assert.equal(await toggle.evaluate(e=>e===document.activeElement),true,locale+width+target+' focus');
    }
    await toggle.click();await toggle.focus();await p.keyboard.press('Tab');assert.equal(await nav.locator('nav a').first().evaluate(e=>e===document.activeElement),true);await p.keyboard.press('Shift+Tab');assert.equal(await toggle.evaluate(e=>e===document.activeElement),true);await p.keyboard.press('Escape');
    checks.push({check:locale+' '+width+' Escape toggle/nav/both account buttons; Tab/Shift+Tab',result:'PASS'});
   }
   if(group!=='menu'){
    for(const action of ['switch_account','logout']){
-    await visit();await p.locator('[data-owner-nav-toggle]').click();const form=p.locator('form[action="/owner_'+action+'.php"]'),button=form.locator('button');
+    await visit();await p.locator('[data-owner-nav-toggle]').click();await p.locator('.owner-account-menu > summary').click();const form=p.locator('form[action="/owner_'+action+'.php"]'),button=form.locator('button');
     assert.equal(await form.getAttribute('method'),'POST');const before=posts.length;await simulatedRestore(p,form,button,locale+' '+width+' '+action);assert.equal(posts.length,before,'simulation sent no request');
     // A fresh real submission to the local synthetic sink, followed by browser.goBack().
-    await visit();await p.locator('[data-owner-nav-toggle]').click();const original=await snapshot(button);await saveNodes(button);const sent=posts.length;
+    await visit();await p.locator('[data-owner-nav-toggle]').click();await p.locator('.owner-account-menu > summary').click();const original=await snapshot(button);await saveNodes(button);const sent=posts.length;
     await form.evaluate(f=>f.addEventListener('submit',e=>{if(!e.defaultPrevented&&!window.__duplicateRequested){window.__duplicateRequested=true;f.requestSubmit();}}));
     await button.click();await p.waitForURL(base+'/result');assert.equal(posts.length,sent+1,'one actual POST');assert.deepEqual(posts.at(-1),{method:'POST',path:'/owner_'+action+'.php',csrfMatches:true,fields:['csrf_token']});
     await p.goBack({waitUntil:'networkidle'});await p.waitForURL(url);assert.deepEqual(await snapshot(button),original,'real browser back restore');
@@ -95,14 +96,14 @@ async function simulatedRestore(page,form,button,label){
   }
   assert.deepEqual(errors,[]);await context.close();
   if(group!=='buttons'){
-   const nojs=await browser.newContext({javaScriptEnabled:false,viewport:{width,height:844}});const p=await nojs.newPage();await p.goto(url);assert.equal(await p.locator('#owner-navigation').isVisible(),true);assert.equal(await p.locator('#owner-navigation nav a').count(),7);assert.equal(await p.locator('[data-owner-nav-toggle]').isVisible(),false);await nojs.close();checks.push({check:locale+' '+width+' no-JS navigation',result:'PASS'});
+   const nojs=await browser.newContext({javaScriptEnabled:false,viewport:{width,height:844}});const p=await nojs.newPage();await p.goto(url);assert.equal(await p.locator('#owner-navigation').isVisible(),true);assert.equal(await p.locator('#owner-navigation nav a').count(),9);assert.equal(await p.locator('[data-owner-nav-toggle]').isVisible(),false);await nojs.close();checks.push({check:locale+' '+width+' no-JS navigation',result:'PASS'});
   }
  }
  if(group!=='menu'){
   const c=await browser.newContext({viewport:{width:1440,height:1000}});const p=await c.newPage();
   for(const page of ['profile','projects','experiences','messages','evidence_hub']){
    await p.goto(base+'/owner.php?lang=en&page='+page,{waitUntil:'networkidle'});
-   if(page==='evidence_hub'){await p.locator('.evidence-hub-account-menu > summary').press('Enter');await p.waitForFunction(()=>document.querySelector('.evidence-hub-account-menu').open);}
+   if(page==='evidence_hub'){await p.locator('.evidence-hub-account-menu > summary').press('Enter');await p.waitForFunction(()=>document.querySelector('.evidence-hub-account-menu').open);}else{await p.locator('.owner-account-menu > summary').press('Enter');await p.waitForFunction(()=>document.querySelector('.owner-account-menu').open);}
    for(const action of ['switch_account','logout']){
     const form=p.locator('form[action="/owner_'+action+'.php"]');await simulatedRestore(p,form,form.locator('button'),page+' shared '+action);
    }

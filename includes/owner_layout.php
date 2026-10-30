@@ -57,6 +57,7 @@ function ownerLayoutStart(string $title, string $activePage, bool $themeCapable 
     <?php if ($isProfile): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_profile.css'); ?>"><?php endif; ?>
     <?php if ($isProjects): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_projects.css'); ?>"><?php endif; ?>
     <?php if ($isExperiences): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_experiences.css'); ?>"><?php endif; ?>
+    <?php if ($activePage === 'publication' || $activePage === 'messages'): ?><link rel="stylesheet" href="<?php echo versionedAssetUrl('assets/css/owner_' . $activePage . '.css'); ?>"><?php endif; ?>
     <script src="<?php echo versionedAssetUrl('assets/js/admin.js'); ?>" defer></script>
     <?php if ($isExperiences): ?><script src="<?php echo versionedAssetUrl('assets/js/owner_experiences.js'); ?>" defer></script><?php endif; ?>
     <?php if ($isProjects): ?><script src="<?php echo versionedAssetUrl('assets/js/owner_projects.js'); ?>" defer></script><?php endif; ?>
@@ -322,6 +323,7 @@ function evidenceHubOwnerIcon(string $name): string
         'pencil' => '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
         'globe' => '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
         'link' => '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+        'copy' => '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h4"/>',
         'circle-check' => '<circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/>',
         'eye-off' => '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
         'file-pen-line' => '<path d="M14.364 13.634a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506l4.013-4.009a1 1 0 0 0-3.004-3.004z"/><path d="M14.487 7.858A1 1 0 0 1 14 7V2"/><path d="M20 19.645V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l2.516 2.516"/><path d="M8 18h1"/>',

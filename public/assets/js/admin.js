@@ -250,10 +250,10 @@
         button.hidden = false;
         button.addEventListener('click', function () {
             navigator.clipboard.writeText(publicUrl.textContent.trim()).then(function () {
-                feedback.textContent = 'Portfolio link copied.';
+                feedback.textContent = button.dataset.copySuccess || 'Portfolio link copied.';
                 feedback.classList.remove('error');
             }).catch(function () {
-                feedback.textContent = 'Copying the Portfolio link failed. Select and copy the link manually.';
+                feedback.textContent = button.dataset.copyFailure || 'Copying the Portfolio link failed. Select and copy the link manually.';
                 feedback.classList.add('error');
             });
         });

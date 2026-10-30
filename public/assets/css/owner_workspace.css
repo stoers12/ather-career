@@ -192,9 +192,8 @@
 .owner-workspace-page :where(.button-secondary,.button-link):hover { background: var(--owner-soft); border-color: var(--admin-primary); }
 .owner-workspace-page :where(.button-danger) { color: var(--admin-danger); border-color: var(--admin-danger); }
 .owner-workspace-page :where(.button-danger):hover { color: var(--admin-danger-hover); background: var(--owner-soft); }
-.owner-workspace-page :where(.publication-card,.message-card) { padding: 22px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface); box-shadow: var(--admin-shadow); }
-.owner-workspace-page :where(.muted,.form-hint,.message-meta) { color: var(--admin-muted); font-size: calc(14px * var(--owner-text-scale, 1)); }
-.owner-workspace-page :where(.profile-form,.publication-primary-action,.publication-destructive-action) { margin: 0; }
+.owner-workspace-page :where(.muted,.form-hint) { color: var(--admin-muted); font-size: calc(14px * var(--owner-text-scale, 1)); }
+.owner-workspace-page :where(.profile-form) { margin: 0; }
 .owner-workspace-page .profile-form { margin-block-end: 24px; padding: 22px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface); }
 .owner-workspace-page .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px 20px; }
 .owner-workspace-page .form-field { display: block; min-inline-size: 0; }
@@ -222,27 +221,12 @@
 .owner-workspace-page .search-field input { inline-size: 240px; max-inline-size: 100%; }
 .owner-workspace-page :where(.count-pill) { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 20px; background: var(--owner-soft); color: var(--admin-primary); font-size: calc(12px * var(--owner-text-scale, 1)); }
 .owner-workspace-page .project-publication-form { display: grid; justify-items: start; gap: 8px; }
-.owner-workspace-page .message-list { display: grid; gap: 16px; }
-.owner-workspace-page .message-card h2 { margin-block-end: 5px; }
-.owner-workspace-page .message-email { margin-block-end: 12px; font-size: calc(14px * var(--owner-text-scale, 1)); }
-.owner-workspace-page .message-body { white-space: pre-wrap; overflow-wrap: anywhere; }
-.owner-workspace-page .message-meta { margin-block-start: 14px; }
-.owner-workspace-page .publication-card { display: grid; gap: 20px; max-inline-size: 780px; }
-.owner-workspace-page .publication-card .profile-form { margin: 0; padding: 0; border: 0; background: transparent; }
 .owner-workspace-page .publication-status { padding: 16px; border-inline-start: 4px solid var(--owner-gold); border-radius: 8px; background: var(--owner-gold-bg); }
-.owner-workspace-page .publication-status--live { border-color: var(--admin-primary); background: var(--owner-soft); }
 .owner-workspace-page .publication-status p:last-child { margin-block-start: 6px; color: var(--admin-muted); }
-.owner-workspace-page .publication-url-block { display: grid; min-inline-size: 0; gap: 6px; }
-.owner-workspace-page .publication-url-label { color: var(--admin-muted); font-size: calc(14px * var(--owner-text-scale, 1)); }
-.owner-workspace-page .publication-public-url { min-inline-size: 0; padding: 12px; border: 1px solid var(--admin-border); border-radius: 8px; background: var(--owner-soft); direction: ltr; text-align: start; }
-.owner-workspace-page .publication-public-url code { font: inherit; }
-.owner-workspace-page .publication-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-.owner-workspace-page .publication-copy-feedback { min-block-size: 24px; color: var(--admin-muted); font-size: calc(14px * var(--owner-text-scale, 1)); }
-.owner-workspace-page .publication-destructive-action { padding-block-start: 18px; border-block-start: 1px solid var(--admin-border); }
 .owner-workspace-page .required-indicator, .owner-workspace-page .field-error { color: var(--admin-danger); }
 .owner-workspace-page .field-error { display: block; margin-block-start: 6px; font-size: calc(14px * var(--owner-text-scale, 1)); }
 .owner-workspace-page .form-grid > .field-error { margin-block-start: -10px; }
-.owner-workspace-page :where(.field-feedback.error,.publication-copy-feedback.error) { color: var(--admin-danger); }
+.owner-workspace-page :where(.field-feedback.error) { color: var(--admin-danger); }
 .owner-workspace-page :where(input,textarea,select)[aria-invalid="true"] { border-color: var(--admin-danger); }
 .owner-workspace-page .status-message { display: grid; gap: 6px; margin-block-end: 20px; padding: 16px; border: 1px solid var(--admin-primary); border-radius: 10px; color: var(--admin-text); background: var(--owner-soft); }
 .owner-workspace-page .status-message.error { border-color: var(--admin-danger); }
@@ -267,7 +251,7 @@
     .owner-workspace-page .admin-page-header { gap: 16px; margin-block-end: 20px; }
     .owner-workspace-page .admin-page-header-actions { inline-size: 100%; }
     .owner-workspace-page .form-grid { grid-template-columns: minmax(0,1fr); }
-    .owner-workspace-page :where(.publication-card,.message-card,.profile-form) { padding: 18px; }
+    .owner-workspace-page :where(.profile-form) { padding: 18px; }
     .owner-workspace-page .form-actions > :where(a,button) { flex: 1 1 130px; }
     .owner-workspace-page .search-field, .owner-workspace-page .search-field input { inline-size: 100%; }
 }

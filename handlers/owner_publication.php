@@ -115,10 +115,5 @@ if (is_array($state) && ownerPublicationStateSlug($state) !== null) {
 }
 
 ownerLayoutStart('Publication', 'publication', true, ['account_name' => $ownerName ?? '']);
-?>
-<div class="admin-page-header">
-    <div class="admin-page-header-copy"><p class="admin-eyebrow"><?php echo ownerEscapeHtml(ownerText('Publication')); ?></p><h1 class="admin-page-title"><?php echo ownerEscapeHtml(ownerText('Public Portfolio')); ?></h1><p class="admin-page-description"><?php echo ownerEscapeHtml(ownerText('Choose the permanent public address, then publish when your profile is ready.')); ?></p></div>
-</div>
-<?php ownerRenderFormFeedback($message, $errors, $fieldErrors); ?>
-<?php if (is_array($state)): renderOwnerPublicationPresentation($state, $publicUrl, $fieldErrors, $submittedSlug); endif; ?>
-<?php ownerLayoutEnd();
+renderOwnerPublicationPage($state, $publicUrl, $message, $errors, $fieldErrors, $submittedSlug);
+ownerLayoutEnd();
