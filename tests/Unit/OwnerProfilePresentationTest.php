@@ -56,6 +56,7 @@ final class OwnerProfilePresentationTest extends TestCase
             self::assertSame(1, $x->query('//form[@id="profile-form"]//input[@name="public_email_visible" and @checked]')->length);
             self::assertSame(0, $x->query('//input[@name="public_phone_visible" and @checked]')->length);
             self::assertSame('73', $x->evaluate('string(//progress/@value)'));
+            self::assertSame($locale === 'ar' ? 'اكتمال الملف' : 'Profile completion', $x->evaluate('string(//progress/@aria-label)'));
             self::assertSame(0, $x->query('//script | //*[@style] | //form//form')->length);
             self::assertSame(0, $x->query('//*[@class="owner-profile-save-status"]/*')->length, 'No saved indicator without a server success message.');
         }

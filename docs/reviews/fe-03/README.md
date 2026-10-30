@@ -39,7 +39,7 @@ No assertion was removed or weakened. The following static checks now inspect th
 
 | Check | Output |
 | --- | --- |
-| PHPUnit | `OK (125 tests, 421 assertions)` |
+| PHPUnit | `OK (125 tests, 423 assertions)` |
 | Phase 2 | `Phase 2 test foundation passed.` |
 | PHPStan | Only the 22 known unmatched baseline-ignore entries; no new errors |
 | JavaScript syntax | Profile controller and extended workspace/browser drivers passed |
