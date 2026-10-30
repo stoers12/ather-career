@@ -9,6 +9,27 @@ require_once __DIR__ . '/evidence_hub_owner_page_presentation.php';
 require_once __DIR__ . '/evidence_hub_copy.php';
 require_once __DIR__ . '/evidence_writing_guidance.php';
 require_once __DIR__ . '/project_evidence_source_repository.php';
+require_once __DIR__ . '/project_evidence_view.php';
+
+/**
+ * Project evidence page (B-07 view modes, docs/contracts/evidence-hub-views.md).
+ * Baseline: both modes still render the text form and the sources, as before;
+ * frontend slice FE-07 renders "read" without editable text and "write" without
+ * source forms, honouring $view.
+ *
+ * @param array{id:int,title:string,values:array<string,mixed>} $project
+ * @param array<string,mixed> $values @param array<string,string> $fieldErrors
+ * @param list<array{id:int,title:string,url:string,note:?string}> $sources
+ * @param array{title:string,url:string,note:string} $sourceValues @param array<string,string> $sourceErrors
+ * @param array{mode:'read'|'write',part:?string} $view
+ */
+function renderOwnerProjectEvidencePage(array $project, array $values, array $fieldErrors, array $sources, array $sourceValues, array $sourceErrors, array $view, string $locale): void
+{
+    ?><div class="evidence-hub-project-evidence" data-evidence-view-mode="<?php echo $view['mode']; ?>"<?php echo $view['part'] !== null ? ' data-evidence-view-part="' . ownerEscapeHtml($view['part']) . '"' : ''; ?>><?php
+    renderOwnerProjectEvidenceForm($project, $values, $fieldErrors, null, $locale);
+    renderOwnerProjectEvidenceSources($project['id'], $sources, $sourceValues, $sourceErrors, $locale);
+    ?></div><?php
+}
 
 /** @param array{id:int,title:string,values:array<string,mixed>} $project @param array<string,mixed> $values @param array<string,string> $fieldErrors */
 function renderOwnerProjectEvidenceForm(array $project, array $values, array $fieldErrors = [], ?array $evaluations = null, string $locale = 'en'): void

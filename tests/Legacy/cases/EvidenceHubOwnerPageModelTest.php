@@ -28,9 +28,11 @@ final class EvidenceHubOwnerPageModelTest
         $editPresentation = file_get_contents($root . 'includes/owner_project_evidence_presentation.php');
         $model = file_get_contents($root . 'includes/evidence_hub_owner_page_model.php');
         $repository = file_get_contents($root . 'includes/project_evidence_repository.php');
-        foreach (['requireOwnerPortfolioContext($database)', 'requireValidCsrfToken', 'runDatabaseTransaction', "httpRedirect('/owner/evidence-hub#project-' . \$projectId, 303)", 'renderOwnerProjectEvidenceForm'] as $required) {
+        foreach (['requireOwnerPortfolioContext($database)', 'requireValidCsrfToken', 'runDatabaseTransaction', "httpRedirect('/owner/evidence-hub#project-' . \$projectId, 303)", 'renderOwnerProjectEvidencePage'] as $required) {
             phase2Assert(str_contains($route, $required), "Evidence route lacks {$required}.");
         }
+        // B-07: the route renders through the view-mode page, which still renders the evidence form.
+        phase2Assert(str_contains($editPresentation, 'renderOwnerProjectEvidenceForm($project, $values, $fieldErrors, null, $locale);'), 'Evidence page lacks renderOwnerProjectEvidenceForm.');
         foreach (['ownerRenderFormFeedback', 'ownerFieldAccessibilityAttributes', 'ownerEscapeHtml', 'Save evidence', 'Cancel'] as $required) {
             phase2Assert(str_contains($editPresentation, $required), "Evidence form lacks {$required}.");
         }
@@ -240,6 +242,8 @@ final class EvidenceHubOwnerPageModelTest
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL DEFAULT 0); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, is_published INTEGER NOT NULL DEFAULT 0, title TEXT NOT NULL, description TEXT NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL, updated_at TEXT NULL); INSERT INTO portfolios (id,owner_user_id) VALUES (10,1),(20,2)');
         $database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
+        // B-07: the page model lists skills without project evidence.
+        $database->exec('CREATE TABLE skills (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, skill_name TEXT NOT NULL, created_at TEXT NOT NULL)');
         $complete = [
             'problem' => 'Manual weekly reporting affected the team because six hours of reconciliation delayed operational decisions.',
             'personal_role' => 'I designed the reporting pipeline and implemented validation checks across each imported data source.',

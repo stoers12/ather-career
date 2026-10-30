@@ -217,6 +217,8 @@ final class EvidenceHubUndoTest
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $database->exec('CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT NULL, is_published INTEGER NOT NULL DEFAULT 0); CREATE TABLE projects (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, is_published INTEGER NOT NULL DEFAULT 0, title TEXT NOT NULL, description TEXT NOT NULL, problem_statement TEXT NULL, personal_role TEXT NULL, measurable_outcome TEXT NULL, technologies TEXT NULL, created_at TEXT NOT NULL, updated_at TEXT NULL); INSERT INTO portfolios (id,owner_user_id) VALUES (10,1),(20,2)');
         $database->exec(phase2EvidenceHubTechnologyReviewSqliteSchema());
+        // B-07: the page model lists skills without project evidence.
+        $database->exec('CREATE TABLE skills (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, skill_name TEXT NOT NULL, created_at TEXT NOT NULL)');
         $values = self::values('Original');
         $statement = $database->prepare('INSERT INTO projects (id,portfolio_id,title,description,problem_statement,personal_role,measurable_outcome,technologies,created_at,updated_at) VALUES (1,10,\'Synthetic project\',\'Private\',:problem,:personal_role,:measurable_outcome,\'["Excel"]\',\'2026-01-01T00:00:00Z\',\'2026-01-02T00:00:00Z\')');
         $statement->execute($values);
