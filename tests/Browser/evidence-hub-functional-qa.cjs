@@ -86,6 +86,7 @@ const editor = `${base}/tests/Browser/owner-project-evidence-visual.php`;
         page.once('dialog', dialog => dialog.accept());
         await page.goto(editor);
         assert.equal(await page.locator('textarea').count(), 0); assert.equal(await page.locator('input[value=add_source]').count(),1);
+        assert.deepEqual(await page.locator('.evidence-hub-reading-section a').evaluateAll(links => links.map(link => link.getAttribute('href'))), ['problem','personal_role','measurable_outcome'].map(part => '/owner/projects/7/evidence?mode=write&part=' + part));
         await page.goto(editor + '?scenario=limit'); assert.equal(await page.locator('input[value=add_source]').count(),0); assert.equal(await page.locator('input[value=remove_source]').count(),10);
         await context.close();
         const noJs = await browser.newContext({ javaScriptEnabled:false, viewport:{width:390,height:844} });

@@ -172,7 +172,7 @@ async function openMenuWithKey(cdp, projectId, activation) {
 async function escapeMenu(cdp, projectId, activation, itemIndex, tabOutside = false) {
     const opened = await openMenuWithKey(cdp, projectId, activation);
     await key(cdp, 'Tab', 'Tab', 9);
-    if (itemIndex === 1) await key(cdp, 'Tab', 'Tab', 9);
+    for (let item = 0; item < itemIndex; item++) await key(cdp, 'Tab', 'Tab', 9);
     assert.equal(await cdp.evaluate(`document.activeElement === document.querySelectorAll('#project-${projectId} .evidence-hub-project-options a')[${itemIndex}]`), true);
     if (tabOutside) await key(cdp, 'Tab', 'Tab', 9);
     await key(cdp, 'Escape', 'Escape', 27);
@@ -319,6 +319,7 @@ async function main() {
             await navigate(page, fixture('mixed', 3));
             await escapeMenu(page, 1, 'Enter', 0);
             await escapeMenu(page, 1, 'Space', 1, true);
+            await escapeMenu(page, 1, 'Enter', 2, true);
             for (let step = 0; step < steps; step++) {
                 await page.evaluate('document.querySelector("[data-evidence-carousel-next]").click()');
                 await new Promise(resolve => setTimeout(resolve, 90));
@@ -326,6 +327,7 @@ async function main() {
             assert.equal((await state(page)).fullyVisibleIds.includes('project-4'), true);
             await escapeMenu(page, 4, 'Enter', 0);
             await escapeMenu(page, 4, 'Space', 1);
+            await escapeMenu(page, 4, 'Enter', 2);
             checks.push(`menu-keyboard-${width}`);
             assert.deepEqual(page.errors, []);
         } finally { await close(page); }
