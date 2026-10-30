@@ -334,7 +334,8 @@ try {
     setAuthorizedMessageRead($database, $contextA, $messageAId, true);
     phase2AssertSame($firstReadAt, findAuthorizedMessage($database, $contextA, $messageAId)['read_at'] ?? null, 'Opening again overwrote the first read time.');
     phase2AssertSame(true, setAuthorizedMessageRead($database, $contextA, $messageAId, false), 'A could not mark its message unread.');
-    phase2AssertSame(null, findAuthorizedMessage($database, $contextA, $messageAId)['read_at'] ?? 'missing', 'Mark unread did not clear the read time.');
+    $unreadMessage = findAuthorizedMessage($database, $contextA, $messageAId);
+    phase2Assert(is_array($unreadMessage) && array_key_exists('read_at', $unreadMessage) && $unreadMessage['read_at'] === null, 'Mark unread did not clear the read time.');
     phase2AssertSame(1, countAuthorizedUnreadMessages($database, $contextA), 'A message marked unread was not counted.');
     phase2AssertSame(false, setAuthorizedMessageRead($database, $contextA, 0, true), 'A non-positive message id was accepted.');
     $passed[] = 'T-OWNER-MESSAGE-READ-STATE';
