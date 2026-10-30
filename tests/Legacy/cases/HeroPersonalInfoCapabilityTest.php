@@ -8,7 +8,7 @@ final class HeroPersonalInfoCapabilityTest
     {
         $migration = self::read('database/migrations/008_personal_info_hero_headline.sql');
         $validation = self::read('includes/validation.php');
-        $ownerRoute = self::read('handlers/owner_profile.php');
+        $ownerRoute = self::read('handlers/owner_profile.php') . self::read('includes/owner_profile_presentation.php');
         $ownerActions = self::read('includes/profile_form_actions.php');
         $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
         $publicData = self::read('includes/public_lifecycle.php');
