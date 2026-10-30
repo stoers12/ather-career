@@ -80,7 +80,7 @@ final class OwnerWorkspacePresentationTest
             $hub = (string) ob_get_clean();
             phase2Assert(str_contains($hub, '<html lang="ar" dir="rtl">')
                 && !str_contains($hub, 'owner_workspace.css') && !str_contains($hub, 'owner-toolbar')
-                && !str_contains($hub, 'data-owner-confirm-') && str_contains($hub, 'evidence_hub.css?')
+                && str_contains($hub, 'data-owner-confirm-cancel="إلغاء"') && str_contains($hub, 'evidence_hub.css?')
                 && str_contains($hub, 'class="evidence-hub-language" href="/owner/evidence-hub?lang=en"')
                 && !isset($GLOBALS['owner_workspace_locale']), 'Evidence Hub must follow the workspace locale inside its own shell, styles and behavior.');
         } finally {

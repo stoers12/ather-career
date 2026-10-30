@@ -21,8 +21,8 @@ module.exports=async function evidenceViewsVisual(browser,base,output){
      if(kind==='hub')await page.locator(`[data-evidence-layer=${panel}]`).click();
      if(kind==='write')await page.locator(`[data-evidence-step=${panel}]`).click();
      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth && document.body.scrollWidth<=innerWidth),true,`${locale}/${theme}/${large}/${width}/${kind}/${panel}`);
-     const targets=page.locator('.admin-content :is(a,button,summary)');
-     for(let i=0;i<await targets.count();i++){const target=targets.nth(i);if(!await target.isVisible() || await target.evaluate(n=>!!n.closest('[inert]')))continue;const r=await target.boundingBox();assert.ok(r.height>=44 && r.width>=44,`${kind}/${panel}: coarse target`);}
+     const smallTargets=await page.locator('.admin-content :is(a,button,summary)').evaluateAll(nodes=>nodes.filter(node=>node.getClientRects().length && !node.closest('[inert]')).map(node=>{const r=node.getBoundingClientRect();return {tag:node.tagName,width:r.width,height:r.height};}).filter(r=>r.width<44 || r.height<44));
+     assert.deepEqual(smallTargets,[],`${kind}/${panel}: coarse targets`);
     }
    }
   }
