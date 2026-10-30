@@ -155,6 +155,9 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         $titleInput = submittedStringField($post, 'title', PROJECT_TITLE_MAX_LENGTH, 'Title', true);
         $categoryInput = submittedStringField($post, 'category', PROJECT_CATEGORY_MAX_LENGTH, 'Category', true);
         $githubInput = submittedStringField($post, 'github_url', PROJECT_GITHUB_URL_MAX_LENGTH, 'GitHub URL');
+        // A form without the field (the current editor) must keep a saved link, never erase it.
+        $liveUrlSubmitted = array_key_exists('live_url', $post);
+        $liveInput = submittedStringField($post, 'live_url', PROJECT_LIVE_URL_MAX_LENGTH, 'Live project URL');
         $descriptionInput = array_key_exists('description', $post) && !is_string($post['description'])
             ? ['value' => '', 'error' => 'Description must be submitted as text.']
             : ['value' => is_string($post['description'] ?? null) ? trim($post['description']) : '', 'error' => null];
@@ -162,7 +165,8 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         $category = $categoryInput['value'];
         $description = $descriptionInput['value'];
         $githubUrl = $githubInput['value'] === '' ? null : $githubInput['value'];
-        foreach (['title' => $titleInput, 'category' => $categoryInput, 'description' => $descriptionInput, 'github_url' => $githubInput] as $field => $input) {
+        $liveUrl = $liveInput['value'] === '' ? null : $liveInput['value'];
+        foreach (['title' => $titleInput, 'category' => $categoryInput, 'description' => $descriptionInput, 'github_url' => $githubInput, 'live_url' => $liveInput] as $field => $input) {
             if ($input['error'] !== null) {
                 $fieldErrors[$field] = $input['error'];
             }
@@ -174,7 +178,7 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
             ? ($post['technologies'] ?? '')
             : null;
         $formMode = $action === 'update' ? 'edit' : 'add';
-        $editingProject = ['id' => is_string($post['id'] ?? null) ? $post['id'] : '', 'title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubInput['value'], 'technologies' => $technologiesInput, 'image_path' => null];
+        $editingProject = ['id' => is_string($post['id'] ?? null) ? $post['id'] : '', 'title' => $title, 'category' => $category, 'description' => $description, 'github_url' => $githubInput['value'], 'live_url' => $liveInput['value'], 'technologies' => $technologiesInput, 'image_path' => null];
         $technologyErrors = [];
         $technologies = normalizeProjectTechnologies($technologiesInput, $technologyErrors);
         if ($technologyErrors !== []) {
@@ -182,6 +186,9 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         }
         if (!isset($fieldErrors['github_url']) && $githubUrl !== null && !isSafeHttpUrl($githubUrl)) {
             $fieldErrors['github_url'] = 'Please enter a valid HTTP or HTTPS URL.';
+        }
+        if (!isset($fieldErrors['live_url']) && $liveUrl !== null && !isSafeHttpUrl($liveUrl)) {
+            $fieldErrors['live_url'] = 'Please enter a valid HTTP or HTTPS URL.';
         }
 
         $projectId = $action === 'update' ? ownerActionId($post['id'] ?? null) : null;
@@ -198,6 +205,9 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
                 $formMode = 'add';
             } else {
                 $editingProject['image_path'] = $existing['image_path'];
+                if (!$liveUrlSubmitted) {
+                    $editingProject['live_url'] = (string) ($existing['live_url'] ?? '');
+                }
             }
         }
 
@@ -216,7 +226,7 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         }
 
         if ($action === 'add') {
-            runDatabaseTransaction($database, static fn (): int => createAuthorizedProject($database, $context, $title, $category, $description, $githubUrl, $newImagePath, $technologies ?? []));
+            runDatabaseTransaction($database, static fn (): int => createAuthorizedProject($database, $context, $title, $category, $description, $githubUrl, $newImagePath, $technologies ?? [], null, $liveUrl));
             setProjectSuccessFlash('Project added successfully.');
             return projectActionResult([], 'add', null, 'owner_projects.php');
         }
@@ -224,7 +234,7 @@ function handleAuthorizedProjectAction(PDO $database, AuthorizedPortfolioContext
         $removeImage = isset($post['remove_image']) && $post['remove_image'] === '1';
         $oldImagePath = $existing['image_path'] ?? null;
         $imagePath = $newImagePath ?? ($removeImage ? null : $oldImagePath);
-        if (!runDatabaseTransaction($database, static fn (): bool => updateAuthorizedProject($database, $context, $projectId, $title, $category, $description, $githubUrl, $imagePath, $technologies ?? []))) {
+        if (!runDatabaseTransaction($database, static fn (): bool => updateAuthorizedProject($database, $context, $projectId, $title, $category, $description, $githubUrl, $imagePath, $technologies ?? [], null, $liveUrlSubmitted ? $liveUrl : false))) {
             cleanProjectImage($newImagePath, 'owner_project_update_compensation', $context->portfolioId);
             $fieldErrors = ['id' => 'Project not found.'];
             return projectActionResult(validationErrorList($fieldErrors), $formMode, $editingProject, null, $fieldErrors, 404);

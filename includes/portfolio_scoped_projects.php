@@ -8,7 +8,7 @@ declare(strict_types=1);
 function listAuthorizedProjects(PDO $database, AuthorizedPortfolioContext $context): array
 {
     $statement = $database->prepare(
-        'SELECT id, title, category, description, github_url, image_path, technologies, created_at, is_published
+        'SELECT id, title, category, description, github_url, live_url, image_path, technologies, created_at, is_published
          FROM projects
          WHERE portfolio_id = :authorized_portfolio_id
          ORDER BY created_at DESC, id DESC'
@@ -32,7 +32,7 @@ function findAuthorizedProject(PDO $database, AuthorizedPortfolioContext $contex
     }
 
     $statement = $database->prepare(
-        'SELECT id, title, category, description, github_url, image_path, technologies, created_at, is_published
+        'SELECT id, title, category, description, github_url, live_url, image_path, technologies, created_at, is_published
          FROM projects
          WHERE id = :resource_id
            AND portfolio_id = :authorized_portfolio_id
@@ -63,18 +63,19 @@ function createAuthorizedProject(
     ?string $imagePath,
     array $technologies,
     ?array $evidenceFields = null,
+    ?string $liveUrl = null,
 ): int {
     $evidenceValues = projectEvidenceStorageValues($evidenceFields);
     if ($evidenceValues === []) {
         // Preserve the legacy column set when no private evidence is supplied.
         $statement = $database->prepare(
-            'INSERT INTO projects (portfolio_id, title, category, description, github_url, image_path, technologies, is_published)
-             VALUES (:authorized_portfolio_id, :title, :category, :description, :github_url, :image_path, :technologies, 0)'
+            'INSERT INTO projects (portfolio_id, title, category, description, github_url, live_url, image_path, technologies, is_published)
+             VALUES (:authorized_portfolio_id, :title, :category, :description, :github_url, :live_url, :image_path, :technologies, 0)'
         );
     } else {
         $evidenceColumns = array_keys($evidenceValues);
-        $columns = ['portfolio_id', 'title', 'category', 'description', 'github_url', 'image_path', 'technologies', 'is_published', ...$evidenceColumns];
-        $parameters = [':authorized_portfolio_id', ':title', ':category', ':description', ':github_url', ':image_path', ':technologies', '0', ...array_map(static fn (string $field): string => ':' . $field, $evidenceColumns)];
+        $columns = ['portfolio_id', 'title', 'category', 'description', 'github_url', 'live_url', 'image_path', 'technologies', 'is_published', ...$evidenceColumns];
+        $parameters = [':authorized_portfolio_id', ':title', ':category', ':description', ':github_url', ':live_url', ':image_path', ':technologies', '0', ...array_map(static fn (string $field): string => ':' . $field, $evidenceColumns)];
         $statement = $database->prepare(
             'INSERT INTO projects (' . implode(', ', $columns) . ')
              VALUES (' . implode(', ', $parameters) . ')'
@@ -86,6 +87,7 @@ function createAuthorizedProject(
         'category' => $category,
         'description' => $description,
         'github_url' => $githubUrl,
+        'live_url' => $liveUrl,
         'image_path' => $imagePath,
         'technologies' => projectTechnologiesToStorage($technologies),
         ...$evidenceValues,
@@ -105,6 +107,7 @@ function updateAuthorizedProject(
     ?string $imagePath,
     array $technologies,
     ?array $evidenceFields = null,
+    string|false|null $liveUrl = false,
 ): bool {
     if ($projectId < 1) {
         return false;
@@ -113,7 +116,7 @@ function updateAuthorizedProject(
     $evidenceValues = projectEvidenceStorageValues($evidenceFields);
     $technologyValue = projectTechnologiesToStorage($technologies);
     $existingStatement = $database->prepare(
-        'SELECT projects.title, projects.category, projects.description, projects.github_url,
+        'SELECT projects.title, projects.category, projects.description, projects.github_url, projects.live_url,
                 projects.image_path, projects.technologies, projects.problem_statement,
                 projects.personal_role, projects.measurable_outcome
          FROM projects
@@ -132,6 +135,7 @@ function updateAuthorizedProject(
     if ($existing === false) {
         return false;
     }
+    $liveUrlValues = $liveUrl === false ? [] : ['live_url' => $liveUrl];
     $newValues = [
         'title' => $title,
         'category' => $category,
@@ -139,6 +143,7 @@ function updateAuthorizedProject(
         'github_url' => $githubUrl,
         'image_path' => $imagePath,
         'technologies' => $technologyValue,
+        ...$liveUrlValues,
         ...$evidenceValues,
     ];
     $changed = false;
@@ -159,7 +164,7 @@ function updateAuthorizedProject(
         return true;
     }
 
-    $evidenceAssignments = array_map(static fn (string $field): string => "{$field} = :{$field}", array_keys($evidenceValues));
+    $optionalAssignments = array_map(static fn (string $field): string => "{$field} = :{$field}", array_keys([...$liveUrlValues, ...$evidenceValues]));
     $timestampExpression = $database->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
         ? "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')"
         : 'CURRENT_TIMESTAMP(6)';
@@ -168,7 +173,7 @@ function updateAuthorizedProject(
          SET title = :title, category = :category, description = :description,
              github_url = :github_url, image_path = :image_path, technologies = :technologies,
              updated_at = ' . $timestampExpression .
-             ($evidenceAssignments === [] ? '' : ', ' . implode(', ', $evidenceAssignments)) . '
+             ($optionalAssignments === [] ? '' : ', ' . implode(', ', $optionalAssignments)) . '
          WHERE id = :resource_id
            AND portfolio_id = :authorized_portfolio_id'
     );
@@ -179,6 +184,7 @@ function updateAuthorizedProject(
         'github_url' => $githubUrl,
         'image_path' => $imagePath,
         'technologies' => $technologyValue,
+        ...$liveUrlValues,
         ...$evidenceValues,
         'resource_id' => $projectId,
         'authorized_portfolio_id' => $context->portfolioId,

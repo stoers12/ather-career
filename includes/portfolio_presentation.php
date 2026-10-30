@@ -59,10 +59,11 @@ function portfolioPresentationSocialLinks(array $profile): array
     return $links;
 }
 
-function portfolioPresentationProjectLink(array $project): ?string
+/** @param 'github_url'|'live_url' $field */
+function portfolioPresentationProjectLink(array $project, string $field = 'github_url'): ?string
 {
-    $url = isset($project['github_url']) && is_string($project['github_url'])
-        ? trim($project['github_url'])
+    $url = isset($project[$field]) && is_string($project[$field])
+        ? trim($project[$field])
         : '';
 
     return $url !== '' && isPublicWebsiteDestination($url) ? $url : null;

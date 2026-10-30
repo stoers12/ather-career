@@ -62,7 +62,7 @@ function validateProjectImageUpload(array $file): array|string
 
 function projectFormDefaults(): array
 {
-    return ['id' => '', 'title' => '', 'category' => '', 'description' => '', 'github_url' => '', 'technologies' => '', 'image_path' => null];
+    return ['id' => '', 'title' => '', 'category' => '', 'description' => '', 'github_url' => '', 'live_url' => '', 'technologies' => '', 'image_path' => null];
 }
 
 function projectActionId($value): ?int

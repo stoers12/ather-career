@@ -357,7 +357,7 @@ function setOwnedProjectPublication(PDO $database, AuthorizedPortfolioContext $c
 function listPublicProjects(PDO $database, PublicReadContext $context): array
 {
     $statement = $database->prepare(
-        'SELECT projects.id, projects.title, projects.category, projects.description, projects.github_url, projects.image_path, projects.technologies, projects.created_at'
+        'SELECT projects.id, projects.title, projects.category, projects.description, projects.github_url, projects.live_url, projects.image_path, projects.technologies, projects.created_at'
         . publicProjectEligibilitySql() . ' ORDER BY projects.created_at DESC, projects.id DESC'
     );
     $statement->execute(['public_portfolio_id' => $context->portfolioId]);
@@ -371,12 +371,21 @@ function listPublicProjects(PDO $database, PublicReadContext $context): array
     return $projects;
 }
 
+/** A stored project link only reaches visitors when it is a bounded http(s) URL. */
+function publicProjectSafeUrl(mixed $stored, int $maximum): ?string
+{
+    $url = is_string($stored) ? trim($stored) : '';
+    $length = utf8CharacterLength($url);
+
+    return $url !== '' && $length !== null && $length <= $maximum && isSafeHttpUrl($url) ? $url : null;
+}
+
 /**
  * Build the deliberately small public JSON representation of Projects for a
  * resolved published Portfolio. Raw storage locators remain server-side: the
  * optional image URL is a scoped public-media capability instead.
  *
- * @return list<array{title: string, category: string, description: string, github_url?: string, technologies: list<string>, image_url?: string}>
+ * @return list<array{title: string, category: string, description: string, github_url?: string, live_url?: string, technologies: list<string>, image_url?: string}>
  */
 function listPublicProjectJsonPayload(PDO $database, PublicReadContext $context, string $slug): array
 {
@@ -386,7 +395,7 @@ function listPublicProjectJsonPayload(PDO $database, PublicReadContext $context,
     }
 
     $statement = $database->prepare(
-        'SELECT projects.id, projects.title, projects.category, projects.description, projects.github_url, projects.image_path, projects.technologies'
+        'SELECT projects.id, projects.title, projects.category, projects.description, projects.github_url, projects.live_url, projects.image_path, projects.technologies'
         . publicProjectEligibilitySql() . ' ORDER BY projects.created_at DESC, projects.id DESC'
     );
     $statement->execute(['public_portfolio_id' => $context->portfolioId]);
@@ -399,11 +408,11 @@ function listPublicProjectJsonPayload(PDO $database, PublicReadContext $context,
             'description' => (string) ($record['description'] ?? ''),
         ];
 
-        $githubUrl = is_string($record['github_url'] ?? null) ? trim($record['github_url']) : '';
-        $githubLength = utf8CharacterLength($githubUrl);
-        if ($githubUrl !== '' && $githubLength !== null
-            && $githubLength <= PROJECT_GITHUB_URL_MAX_LENGTH && isSafeHttpUrl($githubUrl)) {
-            $project['github_url'] = $githubUrl;
+        foreach (['github_url' => PROJECT_GITHUB_URL_MAX_LENGTH, 'live_url' => PROJECT_LIVE_URL_MAX_LENGTH] as $field => $maximum) {
+            $url = publicProjectSafeUrl($record[$field] ?? null, $maximum);
+            if ($url !== null) {
+                $project[$field] = $url;
+            }
         }
         $project['technologies'] = projectTechnologiesFromStorage($record['technologies'] ?? null);
 

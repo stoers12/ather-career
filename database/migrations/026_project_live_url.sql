@@ -1,0 +1,3 @@
+-- Guarded additive migration in database/project_live_url.php.
+-- Adds projects.live_url: an optional public demo or report link (B-04),
+-- validated like github_url. Existing projects keep NULL (no link).
