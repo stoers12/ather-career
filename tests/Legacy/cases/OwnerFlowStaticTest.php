@@ -47,7 +47,7 @@ final class OwnerFlowStaticTest
             && str_contains($adminScript, "getElementById('profile-form')")
             && str_contains($adminScript, 'formState(profileForm)'), 'Owner profile unsaved-change protection is not wired end to end.');
         foreach (['handlers/owner_profile.php', 'handlers/owner_projects.php', 'handlers/owner_experiences.php', 'includes/owner_publication_presentation.php'] as $route) {
-            phase2Assert(str_contains(self::read($route) . ($route === 'handlers/owner_profile.php' ? self::read('includes/owner_profile_presentation.php') : ($route === 'handlers/owner_projects.php' ? self::read('includes/owner_projects_presentation.php') : '')), 'data-confirm='), "{$route} bypasses the shared confirmation dialog for a material action.");
+            phase2Assert(str_contains(self::read($route) . ($route === 'handlers/owner_profile.php' ? self::read('includes/owner_profile_presentation.php') : ($route === 'handlers/owner_projects.php' ? self::read('includes/owner_projects_presentation.php') : ($route === 'handlers/owner_experiences.php' ? self::read('includes/owner_experiences_presentation.php') : ''))), 'data-confirm='), "{$route} bypasses the shared confirmation dialog for a material action.");
         }
         self::optionalProjectGithubUrl();
     }

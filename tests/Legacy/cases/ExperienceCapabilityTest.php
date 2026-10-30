@@ -10,7 +10,7 @@ final class ExperienceCapabilityTest
         $experience = self::read('includes/experience.php');
         $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
         $ownerActions = self::read('includes/owner_actions.php');
-        $ownerRoute = self::read('handlers/owner_experiences.php');
+        $ownerRoute = self::read('handlers/owner_experiences.php') . self::read('includes/owner_experiences_presentation.php') . self::read('includes/owner_experiences_copy.php');
         $publicLifecycle = self::read('includes/public_lifecycle.php');
         $publicRoute = self::read('handlers/public_portfolio.php');
         $presentation = self::read('includes/portfolio_presentation.php');

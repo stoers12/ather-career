@@ -192,10 +192,9 @@
 .owner-workspace-page :where(.button-secondary,.button-link):hover { background: var(--owner-soft); border-color: var(--admin-primary); }
 .owner-workspace-page :where(.button-danger) { color: var(--admin-danger); border-color: var(--admin-danger); }
 .owner-workspace-page :where(.button-danger):hover { color: var(--admin-danger-hover); background: var(--owner-soft); }
-.owner-workspace-page :where(.project-form-card,.publication-card,.message-card) { padding: 22px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface); box-shadow: var(--admin-shadow); }
-.owner-workspace-page :where(.project-form-card) { margin-block-end: 20px; }
+.owner-workspace-page :where(.publication-card,.message-card) { padding: 22px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface); box-shadow: var(--admin-shadow); }
 .owner-workspace-page :where(.muted,.form-hint,.message-meta) { color: var(--admin-muted); font-size: calc(14px * var(--owner-text-scale, 1)); }
-.owner-workspace-page :where(.profile-form,.project-form,.publication-primary-action,.publication-destructive-action) { margin: 0; }
+.owner-workspace-page :where(.profile-form,.publication-primary-action,.publication-destructive-action) { margin: 0; }
 .owner-workspace-page .profile-form { margin-block-end: 24px; padding: 22px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface); }
 .owner-workspace-page .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px 20px; }
 .owner-workspace-page .form-field { display: block; min-inline-size: 0; }
@@ -221,15 +220,8 @@
 .owner-workspace-page .section-heading-row > div { min-inline-size: 0; }
 .owner-workspace-page .search-field { display: block; max-inline-size: 100%; }
 .owner-workspace-page .search-field input { inline-size: 240px; max-inline-size: 100%; }
-.owner-workspace-page .admin-project-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
-.owner-workspace-page .admin-project-grid article { display: flex; min-inline-size: 0; flex-direction: column; overflow: hidden; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface); }
-.owner-workspace-page .project-card-content { display: flex; flex: 1; flex-direction: column; gap: 10px; min-inline-size: 0; padding: 18px; }
-.owner-workspace-page .project-card-content p { color: var(--admin-muted); }
-.owner-workspace-page :where(.project-category,.count-pill) { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 20px; background: var(--owner-soft); color: var(--admin-primary); font-size: calc(12px * var(--owner-text-scale, 1)); }
-.owner-workspace-page .project-category { align-self: start; }
+.owner-workspace-page :where(.count-pill) { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 20px; background: var(--owner-soft); color: var(--admin-primary); font-size: calc(12px * var(--owner-text-scale, 1)); }
 .owner-workspace-page .project-publication-form { display: grid; justify-items: start; gap: 8px; }
-.owner-workspace-page .card-actions { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 10px; margin-block-start: auto; padding-block-start: 6px; }
-.owner-workspace-page .card-actions form { margin: 0; }
 .owner-workspace-page .message-list { display: grid; gap: 16px; }
 .owner-workspace-page .message-card h2 { margin-block-end: 5px; }
 .owner-workspace-page .message-email { margin-block-end: 12px; font-size: calc(14px * var(--owner-text-scale, 1)); }
@@ -274,10 +266,8 @@
     .owner-workspace-page h1 { font-size: calc(25px * var(--owner-text-scale, 1)); }
     .owner-workspace-page .admin-page-header { gap: 16px; margin-block-end: 20px; }
     .owner-workspace-page .admin-page-header-actions { inline-size: 100%; }
-    .owner-workspace-page .form-grid, .owner-workspace-page .admin-project-grid { grid-template-columns: minmax(0,1fr); }
-    .owner-workspace-page :where(.project-form-card,.publication-card,.message-card,.profile-form) { padding: 18px; }
-    .owner-workspace-page .card-actions { align-items: stretch; }
-    .owner-workspace-page .card-actions form { inline-size: 100%; }
+    .owner-workspace-page .form-grid { grid-template-columns: minmax(0,1fr); }
+    .owner-workspace-page :where(.publication-card,.message-card,.profile-form) { padding: 18px; }
     .owner-workspace-page .form-actions > :where(a,button) { flex: 1 1 130px; }
     .owner-workspace-page .search-field, .owner-workspace-page .search-field input { inline-size: 100%; }
 }

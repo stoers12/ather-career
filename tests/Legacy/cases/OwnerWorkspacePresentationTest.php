@@ -47,12 +47,13 @@ final class OwnerWorkspacePresentationTest
             }
             foreach (['handlers/owner_profile.php', 'handlers/owner_projects.php', 'handlers/owner_experiences.php', 'handlers/owner_publication.php'] as $route) {
                 $view = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/' . $route);
+                if ($route === 'handlers/owner_experiences.php') $view .= (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/owner_experiences_presentation.php');
                 if ($route === 'handlers/owner_projects.php') $view .= (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/owner_projects_presentation.php');
                 if ($route === 'handlers/owner_profile.php') $view .= (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/owner_profile_presentation.php');
                 phase2Assert(!preg_match('/href="owner_preview\.php(?:#[^"]*)?"/', $view), 'Page headers must not duplicate the shared toolbar preview.');
             }
             phase2Assert(str_contains((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/owner_projects_presentation.php'), 'href="owner_projects.php?add=1"')
-                && str_contains((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/handlers/owner_experiences.php'), 'href="owner_experiences.php?add=1"'), 'Page-specific add actions must survive removal of duplicate previews.');
+                && str_contains((string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/includes/owner_experiences_presentation.php'), 'href="owner_experiences.php?add=1"'), 'Page-specific add actions must survive removal of duplicate previews.');
             $_GET = [];
             $_COOKIE = ['ather_owner_locale' => 'en'];
             phase2AssertSame('en', ownerLocale(), 'A valid presentation preference must survive navigation without a lang query.');
