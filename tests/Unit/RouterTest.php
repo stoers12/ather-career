@@ -30,6 +30,8 @@ final class RouterTest extends TestCase
         yield 'projects json' => ['/p/jane-doe/projects.json', 'p_projects.php', 'handlers/public_projects_json.php', ['slug' => 'jane-doe']];
         yield 'profile media' => ['/p/jane-doe/media/profile', 'p_media.php', 'handlers/public_media.php', ['slug' => 'jane-doe', 'type' => 'profile']];
         yield 'project media' => ['/p/jane-doe/media/project/9', 'p_media.php', 'handlers/public_media.php', ['slug' => 'jane-doe', 'type' => 'project', 'id' => '9']];
+        yield 'project case study' => ['/p/jane-doe/projects/9', 'p_project.php', 'handlers/public_project.php', ['slug' => 'jane-doe', 'id' => '9']];
+        yield 'project case study slash' => ['/p/jane-doe/projects/12/', 'p_project.php', 'handlers/public_project.php', ['slug' => 'jane-doe', 'id' => '12']];
         yield 'legacy portfolio script' => ['/p.php', 'p.php', 'handlers/public_portfolio.php', null];
     }
 
@@ -50,6 +52,7 @@ final class RouterTest extends TestCase
     {
         foreach (['/nope', '/nope.php', '/Signin.php', '/owner/evidence-hubx', '/owner/projects/0/evidence', '/owner/projects/x/evidence',
             '/p/ab', '/p/Jane', '/p/-jane', '/p/jane-', '/p/' . str_repeat('a', 65), '/p/jane/projects.json/', '/p/jane/media/project/0',
+            '/p/jane/projects', '/p/jane/projects/0', '/p/jane/projects/007', '/p/jane/projects/x', '/p/jane/projects/9/evidence',
             '/includes/http.php', '/config/routes.php', '/health.php', '/ready.php', '/assets/css/landing.css', '//index.php', '/index.phpx'] as $path) {
             yield $path => [$path];
         }
@@ -73,7 +76,7 @@ final class RouterTest extends TestCase
         // ready.php is served by public/ready.php directly, so readiness never depends on the router.
         self::assertSame([], glob(PHASE2_REPOSITORY_ROOT . '/*.php') ?: [], 'Repository root must not contain PHP files');
         $handlers = array_map(static fn (string $path): string => 'handlers/' . basename($path), glob(PHASE2_REPOSITORY_ROOT . '/handlers/*.php') ?: []);
-        self::assertCount(31, $handlers);
+        self::assertCount(32, $handlers);
         $routed = [...array_values($routes['scripts']), $routes['not_found']];
         self::assertSame(['handlers/ready.php'], array_values(array_diff($handlers, $routed)), 'A handler has no route');
     }

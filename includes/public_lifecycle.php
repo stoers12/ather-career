@@ -371,6 +371,26 @@ function listPublicProjects(PDO $database, PublicReadContext $context): array
     return $projects;
 }
 
+/** One published Project of this published Portfolio, with the row shape of listPublicProjects(). */
+function findPublicProject(PDO $database, PublicReadContext $context, int $projectId): ?array
+{
+    if ($projectId < 1) {
+        return null;
+    }
+    $statement = $database->prepare(
+        'SELECT projects.id, projects.title, projects.category, projects.description, projects.github_url, projects.live_url, projects.image_path, projects.technologies, projects.created_at'
+        . publicProjectEligibilitySql() . ' AND projects.id = :resource_id LIMIT 1'
+    );
+    $statement->execute(['resource_id' => $projectId, 'public_portfolio_id' => $context->portfolioId]);
+    $project = $statement->fetch(PDO::FETCH_ASSOC);
+    if ($project === false) {
+        return null;
+    }
+    $project['technologies'] = projectTechnologiesFromStorage($project['technologies'] ?? null);
+
+    return $project;
+}
+
 /** A stored project link only reaches visitors when it is a bounded http(s) URL. */
 function publicProjectSafeUrl(mixed $stored, int $maximum): ?string
 {
