@@ -12,6 +12,9 @@ function evidenceHubValidateRecommendationFacts(array $facts): array
     if (array_key_exists('skill_claims', $facts)) {
         $required[] = 'skill_claims';
     }
+    if (array_key_exists('project_sources', $facts)) {
+        $required[] = 'project_sources';
+    }
     evidenceHubRequireExactObjectKeys($facts, $required, 'scoped_facts_shape');
     evidenceHubValidateOpaqueInputText($facts['tenant_scope_ref'], 'tenant_scope_ref');
     evidenceHubValidateOpaqueInputText($facts['portfolio_target_identity'], 'portfolio_target_identity');
@@ -89,6 +92,8 @@ function evidenceHubValidateRecommendationFacts(array $facts): array
         $lastTarget = $claim['target_identity'];
     }
 
+    $projectSources = evidenceHubValidateProjectSourceFacts($facts['project_sources'] ?? null, $projectTargets);
+
     if (!is_array($facts['portfolio_publication']) || array_is_list($facts['portfolio_publication'])) {
         evidenceHubRecommendationReject('portfolio_publication_shape');
     }
@@ -106,7 +111,40 @@ function evidenceHubValidateRecommendationFacts(array $facts): array
         'technology_mappings' => $mappings,
         'portfolio_publication' => $facts['portfolio_publication'],
         'skill_claims' => $skillClaims,
-    ];
+    ] + ($projectSources === null ? [] : ['project_sources' => $projectSources]);
+}
+
+/**
+ * Optional source counts (B-06): one entry per Project fact, sorted by target identity.
+ *
+ * @param array<string, true> $projectTargets
+ * @return ?list<array{target_identity: string, source_count: int}>
+ */
+function evidenceHubValidateProjectSourceFacts(mixed $sources, array $projectTargets): ?array
+{
+    if ($sources === null) {
+        return null;
+    }
+    if (!is_array($sources) || !array_is_list($sources) || count($sources) !== count($projectTargets)) {
+        evidenceHubRecommendationReject('project_sources_must_cover_projects');
+    }
+    $lastTarget = null;
+    foreach ($sources as $entry) {
+        if (!is_array($entry) || array_is_list($entry)) {
+            evidenceHubRecommendationReject('project_source_shape');
+        }
+        evidenceHubRequireExactObjectKeys($entry, ['target_identity', 'source_count'], 'project_source_shape');
+        if (!is_string($entry['target_identity']) || !isset($projectTargets[$entry['target_identity']])
+            || ($lastTarget !== null && strcmp($lastTarget, $entry['target_identity']) >= 0)) {
+            evidenceHubRecommendationReject('project_sources_not_unique_sorted_or_known');
+        }
+        if (!is_int($entry['source_count']) || $entry['source_count'] < 0 || $entry['source_count'] > 10) {
+            evidenceHubRecommendationReject('project_source_count_invalid');
+        }
+        $lastTarget = $entry['target_identity'];
+    }
+
+    return $sources;
 }
 
 /** @return array<string, array<string, mixed>> */

@@ -66,6 +66,7 @@ function evidenceHubValidateRecommendationFingerprintInput(mixed $input): void
         'review_unmapped_technology' => ['mapping_state', 'normalized_unmapped_label_digest'],
         'complete_portfolio_publication' => ['has_projects', 'portfolio_published', 'publication_prerequisites_met'],
         'add_skill_evidence' => ['canonical_id', 'has_project_evidence'],
+        'add_evidence_source' => ['evidence_complete', 'source_count'],
     };
     $factKeys = array_keys($facts);
     if (in_array('target_ref', $factKeys, true)) {
@@ -77,6 +78,7 @@ function evidenceHubValidateRecommendationFingerprintInput(mixed $input): void
         ['mapping_state', 'normalized_unmapped_label_digest'],
         ['has_projects', 'portfolio_published', 'publication_prerequisites_met'],
         ['canonical_id', 'has_project_evidence'],
+        ['evidence_complete', 'source_count'],
     ] as $otherAllowed) {
         if ($otherAllowed !== $allowed && evidenceHubSameRecommendationKeySet($factKeys, $otherAllowed)) {
             evidenceHubRecommendationReject('predicate_facts_belong_to_different_rule');
@@ -95,6 +97,7 @@ function evidenceHubValidateRecommendationFingerprintInput(mixed $input): void
         'review_unmapped_technology' => evidenceHubValidateUnmappedTechnologyFacts($facts),
         'complete_portfolio_publication' => evidenceHubValidatePublicationFacts($facts),
         'add_skill_evidence' => evidenceHubValidateSkillEvidenceFacts($facts),
+        'add_evidence_source' => evidenceHubValidateEvidenceSourceFacts($facts),
     };
 }
 
@@ -112,7 +115,7 @@ function evidenceHubValidateRecommendationRuleId(mixed $value): void
     if (preg_match('/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/D', $value) !== 1) {
         evidenceHubRecommendationReject('malformed_rule_id');
     }
-    if (!in_array($value, ['add_first_project', 'complete_project_evidence', 'review_unmapped_technology', 'complete_portfolio_publication', 'add_skill_evidence'], true)) {
+    if (!in_array($value, ['add_first_project', 'complete_project_evidence', 'review_unmapped_technology', 'complete_portfolio_publication', 'add_skill_evidence', 'add_evidence_source'], true)) {
         evidenceHubRecommendationReject('unsupported_rule_id');
     }
 }
@@ -194,6 +197,13 @@ function evidenceHubValidateSkillEvidenceFacts(array $facts): void
     evidenceHubValidateSkillCanonicalId($facts['canonical_id']);
     if ($facts['has_project_evidence'] !== false) {
         evidenceHubRecommendationReject('skill_project_evidence_invalid');
+    }
+}
+
+function evidenceHubValidateEvidenceSourceFacts(array $facts): void
+{
+    if ($facts['evidence_complete'] !== true || $facts['source_count'] !== 0) {
+        evidenceHubRecommendationReject('evidence_source_facts_invalid');
     }
 }
 

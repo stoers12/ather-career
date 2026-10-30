@@ -63,6 +63,7 @@ require_once __DIR__ . '/cases/EvidenceHubContractV8Test.php';
 require_once __DIR__ . '/cases/EvidenceTextRules110Test.php';
 require_once __DIR__ . '/cases/EvidenceProjectTextRules110Test.php';
 require_once __DIR__ . '/cases/EvidenceHubContractV9Test.php';
+require_once __DIR__ . '/cases/EvidenceHubContractV10Test.php';
 require_once __DIR__ . '/cases/EvidenceTextOwnerHintsTest.php';
 require_once __DIR__ . '/cases/SourceAutoloadLayoutTest.php';
 
@@ -126,6 +127,7 @@ return [
     'Evidence text rules 1.1.0 calibration and frozen baseline' => [EvidenceTextRules110Test::class, 'run'],
     'Evidence project cross-field text rules 1.1.0' => [EvidenceProjectTextRules110Test::class, 'run'],
     'Evidence Hub contract v9 and explicit text rule versions' => [EvidenceHubContractV9Test::class, 'run'],
+    'Evidence Hub contract v10 evidence sources' => [EvidenceHubContractV10Test::class, 'run'],
     'Evidence Hub text rules localized Owner hints' => [EvidenceTextOwnerHintsTest::class, 'run'],
     'src/ PSR-4 layout and one-line compatibility wrappers' => [SourceAutoloadLayoutTest::class, 'run'],
 ];

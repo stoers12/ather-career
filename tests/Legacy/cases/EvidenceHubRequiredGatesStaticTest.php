@@ -105,6 +105,8 @@ final class EvidenceHubRequiredGatesStaticTest
         $editorPosition = strpos($gate, "'tests/Integration/check-evidence-edit-http.php'");
         $technologyReviewPosition = strpos($gate, "'tests/Integration/check-evidence-technology-review-http.php'");
         phase2Assert($editorPosition !== false && $technologyReviewPosition !== false && $editorPosition < $technologyReviewPosition, 'Required-gates entry point must run the Owner technology review HTTP and MySQL check with the native Owner sessions.');
+        $sourcesPosition = strpos($gate, "'tests/Integration/check-evidence-sources-http.php'");
+        phase2Assert($sourcesPosition !== false && $technologyReviewPosition < $sourcesPosition && str_contains($phase2Runner, 'EvidenceHubContractV10Test::class'), 'Required-gates entry point must run the evidence sources HTTP and MySQL check and the v10 contract test.');
         phase2Assert(!str_contains($dockerfile, '/var/www/public/evidence-hub-web-session-bootstrap.php') && !str_contains($compose, 'EVIDENCE_HUB_WEB_SESSION_BOOTSTRAP'), 'Production artifacts must not publish or enable the Web-SAPI bootstrap.');
     }
 

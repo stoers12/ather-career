@@ -53,7 +53,8 @@ final class EvidenceHubContractV9Test
             }
         }
         $core = buildAuthorizedEvidenceHubOwnerCore($database,$context);
-        phase2AssertSame(mapEvidenceHubContractV9($core,[]),mapEvidenceHubOwnerContract($core,[]),'The live mapper must select v9.');
+        // v10 (B-06) is live now; EvidenceHubContractV10Test owns that assertion. V9 keeps mapping the same core.
+        phase2AssertSame('evidence-hub-contract-v9',mapEvidenceHubContractV9($core,[])['contract_id'],'V9 no longer maps the live core.');
         phase2AssertSame('evidence-hub-contract-'.EVIDENCE_HUB_OWNER_CONTRACT_VERSION,mapEvidenceHubOwnerContract($core,[])['contract_id'],'Live identity is not selected centrally.');
         self::reject(static fn (): array => mapEvidenceHubContractV8($core,[]),'V8 accepted a 1.1.0 core.');
         $baseline = buildAuthorizedEvidenceHubOwnerCore($database,$context,'v8');

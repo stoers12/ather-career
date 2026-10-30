@@ -60,6 +60,11 @@ function mapEvidenceHubContractV9(array $core, array $recommendations): array
     return mapEvidenceHubContractVersion($core, $recommendations, 'v9');
 }
 
+function mapEvidenceHubContractV10(array $core, array $recommendations): array
+{
+    return mapEvidenceHubContractVersion($core, $recommendations, 'v10');
+}
+
 /**
  * Each contract version names the taxonomy it publishes. A contract and a
  * taxonomy version move independently: v5 adds Owner mappings over taxonomy v4.
@@ -74,9 +79,11 @@ const EVIDENCE_HUB_CONTRACT_VERSIONS = [
     'v7' => ['schema_version' => '7.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => false, 'text_rule_version' => '1.0.0'],
     'v8' => ['schema_version' => '8.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => true, 'text_rule_version' => '1.0.0'],
     'v9' => ['schema_version' => '9.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => true, 'text_rule_version' => '1.1.0'],
+    // Evidence sources (B-06): only v10 names the flag, so every historical definition stays identical.
+    'v10' => ['schema_version' => '10.0.0', 'taxonomy_version' => 'v5', 'owner_mappings' => true, 'evidence_detail' => true, 'skill_evidence' => true, 'text_rule_version' => '1.1.0', 'evidence_sources' => true],
 ];
 
-/** @return array{schema_version: string, taxonomy_version: string, owner_mappings: bool, evidence_detail: bool, skill_evidence: bool, text_rule_version: string} */
+/** @return array{schema_version: string, taxonomy_version: string, owner_mappings: bool, evidence_detail: bool, skill_evidence: bool, text_rule_version: string, evidence_sources?: bool} */
 function evidenceHubContractVersionDefinition(string $version): array
 {
     return EVIDENCE_HUB_CONTRACT_VERSIONS[$version] ?? throw new EvidenceHubContractMappingException('Evidence Hub contract version is unsupported.');
@@ -91,6 +98,14 @@ function mapEvidenceHubContractVersion(array $core, array $recommendations, stri
         foreach ($recommendations as $recommendation) {
             if (is_array($recommendation) && ($recommendation['rule_id'] ?? null) === 'add_skill_evidence') {
                 throw new EvidenceHubContractMappingException('This contract version does not support skill evidence recommendations.');
+            }
+        }
+    }
+    $evidenceSources = $definition['evidence_sources'] ?? false;
+    if (!$evidenceSources) {
+        foreach ($recommendations as $recommendation) {
+            if (is_array($recommendation) && ($recommendation['rule_id'] ?? null) === 'add_evidence_source') {
+                throw new EvidenceHubContractMappingException('This contract version does not support evidence source recommendations.');
             }
         }
     }
@@ -110,6 +125,12 @@ function mapEvidenceHubContractVersion(array $core, array $recommendations, stri
         array_splice($progressFields, 4, 0, ['stage', 'published_project_count']);
         $technologyFields[] = 'mapping_coverage_bps';
     }
+    $documentationMetric = evidenceHubContractMapObject($documentation['documentation_coverage'], $documentationFields, 'documentation_coverage');
+    if ($evidenceSources) {
+        $sources = evidenceHubContractMapObject(evidenceHubContractMapFields($core, ['evidence_sources'], 'core')['evidence_sources'], ['projects_with_sources', 'source_count'], 'evidence_sources');
+        evidenceHubContractAssertEvidenceSources($sources, $documentationMetric);
+        $documentationMetric += $sources;
+    }
     $technologyMetric = evidenceHubContractMapObject($technology['technology_evidence_map'], $technologyFields, 'technology_evidence_map');
     $technologyMetric['mappings'] = evidenceHubContractMapTechnologyMappings($technologyMetric['mappings']);
 
@@ -118,7 +139,7 @@ function mapEvidenceHubContractVersion(array $core, array $recommendations, stri
         'schema_version' => $definition['schema_version'],
         'maturity' => evidenceHubContractMapObject($maturity['maturity'], ['state', 'version'], 'maturity'),
         'metrics' => [
-            'documentation_coverage' => evidenceHubContractMapObject($documentation['documentation_coverage'], $documentationFields, 'documentation_coverage'),
+            'documentation_coverage' => $documentationMetric,
             'technology_evidence_map' => $technologyMetric,
             'portfolio_progress' => evidenceHubContractMapObject($progress['portfolio_progress'], $progressFields, 'portfolio_progress'),
         ],
@@ -335,6 +356,20 @@ function evidenceHubContractAssertPortfolioProgress(mixed $metric): void
         && ($metric['project_count'] !== 0 || ($metric['first_project_recorded_at'] ?? null) !== null || ($metric['latest_project_recorded_at'] ?? null) !== null || ($metric['recorded_activity_span_days'] ?? null) !== null)
     ) {
         throw new EvidenceHubContractMappingException('Evidence Hub unavailable portfolio progress is invalid.');
+    }
+}
+
+/** @param array{projects_with_sources: mixed, source_count: mixed} $sources @param array<string, mixed> $documentation */
+function evidenceHubContractAssertEvidenceSources(array $sources, array $documentation): void
+{
+    $projects = $sources['projects_with_sources'];
+    $count = $sources['source_count'];
+    if (!is_int($projects) || !is_int($count) || $projects < 0 || $count < 0
+        || $projects > ($documentation['project_count'] ?? 0)
+        || $projects > $count
+        || $count > $projects * 10
+        || ($projects === 0) !== ($count === 0)) {
+        throw new EvidenceHubContractMappingException('Evidence Hub evidence source counts are invalid.');
     }
 }
 
