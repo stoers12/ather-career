@@ -11,7 +11,8 @@
     var panels = Array.from(document.querySelectorAll('[data-evidence-layer-panel]'));
     nav.setAttribute('role', 'tablist');
     tabs.forEach(function (tab) { tab.setAttribute('role', 'tab'); tab.setAttribute('aria-controls', tab.dataset.evidenceLayer); });
-    panels.forEach(function (panel) { panel.setAttribute('role', 'tabpanel'); panel.tabIndex = 0; });
+    // Panels hold focusable controls, so they stay out of the tab order (APG); no focus frame on a whole layer.
+    panels.forEach(function (panel) { panel.setAttribute('role', 'tabpanel'); });
     function select(id, focus) {
         tabs.forEach(function (tab) {
             var selected = tab.dataset.evidenceLayer === id;

@@ -193,9 +193,9 @@ function ownerEvidenceHubNavigation(string $locale = 'en'): void
     $t = static fn (string $english): string => ownerEscapeHtml(evidenceHubText($english, $locale));
     $dashboardHref = '/owner.php';
     $workspaceLinks = [
-        ['overview', 'Overview', 'layout-dashboard', '/owner.php'],
+        ['overview', 'Overview', 'owner-house', '/owner.php'],
         ['projects', 'Projects', 'folder-kanban', '/owner_projects.php'],
-        ['evidence_hub', 'Evidence Hub', 'blocks', '/owner/evidence-hub'],
+        ['evidence_hub', 'Evidence Hub', 'book-open-check', '/owner/evidence-hub'],
         ['credentials', 'Credentials', 'badge-check', null],
     ];
     ?>

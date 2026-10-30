@@ -138,7 +138,7 @@ final class EvidenceHubOwnerRoutePresenterTest
     {
         $layout = self::read('includes/owner_layout.php');
         $presentation = self::read('includes/evidence_hub_owner_presentation.php');
-        foreach (["['evidence_hub', 'Evidence Hub', 'blocks', '/owner/evidence-hub']", 'aria-current="page"', 'href="#main-content"', 'Back to dashboard'] as $required) {
+        foreach (["['evidence_hub', 'Evidence Hub', 'book-open-check', '/owner/evidence-hub']", 'aria-current="page"', 'href="#main-content"', 'Back to dashboard'] as $required) {
             phase2Assert(str_contains($layout, $required), "Owner navigation accessibility is missing {$required}.");
         }
         foreach (['aria-labelledby="evidence-hub-status-title"', 'aria-labelledby="evidence-hub-technology-title"', 'aria-labelledby="evidence-hub-recommendations-title"', 'aria-label="Evidence Hub recommendation"', 'ownerEscapeHtml'] as $required) {

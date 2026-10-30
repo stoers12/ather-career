@@ -26,6 +26,18 @@ function evidenceHubLanguageName(string $locale): string
 }
 
 /** @param array<string, string|int> $replacements */
+/** One reference vocabulary for the three evidence parts on cards, record and editor (FE-07 review). */
+function evidenceHubPartLabel(string $part): string
+{
+    return match ($part) {
+        // Logical keys, plus the storage name of the first part.
+        'problem', 'problem_statement' => 'Context',
+        'personal_role' => 'My contribution',
+        'measurable_outcome' => 'Outcome',
+        default => throw new InvalidArgumentException('Evidence part is unsupported.'),
+    };
+}
+
 function evidenceHubText(string $english, string $locale, array $replacements = []): string
 {
     $text = evidenceHubLocale($locale) === 'ar' ? (evidenceHubArabicCopy()[$english] ?? $english) : $english;
