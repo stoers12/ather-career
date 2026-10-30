@@ -51,7 +51,7 @@ function ownerFlowSnapshot(PDO $database, int $portfolioId): array
         'personal_info' => 'SELECT id, full_name, profile_image_path FROM personal_info WHERE portfolio_id = :portfolio_id ORDER BY id',
         'skills' => 'SELECT id, skill_name FROM skills WHERE portfolio_id = :portfolio_id ORDER BY id',
         'projects' => 'SELECT id, title, category, description, github_url, image_path FROM projects WHERE portfolio_id = :portfolio_id ORDER BY id',
-        'messages' => 'SELECT id, name, email, message FROM messages WHERE recipient_portfolio_id = :portfolio_id ORDER BY id',
+        'messages' => 'SELECT id, name, email, message, read_at FROM messages WHERE recipient_portfolio_id = :portfolio_id ORDER BY id',
     ] as $resource => $query) {
         $statement = $database->prepare($query);
         $statement->execute(['portfolio_id' => $portfolioId]);
@@ -294,6 +294,8 @@ try {
     phase2AssertSame(['SQL'], $createdProjects[0]['technologies'] ?? null, 'Owner Project creation did not persist technologies.');
 
     phase2AssertSame(null, findAuthorizedMessage($database, $contextA, $messageBId), 'A read B message through an owner route candidate.');
+    phase2AssertSame(false, setAuthorizedMessageRead($database, $contextA, $messageBId, true), 'A marked B message read.');
+    phase2AssertSame(false, setAuthorizedMessageRead($database, $contextA, $messageBId, false), 'A marked B message unread.');
     phase2AssertSame(null, findAuthorizedPersonalInfo($database, $contextA, $profileB), 'A read B profile.');
     phase2AssertSame(null, findAuthorizedProject($database, $contextA, $projectB), 'A read B project.');
     phase2AssertSame($bBefore, ownerFlowSnapshot($database, $portfolioB), 'A owner route attempt changed B database rows.');
@@ -310,6 +312,7 @@ try {
     phase2AssertSame(false, updateAuthorizedSkill($database, $contextB, $skillA, 'B Overwrote A'), 'B updated A skill.');
     phase2AssertSame(false, deleteAuthorizedProject($database, $contextB, $projectA), 'B deleted A project.');
     phase2AssertSame(null, findAuthorizedMessage($database, $contextB, $messageAId), 'B message candidate bypassed scope.');
+    phase2AssertSame(false, setAuthorizedMessageRead($database, $contextB, $messageAId, true), 'B marked A message read.');
     phase2AssertSame($aBefore, ownerFlowSnapshot($database, $portfolioA), 'B owner route attempt changed A database rows.');
     phase2AssertSame($aFilesystemBefore, ownerFlowUploadSnapshot($legacyFixtureRoot), 'B owner route attempt changed A filesystem state.');
     ownerFlowAssertRepositoryUploadsAbsent();
@@ -321,6 +324,20 @@ try {
     phase2AssertSame(2, $aggregate['project_count'], 'A dashboard count included foreign projects.');
     phase2AssertSame(2, $aggregate['skill_count'], 'A dashboard count included foreign skills.');
     phase2AssertSame(1, $aggregate['message_count'], 'A dashboard count included foreign messages.');
+    // Read state (B-03): a new message is unread; opening keeps the first read time; unread clears it.
+    phase2AssertSame(1, countAuthorizedUnreadMessages($database, $contextA), 'A new message must start unread, and only A messages count.');
+    phase2AssertSame(true, setAuthorizedMessageRead($database, $contextA, $messageAId, true), 'A could not mark its message read.');
+    $firstReadAt = findAuthorizedMessage($database, $contextA, $messageAId)['read_at'] ?? null;
+    phase2Assert(is_string($firstReadAt), 'Marking read did not record a read time.');
+    phase2AssertSame(0, countAuthorizedUnreadMessages($database, $contextA), 'A read message still counted as unread.');
+    $database->exec('DO SLEEP(1.1)');
+    setAuthorizedMessageRead($database, $contextA, $messageAId, true);
+    phase2AssertSame($firstReadAt, findAuthorizedMessage($database, $contextA, $messageAId)['read_at'] ?? null, 'Opening again overwrote the first read time.');
+    phase2AssertSame(true, setAuthorizedMessageRead($database, $contextA, $messageAId, false), 'A could not mark its message unread.');
+    phase2AssertSame(null, findAuthorizedMessage($database, $contextA, $messageAId)['read_at'] ?? 'missing', 'Mark unread did not clear the read time.');
+    phase2AssertSame(1, countAuthorizedUnreadMessages($database, $contextA), 'A message marked unread was not counted.');
+    phase2AssertSame(false, setAuthorizedMessageRead($database, $contextA, 0, true), 'A non-positive message id was accepted.');
+    $passed[] = 'T-OWNER-MESSAGE-READ-STATE';
     phase2AssertSame([$profileA], array_map(static fn (array $row): int => (int) $row['id'], array_filter([loadAuthorizedPersonalInfo($database, $contextA)])), 'A profile collection was not scoped.');
     $passed[] = 'T-OWNER-COLLECT';
     ownerFlowAssertRepositoryUploadsAbsent();

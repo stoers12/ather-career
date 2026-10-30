@@ -6,6 +6,7 @@ require_once __DIR__ . '/authorization.php';
 require_once __DIR__ . '/error_reporting.php';
 require_once __DIR__ . '/http.php';
 require_once __DIR__ . '/owner_session.php';
+require_once __DIR__ . '/portfolio_scoped_messages.php';
 
 class OwnerReadinessDeniedException extends RuntimeException
 {
@@ -58,8 +59,44 @@ function requireOwnerPortfolioContext(PDO $database): AuthorizedPortfolioContext
     try {
         $destination = ownerJourneyDestination($database, $user);
         if ($destination !== '/owner.php') { httpRedirect($destination); }
-        return requireOwnedPortfolioContext($database);
+        $context = requireOwnedPortfolioContext($database);
+        ownerAuthorizedRequest($database, $context);
+        return $context;
     } catch (AuthorizationDeniedException) { ownerAuthorizationDenied(); }
+}
+
+/**
+ * The connection and context this request authorized, so workspace chrome that
+ * renders after the handler's reads needs no second connection or authorization.
+ *
+ * @return array{0: PDO, 1: AuthorizedPortfolioContext}|null
+ */
+function ownerAuthorizedRequest(?PDO $database = null, ?AuthorizedPortfolioContext $context = null): ?array
+{
+    static $authorized = null;
+    if ($database !== null && $context !== null) {
+        $authorized = [$database, $context];
+    }
+
+    return $authorized;
+}
+
+/**
+ * Unread messages for the sidebar badge (contract: docs/contracts/owner-messages.md).
+ * Null when this request authorized no Owner or the count cannot be read: the
+ * badge is then omitted, and a failed count never breaks the page.
+ */
+function ownerWorkspaceUnreadMessageCount(): ?int
+{
+    $authorized = ownerAuthorizedRequest();
+    if ($authorized === null) {
+        return null;
+    }
+    try {
+        return countAuthorizedUnreadMessages($authorized[0], $authorized[1]);
+    } catch (PDOException) {
+        return null;
+    }
 }
 
 /** Retired first-creation API: alternate callers cannot bypass completion. */

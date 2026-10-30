@@ -10,6 +10,7 @@ require_once __DIR__ . '/experience.php';
 require_once __DIR__ . '/evidence_text_evaluator.php';
 require_once __DIR__ . '/portfolio_scoped_projects.php';
 require_once __DIR__ . '/portfolio_scoped_experiences.php';
+require_once __DIR__ . '/portfolio_scoped_messages.php';
 
 const AUTHORIZED_PERSONAL_INFO_FIELDS = [
     ...FINAL_PROFILE_FIELDS,
@@ -248,43 +249,6 @@ function deleteAuthorizedSkill(PDO $database, AuthorizedPortfolioContext $contex
     ]);
 
     return $statement->rowCount() === 1;
-}
-
-/** @return list<array<string, mixed>> */
-function listAuthorizedMessages(PDO $database, AuthorizedPortfolioContext $context): array
-{
-    $statement = $database->prepare(
-        'SELECT id, name, email, message, created_at
-         FROM messages
-         WHERE recipient_portfolio_id = :authorized_portfolio_id
-         ORDER BY created_at DESC, id DESC'
-    );
-    $statement->execute(['authorized_portfolio_id' => $context->portfolioId]);
-
-    return $statement->fetchAll(PDO::FETCH_ASSOC);
-}
-
-/** @return array<string, mixed>|null */
-function findAuthorizedMessage(PDO $database, AuthorizedPortfolioContext $context, int $messageId): ?array
-{
-    if ($messageId < 1) {
-        return null;
-    }
-
-    $statement = $database->prepare(
-        'SELECT id, name, email, message, created_at
-         FROM messages
-         WHERE id = :resource_id
-           AND recipient_portfolio_id = :authorized_portfolio_id
-         LIMIT 1'
-    );
-    $statement->execute([
-        'resource_id' => $messageId,
-        'authorized_portfolio_id' => $context->portfolioId,
-    ]);
-    $message = $statement->fetch(PDO::FETCH_ASSOC);
-
-    return $message === false ? null : $message;
 }
 
 /** @return array{project_count: int, skill_count: int, message_count: int, profile_count: int} */
