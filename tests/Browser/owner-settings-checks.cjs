@@ -5,6 +5,14 @@ const path = require('node:path');
 module.exports = async function settingsChecks(browser, base, out, contrast) {
     const settings = locale => `${base}/tests/Browser/owner-settings-visual.php?lang=${locale}`;
     const noOverflow = async (page, label) => assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, label);
+    async function sidebarCurrent(page, locale, section) {
+        const href = `/owner_settings.php?lang=${locale}`;
+        const current = section === 'help' ? href + '#help' : href;
+        const other = section === 'help' ? href : href + '#help';
+        await page.locator(`.owner-nav-item[href="${current}"][aria-current="page"]`).waitFor({ state: 'attached' });
+        assert.equal(await page.locator('.owner-nav-item[aria-current="page"]').count(), 1, 'exactly one sidebar item is current');
+        assert.equal(await page.locator(`.owner-nav-item[href="${other}"]`).getAttribute('aria-current'), null, 'the other Settings destination is not current');
+    }
     const session = process.env.EVIDENCE_HUB_ACTION_SESSION_COOKIE;
     async function context(options = {}) {
         const c = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1440, height: 1000 }, ...options });
@@ -40,8 +48,13 @@ module.exports = async function settingsChecks(browser, base, out, contrast) {
         assert.deepEqual(await page.evaluate(() => window.__settingsFirstLayout), ['default', 'system']);
         await contrast(page);
         await capture(page, `settings-${locale}-${theme}-1440`);
+        await page.goto(`${base}/owner_settings.php?lang=${locale}#help`);
+        await sidebarCurrent(page, locale, 'help');
+        await page.locator('[data-owner-settings-link="appearance"]').click();
+        await sidebarCurrent(page, locale, 'appearance');
+        await page.locator(`.owner-nav-item[href="/owner_settings.php?lang=${locale}#help"]`).click();
+        await sidebarCurrent(page, locale, 'help');
         if (locale === 'ar') {
-            await page.locator('[data-owner-settings-link="help"]').click();
             await page.waitForFunction(() => document.querySelector('#appearance').hidden);
             assert.equal(await page.locator('#help').isVisible(), true);
             assert.equal(await page.locator('.owner-settings-question').count(), 4);
@@ -49,8 +62,9 @@ module.exports = async function settingsChecks(browser, base, out, contrast) {
             const question = page.locator('.owner-settings-question').first();
             await question.locator('summary').focus(); await page.keyboard.press('Enter');
             assert.equal(await question.evaluate(n => n.open), true);
-            await page.locator('[data-owner-settings-link="appearance"]').click();
         }
+        await page.locator('[data-owner-settings-link="appearance"]').click();
+        await sidebarCurrent(page, locale, 'appearance');
         for (const size of ['default', 'large']) {
             await page.locator('[data-owner-preference="text_size"]').selectOption(size);
             for (const width of [390, 768, 1280, 1920, 2560]) {
@@ -107,7 +121,8 @@ module.exports = async function settingsChecks(browser, base, out, contrast) {
     }
     for (const locale of ['ar', 'en']) {
         const c = await context({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
-        const page = await c.newPage(); await page.goto(settings(locale));
+        const page = await c.newPage(); await page.goto(`${base}/owner_settings.php?lang=${locale}#help`);
+        await sidebarCurrent(page, locale, 'appearance');
         assert.equal(await page.locator('#appearance').isVisible(), true);
         assert.equal(await page.locator('#help').isVisible(), true);
         assert.equal(await page.locator('[data-owner-browser-preference] input:visible,[data-owner-browser-preference] select:visible,[data-owner-theme]:visible').count(), 0, 'no non-working preference control without JavaScript');
@@ -119,6 +134,7 @@ module.exports = async function settingsChecks(browser, base, out, contrast) {
         assert.equal(await page.locator('html').getAttribute('lang'), alternate);
         await page.locator('.owner-settings-nav a[href="#help"]').click();
         assert.equal(new URL(page.url()).hash, '#help');
+        await sidebarCurrent(page, alternate, 'appearance');
         await page.locator('.owner-settings-question').first().locator('summary').click();
         assert.equal(await page.locator('.owner-settings-question').first().evaluate(n => n.open), true);
         await noOverflow(page, 'no-JS Settings');
@@ -141,9 +157,13 @@ module.exports = async function settingsChecks(browser, base, out, contrast) {
             const response = await c.request.post(fixture, { form: { action: 'seed', csrf_token: token } });
             assert.equal(response.status(), 200); const { id } = await response.json(); seeded = true;
             assert.ok(Number.isInteger(id) && id > 0);
-            await page.reload();
-            assert.equal(await page.locator('.owner-unread-badge').textContent(), '1');
-            assert.equal(await page.locator('.owner-nav-item[href="/owner_messages.php?lang=en"]').getAttribute('aria-label'), 'Messages, 1 unread');
+            for (const locale of ['ar', 'en']) {
+                await page.goto(`${base}/owner_settings.php?lang=${locale}`);
+                assert.equal(await page.locator('.owner-unread-badge').textContent(), '1');
+                const name = locale === 'ar' ? 'الرسائل، غير المقروءة: 1' : 'Messages, 1 unread';
+                assert.equal(await page.locator(`.owner-nav-item[href="/owner_messages.php?lang=${locale}"]`).getAttribute('aria-label'), name);
+                assert.equal(await page.getByRole('link', { name, exact: true }).count(), 1, 'the unread link exposes the exact localized accessible name');
+            }
             await page.goto(`${base}/owner_messages.php?lang=en`);
             await page.locator(`a[href="owner_messages.php?message=${id}"]`).click();
             assert.equal(await page.locator('.owner-unread-badge').count(), 0, 'opening the actual message marks it read');

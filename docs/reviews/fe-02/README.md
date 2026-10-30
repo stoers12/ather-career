@@ -51,3 +51,8 @@ Reference on the left; FE-02 on the right. Images retain their original viewport
 | 390 Arabic appearance | [Compare](appearance-ar-light-390.png) | [Compare](appearance-ar-dark-390.png) |
 | 390 Arabic without JavaScript | [Compare](appearance-ar-no-js-390.png) | Default light fallback |
 | 1440 Arabic large text | [Compare](appearance-ar-large-light-1440.png) | [Compare](appearance-ar-large-dark-1440.png) |
+
+## Review follow-up
+
+- Settings section changes now synchronize the sidebar highlight and its single `aria-current="page"`: Help for `#help`, Settings for appearance, on initial load and hash changes. The server-rendered no-JS fallback still marks only Settings current and shows both sections. Browser checks cover direct Help links, returning to appearance, sidebar Help navigation and the no-JS fallback in Arabic and English.
+- The Arabic unread accessible label is now `الرسائل، غير المقروءة: %d`, avoiding count-dependent grammar. The authenticated unread lifecycle asserts the exact Arabic and English accessible names while the synthetic message is unread.

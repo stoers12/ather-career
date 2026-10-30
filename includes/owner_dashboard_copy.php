@@ -58,7 +58,7 @@ function ownerDashboardCopy(string $key, string $locale): string
         'expand_sidebar' => ['ar' => 'توسيع الشريط الجانبي', 'en' => 'Expand sidebar'],
         'nav_settings' => ['ar' => 'الإعدادات', 'en' => 'Settings'],
         'nav_help' => ['ar' => 'المساعدة', 'en' => 'Help'],
-        'messages_unread' => ['ar' => 'الرسائل، %d رسائل غير مقروءة', 'en' => 'Messages, %d unread'],
+        'messages_unread' => ['ar' => 'الرسائل، غير المقروءة: %d', 'en' => 'Messages, %d unread'],
         'nav_dashboard' => ['ar' => 'الرئيسية', 'en' => 'Overview'],
         'nav_profile' => ['ar' => 'الملف المهني', 'en' => 'Profile'],
         'nav_projects' => ['ar' => 'المشاريع', 'en' => 'Projects'],

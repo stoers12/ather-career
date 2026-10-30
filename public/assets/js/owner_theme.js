@@ -68,12 +68,19 @@
         document.querySelectorAll('[data-owner-preference="' + name + '"]').forEach(function (control) { control.value = value; });
     }
     function settingsSection() {
+        if (!root.classList.contains('owner-settings-page')) return;
         var section = window.location.hash === '#help' ? 'help' : 'appearance';
         root.setAttribute('data-owner-settings-section', section);
         document.querySelectorAll('[data-owner-settings-panel]').forEach(function (panel) { panel.hidden = panel.getAttribute('data-owner-settings-panel') !== section; });
         document.querySelectorAll('[data-owner-settings-link]').forEach(function (link) {
             if (link.getAttribute('data-owner-settings-link') === section) link.setAttribute('aria-current', 'location');
             else link.removeAttribute('aria-current');
+        });
+        document.querySelectorAll('.owner-nav-utilities .owner-nav-item').forEach(function (link) {
+            var current = (link.hash === '#help') === (section === 'help');
+            if (current) link.setAttribute('aria-current', 'page');
+            else link.removeAttribute('aria-current');
+            link.classList.toggle('active', current);
         });
     }
 
