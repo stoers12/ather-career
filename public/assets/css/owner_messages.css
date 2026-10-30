@@ -1,0 +1,29 @@
+/* Logical columns keep the message list first in RTL, LTR, and native mobile flow. */
+.owner-inbox { display: grid; grid-template-columns: minmax(180px, 210px) minmax(0, 1fr); min-block-size: 408px; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-surface); }
+.owner-message-list { display: grid; align-content: start; gap: 8px; padding: 10px; border-inline-end: 1px solid var(--admin-border); min-inline-size: 0; scroll-margin-block-start: 16px; }
+.owner-message-item { display: grid; gap: 5px; padding: 16px 12px; min-inline-size: 0; border: 1px solid transparent; border-radius: 7px; text-decoration: none; color: var(--admin-text); font-size: calc(12px * var(--owner-text-scale, 1)); }
+.owner-message-item:hover { background: var(--admin-raised); }
+.owner-message-item[aria-current] { background: var(--owner-soft); border-color: var(--admin-border); }
+.owner-message-state { display: flex; align-items: center; gap: 6px; font-size: calc(11px * var(--owner-text-scale, 1)); color: var(--admin-muted); }
+.owner-message-dot { inline-size: 7px; block-size: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--admin-primary); }
+.owner-message-item[data-message-state="unread"] strong { font-weight: 600; }
+.owner-message-email { overflow-wrap: anywhere; color: var(--admin-muted); font-size: calc(12px * var(--owner-text-scale, 1)); }
+.owner-message-excerpt { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--admin-muted); }
+.owner-message-detail { min-inline-size: 0; padding: 24px; }
+.owner-message-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-block-end: 12px; }
+.owner-message-heading > span { color: var(--owner-gold); font-size: calc(11px * var(--owner-text-scale, 1)); }
+.owner-message-detail > .owner-message-email { margin-block: 8px 22px; }
+.owner-message-body { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--admin-text); line-height: 2; }
+.owner-message-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-block-start: 28px; }
+.owner-message-actions form { margin: 0; }
+.owner-messages :is(a,button) { min-block-size: 44px; }
+.owner-message-placeholder { display: grid; place-content: center; justify-items: center; gap: 12px; padding: 40px 24px; text-align: center; }
+.owner-message-placeholder p { color: var(--admin-muted); }
+.owner-message-placeholder svg { inline-size: 32px; block-size: 32px; color: var(--admin-muted); }
+@media (max-width:800px) {
+    .owner-inbox { grid-template-columns: minmax(0, 1fr); }
+    .owner-message-list { border-inline-end: 0; border-block-end: 1px solid var(--admin-border); }
+    .owner-message-detail { padding: 20px; }
+    .owner-message-actions { align-items: stretch; flex-direction: column; }
+    .owner-message-actions :is(form,button) { inline-size: 100%; }
+}

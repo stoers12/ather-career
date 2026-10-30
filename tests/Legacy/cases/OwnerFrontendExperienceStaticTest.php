@@ -14,7 +14,7 @@ final class OwnerFrontendExperienceStaticTest
         $publication = self::read('handlers/owner_publication.php');
         $publicationPresentation = self::read('includes/owner_publication_presentation.php');
         $onboarding = self::read('handlers/owner_onboarding.php') . self::read('includes/owner_flow.php');
-        $messages = self::read('handlers/owner_messages.php');
+        $messages = self::read('handlers/owner_messages.php') . self::read('includes/owner_messages_presentation.php') . self::read('includes/owner_messages_copy.php');
         $dashboard = self::read('includes/owner_dashboard_presentation.php');
         $javascript = self::read('public/assets/js/admin.js');
         $scopedData = SplitSourceFile::read('includes/portfolio_scoped_data.php');
