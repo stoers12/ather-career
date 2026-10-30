@@ -1,0 +1,40 @@
+/* Experience shares workspace tokens, controls, form feedback and typography. */
+.owner-experiences { min-inline-size: 0; }
+.owner-experiences h1 { font-size: calc(32px * var(--owner-text-scale,1)); line-height: 1.4; }
+.owner-experiences .admin-page-description { font-size: calc(13px * var(--owner-text-scale,1)); }
+.owner-experiences .admin-page-header { align-items: center; margin-block-end: 28px; }
+.owner-experiences svg { inline-size: 17px; block-size: 17px; }
+.owner-experience-list { border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-surface); }
+.owner-experience-list:empty { display: none; }
+.owner-experience-card { display: flex; align-items: start; gap: 16px; padding: 21px 22px; min-inline-size: 0; }
+.owner-experience-card + .owner-experience-card { border-block-start: 1px solid var(--admin-border); }
+.owner-experience-icon { display: grid; flex: 0 0 34px; place-items: center; block-size: 34px; border: 1px solid var(--admin-border); border-radius: 7px; background: var(--admin-raised); color: var(--admin-muted); }
+.owner-experience-content { flex: 1; min-inline-size: 0; }
+.owner-experience-content h2 { font-size: calc(16px * var(--owner-text-scale,1)); line-height: 1.6; }
+.owner-experience-content > p { margin-block-start: 3px; color: var(--admin-muted); font-size: calc(13px * var(--owner-text-scale,1)); }
+.owner-experience-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-block-start: 10px; color: var(--admin-muted); font-size: calc(12px * var(--owner-text-scale,1)); }
+.owner-experience-type { padding: 3px 7px; border-radius: 4px; background: var(--admin-raised); }
+.owner-experience-dates { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px; direction: ltr; }
+.owner-experience-content > .owner-experience-description { margin-block-start: 14px; white-space: pre-wrap; }
+.owner-experience-actions { display: flex; flex-direction: column; gap: 0; }
+.owner-experience-actions .button-secondary, .owner-experience-delete .button-danger { font-size: calc(12px * var(--owner-text-scale,1)); }
+.owner-experience-delete { margin: 0; }
+.owner-experience-delete .button-danger { background: transparent; border-color: transparent; }
+.owner-experience-editor { padding: 25px; border: 1px solid var(--admin-border); border-radius: 9px; background: var(--admin-surface); }
+.owner-experience-form { margin: 0; }
+.owner-experience-form .form-grid { gap: 32px 16px; }
+.owner-experience-form .form-field label { display: block; margin-block-end: 8px; font-size: calc(13px * var(--owner-text-scale,1)); }
+.owner-experience-form label em { margin-inline-start: 5px; font-style: normal; font-size: calc(11px * var(--owner-text-scale,1)); color: var(--admin-muted); }
+.owner-experience-form :is(input:not([type="checkbox"]):not([type="hidden"]),select,textarea) { min-block-size: 48px; border-color: var(--admin-input-border); border-radius: 6px; }
+.owner-experience-form input[type="month"] { max-inline-size: 100%; }
+.owner-experience-form input:disabled { color: var(--admin-muted); background: var(--admin-raised); }
+.owner-experience-form .form-hint { font-size: calc(12px * var(--owner-text-scale,1)); }
+.owner-experience-form .checkbox-field { align-items: center; min-block-size: 44px; font-size: calc(13px * var(--owner-text-scale,1)); }
+.owner-experience-form .form-actions { border-block-start: 1px solid var(--admin-border); margin-block-start: 25px; padding-block-start: 18px; }
+.owner-experience-cancel { display: inline-flex; align-items: center; justify-content: center; min-inline-size: 44px; margin-inline-start: auto; padding: 10px; min-block-size: 44px; font-size: calc(12px * var(--owner-text-scale,1)); color: var(--admin-muted); }
+.owner-experience-saved { color: var(--admin-muted); font-size: calc(12px * var(--owner-text-scale,1)); }
+.owner-experience-editor-delete { margin-block-start: 14px; }
+.owner-experiences :is(input,select,textarea)[aria-invalid="true"] { border-color: var(--admin-danger); }
+.owner-experiences :where(a,button,input,textarea,select):focus-visible { outline: 2px solid var(--admin-primary); outline-offset: 3px; }
+@media (max-width:650px) { .owner-experiences h1 { font-size: calc(26px * var(--owner-text-scale,1)); } .owner-experience-card { flex-wrap: wrap; padding: 18px 16px; gap: 12px; } .owner-experience-content { flex-basis: calc(100% - 46px); } .owner-experience-actions { flex-basis: 100%; flex-direction: row; justify-content: end; gap: 8px; } .owner-experience-editor { padding: 20px 16px; } }
+@media (pointer:coarse) { .owner-experiences :is(a,button), .owner-experience-form .checkbox-field { min-inline-size: 44px; min-block-size: 44px; } }
