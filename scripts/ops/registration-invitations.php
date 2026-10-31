@@ -11,15 +11,16 @@ $usage = "Usage:\n"
     . "  php scripts/ops/registration-invitations.php create --count N [--days " . REGISTRATION_INVITATION_DEFAULT_DAYS . "] [--label TEXT]\n"
     . "  php scripts/ops/registration-invitations.php list\n"
     . "  php scripts/ops/registration-invitations.php revoke --id N\n";
-$command = $argv[1] ?? '';
+$arguments = is_array($_SERVER['argv'] ?? null) ? array_values($_SERVER['argv']) : [];
+$command = $arguments[1] ?? '';
 // getopt() stops at the subcommand, so read "--name value" / "--name=value" pairs after it.
 $options = [];
-for ($index = 2; $index < count($argv); $index++) {
-    if (preg_match('/^--(count|days|label|id)(?:=(.*))?$/s', $argv[$index], $match) !== 1) {
+for ($index = 2; $index < count($arguments); $index++) {
+    if (preg_match('/^--(count|days|label|id)(?:=(.*))?$/s', $arguments[$index], $match) !== 1) {
         fwrite(STDERR, $usage);
         exit(2);
     }
-    $options[$match[1]] = array_key_exists(2, $match) ? $match[2] : ($argv[++$index] ?? '');
+    $options[$match[1]] = array_key_exists(2, $match) ? $match[2] : ($arguments[++$index] ?? '');
 }
 
 try {
