@@ -67,4 +67,24 @@ final class PortfolioRedesignTest extends TestCase
         self::assertStringContainsString('حالة النشر غير متاحة', $html);
         self::assertStringNotContainsString('<strong>خاص</strong>', $html, 'A 503 is not a private state');
     }
+
+    public function testNeutralCoversUseOnlyRealTitleInitials(): void
+    {
+        self::assertSame('CO', portfolioProjectInitials('Customer operations dashboard'));
+        self::assertSame('ما', portfolioProjectInitials('منصة التوظيف'));
+        self::assertSame('P', portfolioProjectInitials('<Project>'));
+        self::assertSame('', portfolioProjectInitials('— !! —'));
+
+        ob_start();
+        renderPortfolioNeutralCover('portfolio-project-visual', 'Customer <operations>');
+        $cover = (string) ob_get_clean();
+        self::assertStringContainsString('aria-hidden="true"', $cover);
+        self::assertStringContainsString('<span class="portfolio-cover-mark" dir="ltr"><bdi>CO</bdi> / ATHER</span>', $cover);
+        self::assertSame(1, substr_count($cover, 'portfolio-neutral-cover'));
+
+        ob_start();
+        renderPortfolioNeutralCover('portfolio-case-cover', '— —');
+        $empty = (string) ob_get_clean();
+        self::assertStringNotContainsString('portfolio-cover-mark', $empty, 'No mark without real initials');
+    }
 }

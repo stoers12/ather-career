@@ -40,7 +40,7 @@ function renderPublicProjectPage(array $page): void
     <?php if ($page['preview'] && $page['draft']): ?><p class="portfolio-preview-note portfolio-draft-note" role="note"><?php echo portfolioCopy('draft'); ?></p><?php endif; ?>
     <?php if ($page['preview'] && !$page['portfolio_published']): ?><p class="portfolio-preview-note" role="note"><?php echo portfolioCopy('privatePortfolio'); ?></p><?php endif; ?>
     <article>
-        <?php if ($project['image_url'] !== null): ?><div class="portfolio-case-cover"><img src="<?php echo $e($project['image_url']); ?>" alt="<?php echo $e(sprintf(portfolioCopy('projectPreview'), $title)); ?>"></div><?php else: ?><div class="portfolio-case-cover portfolio-neutral-cover" aria-hidden="true"></div><?php endif; ?>
+        <?php if ($project['image_url'] !== null): ?><div class="portfolio-case-cover"><img src="<?php echo $e($project['image_url']); ?>" alt="<?php echo $e(sprintf(portfolioCopy('projectPreview'), $title)); ?>"></div><?php else: renderPortfolioNeutralCover('portfolio-case-cover', $title); endif; ?>
         <?php if ($project['category'] !== ''): ?><p class="portfolio-project-category" dir="auto"><?php echo $e($project['category']); ?></p><?php endif; ?>
         <h1 id="portfolio-title" dir="auto"><?php echo $e($title); ?></h1>
         <?php if ($project['description'] !== ''): ?><p class="portfolio-case-copy" dir="auto"><?php echo nl2br($e($project['description'])); ?></p><?php endif; ?>

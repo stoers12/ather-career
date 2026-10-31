@@ -102,3 +102,15 @@ All results use synthetic fixtures. Left is reference; right is result. The supp
 | Real contact error and success | [422](images/contact-error.png), [303 success](images/contact-success.png) |
 | Draft case in preview | [1440](images/draft-1440-light.png), [390](images/draft-390-light.png) |
 | No JavaScript | [Public 390](images/public-390-no-js.png), [case 390](images/case-390-no-js.png) |
+
+## Claude review follow-up (owner request)
+
+- **Neutral covers:** they now carry the reference's mark, `XX / ATHER`, built from the real project title's initials (letters and digits only; no mark when there are none). The same mark appears on the public cards and on the case-study cover. The category is deliberately **not** repeated inside the cover, keeping the existing S05 rule that a project's category appears once. The mark is decorative (`aria-hidden`), because the card carries the title as text.
+- **Real images:** they already fill their cover (`object-fit: cover`). The side bands in the comparison screenshots belong to the synthetic fixture image itself, not to the page.
+- **Tests:** `PortfolioRedesignTest::testNeutralCoversUseOnlyRealTitleInitials` was added. The `PortfolioPresentationStaticTest` cover rule now checks the shared helper call (same rule).
+- **Verification:**
+  - PHPUnit `OK (182 tests, 878 assertions)`;
+  - Phase 2 passed;
+  - PHPStan reports only the 22 known entries;
+  - full required gates `REQUIRED_GATES_PASSED`;
+  - `public-portfolio-visual.cjs`: all PASS lines, including AA contrast in both themes and no-JS.

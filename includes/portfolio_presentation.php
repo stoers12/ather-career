@@ -475,7 +475,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                                     <div class="portfolio-project-visual">
                                         <img src="<?php echo portfolioPresentationEscape($projectImageUrl); ?>" alt="<?php echo portfolioPresentationEscape(sprintf(portfolioCopy('projectPreview'), $projectTitle)); ?>" loading="lazy">
                                     </div>
-                                <?php else: ?><div class="portfolio-project-visual portfolio-neutral-cover" aria-hidden="true"></div><?php endif; ?>
+                                <?php else: renderPortfolioNeutralCover('portfolio-project-visual', $projectTitle); endif; ?>
                                 <div class="portfolio-project-body">
                                     <?php if (!$hasProjectImage || $category !== ''): ?><div class="portfolio-project-identity"><?php if ($category !== ''): ?><p class="portfolio-project-category" dir="auto"><?php echo portfolioPresentationEscape($category); ?></p><?php endif; ?></div><?php endif; ?>
                                     <h3 dir="auto"><?php echo portfolioPresentationEscape($projectTitle); ?></h3>
