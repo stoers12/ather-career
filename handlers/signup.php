@@ -18,6 +18,7 @@ $locale = ($_GET['lang'] ?? null) === 'en' ? 'en' : 'ar';
 require_once dirname(__DIR__) . '/includes/authenticated_entry.php';
 presentAuthenticatedEntryIfPresent($locale);
 $registrationEnabled = auth0RegistrationIsEnabled();
+$invitationRequired = auth0RegistrationRequiresInvitation();
 if ($registrationEnabled) { startOwnerSession(); }
 $canRegister = $registrationEnabled && !array_key_exists(INTERNAL_USER_SESSION_KEY, $_SESSION ?? []);
 header('Content-Type: text/html; charset=utf-8');
@@ -69,6 +70,17 @@ header('Content-Language: ' . $locale);
                         <?php if ($canRegister): ?>
                         <form action="/owner_register.php" method="POST">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                            <?php if ($invitationRequired): ?>
+                            <?php $invitationInvalid = ($_GET['invitation'] ?? null) === 'invalid'; ?>
+                            <div class="af-invitation">
+                                <label for="invitation-code"><?php echo signUpCopy('invitation_label', $locale); ?></label>
+                                <input id="invitation-code" name="invitation_code" type="text" required maxlength="64" dir="ltr" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="invitation-hint<?php echo $invitationInvalid ? ' invitation-error' : ''; ?>"<?php echo $invitationInvalid ? ' aria-invalid="true"' : ''; ?>>
+                                <p class="af-invitation-hint" id="invitation-hint"><?php echo signUpCopy('invitation_hint', $locale); ?> <bdi dir="ltr"><?php echo signUpCopy('invitation_format', $locale); ?></bdi></p>
+                                <?php if ($invitationInvalid): ?>
+                                <p class="af-invitation-error" id="invitation-error" role="alert"><?php echo signUpCopy('invitation_invalid', $locale); ?></p>
+                                <?php endif; ?>
+                            </div>
+                            <?php endif; ?>
                             <button class="af-auth-button" type="submit"><span class="af-provider-icon" aria-hidden="true">G</span><?php echo signUpCopy('google', $locale); ?></button>
                         </form>
                         <?php else: ?>

@@ -30,6 +30,48 @@ $render = static function (string $screen, array $query) use ($root): string {
     }
 };
 
+function checkSignupInvitationPresentation(callable $render, callable $check): void
+{
+    foreach (['invite', '1', '0'] as $mode) {
+        putenv('ATHERCAR_REGISTRATION_ENABLED=' . $mode);
+        foreach (['ar', 'en'] as $locale) {
+            foreach ([null, 'invalid', ['invalid']] as $error) {
+                $query = ['lang' => $locale, 'invitation' => $error, 'invitation_code' => '<script>private-code</script>'];
+                $html = $render('signup', $query);
+                $dom = new DOMDocument();
+                @$dom->loadHTML('<?xml encoding="UTF-8">' . $html);
+                $xpath = new DOMXPath($dom);
+                $names = [];
+                /** @var DOMElement $field */
+                foreach ($xpath->query('//form//*[@name]') as $field) { $names[] = $field->getAttribute('name'); }
+                $check($names === ($mode === 'invite' ? ['csrf_token', 'invitation_code'] : ($mode === '1' ? ['csrf_token'] : [])), 'Registration field set must exactly match the mode contract.');
+                $input = $xpath->query('//input[@name="invitation_code"]')->item(0);
+                $check(($input !== null) === ($mode === 'invite'), 'Invitation field must be invite-only.');
+                $invalid = $mode === 'invite' && $error === 'invalid';
+                $check($xpath->query('//*[@id="invitation-error" and @role="alert"]')->length === (int) $invalid, 'Only the exact invalid state must announce an inline error.');
+                $check(!str_contains($html, 'private-code'), 'Submitted invitation must never be echoed.');
+                if ($mode !== 'invite') {
+                    $check($html === $render('signup', ['lang' => $locale]), 'Invitation query must not alter open or closed presentation.');
+                    continue;
+                }
+                if (!$input instanceof DOMElement) { throw new RuntimeException('Invitation input missing.'); }
+                foreach (['required' => '', 'maxlength' => '64', 'dir' => 'ltr', 'autocomplete' => 'off', 'autocapitalize' => 'characters', 'spellcheck' => 'false'] as $attribute => $value) {
+                    $check($input->hasAttribute($attribute) && $input->getAttribute($attribute) === $value, 'Invitation input attribute mismatch: ' . $attribute);
+                }
+                $check(!$input->hasAttribute('value'), 'Invitation field must always start empty.');
+                $check($xpath->query('//label[@for="invitation-code"]')->item(0)->textContent === html_entity_decode(signUpCopy('invitation_label', $locale), ENT_QUOTES, 'UTF-8'), 'Visible translated invitation label missing.');
+                $check(str_contains($html, signUpCopy('invitation_format', $locale)), 'Invitation format hint missing.');
+                $check($input->getAttribute('aria-describedby') === ($invalid ? 'invitation-hint invitation-error' : 'invitation-hint'), 'Hint/error must be connected to the field.');
+                $check($input->hasAttribute('aria-invalid') === $invalid, 'Invalid field state mismatch.');
+                if ($invalid) { $check(str_contains($html, signUpCopy('invitation_invalid', $locale)), 'Translated invitation error missing.'); }
+                $check($xpath->query('//script[not(@src)]|//*[@style or @onclick]')->length === 0, 'Invitation presentation must respect CSP.');
+            }
+        }
+    }
+    if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }
+    putenv('ATHERCAR_REGISTRATION_ENABLED');
+}
+
 try {
     // A fixture must not turn browser-selected claims into local authentication state.
     $_SESSION = ['existing_marker' => 'unchanged'];
@@ -99,6 +141,7 @@ try {
     } catch (InvalidArgumentException) {
         ++$checks;
     }
+    if (in_array('signup', $screens, true)) { checkSignupInvitationPresentation($render, $check); }
     echo 'PASS account entry presentation boundaries: ' . $checks . " checks.\n";
 } catch (Throwable $exception) {
     fwrite(STDERR, 'FAIL account entry: ' . $exception->getMessage() . "\n");
