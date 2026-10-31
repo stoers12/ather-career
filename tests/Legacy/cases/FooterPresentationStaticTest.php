@@ -64,7 +64,7 @@ final class FooterPresentationStaticTest
         phase2Assert($footer !== '', 'Semantic Footer landmark is missing.');
         [$footerPrimary] = explode('<div class="portfolio-container portfolio-footer-secondary">', $footer, 2);
         $footerNavigation = preg_match('/<nav class="portfolio-footer-navigation".*?<\/nav>/s', $footer, $footerNavigationMatch) === 1 ? $footerNavigationMatch[0] : '';
-        phase2Assert(substr_count($footerPrimary, 'aria-label="ATHER, home"') === 1 && str_contains($footerPrimary, 'src="/assets/images/ather-navbar-logo.png"') && str_contains($footerPrimary, 'A professional portfolio built with ATHER.'), 'Footer must render ATHER once as restrained platform identity with its approved supporting sentence.');
+        phase2Assert(substr_count($footerPrimary, 'aria-label="ATHER, home"') === 1 && str_contains($footerPrimary, 'portfolio-footer-logo portfolio-wordmark') && str_contains($footerPrimary, 'A professional portfolio built with ATHER.'), 'Footer must render ATHER once as restrained platform identity with its approved supporting sentence.');
         phase2Assert(!str_contains($footerPrimary, '&lt;Footer Owner&gt;') && !str_contains($footerPrimary, 'Data &lt;Leader&gt;') && !str_contains($footerPrimary, 'Builds &lt;safe&gt; data products.') && !str_contains($footerPrimary, '&lt;Amman&gt;'), 'Footer primary area must not repeat Owner identity, title, summary, or location.');
         foreach (['#about', '#projects', '#experience', '#skills', '#contact'] as $target) {
             phase2Assert(str_contains($footerPrimary, 'href="' . $target . '"'), "Footer navigation is missing the real {$target} target.");

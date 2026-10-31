@@ -70,7 +70,7 @@ const installRoutes = async (page, html) => {
                     if (expected.experiences === 1) {
                         assert.equal(await items.first().evaluate(node => getComputedStyle(node, '::after').content), 'none', `${width}/${variant}: single Experience connector`);
                     } else {
-                        assert.notEqual(await items.first().evaluate(node => getComputedStyle(node, '::after').content), 'none', `${width}/${variant}: connecting Experience segment`);
+                        assert.equal(await items.first().evaluate(node => getComputedStyle(node).borderTopWidth), '1px', `${width}/${variant}: reference Experience divider`);
                     }
                 } else {
                     assert.equal(await page.locator('.portfolio-closing-layout--contact-only').count(), 1, `${width}/${variant}: full-width Contact layout`);
@@ -129,8 +129,8 @@ const installRoutes = async (page, html) => {
                     const experienceBox = await experience.evaluate(node => node.getBoundingClientRect());
                     const contactBox = await contact.evaluate(node => node.getBoundingClientRect());
                     assert(Math.abs(experienceBox.width - contactBox.width) < 1, `${width}/${variant}: equal columns`);
-                    assert(Math.abs(experienceBox.top - contactBox.top) < 1, `${width}/${variant}: aligned panels`);
-                    assert(Math.abs(experienceBox.height - contactBox.height) < 1, `${width}/${variant}: equal panel heights`);
+                    assert(contactBox.top >= experienceBox.bottom, `${width}/${variant}: Experience precedes Contact`);
+                    assert(experienceBox.height > 0 && contactBox.height > 0, `${width}/${variant}: content determines panel heights`);
                     assert.notEqual(await experience.evaluate(node => getComputedStyle(node).overflowY), 'auto', `${width}/${variant}: no internal Experience scroll`);
                 }
                 if (width <= 1100 && expected.experiences > 0) {

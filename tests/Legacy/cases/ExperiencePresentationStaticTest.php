@@ -6,7 +6,7 @@ final class ExperiencePresentationStaticTest
 {
     public static function run(TestEnvironment $environment): void
     {
-        $presentation = self::read('includes/portfolio_presentation.php');
+        $presentation = self::read('includes/portfolio_presentation.php') . self::read('includes/portfolio_copy.php');
         $stylesheet = self::read('public/assets/css/portfolio.css');
         $script = self::read('public/assets/js/portfolio.js');
 
@@ -31,12 +31,12 @@ final class ExperiencePresentationStaticTest
         ] as $required) {
             phase2Assert(str_contains($presentation, $required), "Experience presentation is missing {$required}.");
         }
-        foreach (['.portfolio-closing-layout', 'align-items: stretch', 'height: 100%', '.portfolio-experience-list', '.portfolio-experience-item::before', '.portfolio-experience-item:not(.portfolio-experience-item--visible-last)::after', '.portfolio-experience-content', '.portfolio-experience-topline', '.portfolio-experience-date', '.portfolio-experience-pagination', '.portfolio-experience-pagination[hidden] { display: none; }', 'margin-top: auto'] as $required) {
+        foreach (['.portfolio-closing-layout', 'align-items: start', '.portfolio-experience-list', '.portfolio-experience-item { padding: 22px 0; border-top: 1px solid var(--pf-line);', '.portfolio-experience-content', '.portfolio-experience-topline', '.portfolio-experience-date', '.portfolio-experience-pagination', '.portfolio-experience-pagination[hidden] { display: none; }'] as $required) {
             phase2Assert(str_contains($stylesheet, $required), "Experience styling is missing {$required}.");
         }
         phase2Assert(!str_contains($stylesheet, '.portfolio-experience-list::before'), 'Experience must not use a list-wide connector that extends below the final marker.');
-        phase2Assert(str_contains($script, 'initializeExperiencePagination') && str_contains($script, 'items.length <= pageSize') && str_contains($script, 'item.hidden = !visible') && str_contains($script, 'portfolio-experience-item--visible-last') && str_contains($script, 'Showing experience ${end} of ${items.length}') && str_contains($script, 'Showing experiences ${start + 1}–${end} of ${items.length}') && str_contains($script, 'pagination.addEventListener(\'click\''), 'Experience pagination must be a progressive, delegated enhancement with an accurate live range.');
-        phase2Assert(str_contains($presentation, 'href="#experience" data-portfolio-section="experience">Experience</a>'), 'Experience navigation must use the generic implemented-section anchor contract.');
+        phase2Assert(str_contains($script, 'initializeExperiencePagination') && str_contains($script, 'items.length <= pageSize') && str_contains($script, 'item.hidden = !visible') && str_contains($script, 'portfolio-experience-item--visible-last') && str_contains($script, "pagination.dataset.rangeOne") && str_contains($presentation, 'Showing experience {end} of {total}') && str_contains($script, "pagination.dataset.rangeMany") && str_contains($presentation, 'Showing experiences {start}–{end} of {total}') && str_contains($script, 'pagination.addEventListener(\'click\''), 'Experience pagination must be a progressive, delegated enhancement with an accurate live range.');
+        phase2Assert(str_contains($presentation, "href=\"#experience\" data-portfolio-section=\"experience\"><?php echo portfolioCopy('experience'); ?></a>"), 'Experience navigation must use the generic implemented-section anchor contract.');
         phase2Assert(!str_contains($presentation, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>'), 'Experience navigation must no longer be disabled after acceptance.');
 
         require_once PHASE2_REPOSITORY_ROOT . '/includes/portfolio_presentation.php';
@@ -95,7 +95,7 @@ final class ExperiencePresentationStaticTest
         phase2Assert(str_contains($rendered, 'Sep 2025 — Present') && str_contains($rendered, 'Mar 2025 — Aug 2025') && str_contains($rendered, 'Oct 2024 — Feb 2025'), 'Experience month precision must format deterministically.');
         phase2Assert(!preg_match('/\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{1,2}, \d{4}\b/', $rendered), 'Experience presentation must not fabricate day precision.');
         phase2Assert(!str_contains($rendered, 'months') && !str_contains($rendered, 'years'), 'Experience presentation must not calculate duration.');
-        phase2Assert(preg_match('/portfolio-experience-topline.*?Employment.*?Sep 2025 — Present/s', $rendered) === 1 && preg_match('/Northstar Analytics<span aria-hidden="true">&nbsp;·<\/span><\/span>\s*<span>Amman, Jordan<\/span>/', $rendered) === 1 && preg_match('/Vertex Labs<\/span>\s*<\/p>/', $rendered) === 1, 'Experience date placement or optional organization/location separators are incorrect.');
+        phase2Assert(preg_match('/portfolio-experience-topline.*?Employment.*?Sep 2025 — Present/s', $rendered) === 1 && preg_match('/Northstar Analytics<span aria-hidden="true">&nbsp;·<\/span><\/span>\s*<bdi dir="auto">Amman, Jordan<\/bdi>/', $rendered) === 1 && preg_match('/Vertex Labs<\/span>\s*<\/p>/', $rendered) === 1, 'Experience date placement or optional organization/location separators are incorrect.');
         phase2Assert(substr_count($rendered, 'Present') === 1, 'Present must render only for an explicitly current Experience.');
         phase2Assert(str_contains($rendered, 'aria-labelledby="experience-title"') && str_contains($rendered, '<ol class="portfolio-experience-list" id="portfolio-experience-list" data-experience-page-size="5">') && !str_contains($rendered, 'data-experience-pagination'), 'Experience section must preserve semantic heading/list structure without pagination for five or fewer records.');
         $experienceSection = preg_match('/<section class="portfolio-section portfolio-closing-panel portfolio-experience".*?<\/section>/s', $rendered, $sectionMatch) === 1 ? $sectionMatch[0] : '';
@@ -104,7 +104,7 @@ final class ExperiencePresentationStaticTest
         ob_start();
         renderPortfolioPresentation(['full_name' => 'One Experience'], [], [], ['experiences' => [$experiences[0]]]);
         $singleRendered = ob_get_clean();
-        phase2Assert(is_string($singleRendered) && substr_count($singleRendered, 'portfolio-experience-item') >= 1 && str_contains($stylesheet, '.portfolio-experience-item:not(.portfolio-experience-item--visible-last)::after'), 'A single Experience must render without requiring a connector beyond its only marker.');
+        phase2Assert(is_string($singleRendered) && substr_count($singleRendered, 'portfolio-experience-item') >= 1 && !str_contains($stylesheet, '.portfolio-experience-item::after'), 'A single Experience must render without requiring a connector beyond its only marker.');
 
         $paginationExperiences = [];
         for ($index = 1; $index <= 11; ++$index) {
@@ -120,7 +120,7 @@ final class ExperiencePresentationStaticTest
             } elseif ($count <= 5) {
                 phase2Assert(!str_contains($paginationRendered, 'data-experience-pagination'), "Experience pagination controls must be omitted for {$count} records.");
             } else {
-                phase2Assert(str_contains($paginationRendered, 'data-experience-pagination hidden') && str_contains($paginationRendered, 'role="status" aria-live="polite"') && substr_count($paginationRendered, 'type="button" data-experience-page=') === 2 && substr_count($paginationRendered, 'aria-controls="portfolio-experience-list"') === 2 && !preg_match('/<li[^>]+hidden/', $paginationRendered), "Experience pagination controls must use accessible native buttons and enhance, not replace, the {$count}-record fallback.");
+                phase2Assert(str_contains($paginationRendered, 'data-experience-pagination data-range-one=') && str_contains($paginationRendered, 'role="status" aria-live="polite"') && substr_count($paginationRendered, 'type="button" data-experience-page=') === 2 && substr_count($paginationRendered, 'aria-controls="portfolio-experience-list"') === 2 && !preg_match('/<li[^>]+hidden/', $paginationRendered), "Experience pagination controls must use accessible native buttons and enhance, not replace, the {$count}-record fallback.");
             }
         }
 

@@ -67,14 +67,14 @@ final class FrontendPerformanceResilienceStaticTest
         );
 
         phase2Assert(
-            str_contains($stylesheet, '.portfolio-js [data-project-navigator]:not(.portfolio-project-navigator--active) .portfolio-project-card:nth-child(n+4)')
+            str_contains($stylesheet, '.portfolio-js [data-project-navigator]:not(.portfolio-project-navigator--active) .portfolio-project-card:nth-child(n+5)')
             && str_contains($stylesheet, 'nth-child(n+3)')
             && str_contains($stylesheet, 'nth-child(n+2)'),
             'Enhanced project-window CSS must reserve the same initial card count at desktop, intermediate, and narrow breakpoints.',
         );
         phase2Assert(
-            str_contains($stylesheet, '.portfolio-hero-profile-card--image .portfolio-hero-profile-visual { aspect-ratio: 4 / 5; }')
-            && str_contains($stylesheet, '.portfolio-project-card--image .portfolio-project-visual { aspect-ratio: 16 / 9; }'),
+            str_contains($stylesheet, '.portfolio-hero-profile-card--image .portfolio-hero-profile-visual { aspect-ratio: 4 / 3; }')
+            && str_contains($stylesheet, '.portfolio-project-visual { height: 170px;'),
             'Image containers must reserve the Hero and project aspect ratios before their media finishes loading.',
         );
         phase2Assert(

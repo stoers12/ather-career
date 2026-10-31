@@ -283,7 +283,7 @@ try {
     $private = Invoke-DrHttp "$restoreBase/portfolios/$($after.portfolio_id)/profile/original/stage4c-profile.png"; Assert-Dr ($private.Status -in 403,404) 'A private original became public.'
     $session = Invoke-DrFixture $restoredWeb $restoreDatabase 'session' $slug
     $owner = Invoke-DrHttp "$restoreBase/owner.php" @{ Cookie = ('portfolio_owner_session=' + [string]$session.session_id) }
-    Assert-Dr ($owner.Status -eq 200 -and $owner.Body -match 'Owner Dashboard') 'The synthetic Owner session cannot access restored Owner pages.'
+    Assert-Dr ($owner.Status -eq 200 -and $owner.Body -match 'owner-dashboard-page') "The synthetic Owner session cannot access restored Owner pages (HTTP $($owner.Status), onboarding=$($owner.Headers -match 'Location: /owner_onboarding'), login=$($owner.Headers -match 'Location: /owner_login'))."
     $contact = Invoke-DrHttp "$restoreBase/p/$slug/contact"; Assert-Dr ($contact.Status -in 405,200) 'The restored public Contact endpoint is unavailable.'
 
     $rehearsalResult = [pscustomobject]@{
