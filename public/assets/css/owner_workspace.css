@@ -58,7 +58,9 @@
 .owner-workspace-page .owner-wordmark::first-letter { color: var(--owner-sidebar-gold); }
 .owner-workspace-page .owner-brand-caption { color: var(--owner-sidebar-muted); font: 11px/1.6 "Ather Sans", sans-serif; letter-spacing: 1.1px; }
 .owner-workspace-page .owner-navigation { display: flex; flex: 0 1 auto; flex-direction: column; gap: 16px; min-block-size: 0; }
-.owner-workspace-page .owner-nav { display: grid; gap: 3px; min-block-size: 0; flex-shrink: 1; overflow-y: auto; scroll-padding-block: 8px; }
+.owner-workspace-page .owner-nav { display: grid; gap: 3px; min-block-size: 0; flex-shrink: 1; overflow-y: auto; scroll-padding-block: 8px; scrollbar-width: none; }
+/* The rail still scrolls (wheel, touch, keyboard focus) on short screens, without a visible scrollbar (owner request). */
+.owner-workspace-page .owner-nav::-webkit-scrollbar { display: none; }
 .owner-workspace-page .owner-nav-item {
     position: relative; display: flex; align-items: center; gap: 12px; min-block-size: 44px; padding: 10px 12px; border: 1px solid transparent; border-radius: 6px; line-height: 1.6;
     color: var(--owner-sidebar-muted); font-size: calc(13px * var(--owner-text-scale, 1)); text-decoration: none;
