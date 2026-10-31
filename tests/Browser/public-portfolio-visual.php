@@ -7,6 +7,8 @@ require_once __DIR__ . '/../../includes/public_project_presentation.php';
 require_once __DIR__ . '/../../includes/public_project_page.php';
 
 $variant = $argv[1] ?? 'public';
+$portrait = str_ends_with($variant, '-portrait');
+if ($portrait) $variant = substr($variant, 0, -9);
 $_GET['lang'] = 'ar';
 $_COOKIE['ather_owner_locale'] = 'ar';
 $profile = [
@@ -45,6 +47,7 @@ $options = [
     'project_case_url' => static fn (int $id): string => $preview ? '/owner_preview.php?project=' . $id : '/p/synthetic-owner/projects/' . $id,
     'contact_action' => '/p/synthetic-owner/contact', 'experiences' => $experiences,
 ];
+if ($portrait) $options['profile_media_url'] = $preview ? '/owner_media.php?type=profile' : '/p/synthetic-owner/media/profile';
 if ($variant === 'error') {
     $options['contact_values'] = ['name' => '<Visitor>', 'email' => 'invalid', 'message' => "Hello\nA useful conversation."];
     $options['contact_field_errors'] = ['email' => 'Enter a valid email address.'];
