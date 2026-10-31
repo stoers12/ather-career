@@ -393,3 +393,7 @@ body.evidence-hub-page .evidence-hub-project-evidence .evidence-hub-editor > hea
  html[dir="rtl"] body.evidence-hub-page:not(.evidence-hub-js) .evidence-hub-sidebar { position:relative; inset:auto; transform:none; width:100%; height:auto; box-shadow:none; }
  body.evidence-hub-page:not(.evidence-hub-js) .evidence-hub-mobile-toggle { display:none; }
 }
+
+/* Same as the workspace rail: scrollable on short screens, no visible scrollbar (owner request). */
+body.evidence-hub-page .evidence-hub-sidebar nav { scrollbar-width: none; }
+body.evidence-hub-page .evidence-hub-sidebar nav::-webkit-scrollbar { display: none; }
