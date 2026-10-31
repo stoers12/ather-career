@@ -139,8 +139,8 @@ const captureBrowserErrors = page => {
         await desktop.locator('.admin-content').screenshot({ path: path.join(output, 'desktop-expanded-light.png') });
         await desktop.locator('#evidence-hub-sidebar-toggle').click();
         assert.equal(await desktop.locator('body').evaluate(node => node.classList.contains('evidence-hub-sidebar-collapsed')), true, 'desktop: rail collapses');
-        await desktop.waitForFunction(() => Math.round(document.querySelector('.evidence-hub-sidebar').getBoundingClientRect().width) === 78);
-        assert.equal(Math.round((await rail.boundingBox()).width), 78, 'desktop: collapsed rail is 78px');
+        await desktop.waitForFunction(() => Math.round(document.querySelector('.evidence-hub-sidebar').getBoundingClientRect().width) === 72);
+        assert.equal(Math.round((await rail.boundingBox()).width), 72, 'desktop: collapsed rail is 72px');
         await desktop.locator('#evidence-hub-sidebar-toggle').focus();
         await desktop.screenshot({ path: path.join(output, 'desktop-collapsed-tooltip.png') });
         assert.equal(await desktop.locator('#evidence-hub-sidebar-toggle').getAttribute('aria-label'), 'Expand navigation', 'desktop: collapsed rail label');

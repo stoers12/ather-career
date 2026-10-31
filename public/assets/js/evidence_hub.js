@@ -87,8 +87,11 @@
         accountPanel.style.top = '0px';
         // The mobile drawer is transformed; compensate its fixed-position origin.
         var origin = accountPanel.getBoundingClientRect();
+        var rtl = document.documentElement.dir === 'rtl';
+        var rail = sidebar.getBoundingClientRect();
         var left = !isMobile() && root.classList.contains('evidence-hub-sidebar-collapsed')
-            ? sidebar.getBoundingClientRect().right + 8 : bounds.left;
+            ? (rtl ? rail.left - accountPanel.offsetWidth - 8 : rail.right + 8)
+            : (rtl ? bounds.right - accountPanel.offsetWidth : bounds.left);
         var top = bounds.top - accountPanel.offsetHeight - 8;
         if (top < 8) top = bounds.bottom + 8;
         accountPanel.style.left = Math.max(8, Math.min(left, window.innerWidth - accountPanel.offsetWidth - 8)) - origin.left + 'px';
@@ -175,9 +178,10 @@
         sidebarTooltip.textContent = trigger.getAttribute('data-sidebar-tooltip');
         sidebarTooltip.hidden = false;
         var bounds = trigger.getBoundingClientRect();
-        var preferredLeft = sidebar.getBoundingClientRect().right + 8;
-        var mobileLeft = Math.min(preferredLeft, window.innerWidth - sidebarTooltip.offsetWidth - 8);
-        sidebarTooltip.style.left = Math.max(8, (isMobile() ? mobileLeft : preferredLeft)) + 'px';
+        var rail = sidebar.getBoundingClientRect();
+        var preferredLeft = document.documentElement.dir === 'rtl'
+            ? rail.left - sidebarTooltip.offsetWidth - 8 : rail.right + 8;
+        sidebarTooltip.style.left = Math.max(8, Math.min(preferredLeft, window.innerWidth - sidebarTooltip.offsetWidth - 8)) + 'px';
         sidebarTooltip.style.top = Math.max(8, Math.min(window.innerHeight - sidebarTooltip.offsetHeight - 8, bounds.top + (bounds.height - sidebarTooltip.offsetHeight) / 2)) + 'px';
         trigger.setAttribute('aria-describedby', sidebarTooltip.id);
     }
@@ -250,6 +254,16 @@
 
     var nav = document.querySelector('.evidence-hub-section-nav');
     if (!nav) return;
+    // Only section targets use the measured chrome offset; fixed drawer focus must not scroll the page.
+    var topbar = document.querySelector('.evidence-hub-topbar');
+    var sheet = Array.from(document.styleSheets).find(function (item) { return item.href && new URL(item.href).pathname.endsWith('/assets/css/evidence_hub.css'); });
+    var rootRule = sheet && Array.from(sheet.cssRules).find(function (rule) { return rule.selectorText === 'body.evidence-hub-page'; });
+    function updateNavigationOffset() {
+        if (rootRule) rootRule.style.setProperty('--eh-navigation-offset', Math.ceil(topbar.getBoundingClientRect().height) + 16 + 'px');
+    }
+    updateNavigationOffset();
+    if (typeof window.ResizeObserver === 'function') new ResizeObserver(updateNavigationOffset).observe(topbar);
+    else window.addEventListener('resize', updateNavigationOffset);
     var navLinks = Array.from(nav.querySelectorAll('a'));
     var sections = navLinks.map(function (link) { return document.getElementById(link.hash.slice(1)); }).filter(Boolean);
     var pinnedSection = null;

@@ -207,6 +207,7 @@ function ownerEvidenceHubNavigation(string $locale = 'en'): void
         <div class="evidence-hub-sidebar-head">
             <a class="admin-brand evidence-hub-brand" href="<?php echo ownerEscapeHtml($dashboardHref); ?>" aria-label="<?php echo $t('Ather — Evidence Hub'); ?>" data-sidebar-tooltip="<?php echo $t('Ather — Evidence Hub'); ?>">
                 <span class="evidence-hub-brand-logo" aria-hidden="true">ATHER</span>
+                <span class="evidence-hub-brand-compact" aria-hidden="true">A<span>•</span></span>
                 <span class="evidence-hub-brand-copy"><small><?php echo $t('EVIDENCE WORKSPACE'); ?></small></span>
             </a>
             <a class="evidence-hub-sidebar-back" href="<?php echo ownerEscapeHtml($dashboardHref); ?>" aria-label="<?php echo $t('Back to dashboard'); ?>" data-sidebar-tooltip="<?php echo $t('Back to dashboard'); ?>" data-sidebar-tooltip-always="true">
@@ -227,7 +228,7 @@ function ownerEvidenceHubNavigation(string $locale = 'en'): void
                     <?php echo evidenceHubOwnerIcon($icon); ?><span class="evidence-hub-sidebar-label"><?php echo $t($label); ?></span>
                 </a>
                 <?php else: ?>
-                <button class="evidence-hub-future-link" type="button" aria-disabled="true" tabindex="0" title="<?php echo $t('Coming soon'); ?>" data-sidebar-tooltip="<?php echo $t('Coming soon'); ?>" data-sidebar-tooltip-always="true">
+                <button class="evidence-hub-future-link" type="button" aria-disabled="true" tabindex="0" title="<?php echo $t('Coming soon'); ?>" data-sidebar-tooltip="<?php echo $t($label) . ' — ' . $t('Coming soon'); ?>" data-sidebar-tooltip-always="true">
                     <?php echo evidenceHubOwnerIcon($icon); ?><span class="evidence-hub-sidebar-label"><?php echo $t($label); ?></span>
                 </button>
                 <?php endif; ?>
@@ -236,9 +237,9 @@ function ownerEvidenceHubNavigation(string $locale = 'en'): void
         <div class="sidebar-footer evidence-hub-sidebar-footer">
             <details class="evidence-hub-account-menu">
                 <summary class="evidence-hub-owner-context" aria-label="<?php echo $t('Account options'); ?>" aria-controls="evidence-hub-account-actions" data-sidebar-tooltip="<?php echo $t('Account options'); ?>">
-                    <?php echo evidenceHubOwnerIcon('user-round'); ?>
+                    <span class="evidence-hub-avatar" aria-hidden="true"><?php echo evidenceHubOwnerIcon('user-round'); ?></span>
                     <span class="evidence-hub-owner-context-copy"><span><?php echo $t('Portfolio owner'); ?></span><span class="evidence-hub-private-workspace"><?php echo evidenceHubOwnerIcon('lock-keyhole'); ?><span><?php echo $t('Private workspace'); ?></span></span></span>
-                    <span class="evidence-hub-account-indicator" aria-hidden="true"></span>
+                    <span class="evidence-hub-account-indicator" aria-hidden="true"><?php echo evidenceHubOwnerIcon('chevrons-up-down'); ?></span>
                 </summary>
                 <div class="evidence-hub-account-panel" id="evidence-hub-account-actions" role="group" aria-label="<?php echo $t('Account actions'); ?>">
                     <?php ownerAccountSelectionForm(true, $locale === 'ar' ? 'ar' : null); ?>
