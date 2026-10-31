@@ -125,3 +125,6 @@ body { margin: 0; padding: 12px; font-size: 16px; line-height: 1.625; -webkit-fo
 @media (prefers-reduced-motion: reduce) {
     #ather-auth-flow *, .af-skip { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+#ather-auth-flow .legal-links--auth { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; margin-top: 16px; font-size: 12px; }
+#ather-auth-flow .legal-links--auth a { display: inline-flex; align-items: center; min-height: 44px; color: var(--af-green); text-decoration: underline; }

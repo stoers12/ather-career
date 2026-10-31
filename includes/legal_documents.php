@@ -10,9 +10,17 @@ require_once __DIR__ . '/identity_repository.php';
 /** @var array{privacy: string, terms: string} */
 const LEGAL_DOCUMENT_VERSIONS = ['privacy' => '1.0', 'terms' => '1.0'];
 
-// Stays false until the sign-up page shows the consent checkbox. The frontend
-// PR that adds the checkbox flips it, so registration then requires consent.
+// The owner enables required consent together with publication on launch day.
 const LEGAL_CONSENT_REQUIRED = false;
+
+// Launch changes publish the pages, effective date and required consent together.
+const LEGAL_PAGES_PUBLISHED = false;
+const LEGAL_DOCUMENT_EFFECTIVE_DATE = null;
+
+function legalPagesPublished(): bool
+{
+    return LEGAL_PAGES_PUBLISHED;
+}
 
 const LEGAL_CONSENT_SESSION_KEY = 'ather_registration_legal_consent';
 

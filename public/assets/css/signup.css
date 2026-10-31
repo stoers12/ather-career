@@ -16,3 +16,9 @@
 #ather-auth-flow .af-invitation-hint, #ather-auth-flow .af-invitation-error { font-size: 13px; line-height: 1.8; margin: 0; }
 #ather-auth-flow .af-invitation-hint { color: var(--af-muted); }
 #ather-auth-flow .af-invitation-error { color: var(--af-danger); }
+
+#ather-auth-flow .legal-consent { margin-block: 16px; }
+#ather-auth-flow .legal-consent-label { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: start; gap: 10px; min-height: 44px; font-size: 13px; line-height: 1.8; cursor: pointer; }
+#ather-auth-flow .legal-consent input { width: 22px; height: 22px; margin: 11px 0; accent-color: var(--af-green); }
+#ather-auth-flow .legal-consent a { display: inline-flex; align-items: center; min-height: 44px; color: var(--af-green); text-decoration: underline; }
+#ather-auth-flow .legal-consent-error { color: var(--af-danger); font-size: 13px; margin: 8px 0 0; }

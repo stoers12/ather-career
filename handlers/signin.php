@@ -6,6 +6,7 @@ require_once dirname(__DIR__) . '/includes/http.php';
 require_once dirname(__DIR__) . '/includes/presentation.php';
 require_once dirname(__DIR__) . '/includes/signin_copy.php';
 require_once dirname(__DIR__) . '/includes/signin_icons.php';
+require_once dirname(__DIR__) . '/includes/legal_presentation.php';
 
 httpRegisterExceptionBoundary('signin.php');
 httpRequireMethod(['GET', 'HEAD']);
@@ -66,6 +67,7 @@ header('Content-Language: ' . $locale);
                     <p class="af-method-note" id="email-unavailable"><?php echo signInCopy('email_unavailable', $locale); ?></p>
                     <div class="af-safe-note"><?php echo signInIcon('external-link'); ?><span><?php echo signInCopy('safe', $locale); ?> <a href="owner_login.php"><?php echo signInCopy('ordinary', $locale); ?></a></span></div>
                     <p class="af-footnote"><?php echo signInCopy('unavailable', $locale); ?></p>
+                    <?php renderLegalLinks($locale, 'auth'); ?>
                 </article>
             </div>
         </div>

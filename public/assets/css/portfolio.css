@@ -286,3 +286,6 @@ body.portfolio-page :where(a, button, input, textarea):focus-visible { outline: 
 .portfolio-js [data-project-navigator]:not(.portfolio-project-navigator--active) .portfolio-project-card:nth-child(n+5) { display: none; }
 @media (max-width: 1100px) { .portfolio-js [data-project-navigator]:not(.portfolio-project-navigator--active) .portfolio-project-card:nth-child(n+3) { display: none; } }
 @media (max-width: 620px) { .portfolio-js [data-project-navigator]:not(.portfolio-project-navigator--active) .portfolio-project-card:nth-child(n+2) { display: none; } }
+
+.portfolio-footer .legal-links--portfolio { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.portfolio-footer .legal-links--portfolio a { display: inline-flex; align-items: center; min-height: 44px; }

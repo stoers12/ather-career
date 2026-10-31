@@ -32,6 +32,8 @@ final class RouterTest extends TestCase
         yield 'project media' => ['/p/jane-doe/media/project/9', 'p_media.php', 'handlers/public_media.php', ['slug' => 'jane-doe', 'type' => 'project', 'id' => '9']];
         yield 'project case study' => ['/p/jane-doe/projects/9', 'p_project.php', 'handlers/public_project.php', ['slug' => 'jane-doe', 'id' => '9']];
         yield 'project case study slash' => ['/p/jane-doe/projects/12/', 'p_project.php', 'handlers/public_project.php', ['slug' => 'jane-doe', 'id' => '12']];
+        yield 'privacy' => ['/privacy', 'privacy.php', 'handlers/privacy.php', null];
+        yield 'terms' => ['/terms', 'terms.php', 'handlers/terms.php', null];
         yield 'legacy portfolio script' => ['/p.php', 'p.php', 'handlers/public_portfolio.php', null];
     }
 
@@ -76,7 +78,7 @@ final class RouterTest extends TestCase
         // ready.php is served by public/ready.php directly, so readiness never depends on the router.
         self::assertSame([], glob(PHASE2_REPOSITORY_ROOT . '/*.php') ?: [], 'Repository root must not contain PHP files');
         $handlers = array_map(static fn (string $path): string => 'handlers/' . basename($path), glob(PHASE2_REPOSITORY_ROOT . '/handlers/*.php') ?: []);
-        self::assertCount(32, $handlers);
+        self::assertCount(34, $handlers);
         $routed = [...array_values($routes['scripts']), $routes['not_found']];
         self::assertSame(['handlers/ready.php'], array_values(array_diff($handlers, $routed)), 'A handler has no route');
     }

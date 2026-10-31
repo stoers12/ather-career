@@ -473,6 +473,8 @@ PHP;
     echo "PASS routing all preexisting Users/bindings and protected ownership/content unchanged; no automatic Portfolio or provider metadata\n";
     require_once __DIR__ . '/../../tests/Support/integrated-journey-acceptance.php';
     routingIntegratedJourney($database, $prefix . 'integrated-journey');
+    require_once __DIR__ . '/../Support/legal-registration-acceptance.php';
+    routingLegalConsentAcceptance($database, $prefix . 'legal-consent');
 } catch (Throwable $exception) {
     fwrite(STDERR, 'FAIL registration routing: ' . ($exception instanceof PDOException ? 'database operation failed, driver ' . (int) ($exception->errorInfo[1] ?? 0) : (get_class($exception) === RuntimeException::class ? $exception->getMessage() : get_class($exception))) . ' [line ' . $exception->getLine() . "]\n");
     if (isset($root) && is_file($root . '/http-private.log')) {
