@@ -73,7 +73,7 @@ final class FrontendPerformanceResilienceStaticTest
             'Enhanced project-window CSS must reserve the same initial card count at desktop, intermediate, and narrow breakpoints.',
         );
         phase2Assert(
-            str_contains($stylesheet, '.portfolio-hero-profile-card--image .portfolio-hero-profile-visual { aspect-ratio: 4 / 3; }')
+            str_contains($stylesheet, '.portfolio-hero-profile-card--image .portfolio-hero-profile-visual { aspect-ratio: 4 / 5;')
             && str_contains($stylesheet, '.portfolio-project-visual { height: 170px;'),
             'Image containers must reserve the Hero and project aspect ratios before their media finishes loading.',
         );

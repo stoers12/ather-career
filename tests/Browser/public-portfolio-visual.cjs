@@ -4,6 +4,7 @@ const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
+const { runScrollPortraitChecks, portraitSvg } = require('./portfolio-scroll-portrait-checks.cjs');
 const root = path.resolve(__dirname, '../..');
 const output = process.argv[2];
 if (!output) throw new Error('Screenshot directory required');
@@ -17,6 +18,7 @@ async function routes(page, variant) {
             const file = path.join(root, 'public', url.pathname);
             if (fs.existsSync(file)) return route.fulfill({ body: fs.readFileSync(file), contentType: url.pathname.endsWith('.css') ? 'text/css' : url.pathname.endsWith('.js') ? 'application/javascript' : 'font/woff2' });
         }
+        if (url.pathname.endsWith('/media/profile') || url.searchParams.get('type') === 'profile') return route.fulfill({ contentType: 'image/svg+xml', body: portraitSvg });
         if (url.pathname.includes('/media/project/') || url.pathname === '/owner_media.php') return route.fulfill({ contentType: 'image/svg+xml', body: picture });
         const selected = url.pathname.includes('/projects/') || url.searchParams.has('project') ? (variant.startsWith('preview') ? 'preview-case' : 'case') : variant;
         return route.fulfill({ contentType: 'text/html', body: html(selected) });
@@ -49,8 +51,9 @@ async function contrast(page) {
 }
 
 (async () => {
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({ headless: true, ignoreDefaultArgs: ['--hide-scrollbars'] });
     try {
+        await runScrollPortraitChecks(browser, output, routes);
         for (const width of [320, 390, 768, 1280, 1440, 1920, 2560]) {
             for (const theme of ['light', 'dark']) {
                 for (const variant of ['public', 'preview-private', 'case', 'preview-case', 'case-empty', 'draft', 'long']) {

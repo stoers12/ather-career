@@ -3,6 +3,25 @@
 
     document.documentElement.classList.add('portfolio-js');
 
+    const initializePortfolioHeaderOffset = () => {
+        const header = document.querySelector('.portfolio-header');
+        if (!(header instanceof HTMLElement)) return;
+
+        // Update the external stylesheet through CSSOM: no inline style or CSP exception.
+        const stylesheet = Array.from(document.styleSheets).find((sheet) => sheet.href
+            && new URL(sheet.href).pathname.endsWith('/assets/css/portfolio.css'));
+        const rootRule = stylesheet && Array.from(stylesheet.cssRules)
+            .find((rule) => rule instanceof CSSStyleRule && rule.selectorText === ':root');
+        if (!rootRule) return;
+
+        const updateOffset = () => {
+            rootRule.style.setProperty('--pf-header-offset', `${Math.ceil(header.getBoundingClientRect().height) + 16}px`);
+        };
+        updateOffset();
+        if (typeof window.ResizeObserver === 'function') new ResizeObserver(updateOffset).observe(header);
+        else window.addEventListener('resize', updateOffset);
+    };
+
     const initializePortfolioScrollspy = () => {
         const header = document.querySelector('.portfolio-header');
         const links = Array.from(document.querySelectorAll('[data-portfolio-section]'));
@@ -391,6 +410,7 @@
 
     const initializePortfolio = () => {
         initializePortfolioTheme();
+        initializePortfolioHeaderOffset();
         initializePortfolioScrollspy();
         initializePortfolioSkills();
         initializeProjectNavigator();
