@@ -74,7 +74,7 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
         await same(future.getAttribute('tabindex'), '0', `${item} remains keyboard focusable`);
         await same(future.getAttribute('href'), null, `${item} has no route`);
         await same(future.getAttribute('title'), 'Coming soon', `${item} has a no-JS tooltip`);
-        await future.hover(); await same(tooltip.innerText(), 'Coming soon', `${item} hover tooltip`);
+        await future.hover(); await same(tooltip.innerText(), `${item} — Coming soon`, `${item} hover tooltip`);
         await future.focus(); await same(tooltip.isVisible(), true, `${item} focus tooltip`);
         const url = page.url();
         await future.press('Enter'); await same(page.url(), url, `${item} Enter does not navigate`);
@@ -113,9 +113,9 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
 
     const expanded = await metrics();
     assert.ok(Math.abs(expanded.rail.width - 228) < 1, 'expanded rail is 228px');
-    assert.ok(expanded.header.height >= 140 && expanded.header.height <= 148, 'expanded header gives the collapse control its own space');
-    assert.ok(expanded.gap >= 10 && expanded.gap <= 18, 'workspace starts below the header');
-    for (const item of expanded.items) assert.ok(item.height >= 46 && item.height <= 50, '48px navigation rows');
+    assert.ok(expanded.header.height >= 116 && expanded.header.height <= 120, 'Dashboard brand row and retained back control reserve their own space');
+    assert.ok(Math.abs(expanded.gap - 24) < 1, 'workspace uses the Dashboard header clearance');
+    for (const item of expanded.items) assert.ok(item.height >= 44 && item.height <= 46, '44px Dashboard navigation rows');
     const brand = aside.locator('.evidence-hub-brand');
     await same(brand.locator('small').innerText(), 'EVIDENCE WORKSPACE', 'brand secondary line');
     await same(brand.getAttribute('aria-label'), 'Ather — Evidence Hub', 'accessible brand label');
@@ -128,7 +128,7 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     assert.ok(Math.abs(logoBox.x - groupBox.x) <= 2, 'wordmark aligns with workspace inset');
     assert.ok(Math.abs(subtitleBox.x - groupBox.x) <= 1, 'subtitle aligns with workspace inset');
     assert.ok(collapseBox.x >= logoBox.x + logoBox.width + 12, 'collapse control clears the logo');
-    assert.ok(collapseBox.y >= backBox.y + backBox.height + 8, 'collapse control clears the back link');
+    assert.ok(collapseBox.y + collapseBox.height <= backBox.y - 8, 'header-row collapse control clears the retained back link');
     assert.ok(collapseBox.y + collapseBox.height <= groupBox.y - 12, 'collapse control clears WORKSPACE');
     await same(brand.innerText().then(text => text.replace(/\s+/g, ' ').trim()), 'ATHER EVIDENCE WORKSPACE', 'one reference wordmark and workspace subtitle');
     await same(root.evaluate(n => n.getAttribute('data-evidence-hub-theme')), 'light', 'light theme baseline');
@@ -157,7 +157,7 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     const toggleBox = await toggle.boundingBox(); assert.ok(toggleBox.width >= 44 && toggleBox.height >= 44, 'collapse target meets 44px');
     await toggle.click(); await page.waitForTimeout(200);
     const collapsed = await metrics();
-    assert.ok(Math.abs(collapsed.rail.width - 78) < 1, 'collapsed rail is 78px');
+    assert.ok(Math.abs(collapsed.rail.width - 72) < 1, 'collapsed rail is 72px');
     assert.equal(collapsed.overflow, false, 'collapsed rail does not create horizontal overflow');
     await same(toggle.getAttribute('aria-label'), 'Expand navigation', 'collapsed expand label');
     await same(toggle.getAttribute('aria-expanded'), 'false', 'collapsed state');
@@ -166,7 +166,7 @@ module.exports = async function ownerSidebarR11Contract(browser, baseUrl, output
     await same(brand.getAttribute('data-sidebar-tooltip'), 'Ather — Evidence Hub', 'collapsed brand tooltip');
     for (const item of ['Credentials']) {
         const future = nav.getByRole('button', { name: item, exact: true });
-        await future.hover(); await same(tooltip.innerText(), 'Coming soon', 'collapsed future tooltip');
+        await future.hover(); await same(tooltip.innerText(), `${item} — Coming soon`, 'collapsed future tooltip');
         await future.focus(); await same(tooltip.isVisible(), true, 'collapsed future keyboard tooltip');
     }
     await back.focus(); await same(tooltip.innerText(), 'Back to dashboard', 'collapsed dashboard tooltip');

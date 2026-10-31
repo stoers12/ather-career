@@ -5,7 +5,7 @@ const path = require('node:path');
 const {chromium} = require(process.env.ATHER_PLAYWRIGHT_MODULE || 'playwright');
 const base=process.env.ATHER_VISUAL_BASE || 'http://127.0.0.1:8765';
 const output=process.env.ATHER_VISUAL_OUT || path.join(process.env.TEMP,'ather-evidence-interactions');
-const palettes={light:{soft:'rgb(232, 240, 230)',green:'rgb(35, 93, 69)',ink:'rgb(28, 48, 40)',danger:'rgb(154, 40, 40)',surface:'rgb(255, 255, 255)'},dark:{soft:'rgb(46, 66, 49)',green:'rgb(184, 212, 170)',ink:'rgb(237, 243, 234)',danger:'rgb(255, 180, 174)',surface:'rgb(28, 39, 34)'}};
+const palettes={light:{soft:'rgb(232, 240, 230)',green:'rgb(35, 93, 69)',gold:'rgb(132, 104, 46)',ink:'rgb(28, 48, 40)',danger:'rgb(154, 40, 40)',surface:'rgb(255, 255, 255)'},dark:{soft:'rgb(46, 66, 49)',green:'rgb(184, 212, 170)',gold:'rgb(219, 198, 155)',ink:'rgb(237, 243, 234)',danger:'rgb(255, 180, 174)',surface:'rgb(28, 39, 34)'}};
 async function inspect(locator){return locator.evaluate(n=>{let s=getComputedStyle(n),r=n.getBoundingClientRect();return {color:s.color,bg:s.backgroundColor,outline:s.outlineColor,width:s.outlineWidth,shadow:s.boxShadow,x:r.x,y:r.y,w:r.width,h:r.height};});}
 async function audit(page,palette,label){
  const controls=page.locator('.admin-content :is(a[href],button,summary,input:not([type=hidden]),textarea,select)'); let checked=0;
@@ -17,7 +17,11 @@ async function audit(page,palette,label){
   const before=await inspect(target); await target.hover(); const after=await inspect(target);
   for(const key of ['x','y','w','h'])assert.ok(Math.abs(before[key]-after[key])<1,`${label} stable hover ${i}/${key}`);
   assert.notEqual(after.bg,'rgb(37, 99, 235)',`${label} no blue leakage`);
-  if(await target.evaluate(n=>n.matches('a,button') && !n.matches('[aria-pressed=true],[aria-selected=true]') && !n.closest('.evidence-hub-options > div') && n.type!=='submit' && !n.classList.contains('evidence-hub-primary-cta'))){assert.equal(after.bg,palette.soft,`${label} secondary hover`);assert.equal(after.color,palette.green);}
+  if(await target.evaluate(n=>!!n.closest('.evidence-hub-section-nav'))){
+   assert.equal(after.bg,'rgba(0, 0, 0, 0)',`${label} Portfolio navigation hover surface`);assert.equal(after.color,palette.ink);
+   assert.equal(await target.evaluate(n=>getComputedStyle(n).textDecorationLine),'underline');
+   assert.equal(await target.evaluate(n=>getComputedStyle(n).textDecorationColor),palette.gold);
+  }else if(await target.evaluate(n=>n.matches('a,button') && !n.matches('[aria-pressed=true],[aria-selected=true]') && !n.closest('.evidence-hub-options > div') && n.type!=='submit' && !n.classList.contains('evidence-hub-primary-cta'))){assert.equal(after.bg,palette.soft,`${label} secondary hover`);assert.equal(after.color,palette.green);}
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${label} overflow`); checked++;
  }
  assert.ok(checked>=4,`${label} controls were audited`);return checked;

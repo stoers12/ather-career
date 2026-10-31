@@ -4,6 +4,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 // Additional FE-07 matrix, invoked by the standalone page visual driver.
 module.exports=async function evidenceViewsVisual(browser,base,output){
+ await require('./evidence-hub-navigation-checks.cjs')(browser,base,output);
  const pageUrl=(locale,kind)=>`${base}/tests/Browser/${kind==='hub'?'evidence-hub-page-visual.php?variant=partial':`owner-project-evidence-visual.php?mode=${kind==='write'?'write':'read'}`}&lang=${locale}`;
  for(const locale of ['ar','en'])for(const theme of ['light','dark'])for(const large of [false,true]){
   const context=await browser.newContext({viewport:{width:1440,height:1052},reducedMotion:'reduce',hasTouch:true});
