@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/includes/auth0_oidc.php';
 require_once dirname(__DIR__) . '/includes/owner_session.php';
 require_once dirname(__DIR__) . '/includes/csrf.php';
 require_once dirname(__DIR__) . '/includes/http.php';
 require_once dirname(__DIR__) . '/includes/rate_limit.php';
+require_once dirname(__DIR__) . '/includes/registration_invitations.php';
 require_once dirname(__DIR__) . '/includes/security_events.php';
 
 httpRegisterExceptionBoundary('owner_register.php');
@@ -15,7 +17,11 @@ if (!auth0RegistrationIsEnabled()) {
 }
 httpRequireMethod(['POST']);
 startOwnerSession();
-if ($_GET !== [] || $_FILES !== [] || array_keys($_POST) !== ['csrf_token']) {
+$invitationRequired = auth0RegistrationRequiresInvitation();
+$expectedFields = $invitationRequired ? ['csrf_token', 'invitation_code'] : ['csrf_token'];
+$postedFields = array_keys($_POST);
+sort($postedFields);
+if ($_GET !== [] || $_FILES !== [] || $postedFields !== $expectedFields) {
     httpAbortHtml(403, 'Invalid request.');
 }
 requireValidCsrfToken($_POST['csrf_token']);
@@ -30,9 +36,27 @@ try {
         header('Retry-After: ' . $limit['retry_after']);
         httpAbortHtml(429, 'Please try again later.');
     }
+    $invitationId = null;
+    if ($invitationRequired) {
+        $invitationLimit = consumeRateLimit('registration_invitation', rateLimitClientIp(), REGISTRATION_INVITATION_RATE_LIMIT_ATTEMPTS, REGISTRATION_INVITATION_RATE_LIMIT_WINDOW_SECONDS);
+        if (!$invitationLimit['allowed']) {
+            reportSecurityEvent('rate_limit_denial', 'denied', ['scope' => 'registration_invitation', 'reason' => 'threshold_exceeded']);
+            header('Retry-After: ' . $invitationLimit['retry_after']);
+            httpAbortHtml(429, 'Please try again later.');
+        }
+        $invitationId = findUsableRegistrationInvitation(getDatabaseConnection(), $_POST['invitation_code']);
+        if ($invitationId === null) {
+            // One outcome for malformed, unknown, used, revoked and expired codes.
+            reportSecurityEvent('registration_invitation', 'denied', ['reason' => 'invitation_unusable']);
+            httpRedirect('/signup.php?invitation=invalid');
+        }
+    }
     $configuration = auth0ConfigurationFromEnvironment();
     $discovery = auth0Discovery($configuration);
     beginFreshOwnerAccountSelectionSession();
+    if ($invitationId !== null) {
+        rememberRegistrationInvitation($invitationId);
+    }
     $authorization = beginAuth0Authorization($configuration, $discovery['authorization_endpoint'], null, 'google', AUTH0_PURPOSE_REGISTRATION);
     header('Location: ' . $authorization['url'], true, 302);
     exit;
