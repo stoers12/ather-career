@@ -35,6 +35,7 @@ RUN apt-get update \
 COPY docker/apache/access-policy.conf /etc/apache2/conf-enabled/zzz-portfolio-access-policy.conf
 COPY docker/apache/security-headers.conf /etc/apache2/conf-enabled/zzz-portfolio-security-headers.conf
 COPY docker/apache/cache-policy.conf /etc/apache2/conf-enabled/zzz-portfolio-cache-policy.conf
+COPY docker/apache/performance.conf /etc/apache2/conf-enabled/zzz-portfolio-performance.conf
 COPY docker/apache/safe-access-log.conf /etc/apache2/conf-enabled/zzz-portfolio-safe-access-log.conf
 COPY docker/apache/vhost.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/production-entrypoint.sh /usr/local/bin/portfolio-production-entrypoint

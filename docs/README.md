@@ -13,6 +13,7 @@ Documents marked “classification review” mix current guidance with older sco
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Code layout (`includes/`, `src/`, Composer autoload) and the module-by-module migration rule.
 - [ENGINEERING_GUIDELINES.md](ENGINEERING_GUIDELINES.md) — Rules for the site redesign and its features: frontend/backend split, feature contracts, file organization, clean code, no over-engineering, the UI/UX Pro Max skill and the Evidence Hub track.
 - [LOCAL_RELEASE.md](LOCAL_RELEASE.md) — Owner local release automation, dry-run, rollback and isolated verification.
+- [LOAD_TESTING.md](LOAD_TESTING.md) — k6 load test on a disposable stack, profiles, safety model and the measured Apache worker baseline.
 - [EVIDENCE_HUB_0_LITE.md](EVIDENCE_HUB_0_LITE.md) — Authoritative Evidence Hub rules, versioned contracts and private Owner boundary. (kept in place — referenced from `tests/Legacy/cases/EvidenceHubContractTest.php`, `AGENTS.md`)
 - [HTTP_CONTRACTS.md](HTTP_CONTRACTS.md) — Active HTTP methods, validation, redirects and public JSON contracts. (kept in place — referenced from `tests/Legacy/cases/PublicProjectJsonContractTest.php`)
 - [P2J09_AUTH0_SETUP.md](P2J09_AUTH0_SETUP.md) — Auth0 application configuration and real-provider verification prerequisites.
