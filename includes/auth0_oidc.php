@@ -7,9 +7,15 @@ require_once __DIR__ . '/auth0_signin_methods.php';
 const AUTH0_PURPOSE_SIGN_IN = 'sign-in';
 const AUTH0_PURPOSE_REGISTRATION = 'registration';
 
+// ATHERCAR_REGISTRATION_ENABLED: '1' open, 'invite' invite-only (L-01), anything else closed.
 function auth0RegistrationIsEnabled(): bool
 {
-    return getenv('ATHERCAR_REGISTRATION_ENABLED') === '1';
+    return in_array(getenv('ATHERCAR_REGISTRATION_ENABLED'), ['1', 'invite'], true);
+}
+
+function auth0RegistrationRequiresInvitation(): bool
+{
+    return getenv('ATHERCAR_REGISTRATION_ENABLED') === 'invite';
 }
 
 const AUTH0_AUTH_TRANSACTION_KEY = 'auth0_authorization_transaction';

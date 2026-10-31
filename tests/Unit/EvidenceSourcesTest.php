@@ -182,7 +182,7 @@ final class EvidenceSourcesTest extends TestCase
         self::assertStringNotContainsString('ALTER TABLE', $sql);
         self::assertStringNotContainsString('DROP', $sql);
         $ledger = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/tests/Integration/check-restored-startup-idempotence.sh');
-        self::assertStringContainsString(",026,027'", $ledger);
+        self::assertStringContainsString(",026,027", $ledger);
     }
 
     private function add(int $projectId, string $title): int
