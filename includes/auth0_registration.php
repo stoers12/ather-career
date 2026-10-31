@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/auth0_oidc.php';
 require_once __DIR__ . '/identity_repository.php';
 require_once __DIR__ . '/registration_invitations.php';
+require_once __DIR__ . '/legal_documents.php';
 
 /**
  * Explicit registration core only. A future purpose-bound registration route
@@ -62,6 +63,7 @@ function registerAuth0InternalUser(PDO $database, Auth0OidcConfiguration $config
         if (auth0RegistrationRequiresInvitation()) {
             consumeRegistrationInvitation($database, $userId);
         }
+        recordRegistrationLegalConsent($database, $userId);
         $database->commit();
         return ['user_id' => $userId, 'authz_version' => 1];
     } catch (Throwable $exception) {
