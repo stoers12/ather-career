@@ -154,6 +154,8 @@ try {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
     if (session_status()===PHP_SESSION_ACTIVE) { session_write_close(); }
     foreach ($projects as $id) { $db->exec('DELETE FROM projects WHERE id='.$id); }
+    // The real contact browser journey writes only to these run-owned recipients.
+    foreach ($contexts as $context) { $db->prepare('DELETE FROM messages WHERE recipient_portfolio_id=?')->execute([$context->portfolioId]); }
     completionCleanup($db,$users); $db->exec('DELETE FROM owner_journey_cutover');
     foreach ($originalSeal as $row) { $db->prepare('INSERT INTO owner_journey_cutover (`'.implode('`,`',array_keys($row)).'`) VALUES ('.implode(',',array_fill(0,count($row),'?')).')')->execute(array_values($row)); }
     foreach ($originalFlags as $row) { $db->prepare('UPDATE projects SET is_published=? WHERE id=?')->execute([$row['is_published'],$row['id']]); }

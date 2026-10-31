@@ -8,13 +8,13 @@ const base=process.env.ATHERCAR_PROJECT_PUBLICATION_BASE_URL;
 const evidence=process.env.ATHERCAR_PROJECT_PUBLICATION_BROWSER_EVIDENCE;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base||'') || !fs.statSync(evidence).isDirectory()) process.exit(2);
 const fixture=JSON.parse(fs.readFileSync(path.join(evidence,'private-project-context.json'),'utf8'));
-let browser,context,stage='startup';
+let browser,context,activePage,stage='startup';
 function check(condition,message) { if (!condition) { const e=new Error('Assertion'); e.safeMessage=message; throw e; } }
 try {
   browser=await chromium.launch({headless:true});
   context=await browser.newContext({viewport:{width:1440,height:1000}});
   await context.addCookies([{name:fixture.cookie.Name,value:fixture.cookie.Value,url:base,httpOnly:true,sameSite:'Lax'}]);
-  const p=await context.newPage(); await p.goto(base+'/owner_projects.php?lang=en');
+  const p=await context.newPage(); activePage=p; await p.goto(base+'/owner_projects.php?lang=en');
   const card=p.locator('.owner-project-grid article').filter({has:p.getByRole('heading',{name:'Project Alpha',exact:true})});
   const form=card.locator('.project-publication-form');
   stage='explicit keyboard controls';
@@ -37,6 +37,8 @@ try {
   stage='content preservation';
   await card.getByRole('link',{name:'Edit',exact:true}).click();
   await p.locator('#description').fill('Browser content edit preserves choice');
+  await p.locator('[data-project-step-link="2"]').click();
+  await p.locator('[name="live_url"]').fill('https://example.org/demo?view=public&mode=read');
   await Promise.all([p.waitForNavigation(),p.getByRole('button',{name:'Save project',exact:true}).click()]);
   await card.locator('.owner-project-publication > summary').click();
   check(await form.getByRole('button',{name:'Hide project',exact:true}).count()===1,'Content edit reset choice');
@@ -51,6 +53,72 @@ try {
     await p.screenshot({path:path.join(evidence,'project-publication-'+width+'.png'),fullPage:true});
   }
   console.log('PASS project-publication browser responsive stored-state/help keyboard controls at 1440 1024 768 390 320px');
+  stage='FE08 owner preview navigation';
+  await p.setViewportSize({width:1440,height:1000});
+  await p.goto(base+'/owner_preview.php?lang=ar');
+  check(await p.locator('html').getAttribute('lang')==='en','Arabic owner changed preview language');
+  check(await p.locator('.portfolio-preview-bar').getAttribute('lang')==='ar','Preview bar locale missing');
+  check((await p.locator('.portfolio-preview-bar strong').textContent()).includes('منشور'),'Real publication state missing');
+  const previewCard=p.locator('.portfolio-project-card').filter({has:p.getByRole('heading',{name:'Project Alpha',exact:true})});
+  const previewResponse=p.waitForResponse(r=>r.url().includes('/owner_preview.php?project=') && r.request().isNavigationRequest());
+  await previewCard.getByRole('link',{name:'View case study',exact:true}).click();
+  check((await previewResponse).status()===200,'Preview case study route failed');
+  await p.waitForLoadState('load');
+  check(new URL(p.url()).search==='?project='+fixture.alpha,'Preview card case destination wrong');
+  check(await p.locator('.portfolio-preview-bar').count()===1 && await p.locator('link[rel="canonical"]').count()===0,'Preview metadata boundary wrong');
+  await p.goto(base+'/owner_preview.php?project='+fixture.hidden);
+  check(await p.locator('.portfolio-draft-note').count()===1,'Draft note missing');
+  check((await p.request.get(base+'/p/'+fixture.slug+'/projects/'+fixture.hidden)).status()===404,'Draft case study exposed');
+  const visitor=await browser.newContext({viewport:{width:1440,height:1000},colorScheme:'light'});
+  try {
+    await visitor.addCookies([{name:'ather_owner_locale',value:'ar',url:base}]);
+    const v=await visitor.newPage(); activePage=v; const publicUrl=base+'/p/'+fixture.slug;
+    stage='FE08 public portfolio';
+    await v.goto(publicUrl);
+    check(await v.locator('html').getAttribute('lang')==='en','Visitor document followed workspace locale');
+    check(await v.locator('.portfolio-preview-bar').count()===0,'Public page exposed preview bar');
+    check(await v.getByText('Insights',{exact:true}).count()===0,'Insights placeholder retained');
+    const body=await v.content();
+    for(const sentinel of ['Hidden project sentinel','Hidden description sentinel','problem_statement','personal_role','measurable_outcome','recommendation_key','target_ref','evidence_sources']) check(!body.includes(sentinel),'Private data reached public HTML');
+    check(await v.locator('.portfolio-live-link').getAttribute('href')==='https://example.org/demo?view=public&mode=read','Live link not kept or escaped correctly');
+    stage='FE08 public card to case';
+    await v.getByRole('link',{name:'View case study',exact:true}).click();
+    await v.waitForLoadState('load');
+    check(new URL(v.url()).pathname==='/p/'+fixture.slug+'/projects/'+fixture.alpha,'Public card case destination wrong');
+    check(await v.locator('.portfolio-case-cover img').getAttribute('src')==='/p/'+fixture.slug+'/media/project/'+fixture.alpha,'Case image not scoped');
+    check(await v.locator('.portfolio-preview-bar').count()===0,'Public case exposed preview bar');
+    check(await v.locator('link[rel="canonical"]').getAttribute('href')===new URL('/p/'+fixture.slug+'/projects/'+fixture.alpha,await v.locator('link[rel="canonical"]').getAttribute('href')).href,'Case canonical wrong');
+    await v.getByRole('link',{name:'All projects',exact:true}).click();
+    check(new URL(v.url()).hash==='#projects','Back link lost project anchor');
+    stage='FE08 real contact';
+    await v.locator('[name="name"]').fill('Synthetic FE08 visitor');
+    await v.locator('[name="email"]').fill('invalid');
+    await v.locator('[name="message"]').fill('Synthetic FE08 contact message');
+    await v.locator('.portfolio-contact-card form').evaluate(form=>{form.noValidate=true;});
+    stage='FE08 contact POST422';
+    const invalid=v.waitForResponse(r=>r.request().method()==='POST' && r.url().includes('/contact'));
+    await v.getByRole('button',{name:'Send message',exact:true}).click();
+    check((await invalid).status()===422,'Contact invalid response changed');
+    stage='FE08 contact error focus';
+    await v.waitForFunction(()=>document.activeElement.hasAttribute('data-portfolio-error-summary'));
+    stage='FE08 contact retained values';
+    check(await v.locator('[name="name"]').inputValue()==='Synthetic FE08 visitor','422 lost name');
+    check(await v.locator('[name="message"]').inputValue()==='Synthetic FE08 contact message','422 lost message');
+    check(await v.locator('[name="email"]').getAttribute('aria-invalid')==='true','422 field error missing');
+    check(await v.locator('.portfolio-case-link').getAttribute('href')==='/p/'+fixture.slug+'/projects/'+fixture.alpha,'422 lost case-study navigation');
+    await v.locator('#contact').screenshot({path:path.join(evidence,'fe08-contact-error.png')});
+    await v.locator('[name="email"]').fill('fe08-visitor@example.test');
+    stage='FE08 contact success PRG';
+    await Promise.all([v.waitForURL('**?contact=sent#contact'),v.getByRole('button',{name:'Send message',exact:true}).click()]);
+    check((await v.locator('.portfolio-form-status[role="status"]').textContent()).includes('successfully'),'Contact PRG success missing');
+    await v.locator('#contact').screenshot({path:path.join(evidence,'fe08-contact-success.png')});
+    console.log('PASS FE08 actual public/preview card-to-case links, scoped media/canonical, Arabic owner English page, draft404, safe live URL and private-data boundary');
+    console.log('PASS FE08 actual contact POST422 retains values and focuses announced error, then saves with PRG303 and server success');
+  } catch(e) {
+    fs.writeFileSync(path.join(evidence,'fe08-browser-diagnostic.json'),JSON.stringify(await activePage.evaluate(()=>({js:document.documentElement.className,summary:!!document.querySelector('[data-portfolio-error-summary]'),active:document.activeElement.tagName,invalid:document.querySelectorAll('[aria-invalid="true"]').length}))), 'utf8');
+    await activePage.screenshot({path:path.join(evidence,'fe08-failure.png'),fullPage:true});
+    throw e;
+  } finally { await visitor.close(); }
 } catch(e) {
   console.error('FAIL project-publication browser '+stage+': '+(e.safeMessage || e.name)); process.exitCode=1;
 } finally {

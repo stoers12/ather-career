@@ -3,6 +3,12 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 module.exports = async function (browser, base, out, contrast) {
     const fixture = (locale, state = '') => `${base}/tests/Browser/owner-projects-visual.php?lang=${locale}&state=${state}`;
+    const focusPicker = async page => {
+        await page.bringToFront();
+        await page.locator('#github_url').focus();
+        await page.keyboard.press('Tab');
+        assert.equal(await page.evaluate(() => document.hasFocus()), true, 'keyboard input requires the active browser page');
+    };
     const step = (page, number) => page.locator(`[data-project-step-link="${number}"]`).click();
     const capture = async (page, name) => { await page.evaluate(async () => { await document.fonts.ready; document.activeElement.blur(); window.scrollTo(0, 0); }); await page.screenshot({ path: path.join(out, name + '.png'), fullPage: true }); };
     for (const locale of ['ar', 'en']) for (const theme of ['light', 'dark']) {
@@ -51,11 +57,13 @@ module.exports = async function (browser, base, out, contrast) {
         assert.equal(await page.locator('#project-step-2').isVisible(), true);
         assert.equal(await page.locator('.owner-project-file-trigger').textContent(), locale === 'ar' ? 'اختيار صورة' : 'Choose image');
         const imageInput = page.locator('#project_image');
-        await imageInput.focus();
+        // Arm interception before keyboard preparation so the native dialog cannot outrun the listener.
+        const chooser = page.waitForEvent('filechooser');
+        await focusPicker(page);
         assert.equal(await imageInput.evaluate(n => n === document.activeElement), true, 'the native picker remains keyboard focusable');
         assert.equal(await page.locator('.owner-project-file-trigger').evaluate(n => getComputedStyle(n).outlineStyle), 'solid', 'native input focus is visible on the localized trigger');
-        const chooser = page.waitForEvent('filechooser');
-        await page.keyboard.press('Enter');
+        // Space activates the native file button; Enter can follow form submission semantics.
+        await page.keyboard.press('Space', { delay: 80 });
         await (await chooser).setFiles({ name: 'رسم-$&-<x>.png', mimeType: 'image/png', buffer: Buffer.from('synthetic file selection only') });
         assert.equal(await page.locator('#project-image-status').textContent(), locale === 'ar' ? 'تم اختيار: رسم-$&-<x>.png. يستمر التحقق عند الحفظ.' : 'Selected: رسم-$&-<x>.png. Validation continues when you save.');
         assert.equal(await page.locator('#project-image-status x').count(), 0, 'filenames are text rather than markup');
@@ -108,10 +116,10 @@ module.exports = async function (browser, base, out, contrast) {
         assert.equal(await p.locator('[data-project-preview]').isVisible(), false);
         assert.equal(await p.locator('[data-project-next]').isVisible(), false);
         assert.equal(await p.locator('.owner-project-file-trigger').textContent(), locale === 'ar' ? 'اختيار صورة' : 'Choose image');
-        await p.locator('#project_image').focus();
-        assert.equal(await p.locator('#project_image').evaluate(n => n === document.activeElement), true);
         const nativeChooser = p.waitForEvent('filechooser');
-        await p.keyboard.press('Enter');
+        await focusPicker(p);
+        assert.equal(await p.locator('#project_image').evaluate(n => n === document.activeElement), true);
+        await p.keyboard.press('Space', { delay: 80 });
         await (await nativeChooser).setFiles({ name: 'native-no-js.png', mimeType: 'image/png', buffer: Buffer.from('native file payload') });
         assert.equal(await p.locator('.owner-project-form').evaluate(f => new FormData(f).get('project_image').name), 'native-no-js.png', 'native selection remains in the complete multipart payload without JavaScript');
         assert.equal(await p.locator('#technologies').evaluate(n => n.rows >= 6 && n.scrollHeight <= n.clientHeight), true, 'no-JS technologies retain a sensible height');

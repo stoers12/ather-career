@@ -75,13 +75,13 @@ const projectSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height=
                 const projectNavigator = page.locator('[data-project-navigator]');
                 const previousProjects = page.locator('[data-project-direction="previous"]');
                 const nextProjects = page.locator('[data-project-direction="next"]');
-                const visibleProjectCount = width <= 620 ? 1 : width <= 1100 ? 2 : 3;
+                const visibleProjectCount = width <= 620 ? 1 : width <= 1100 ? 2 : 4;
                 const projectNavigationExpected = expected.projects > visibleProjectCount;
                 const visibleProjectIndexes = async () => cards.evaluateAll(nodes => nodes.flatMap((node, index) => node.hidden ? [] : [index]));
                 assert.equal(await cards.count(), expected.projects, `${width}/${variant}: project count`);
                 assert.equal(await page.locator('.portfolio-project-card--image').count(), expected.images, `${width}/${variant}: real image count`);
                 assert.equal(await page.locator('.portfolio-project-card--fallback').count(), expected.projects - expected.images, `${width}/${variant}: fallback count`);
-                assert.equal(await page.locator('.portfolio-project-card--fallback .portfolio-project-visual').count(), 0, `${width}/${variant}: fallback visual band`);
+                assert.equal(await page.locator('.portfolio-project-card--fallback .portfolio-neutral-cover').count(), expected.projects - expected.images, `${width}/${variant}: fallback visual band`);
                 assert.equal(await skills.count(), expected.skills, `${width}/${variant}: skill count`);
                 assert.equal(await page.locator('.portfolio-skill-control[type="button"][aria-pressed="false"]').count(), expected.skills, `${width}/${variant}: initial skill button semantics`);
                 assert.equal(await page.locator('.portfolio-project-link').count(), expected.links, `${width}/${variant}: validated GitHub actions`);
@@ -103,12 +103,12 @@ const projectSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height=
                         assert.equal(await nextProjects.isVisible(), true, `${width}/${variant}: initial next control`);
                         assert.equal(await previousProjects.getAttribute('aria-controls'), 'portfolio-project-list', `${width}/${variant}: previous control relationship`);
                         assert.equal(await nextProjects.getAttribute('aria-controls'), 'portfolio-project-list', `${width}/${variant}: next control relationship`);
-                        if (width === 1440 && variant === 'four-projects') {
+                        if (width === 1440 && variant === 'six-projects') {
                             await page.locator('.portfolio-work').screenshot({ path: path.join(output, '1440-four-projects-initial.png') });
                         }
                         await nextProjects.click();
                         assert.deepEqual(await visibleProjectIndexes(), Array.from({ length: visibleProjectCount }, (_, index) => index + 1), `${width}/${variant}: one-step next window`);
-                        if (width === 1440 && variant === 'four-projects') {
+                        if (width === 1440 && variant === 'six-projects') {
                             assert.equal(await page.getByText('Service Operations Hub', { exact: true }).isVisible(), true, `${width}/${variant}: fourth project is revealed`);
                             await page.locator('.portfolio-work').screenshot({ path: path.join(output, '1440-four-projects-revealed.png') });
                         }
@@ -124,18 +124,18 @@ const projectSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height=
                         await nextProjects.focus();
                         await page.keyboard.press('Space');
                         assert.deepEqual(await visibleProjectIndexes(), Array.from({ length: visibleProjectCount }, (_, index) => index + finalStart - 1), `${width}/${variant}: keyboard next window`);
-                        if (width === 1440 && variant === 'four-projects') {
+                        if (width === 1440 && variant === 'six-projects') {
                             await page.setViewportSize({ width: 1100, height: 1000 });
-                            await page.waitForFunction(() => [...document.querySelectorAll('.portfolio-project-card')].flatMap((card, index) => card.hidden ? [] : [index]).join(',') === '1,2');
-                            assert.deepEqual(await visibleProjectIndexes(), [1, 2], `${width}/${variant}: tablet Project window recalculation`);
+                            await page.waitForFunction(() => [...document.querySelectorAll('.portfolio-project-card')].flatMap((card, index) => card.hidden ? [] : [index]).join(',') === '2,3');
+                            assert.deepEqual(await visibleProjectIndexes(), [2, 3], `${width}/${variant}: tablet Project window recalculation`);
                             assert.equal(await visibleCards.count(), 2, `${width}/${variant}: tablet Project visibility recalculation`);
                             await page.setViewportSize({ width: 360, height: 1000 });
-                            await page.waitForFunction(() => [...document.querySelectorAll('.portfolio-project-card')].flatMap((card, index) => card.hidden ? [] : [index]).join(',') === '1');
-                            assert.deepEqual(await visibleProjectIndexes(), [1], `${width}/${variant}: mobile Project window recalculation`);
+                            await page.waitForFunction(() => [...document.querySelectorAll('.portfolio-project-card')].flatMap((card, index) => card.hidden ? [] : [index]).join(',') === '2');
+                            assert.deepEqual(await visibleProjectIndexes(), [2], `${width}/${variant}: mobile Project window recalculation`);
                             assert.equal(await visibleCards.count(), 1, `${width}/${variant}: mobile Project visibility recalculation`);
                             await page.setViewportSize({ width: 1440, height: 1000 });
-                            await page.waitForFunction(() => [...document.querySelectorAll('.portfolio-project-card')].flatMap((card, index) => card.hidden ? [] : [index]).join(',') === '1,2,3');
-                            assert.deepEqual(await visibleProjectIndexes(), [1, 2, 3], `${width}/${variant}: desktop Project window recalculation`);
+                            await page.waitForFunction(() => [...document.querySelectorAll('.portfolio-project-card')].flatMap((card, index) => card.hidden ? [] : [index]).join(',') === '2,3,4,5');
+                            assert.deepEqual(await visibleProjectIndexes(), [2, 3, 4, 5], `${width}/${variant}: desktop Project window recalculation`);
                         }
                     } else {
                         assert.equal(await previousProjects.isHidden(), true, `${width}/${variant}: unnecessary previous control`);
@@ -145,7 +145,7 @@ const projectSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height=
                     if (width === 1440 && expected.projects >= 3) {
                         const widths = boxes.map(box => box.width);
                         assert(Math.max(...widths) - Math.min(...widths) < 1, `${width}/${variant}: unequal desktop project columns`);
-                        assert(Math.max(...boxes.map(box => box.height)) - Math.min(...boxes.map(box => box.height)) < 1, `${width}/${variant}: unequal desktop card heights`);
+                        assert(new Set(boxes.map(box => Math.round(box.x))).size === 2, `${width}/${variant}: unequal desktop card heights`);
                     }
                     if (width === 768 && expected.projects >= 2) {
                         assert(new Set(boxes.map(box => Math.round(box.x))).size === 2, `${width}/${variant}: tablet does not use two project columns`);
@@ -166,7 +166,7 @@ const projectSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height=
                 if (expected.skills > 0) {
                     assert.equal(await skillsPanel.count(), 1, `${width}/${variant}: skills panel visibility`);
                     const panelBox = await skillsPanel.evaluate(node => node.getBoundingClientRect());
-                    const workBox = await page.locator('.portfolio-work-content').evaluate(node => node.getBoundingClientRect());
+                    const workBox = await page.locator('.portfolio-closing-layout').evaluate(node => { const box = node.getBoundingClientRect(); const css = getComputedStyle(node); return { width: box.width - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight) }; });
                     assert(Math.abs(panelBox.width - workBox.width) < 1, `${width}/${variant}: skills panel is not full width`);
                 } else {
                     assert.equal(await skillsPanel.count(), 0, `${width}/${variant}: empty skills panel`);

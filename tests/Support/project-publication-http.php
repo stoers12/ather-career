@@ -21,10 +21,12 @@ file_put_contents($root.'/control/mode','');
 file_put_contents($root.'/router.php', <<<'PHP'
 <?php
 $path=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);
-if (preg_match('~^/p/([a-z0-9-]+)(?:/(projects\.json|media/project/([0-9]+)))?/?$~',$path,$m)) {
+if (preg_match('~^/p/([a-z0-9-]+)(?:/(projects\.json|media/project/([0-9]+)|projects/([0-9]+)|contact))?/?$~',$path,$m)) {
     $_GET['slug']=$m[1]; $file='handlers/public_portfolio.php';
     if (($m[2]??'')==='projects.json') { $file='handlers/public_projects_json.php'; }
-    elseif (isset($m[3])) { $file='handlers/public_media.php'; $_GET['type']='project'; $_GET['id']=$m[3]; }
+    elseif (isset($m[3]) && $m[3]!=='') { $file='handlers/public_media.php'; $_GET['type']='project'; $_GET['id']=$m[3]; }
+    elseif (isset($m[4]) && $m[4]!=='') { $file='handlers/public_project.php'; $_GET['id']=$m[4]; }
+    elseif (($m[2]??'')==='contact') { $file='handlers/public_contact.php'; }
     require __DIR__.'/app/'.$file; return true;
 }
 return false;

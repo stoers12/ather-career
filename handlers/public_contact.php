@@ -45,6 +45,7 @@ function publicContactValidationFailure(PDO $database, PublicReadContext $contex
     renderPortfolioPresentation($profile, $skills, $projects, [
         'profile_media_url' => (string) ($profile['profile_image_path'] ?? '') !== '' ? "/p/{$encodedSlug}/media/profile" : '',
         'project_media_url' => static fn (int $projectId): string => "/p/{$encodedSlug}/media/project/{$projectId}",
+        'project_case_url' => static fn (int $projectId): string => "/p/{$encodedSlug}/projects/{$projectId}",
         'contact_action' => "/p/{$encodedSlug}/contact",
         'contact_values' => $values,
         'contact_field_errors' => $fieldErrors,

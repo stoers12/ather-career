@@ -13,7 +13,7 @@ final class ExperienceCapabilityTest
         $ownerRoute = self::read('handlers/owner_experiences.php') . self::read('includes/owner_experiences_presentation.php') . self::read('includes/owner_experiences_copy.php');
         $publicLifecycle = self::read('includes/public_lifecycle.php');
         $publicRoute = self::read('handlers/public_portfolio.php');
-        $presentation = self::read('includes/portfolio_presentation.php');
+        $presentation = self::read('includes/portfolio_presentation.php') . self::read('includes/portfolio_copy.php');
         $header = self::read('includes/portfolio_presentation.php');
 
         foreach ([
@@ -79,7 +79,7 @@ final class ExperienceCapabilityTest
         phase2Assert(str_contains($publicLifecycle, 'function listPublicExperiences(PDO $database, PublicReadContext $context): array') && str_contains($publicLifecycle, 'WHERE portfolio_id = :public_portfolio_id') && str_contains($publicLifecycle, 'ORDER BY start_month DESC, id DESC') && !str_contains($publicLifecycle, 'ORDER BY is_current DESC'), 'Experience public read path is not safely Portfolio-scoped and deterministic.');
         phase2Assert(str_contains($publicRoute, 'listPublicExperiences($database, $context)') && str_contains($publicRoute, "'experiences' => \$experiences"), 'Public Portfolio route does not pass the structured Experience collection to presentation.');
         phase2Assert(str_contains($presentation, 'function portfolioPresentationExperiences(array $experiences): array') && str_contains($presentation, '$presentationExperiences = portfolioPresentationExperiences('), 'Presentation-ready Experience mapping is missing.');
-        phase2Assert(str_contains($presentation, 'href="#experience" data-portfolio-section="experience">Experience</a>') && !str_contains($header, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>'), 'Experience navigation must use the implemented section anchor contract.');
+        phase2Assert(str_contains($presentation, "href=\"#experience\" data-portfolio-section=\"experience\"><?php echo portfolioCopy('experience'); ?></a>") && !str_contains($header, 'portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Experience</span>'), 'Experience navigation must use the implemented section anchor contract.');
         phase2Assert(!str_contains($presentation, 'Experience timeline') && !str_contains($presentation, 'Years Experience'), 'Experience presentation must not add duration claims.');
 
         require_once PHASE2_REPOSITORY_ROOT . '/includes/experience.php';

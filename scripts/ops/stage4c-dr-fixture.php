@@ -72,11 +72,16 @@ function stage4cFixtureSeed(PDO $database, string $slug): array
     if ((int) $exists->fetchColumn() !== 0) {
         throw new RuntimeException('The disposable rehearsal slug already exists.');
     }
+    // Like the isolated journey fixtures, seal the empty synthetic cohort before
+    // its factory adds a known legacy Owner. The CLI namespace guard is mandatory.
+    $database->exec("INSERT IGNORE INTO owner_journey_cutover (id,revision,snapshot_count,snapshot_digest,captured_at) VALUES (1,'owner-journey-cutover-v1',0,UNHEX(SHA2('[]',256)),UTC_TIMESTAMP(6))");
     $user = $database->prepare('INSERT INTO users (oidc_issuer, oidc_subject, account_status, authz_version) VALUES (:issuer, :subject, "active", 1)');
     $user->execute(['issuer' => 'https://stage4c-owner.invalid/', 'subject' => 'owner-' . substr($slug, -24)]);
     $userId = (int) $database->lastInsertId();
-    $portfolio = $database->prepare('INSERT INTO portfolios (owner_user_id) VALUES (:user_id)');
-    $portfolio->execute(['user_id' => $userId]);
+    // This isolated restore dataset represents an existing, grandfathered V1 Owner.
+    // Preserve that proof across restore instead of creating an unproven post-cutover Portfolio.
+    $portfolio = $database->prepare('INSERT INTO portfolios (owner_user_id, legacy_owner_user_id) VALUES (:user_id, :legacy_user_id)');
+    $portfolio->execute(['user_id' => $userId, 'legacy_user_id' => $userId]);
     $portfolioId = (int) $database->lastInsertId();
     $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser($userId), $portfolioId);
 

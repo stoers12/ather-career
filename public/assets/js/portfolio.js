@@ -46,6 +46,10 @@
                 }
             }
 
+            if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2) {
+                setActive(sections[sections.length - 1].id);
+                return;
+            }
             let selected = sections[0];
             let closestDistance = Number.POSITIVE_INFINITY;
 
@@ -78,6 +82,15 @@
             sections.forEach((entry) => observer.observe(entry.element));
         }
 
+        let scrollScheduled = false;
+        window.addEventListener('scroll', () => {
+            if (scrollScheduled) return;
+            scrollScheduled = true;
+            window.requestAnimationFrame(() => {
+                scrollScheduled = false;
+                selectDominantSection();
+            });
+        }, { passive: true });
         const initialId = window.location.hash.slice(1);
         if (links.some((link) => link.dataset.portfolioSection === initialId)) {
             setActive(initialId);
@@ -98,6 +111,15 @@
             if (!(list instanceof HTMLElement)) {
                 return;
             }
+
+            list.querySelectorAll('.portfolio-skill-label').forEach((label) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'portfolio-skill-control';
+                button.setAttribute('aria-pressed', 'false');
+                button.append(...label.childNodes);
+                label.replaceWith(button);
+            });
 
             list.addEventListener('click', (event) => {
                 const button = event.target instanceof Element ? event.target.closest('.portfolio-skill-control') : null;
@@ -141,7 +163,7 @@
                 if (window.matchMedia('(max-width: 620px)').matches) {
                     return 1;
                 }
-                return window.matchMedia('(max-width: 1100px)').matches ? 2 : 3;
+                return window.matchMedia('(max-width: 1100px)').matches ? 2 : 4;
             };
             const renderWindow = () => {
                 const count = visibleCount();
@@ -153,7 +175,6 @@
                         card.hidden = false;
                     });
                     navigator.classList.remove('portfolio-project-navigator--active');
-                    list.style.removeProperty('--portfolio-project-visible-count');
                     previous.hidden = true;
                     next.hidden = true;
                     return;
@@ -163,7 +184,6 @@
                 cards.forEach((card, index) => {
                     card.hidden = index < start || index >= end;
                 });
-                list.style.setProperty('--portfolio-project-visible-count', String(count));
                 navigator.classList.add('portfolio-project-navigator--active');
                 previous.hidden = start === 0;
                 next.hidden = start === maximumStart;
@@ -220,9 +240,9 @@
                     item.hidden = !visible;
                     item.classList.toggle('portfolio-experience-item--visible-last', visible && index === end - 1);
                 });
-                range.textContent = start + 1 === end
-                    ? `Showing experience ${end} of ${items.length}`
-                    : `Showing experiences ${start + 1}–${end} of ${items.length}`;
+                const rangeCopy = start + 1 === end ? pagination.dataset.rangeOne : pagination.dataset.rangeMany;
+                range.textContent = rangeCopy.replace('{start}', String(start + 1))
+                    .replace('{end}', String(end)).replace('{total}', String(items.length));
                 newer.disabled = page === 0;
                 older.disabled = page === pageCount - 1;
             };
@@ -348,7 +368,29 @@
         }
     };
 
+    const initializePortfolioTheme = () => {
+        const button = document.querySelector('[data-portfolio-theme]');
+        if (!(button instanceof HTMLButtonElement)) return;
+        const system = window.matchMedia('(prefers-color-scheme: dark)');
+        let choice = null;
+        const render = () => {
+            const dark = choice === null ? system.matches : choice === 'dark';
+            if (choice !== null) document.documentElement.dataset.portfolioTheme = choice;
+            button.setAttribute('aria-label', dark ? button.dataset.lightLabel : button.dataset.darkLabel);
+            button.setAttribute('aria-pressed', String(dark));
+        };
+        button.addEventListener('click', () => {
+            const dark = choice === null ? system.matches : choice === 'dark';
+            choice = dark ? 'light' : 'dark';
+            render();
+        });
+        system.addEventListener('change', render);
+        render();
+        button.hidden = false;
+    };
+
     const initializePortfolio = () => {
+        initializePortfolioTheme();
         initializePortfolioScrollspy();
         initializePortfolioSkills();
         initializeProjectNavigator();
