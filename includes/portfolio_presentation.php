@@ -28,7 +28,7 @@ function portfolioPresentationHeroHeadline(array $profile): string
         }
     }
 
-    return 'Portfolio';
+    return portfolioCopy('portfolio');
 }
 
 function portfolioPresentationPhoneAction(string $phone): string
@@ -46,11 +46,11 @@ function portfolioPresentationSocialLinks(array $profile): array
 {
     $links = [];
     foreach ([
-        'linkedin_url' => 'LinkedIn',
-        'github_url' => 'GitHub',
-        'instagram_url' => 'Instagram',
-        'facebook_url' => 'Facebook',
-        'website_url' => 'Website',
+        'linkedin_url' => portfolioCopy('linkedin'),
+        'github_url' => portfolioCopy('github'),
+        'instagram_url' => portfolioCopy('instagram'),
+        'facebook_url' => portfolioCopy('facebook'),
+        'website_url' => portfolioCopy('website'),
     ] as $field => $label) {
         $url = portfolioPresentationValue($profile, $field);
         if ($url !== '' && isPublicWebsiteDestination($url)) {
@@ -86,13 +86,13 @@ function portfolioPresentationHeroSocialActions(array $profile, string $emailAct
         }
     }
     if ($emailAction !== '') {
-        $actions[] = ['label' => 'Email', 'url' => $emailAction, 'external' => false];
+        $actions[] = ['label' => portfolioCopy('email'), 'url' => $emailAction, 'external' => false];
     }
 
     // The current public Portfolio model has no resume or profile-document
     // destination, so a validated personal website is the truthful fallback.
     if (isset($socialByLabel['Website'])) {
-        $actions[] = ['label' => 'Website', 'url' => $socialByLabel['Website'], 'external' => true];
+        $actions[] = ['label' => portfolioCopy('website'), 'url' => $socialByLabel['Website'], 'external' => true];
     }
 
     return $actions;
@@ -459,7 +459,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                         <div class="portfolio-project-grid" id="portfolio-project-list">
                         <?php foreach ($presentationProjects as $project):
                             $projectId = isset($project['id']) ? (int) $project['id'] : 0;
-                            $projectTitle = isset($project['title']) ? trim((string) $project['title']) : 'Project';
+                            $projectTitle = isset($project['title']) ? trim((string) $project['title']) : portfolioCopy('project');
                             $category = isset($project['category']) ? trim((string) $project['category']) : '';
                             $projectImageUrl = (string) $projectMediaUrl($projectId);
                             $hasProjectImage = isset($project['image_path']) && trim((string) $project['image_path']) !== '' && $projectImageUrl !== '';

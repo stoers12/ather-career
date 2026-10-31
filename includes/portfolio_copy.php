@@ -7,6 +7,11 @@ function portfolioCopy(string $key, string $locale = 'en'): string
 {
     $copy = [
         'home' => 'Home',
+        'linkedin' => 'LinkedIn',
+        'github' => 'GitHub',
+        'instagram' => 'Instagram',
+        'facebook' => 'Facebook',
+        'website' => 'Website',
         'brandHome' => 'ATHER, home',
         'metrics' => 'Portfolio metrics',
         'metricProjects' => 'Projects',
