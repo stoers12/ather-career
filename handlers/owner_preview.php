@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/includes/http.php';
 require_once dirname(__DIR__) . '/includes/owner_flow.php';
 require_once dirname(__DIR__) . '/includes/portfolio_scoped_data.php';
 require_once dirname(__DIR__) . '/includes/portfolio_presentation.php';
+require_once dirname(__DIR__) . '/includes/public_lifecycle.php';
 
 startOwnerSession();
 httpRegisterExceptionBoundary('owner_preview.php');
@@ -41,9 +42,11 @@ $skills = [];
 $projects = [];
 $experiences = [];
 $previewError = '';
+$portfolioPublished = null;
 try {
     $database = getDatabaseConnection();
     $context = requireOwnerPortfolioContext($database);
+    $portfolioPublished = ownedPublicLifecycleState($database, $context)['is_published'] === 1;
     $profile = loadAuthorizedPersonalInfo($database, $context);
     $skills = listAuthorizedSkills($database, $context);
     $projects = listAuthorizedProjects($database, $context);
@@ -59,5 +62,8 @@ renderPortfolioPresentation(is_array($profile) ? $profile : [], $skills, $projec
     'preview_error' => $previewError,
     'profile_media_url' => is_array($profile) && (string) ($profile['profile_image_path'] ?? '') !== '' ? '/owner_media.php?type=profile' : '',
     'project_media_url' => static fn (int $projectId): string => "/owner_media.php?type=project&id={$projectId}",
+    // B-08: case study preview links and the real portfolio state (null when unavailable).
+    'project_case_url' => static fn (int $projectId): string => "/owner_preview.php?project={$projectId}",
+    'portfolio_published' => $portfolioPublished,
     'experiences' => $experiences,
 ]);

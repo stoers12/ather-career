@@ -48,6 +48,8 @@ $encodedSlug = rawurlencode($slug);
 renderPortfolioPresentation($profile, $skills, $projects, [
     'profile_media_url' => (string) ($profile['profile_image_path'] ?? '') !== '' ? "/p/{$encodedSlug}/media/profile" : '',
     'project_media_url' => static fn (int $projectId): string => "/p/{$encodedSlug}/media/project/{$projectId}",
+    'project_case_url' => static fn (int $projectId): string => "/p/{$encodedSlug}/projects/{$projectId}",
+    'portfolio_published' => true,
     'contact_action' => "/p/{$encodedSlug}/contact",
     'canonical_url' => publicPortfolioUrl($slug),
     'contact_sent' => ($_GET['contact'] ?? null) === 'sent',

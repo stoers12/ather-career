@@ -46,6 +46,7 @@ The array shape:
     ],
     'portfolio_url' => string,   // "/p/{slug}" or "/owner_preview.php"; add "#projects" for the back link
     'canonical_url' => ?string,  // absolute; null in preview, or if PUBLIC_BASE_URL is not configured
+    'portfolio_published' => bool, // B-08: the real portfolio state in preview; always true on the visitor route
 ]
 ```
 
@@ -62,6 +63,20 @@ The array shape:
 The handler ships a minimal baseline template (`includes/public_project_presentation.php`), which FE-08 replaces with the reference design. FE-08 also links each project card to its page:
 - on the public portfolio, `/p/{slug}/projects/{id}`;
 - in the owner preview, `/owner_preview.php?project={id}`.
+
+## Portfolio renderer options (B-08, for FE-08)
+
+`renderPortfolioPresentation()` receives two further options from both handlers:
+
+| Option | Public `/p/{slug}` | Owner preview `/owner_preview.php` |
+|---|---|---|
+| `project_case_url` (`callable(int): string`) | `/p/{slug}/projects/{id}` | `/owner_preview.php?project={id}` |
+| `portfolio_published` (`?bool`) | `true` | The real state: `true` (published) or `false` (private). `null` only when the preview could not load (503). |
+
+**Rules for the template:**
+- Use `project_case_url` for every card's «View case study» link.
+- Use `portfolio_published` only for the owner preview bar («منشور / خاص»).
+- Visitors never see the preview bar.
 
 ## Not part of this contract
 

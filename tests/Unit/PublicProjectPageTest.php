@@ -20,7 +20,7 @@ final class PublicProjectPageTest extends TestCase
         $this->database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $this->database->exec(
             "CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT NOT NULL);
-             CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT, is_published INTEGER NOT NULL);
+             CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT, is_published INTEGER NOT NULL, published_at TEXT NULL);
              CREATE TABLE personal_info (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL UNIQUE, full_name TEXT, professional_title TEXT, hero_headline TEXT, location TEXT, about_me TEXT,
                 work_description TEXT, linkedin_url TEXT, github_url TEXT, instagram_url TEXT, facebook_url TEXT, website_url TEXT, profile_image_path TEXT,
                 email TEXT, public_email_visible INTEGER NOT NULL DEFAULT 0, phone_primary TEXT, public_phone_visible INTEGER NOT NULL DEFAULT 0,
@@ -45,7 +45,8 @@ final class PublicProjectPageTest extends TestCase
         $page = publicProjectPageData($this->database, 'jane-doe', '100');
 
         self::assertNotNull($page);
-        self::assertSame(['preview', 'draft', 'owner', 'project', 'portfolio_url', 'canonical_url'], array_keys($page));
+        self::assertSame(['preview', 'draft', 'owner', 'project', 'portfolio_url', 'canonical_url', 'portfolio_published'], array_keys($page));
+        self::assertTrue($page['portfolio_published'], 'A visitor page is always of a published portfolio');
         self::assertSame(['id', 'title', 'category', 'description', 'technologies', 'live_url', 'github_url', 'image_url'], array_keys($page['project']));
         self::assertSame(['name' => 'Jane Doe', 'professional_title' => 'Data Analyst'], $page['owner'], 'Only the name and title; no contact details');
         self::assertSame(100, $page['project']['id']);
@@ -109,6 +110,11 @@ final class PublicProjectPageTest extends TestCase
         self::assertSame('/owner_preview.php', $draft['portfolio_url']);
         self::assertSame('https://draft.example.test/', $draft['project']['live_url']);
 
+        self::assertTrue($draft['portfolio_published'], 'Preview reports the real published state');
+        $this->database->exec('UPDATE portfolios SET is_published = 0 WHERE id = 10');
+        self::assertFalse(ownerPreviewProjectPageData($this->database, $context, '102')['portfolio_published'] ?? null, 'Preview reports a private portfolio');
+        $this->database->exec('UPDATE portfolios SET is_published = 1 WHERE id = 10');
+
         $published = ownerPreviewProjectPageData($this->database, $context, '100');
         self::assertNotNull($published);
         self::assertFalse($published['draft']);
@@ -116,6 +122,17 @@ final class PublicProjectPageTest extends TestCase
 
         self::assertNull(ownerPreviewProjectPageData($this->database, $context, '200'), 'Foreign project');
         self::assertNull(ownerPreviewProjectPageData($this->database, $context, 'x'));
+    }
+
+    public function testBothPortfolioHandlersPassCaseLinksAndTheRealPublicationState(): void
+    {
+        $public = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/handlers/public_portfolio.php');
+        self::assertStringContainsString("'project_case_url' => static fn (int \$projectId): string => \"/p/{\$encodedSlug}/projects/{\$projectId}\",", $public);
+        self::assertStringContainsString("'portfolio_published' => true,", $public);
+        $preview = (string) file_get_contents(PHASE2_REPOSITORY_ROOT . '/handlers/owner_preview.php');
+        self::assertStringContainsString("'project_case_url' => static fn (int \$projectId): string => \"/owner_preview.php?project={\$projectId}\",", $preview);
+        self::assertStringContainsString("\$portfolioPublished = ownedPublicLifecycleState(\$database, \$context)['is_published'] === 1;", $preview);
+        self::assertStringContainsString("'portfolio_published' => \$portfolioPublished,", $preview);
     }
 
     public function testBaselineTemplateEscapesContentAndOpensLinksSafely(): void

@@ -246,6 +246,8 @@ function portfolioPresentationMetricIcon(string $metric): string
  *     preview_error?: string,
  *     profile_media_url?: string,
  *     project_media_url?: callable(int): string,
+ *     project_case_url?: callable(int): string,
+ *     portfolio_published?: ?bool,
  *     contact_action?: string,
  *     contact_sent?: bool,
  *     contact_values?: array{name?: string, email?: string, message?: string},
