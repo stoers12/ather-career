@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/presentation.php';
 require_once __DIR__ . '/validation.php';
+require_once __DIR__ . '/portfolio_copy.php';
+require_once __DIR__ . '/portfolio_shared_presentation.php';
 
 function portfolioPresentationEscape(mixed $value): string
 {
@@ -99,14 +101,8 @@ function portfolioPresentationHeroSocialActions(array $profile, string $emailAct
 /** @return list<array<string, mixed>> */
 function portfolioPresentationProjects(array $projects): array
 {
-    // Scoped reads establish the deterministic display order. The navigator
-    // chooses a client-side window only after JavaScript is available.
+    // Scoped reads establish the deterministic display order.
     return $projects;
-}
-
-function portfolioPresentationProjectFallbackIcon(): string
-{
-    return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 7.5h14v10H5zM8 4.5h8M8 11.5h8M8 15.5h5"/></svg>';
 }
 
 /** @return list<array{experience_type: string, role_title: string, organization: string, location: string|null, start_month: string, end_month: string|null, is_current: bool, description: string|null}> */
@@ -138,12 +134,12 @@ function portfolioPresentationExperiences(array $experiences): array
 function portfolioPresentationExperienceTypeLabel(mixed $type): string
 {
     return match ($type) {
-        'employment' => 'Employment',
-        'training' => 'Training',
-        'internship' => 'Internship',
-        'volunteer' => 'Volunteer',
-        'leadership' => 'Leadership',
-        default => 'Experience',
+        'employment' => portfolioCopy('employment'),
+        'training' => portfolioCopy('training'),
+        'internship' => portfolioCopy('internship'),
+        'volunteer' => portfolioCopy('volunteer'),
+        'leadership' => portfolioCopy('leadership'),
+        default => portfolioCopy('experience'),
     };
 }
 
@@ -153,10 +149,7 @@ function portfolioPresentationExperienceMonth(mixed $value): ?string
         return null;
     }
 
-    $months = [
-        1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun',
-        7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec',
-    ];
+    $months = portfolioMonthNames();
 
     return $months[(int) $matches[2]] . ' ' . $matches[1];
 }
@@ -169,7 +162,7 @@ function portfolioPresentationExperienceDateRange(array $experience): string
     }
 
     if (($experience['is_current'] ?? false) === true) {
-        return $start . ' — Present';
+        return $start . ' — ' . portfolioCopy('present');
     }
 
     $end = portfolioPresentationExperienceMonth($experience['end_month'] ?? null);
@@ -196,13 +189,13 @@ function portfolioPresentationMetrics(array $projects, array $skills): array
 
     $metrics = [];
     if ($projects !== []) {
-        $metrics[] = ['key' => 'projects', 'value' => count($projects), 'label' => 'Projects'];
+        $metrics[] = ['key' => 'projects', 'value' => count($projects), 'label' => portfolioCopy('metricProjects')];
     }
     if ($skillCount > 0) {
-        $metrics[] = ['key' => 'skills', 'value' => $skillCount, 'label' => 'Core Skills'];
+        $metrics[] = ['key' => 'skills', 'value' => $skillCount, 'label' => portfolioCopy('metricSkills')];
     }
     if ($categories !== []) {
-        $metrics[] = ['key' => 'categories', 'value' => count($categories), 'label' => 'Focus Areas'];
+        $metrics[] = ['key' => 'categories', 'value' => count($categories), 'label' => portfolioCopy('focusAreas')];
     }
 
     return $metrics;
@@ -248,6 +241,8 @@ function portfolioPresentationMetricIcon(string $metric): string
  *     project_media_url?: callable(int): string,
  *     project_case_url?: callable(int): string,
  *     portfolio_published?: ?bool,
+ *     project_case_url?: callable(int): string,
+ *     portfolio_published?: ?bool,
  *     contact_action?: string,
  *     contact_sent?: bool,
  *     contact_values?: array{name?: string, email?: string, message?: string},
@@ -262,7 +257,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     $ownerName = portfolioPresentationValue($profile, 'full_name');
     $name = $ownerName;
     if ($name === '') {
-        $name = $preview ? 'Your Portfolio' : 'Portfolio';
+        $name = $preview ? portfolioCopy('yourPortfolio') : portfolioCopy('portfolio');
     }
     $heroHeadline = portfolioPresentationHeroHeadline($profile);
     $location = portfolioPresentationValue($profile, 'location');
@@ -284,31 +279,33 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
         isset($options['experiences']) && is_array($options['experiences']) ? $options['experiences'] : [],
     );
     $experiencePaginationEnabled = count($presentationExperiences) > PORTFOLIO_EXPERIENCE_PAGE_SIZE;
-    $initials = profileInitials($name) ?: 'P';
+    $initials = $ownerName !== '' ? profileInitials($ownerName) : '';
     $showProjects = $presentationProjects !== [];
     $projectNavigationAvailable = count($presentationProjects) > 1;
     $showSkills = $skills !== [];
     $showAbout = $aboutNarrative !== '';
     $footerNavigation = [];
     if ($showAbout) {
-        $footerNavigation[] = ['label' => 'About', 'target' => 'about'];
+        $footerNavigation[] = ['label' => portfolioCopy('about'), 'target' => 'about'];
     }
     if ($showProjects) {
-        $footerNavigation[] = ['label' => 'Projects', 'target' => 'projects'];
+        $footerNavigation[] = ['label' => portfolioCopy('projects'), 'target' => 'projects'];
     }
     if ($presentationExperiences !== []) {
-        $footerNavigation[] = ['label' => 'Experience', 'target' => 'experience'];
+        $footerNavigation[] = ['label' => portfolioCopy('experience'), 'target' => 'experience'];
     }
     if ($showSkills) {
-        $footerNavigation[] = ['label' => 'Skills', 'target' => 'skills'];
+        $footerNavigation[] = ['label' => portfolioCopy('skills'), 'target' => 'skills'];
     }
-    $footerNavigation[] = ['label' => 'Contact', 'target' => 'contact'];
+    $footerNavigation[] = ['label' => portfolioCopy('contact'), 'target' => 'contact'];
     $profileMediaUrl = isset($options['profile_media_url']) && is_string($options['profile_media_url'])
         ? $options['profile_media_url']
         : '';
     $projectMediaUrl = isset($options['project_media_url']) && is_callable($options['project_media_url'])
         ? $options['project_media_url']
         : static fn (int $projectId): string => '';
+    $projectCaseUrl = isset($options['project_case_url']) && is_callable($options['project_case_url'])
+        ? $options['project_case_url'] : static fn (int $projectId): string => '';
     $contactAction = isset($options['contact_action']) && is_string($options['contact_action'])
         ? $options['contact_action']
         : '';
@@ -337,58 +334,51 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php if ($preview): ?><meta name="robots" content="noindex,nofollow"><?php else: ?><meta name="robots" content="index,follow"><?php endif; ?>
-    <meta name="color-scheme" content="dark">
-    <title><?php echo portfolioPresentationEscape($name); ?> — Portfolio</title>
+    <meta name="color-scheme" content="light dark">
+    <title><?php echo portfolioPresentationEscape($name); ?> — <?php echo portfolioCopy('portfolio'); ?></title>
     <link rel="icon" type="image/png" href="/assets/images/ather-navbar-logo.png">
     <?php if ($canonicalUrl !== ''): ?><link rel="canonical" href="<?php echo portfolioPresentationEscape($canonicalUrl); ?>"><?php endif; ?>
     <link rel="stylesheet" href="<?php echo portfolioPresentationEscape($stylesheet); ?>">
     <script src="<?php echo portfolioPresentationEscape($script); ?>" defer></script>
 </head>
 <body class="portfolio-page<?php echo $preview ? ' portfolio-preview-mode' : ''; ?>">
-<a class="portfolio-skip-link" href="#portfolio-main">Skip to content</a>
+<a class="portfolio-skip-link" href="#portfolio-main"><?php echo portfolioCopy('skip'); ?></a>
 
+<?php if ($preview) { renderPortfolioPreviewBar($options['portfolio_published'] ?? null); } ?>
 <header class="portfolio-header">
     <div class="portfolio-header-inner">
-        <a class="portfolio-brand" href="#top" aria-label="ATHER, home">
-            <img class="portfolio-brand-logo" src="/assets/images/ather-navbar-logo.png" width="880" height="155" alt="">
+        <a class="portfolio-brand" href="#top" aria-label="<?php echo portfolioCopy('brandHome'); ?>">
+            <?php renderPortfolioWordmark('portfolio-brand-logo'); ?>
         </a>
-        <nav class="portfolio-nav-links" aria-label="Portfolio sections">
-            <a class="is-current" href="#top" data-portfolio-section="top" aria-current="page">Home</a>
-            <?php if ($showAbout): ?><a href="#about" data-portfolio-section="about">About</a><?php endif; ?>
-            <?php if ($showProjects): ?><a href="#projects" data-portfolio-section="projects">Projects</a><?php endif; ?>
-            <?php if ($presentationExperiences !== []): ?><a href="#experience" data-portfolio-section="experience">Experience</a><?php endif; ?>
-            <?php if ($showSkills): ?><a href="#skills" data-portfolio-section="skills">Skills</a><?php endif; ?>
-            <span class="portfolio-nav-placeholder" aria-disabled="true" title="Coming soon">Insights</span>
-            <a href="#contact" data-portfolio-section="contact">Contact</a>
+        <nav class="portfolio-nav-links" aria-label="<?php echo portfolioCopy('sections'); ?>">
+            <a class="is-current" href="#top" data-portfolio-section="top" aria-current="page"><?php echo portfolioCopy('home'); ?></a>
+            <?php if ($showAbout): ?><a href="#about" data-portfolio-section="about"><?php echo portfolioCopy('about'); ?></a><?php endif; ?>
+            <?php if ($showProjects): ?><a href="#projects" data-portfolio-section="projects"><?php echo portfolioCopy('projects'); ?></a><?php endif; ?>
+            <?php if ($presentationExperiences !== []): ?><a href="#experience" data-portfolio-section="experience"><?php echo portfolioCopy('experience'); ?></a><?php endif; ?>
+            <?php if ($showSkills): ?><a href="#skills" data-portfolio-section="skills"><?php echo portfolioCopy('skills'); ?></a><?php endif; ?>
+            <a href="#contact" data-portfolio-section="contact"><?php echo portfolioCopy('contact'); ?></a>
         </nav>
-        <div class="portfolio-header-actions">
-            <a class="portfolio-header-cta" href="#contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8.2 11.5 8.3-3.3-3.4 7.8-1.7-3.1-3.2-1.4Z"/><path d="m11.5 12.9 2.2-2.2"/></svg><span>Let’s Connect</span></a>
-            <button class="portfolio-menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="portfolio-mobile-nav"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+        <div class="portfolio-header-actions"><?php renderPortfolioThemeControl(); ?>
+            <a class="portfolio-header-cta" href="#contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8.2 11.5 8.3-3.3-3.4 7.8-1.7-3.1-3.2-1.4Z"/><path d="m11.5 12.9 2.2-2.2"/></svg><span><?php echo portfolioCopy('talk'); ?></span></a>
+            <button class="portfolio-menu-toggle" type="button" aria-label="<?php echo portfolioCopy('openNav'); ?>" aria-expanded="false" aria-controls="portfolio-mobile-nav"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
         </div>
     </div>
 </header>
 
 <div class="portfolio-mobile-nav-layer" aria-hidden="true" inert>
-    <button class="portfolio-mobile-nav-backdrop" type="button" aria-label="Close navigation" tabindex="-1"></button>
+    <button class="portfolio-mobile-nav-backdrop" type="button" aria-label="<?php echo portfolioCopy('closeNav'); ?>" tabindex="-1"></button>
     <aside class="portfolio-mobile-nav-panel" role="dialog" aria-modal="true" aria-labelledby="portfolio-mobile-navigation-title">
-        <div class="portfolio-mobile-nav-panel-heading"><span id="portfolio-mobile-navigation-title">Navigation</span><button class="portfolio-mobile-nav-close" type="button" aria-label="Close navigation"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
-        <nav class="portfolio-mobile-nav-links" id="portfolio-mobile-nav" aria-label="Portfolio mobile sections">
-            <a class="is-current" href="#top" data-portfolio-section="top" aria-current="page">Home</a>
-            <?php if ($showAbout): ?><a href="#about" data-portfolio-section="about">About</a><?php endif; ?>
-            <?php if ($showProjects): ?><a href="#projects" data-portfolio-section="projects">Projects</a><?php endif; ?>
-            <?php if ($presentationExperiences !== []): ?><a href="#experience" data-portfolio-section="experience">Experience</a><?php endif; ?>
-            <?php if ($showSkills): ?><a href="#skills" data-portfolio-section="skills">Skills</a><?php endif; ?>
-            <span class="portfolio-mobile-nav-placeholder" aria-disabled="true">Insights <small>Coming soon</small></span>
-            <a href="#contact" data-portfolio-section="contact">Contact</a>
+        <div class="portfolio-mobile-nav-panel-heading"><span id="portfolio-mobile-navigation-title"><?php echo portfolioCopy('navigation'); ?></span><button class="portfolio-mobile-nav-close" type="button" aria-label="<?php echo portfolioCopy('closeNav'); ?>"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+        <nav class="portfolio-mobile-nav-links" id="portfolio-mobile-nav" aria-label="<?php echo portfolioCopy('mobileSections'); ?>">
+            <a class="is-current" href="#top" data-portfolio-section="top" aria-current="page"><?php echo portfolioCopy('home'); ?></a>
+            <?php if ($showAbout): ?><a href="#about" data-portfolio-section="about"><?php echo portfolioCopy('about'); ?></a><?php endif; ?>
+            <?php if ($showProjects): ?><a href="#projects" data-portfolio-section="projects"><?php echo portfolioCopy('projects'); ?></a><?php endif; ?>
+            <?php if ($presentationExperiences !== []): ?><a href="#experience" data-portfolio-section="experience"><?php echo portfolioCopy('experience'); ?></a><?php endif; ?>
+            <?php if ($showSkills): ?><a href="#skills" data-portfolio-section="skills"><?php echo portfolioCopy('skills'); ?></a><?php endif; ?>
+            <a href="#contact" data-portfolio-section="contact"><?php echo portfolioCopy('contact'); ?></a>
         </nav>
     </aside>
 </div>
-
-<?php if ($preview): ?>
-    <aside class="portfolio-preview-bar" aria-label="Private preview status">
-        <div class="portfolio-container portfolio-preview-bar-inner"><span><strong>Private preview</strong> · viewing does not publish this Portfolio.</span><a href="owner.php">Dashboard</a></div>
-    </aside>
-<?php endif; ?>
 
 <main id="portfolio-main">
     <?php if ($previewError !== ''): ?><div class="portfolio-container portfolio-alert" role="alert"><?php echo portfolioPresentationEscape($previewError); ?></div><?php endif; ?>
@@ -396,35 +386,36 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     <section class="portfolio-hero" id="top" aria-labelledby="portfolio-title">
         <div class="portfolio-container portfolio-hero-grid">
             <div class="portfolio-hero-copy">
-                <h1 id="portfolio-title"><?php echo portfolioPresentationEscape($heroHeadline); ?></h1>
-                <?php if ($heroSummary !== ''): ?><p class="portfolio-hero-summary"><?php echo nl2br(portfolioPresentationEscape($heroSummary)); ?></p><?php endif; ?>
+                <p class="portfolio-hero-eyebrow"><bdi dir="auto"><?php echo portfolioPresentationEscape($ownerName); ?></bdi><?php if (portfolioPresentationValue($profile, 'professional_title') !== ''): ?> · <bdi dir="auto"><?php echo portfolioPresentationEscape(portfolioPresentationValue($profile, 'professional_title')); ?></bdi><?php endif; ?></p>
+                <h1 id="portfolio-title" dir="auto"><?php echo portfolioPresentationEscape($heroHeadline); ?></h1>
+                <?php if ($heroSummary !== ''): ?><p class="portfolio-hero-summary" dir="auto"><?php echo nl2br(portfolioPresentationEscape($heroSummary)); ?></p><?php endif; ?>
                 <div class="portfolio-hero-actions-cluster">
                     <div class="portfolio-hero-actions">
-                        <?php if ($showProjects): ?><a class="portfolio-button portfolio-button-primary" href="#projects"><span>View My Work</span><?php echo portfolioPresentationActionIcon('arrow'); ?></a><?php endif; ?>
-                        <button class="portfolio-button portfolio-button-secondary" type="button" disabled aria-label="Download Resume (unavailable)"><span>Download Resume</span><?php echo portfolioPresentationActionIcon('download'); ?></button>
+                        <?php if ($showProjects): ?><a class="portfolio-button portfolio-button-primary" href="#projects"><span><?php echo portfolioCopy('explore'); ?></span><?php echo portfolioPresentationActionIcon('arrow'); ?></a><?php endif; ?>
+                        <a class="portfolio-button portfolio-button-secondary" href="#contact"><span><?php echo portfolioCopy('touch'); ?></span></a>
                     </div>
                     <?php if ($heroSocialActions !== []): ?>
-                        <ul class="portfolio-hero-social-list" aria-label="Professional links">
-                            <?php foreach ($heroSocialActions as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" aria-label="<?php echo portfolioPresentationEscape($link['label'] === 'Email' ? 'Email ' . $name : $link['label']); ?>"<?php if ($link['external']): ?> rel="noopener noreferrer"<?php endif; ?>><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?>
+                        <ul class="portfolio-hero-social-list" aria-label="<?php echo portfolioCopy('professionalLinks'); ?>">
+                            <?php foreach ($heroSocialActions as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" aria-label="<?php echo portfolioPresentationEscape($link['label'] === 'Email' ? sprintf(portfolioCopy('emailName'), $name) : $link['label']); ?>"<?php if ($link['external']): ?> rel="noopener noreferrer"<?php endif; ?>><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?>
                         </ul>
                     <?php endif; ?>
                 </div>
             </div>
             <div class="portfolio-hero-reserved">
-                <article class="portfolio-hero-profile-card portfolio-hero-profile-card--<?php echo $profileMediaUrl !== '' ? 'image' : 'fallback'; ?>" aria-label="Profile summary">
+                <article class="portfolio-hero-profile-card portfolio-hero-profile-card--<?php echo $profileMediaUrl !== '' ? 'image' : 'fallback'; ?>" aria-label="<?php echo portfolioCopy('summary'); ?>">
                     <div class="portfolio-hero-profile-visual">
                         <?php if ($profileMediaUrl !== ''): ?>
-                            <img src="<?php echo portfolioPresentationEscape($profileMediaUrl); ?>" alt="<?php echo portfolioPresentationEscape($name); ?> portrait" loading="eager" fetchpriority="high" decoding="async">
+                            <img src="<?php echo portfolioPresentationEscape($profileMediaUrl); ?>" alt="<?php echo portfolioPresentationEscape(sprintf(portfolioCopy('portrait'), $name)); ?>" loading="eager" fetchpriority="high" decoding="async">
                         <?php else: ?>
                             <span class="portfolio-hero-profile-fallback" aria-hidden="true"><?php echo portfolioPresentationEscape($initials); ?></span>
                         <?php endif; ?>
                     </div>
                     <div class="portfolio-hero-profile-details">
-                        <h2><?php echo portfolioPresentationEscape($name); ?></h2>
+                        <h2 dir="auto"><?php echo portfolioPresentationEscape($name); ?></h2><?php if (portfolioPresentationValue($profile, 'professional_title') !== ''): ?><p class="portfolio-hero-profile-role" dir="auto"><?php echo portfolioPresentationEscape(portfolioPresentationValue($profile, 'professional_title')); ?></p><?php endif; ?>
                         <?php if ($location !== ''): ?><p class="portfolio-hero-profile-location"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20s6-5.1 6-11a6 6 0 1 0-12 0c0 5.9 6 11 6 11Z"/><circle cx="12" cy="9" r="2"/></svg><?php echo portfolioPresentationEscape($location); ?></p><?php endif; ?>
                         <?php if ($phone !== '' || $email !== ''): ?>
                             <div class="portfolio-hero-profile-contact">
-                                <?php foreach ([['Phone', $phone, $phoneAction], ['Email', $email, $emailAction]] as [$label, $value, $action]): ?>
+                                <?php foreach ([[portfolioCopy('phone'), $phone, $phoneAction], [portfolioCopy('email'), $email, $emailAction]] as [$label, $value, $action]): ?>
                                     <?php if ($value === '') continue; ?>
                                     <div class="portfolio-hero-profile-contact-row">
                                         <?php if ($label === 'Email'): ?><?php echo portfolioPresentationSocialIcon('Email'); ?><?php else: ?><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2C10 21 3 14 3 5a2 2 0 0 1 2-2Z"/></svg><?php endif; ?>
@@ -440,7 +431,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     </section>
 
     <?php if ($metrics !== []): ?>
-        <section class="portfolio-metrics" aria-label="Portfolio metrics">
+        <section class="portfolio-metrics" aria-label="<?php echo portfolioCopy('metrics'); ?>">
             <div class="portfolio-container">
                 <ul class="portfolio-metrics-strip portfolio-metrics-strip--count-<?php echo count($metrics); ?>">
                     <?php foreach ($metrics as $metric): ?>
@@ -453,8 +444,8 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
 
     <?php if ($showAbout): ?>
         <section class="portfolio-section portfolio-about" id="about" aria-labelledby="about-title"><div class="portfolio-container"><div class="portfolio-about-card">
-            <div class="portfolio-about-heading"><p class="portfolio-section-kicker">ABOUT</p><h2 id="about-title">Professional Overview</h2></div>
-            <div class="portfolio-about-copy"><p><?php echo nl2br(portfolioPresentationEscape($aboutNarrative)); ?></p></div>
+            <div class="portfolio-about-heading"><p class="portfolio-section-kicker"><?php echo portfolioCopy('aboutKicker'); ?></p><h2 id="about-title"><?php echo portfolioCopy('overview'); ?></h2></div>
+            <div class="portfolio-about-copy"><p dir="auto"><?php echo nl2br(portfolioPresentationEscape($aboutNarrative)); ?></p></div>
         </div></div></section>
     <?php endif; ?>
 
@@ -462,9 +453,9 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
         <div class="portfolio-section portfolio-work"><div class="portfolio-container portfolio-work-content">
             <?php if ($showProjects): ?>
                 <section class="portfolio-projects" id="projects" aria-labelledby="projects-title">
-                    <header class="portfolio-section-heading"><h2 id="projects-title">Featured Projects</h2></header>
+                    <header class="portfolio-section-heading"><h2 id="projects-title"><?php echo portfolioCopy('selected'); ?></h2><p><?php echo portfolioCopy('ideas'); ?></p></header>
                     <div class="portfolio-project-navigator" data-project-navigator>
-                        <?php if ($projectNavigationAvailable): ?><button class="portfolio-project-navigation portfolio-project-navigation--previous" type="button" data-project-direction="previous" aria-label="Show previous projects" aria-controls="portfolio-project-list" hidden><?php echo portfolioPresentationActionIcon('arrow'); ?></button><?php endif; ?>
+                        <?php if ($projectNavigationAvailable): ?><button class="portfolio-project-navigation portfolio-project-navigation--previous" type="button" data-project-direction="previous" aria-label="<?php echo portfolioCopy('previousProjects'); ?>" aria-controls="portfolio-project-list" hidden><?php echo portfolioPresentationActionIcon('arrow'); ?></button><?php endif; ?>
                         <div class="portfolio-project-grid" id="portfolio-project-list">
                         <?php foreach ($presentationProjects as $project):
                             $projectId = isset($project['id']) ? (int) $project['id'] : 0;
@@ -473,46 +464,44 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                             $projectImageUrl = (string) $projectMediaUrl($projectId);
                             $hasProjectImage = isset($project['image_path']) && trim((string) $project['image_path']) !== '' && $projectImageUrl !== '';
                             $projectLink = portfolioPresentationProjectLink($project);
+                            $projectLiveLink = portfolioPresentationProjectLink($project, 'live_url');
+                            $caseUrl = (string) $projectCaseUrl($projectId);
                             $projectTechnologies = isset($project['technologies']) && is_array($project['technologies'])
-                                ? array_slice($project['technologies'], 0, 4)
+                                ? array_slice($project['technologies'], 0, 3)
                                 : [];
                             ?>
                             <article class="portfolio-project-card portfolio-project-card--<?php echo $hasProjectImage ? 'image' : 'fallback'; ?>">
                                 <?php if ($hasProjectImage): ?>
                                     <div class="portfolio-project-visual">
-                                        <img src="<?php echo portfolioPresentationEscape($projectImageUrl); ?>" alt="<?php echo portfolioPresentationEscape($projectTitle); ?> project preview" loading="lazy">
+                                        <img src="<?php echo portfolioPresentationEscape($projectImageUrl); ?>" alt="<?php echo portfolioPresentationEscape(sprintf(portfolioCopy('projectPreview'), $projectTitle)); ?>" loading="lazy">
                                     </div>
-                                <?php endif; ?>
+                                <?php else: ?><div class="portfolio-project-visual portfolio-neutral-cover" aria-hidden="true"></div><?php endif; ?>
                                 <div class="portfolio-project-body">
-                                    <?php if (!$hasProjectImage || $category !== ''): ?><div class="portfolio-project-identity"><?php if (!$hasProjectImage): ?><span class="portfolio-project-fallback" aria-hidden="true"><?php echo portfolioPresentationProjectFallbackIcon(); ?></span><?php endif; ?><?php if ($category !== ''): ?><p class="portfolio-project-category"><?php echo portfolioPresentationEscape($category); ?></p><?php endif; ?></div><?php endif; ?>
-                                    <h3><?php echo portfolioPresentationEscape($projectTitle); ?></h3>
-                                    <?php if (isset($project['description']) && trim((string) $project['description']) !== ''): ?><p class="portfolio-project-description"><?php echo nl2br(portfolioPresentationEscape($project['description'])); ?></p><?php endif; ?>
-                                    <?php if ($projectTechnologies !== []): ?><ul class="portfolio-project-technologies" aria-label="Technologies used"><?php foreach ($projectTechnologies as $technology): ?><li><?php echo portfolioPresentationEscape($technology); ?></li><?php endforeach; ?></ul><?php endif; ?>
-                                    <?php if ($projectLink !== null): ?><a class="portfolio-project-link" href="<?php echo portfolioPresentationEscape($projectLink); ?>" rel="noopener noreferrer" aria-label="View <?php echo portfolioPresentationEscape($projectTitle); ?> on GitHub">View on GitHub <?php echo portfolioPresentationSocialIcon('GitHub'); ?></a><?php endif; ?>
+                                    <?php if (!$hasProjectImage || $category !== ''): ?><div class="portfolio-project-identity"><?php if ($category !== ''): ?><p class="portfolio-project-category" dir="auto"><?php echo portfolioPresentationEscape($category); ?></p><?php endif; ?></div><?php endif; ?>
+                                    <h3 dir="auto"><?php echo portfolioPresentationEscape($projectTitle); ?></h3>
+                                    <?php if (isset($project['description']) && trim((string) $project['description']) !== ''): ?><p class="portfolio-project-description" dir="auto"><?php echo nl2br(portfolioPresentationEscape($project['description'])); ?></p><?php endif; ?>
+                                    <?php if ($projectTechnologies !== []): ?><ul class="portfolio-project-technologies" aria-label="<?php echo portfolioCopy('technologies'); ?>"><?php foreach ($projectTechnologies as $technology): ?><li><bdi dir="auto"><?php echo portfolioPresentationEscape($technology); ?></bdi></li><?php endforeach; ?><?php if (count($project['technologies']) > 3): ?><li aria-label="<?php echo portfolioPresentationEscape(sprintf(portfolioCopy('moreTechnologies'), count($project['technologies']) - 3)); ?>">+<?php echo count($project['technologies']) - 3; ?></li><?php endif; ?></ul><?php endif; ?>
+                                    <div class="portfolio-project-actions">
+                                    <?php if ($caseUrl !== ''): ?><a class="portfolio-case-link" href="<?php echo portfolioPresentationEscape($caseUrl); ?>"><?php echo portfolioCopy('caseStudy'); ?> <?php echo portfolioPresentationActionIcon('arrow'); ?></a><?php endif; ?>
+                                    <?php if ($projectLiveLink !== null): ?><a class="portfolio-live-link" href="<?php echo portfolioPresentationEscape($projectLiveLink); ?>" rel="noopener noreferrer"><?php echo portfolioCopy('live'); ?></a><?php endif; ?>
+                                    <?php if ($projectLink !== null): ?><a class="portfolio-project-link" href="<?php echo portfolioPresentationEscape($projectLink); ?>" rel="noopener noreferrer" aria-label="<?php echo portfolioPresentationEscape(sprintf(portfolioCopy('githubLabel'), $projectTitle)); ?>"><?php echo portfolioCopy('code'); ?> <?php echo portfolioPresentationSocialIcon('GitHub'); ?></a><?php endif; ?>
+                                    </div>
                                 </div>
                             </article>
                         <?php endforeach; ?>
                         </div>
-                        <?php if ($projectNavigationAvailable): ?><button class="portfolio-project-navigation portfolio-project-navigation--next" type="button" data-project-direction="next" aria-label="Show next projects" aria-controls="portfolio-project-list" hidden><?php echo portfolioPresentationActionIcon('arrow'); ?></button><?php endif; ?>
+                        <?php if ($projectNavigationAvailable): ?><button class="portfolio-project-navigation portfolio-project-navigation--next" type="button" data-project-direction="next" aria-label="<?php echo portfolioCopy('nextProjects'); ?>" aria-controls="portfolio-project-list" hidden><?php echo portfolioPresentationActionIcon('arrow'); ?></button><?php endif; ?>
                     </div>
                 </section>
             <?php endif; ?>
 
-            <?php if ($showSkills): ?>
-                <section class="portfolio-skills-region" id="skills" aria-labelledby="portfolio-skills-heading">
-                    <header class="portfolio-section-heading portfolio-skills-heading"><h2 id="portfolio-skills-heading">Skills &amp; Technologies</h2></header>
-                    <div class="portfolio-skills-panel">
-                        <ul class="portfolio-skills-list"><?php foreach ($skills as $skill): $skillName = isset($skill['skill_name']) ? trim((string) $skill['skill_name']) : ''; ?><?php if ($skillName !== ''): ?><li><button class="portfolio-skill-control" type="button" aria-pressed="false"><?php echo portfolioPresentationEscape($skillName); ?></button></li><?php endif; ?><?php endforeach; ?></ul>
-                    </div>
-                </section>
-            <?php endif; ?>
         </div></div>
     <?php endif; ?>
 
     <div class="portfolio-closing-region"><div class="portfolio-container portfolio-closing-layout<?php echo $presentationExperiences === [] ? ' portfolio-closing-layout--contact-only' : ''; ?>">
         <?php if ($presentationExperiences !== []): ?>
             <section class="portfolio-section portfolio-closing-panel portfolio-experience" id="experience" aria-labelledby="experience-title">
-                <header class="portfolio-section-heading"><h2 id="experience-title">Experience</h2></header>
+                <header class="portfolio-section-heading"><h2 id="experience-title"><?php echo portfolioCopy('experience'); ?></h2></header>
                 <ol class="portfolio-experience-list" id="portfolio-experience-list" data-experience-page-size="<?php echo PORTFOLIO_EXPERIENCE_PAGE_SIZE; ?>">
                     <?php foreach ($presentationExperiences as $experienceIndex => $experience):
                         $experienceType = portfolioPresentationExperienceTypeLabel($experience['experience_type']);
@@ -525,40 +514,48 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
                         ?>
                         <li class="portfolio-experience-item<?php echo $experienceIsCurrent ? ' portfolio-experience-item--current' : ''; ?><?php echo $experienceIndex === array_key_last($presentationExperiences) ? ' portfolio-experience-item--visible-last' : ''; ?>">
                             <article class="portfolio-experience-content">
-                                <div class="portfolio-experience-topline"><p class="portfolio-experience-type"><?php echo portfolioPresentationEscape($experienceType); ?></p><?php if ($experienceDateRange !== ''): ?><p class="portfolio-experience-date"><?php echo portfolioPresentationEscape($experienceDateRange); ?></p><?php endif; ?></div>
-                                <?php if ($experienceRole !== ''): ?><h3><?php echo portfolioPresentationEscape($experienceRole); ?></h3><?php endif; ?>
-                                <?php if ($experienceOrganization !== '' || $experienceLocation !== null): ?><p class="portfolio-experience-organization"><?php if ($experienceOrganization !== ''): ?><span class="portfolio-experience-organization-name"><?php echo portfolioPresentationEscape($experienceOrganization); ?><?php if ($experienceLocation !== null): ?><span aria-hidden="true">&nbsp;·</span><?php endif; ?></span><?php endif; ?><?php if ($experienceLocation !== null): ?><span><?php echo portfolioPresentationEscape($experienceLocation); ?></span><?php endif; ?></p><?php endif; ?>
-                                <?php if ($experienceDescription !== null): ?><p class="portfolio-experience-description"><?php echo nl2br(portfolioPresentationEscape($experienceDescription)); ?></p><?php endif; ?>
+                                <div class="portfolio-experience-topline"><p class="portfolio-experience-type"><?php echo portfolioPresentationEscape($experienceType); ?></p><?php if ($experienceDateRange !== ''): ?><p class="portfolio-experience-date" dir="auto"><?php echo portfolioPresentationEscape($experienceDateRange); ?></p><?php endif; ?></div>
+                                <?php if ($experienceRole !== ''): ?><h3 dir="auto"><?php echo portfolioPresentationEscape($experienceRole); ?></h3><?php endif; ?>
+                                <?php if ($experienceOrganization !== '' || $experienceLocation !== null): ?><p class="portfolio-experience-organization"><?php if ($experienceOrganization !== ''): ?><span class="portfolio-experience-organization-name" dir="auto"><?php echo portfolioPresentationEscape($experienceOrganization); ?><?php if ($experienceLocation !== null): ?><span aria-hidden="true">&nbsp;·</span><?php endif; ?></span><?php endif; ?><?php if ($experienceLocation !== null): ?><bdi dir="auto"><?php echo portfolioPresentationEscape($experienceLocation); ?></bdi><?php endif; ?></p><?php endif; ?>
+                                <?php if ($experienceDescription !== null): ?><p class="portfolio-experience-description" dir="auto"><?php echo nl2br(portfolioPresentationEscape($experienceDescription)); ?></p><?php endif; ?>
                             </article>
                         </li>
                     <?php endforeach; ?>
                 </ol>
                 <?php if ($experiencePaginationEnabled): ?>
-                    <div class="portfolio-experience-pagination" data-experience-pagination hidden>
+                    <div class="portfolio-experience-pagination" data-experience-pagination data-range-one="<?php echo portfolioCopy('showingOne'); ?>" data-range-many="<?php echo portfolioCopy('showingMany'); ?>" hidden>
                         <p class="portfolio-experience-range" id="portfolio-experience-range" role="status" aria-live="polite"></p>
                         <div class="portfolio-experience-pagination-actions">
-                            <button class="portfolio-experience-page-button" type="button" data-experience-page="newer" aria-controls="portfolio-experience-list">Newer experiences</button>
-                            <button class="portfolio-experience-page-button" type="button" data-experience-page="older" aria-controls="portfolio-experience-list">Older experiences</button>
+                            <button class="portfolio-experience-page-button" type="button" data-experience-page="newer" aria-controls="portfolio-experience-list"><?php echo portfolioCopy('newer'); ?></button>
+                            <button class="portfolio-experience-page-button" type="button" data-experience-page="older" aria-controls="portfolio-experience-list"><?php echo portfolioCopy('older'); ?></button>
                         </div>
                     </div>
                 <?php endif; ?>
             </section>
         <?php endif; ?>
 
+            <?php if ($showSkills): ?>
+                <section class="portfolio-skills-region" id="skills" aria-labelledby="portfolio-skills-heading">
+                    <header class="portfolio-section-heading portfolio-skills-heading"><h2 id="portfolio-skills-heading"><?php echo portfolioCopy('coreSkills'); ?></h2></header>
+                    <div class="portfolio-skills-panel">
+                        <ul class="portfolio-skills-list"><?php foreach ($skills as $skill): $skillName = isset($skill['skill_name']) ? trim((string) $skill['skill_name']) : ''; ?><?php if ($skillName !== ''): ?><li><span class="portfolio-skill-label"><bdi dir="auto"><?php echo portfolioPresentationEscape($skillName); ?></bdi></span></li><?php endif; ?><?php endforeach; ?></ul>
+                    </div>
+                </section>
+            <?php endif; ?>
         <section class="portfolio-section portfolio-closing-panel portfolio-contact" id="contact" aria-labelledby="contact-title">
-            <div class="portfolio-contact-copy"><p class="portfolio-section-kicker">CONTACT</p><h2 id="contact-title">Let’s start a conversation.</h2><p>Have a project, role, or collaboration opportunity in mind? Send a message through this Portfolio.</p>
-                <?php if ($socialLinks !== []): ?><div class="portfolio-contact-social"><p class="portfolio-contact-social-label">Connect</p><ul class="portfolio-social-list" aria-label="Connect with <?php echo portfolioPresentationEscape($name); ?>"><?php foreach ($socialLinks as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" aria-label="<?php echo portfolioPresentationEscape($link['label'] . ' for ' . $name); ?>" rel="noopener noreferrer"><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?></ul></div><?php endif; ?>
+            <div class="portfolio-contact-copy"><p class="portfolio-section-kicker"><?php echo portfolioCopy('contactKicker'); ?></p><h2 id="contact-title"><?php echo portfolioCopy('conversation'); ?></h2><p><?php echo portfolioCopy('invitation'); ?></p>
+                <?php if ($socialLinks !== []): ?><div class="portfolio-contact-social"><p class="portfolio-contact-social-label"><?php echo portfolioCopy('connect'); ?></p><ul class="portfolio-social-list" aria-label="<?php echo portfolioPresentationEscape(sprintf(portfolioCopy('connectWith'), $name)); ?>"><?php foreach ($socialLinks as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" aria-label="<?php echo portfolioPresentationEscape(sprintf(portfolioCopy('socialFor'), $link['label'], $name)); ?>" rel="noopener noreferrer"><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?></ul></div><?php endif; ?>
             </div>
             <div class="portfolio-contact-card">
-                <h3 id="portfolio-contact-form-title">Send a message</h3>
-                <?php if (($options['contact_sent'] ?? false) === true): ?><p class="portfolio-form-status" role="status">Message submitted successfully.</p><?php endif; ?>
-                <?php if ($preview): ?><p class="portfolio-preview-note portfolio-preview-note--contact" role="status"><?php echo portfolioPresentationSocialIcon('Email'); ?><span>The contact form is inactive in private preview.</span></p><?php endif; ?>
+                <h3 id="portfolio-contact-form-title"><?php echo portfolioCopy('send'); ?></h3>
+                <?php if (($options['contact_sent'] ?? false) === true): ?><p class="portfolio-form-status" role="status"><?php echo portfolioCopy('sent'); ?></p><?php endif; ?>
+                <?php if ($preview): ?><p class="portfolio-preview-note portfolio-preview-note--contact" role="status"><?php echo portfolioPresentationSocialIcon('Email'); ?><span><?php echo portfolioCopy('inactive'); ?></span></p><?php endif; ?>
                 <?php if ($contactFormError !== ''): ?><p class="portfolio-contact-form-error" role="alert" tabindex="-1" data-portfolio-error-summary><?php echo portfolioPresentationEscape($contactFormError); ?></p><?php endif; ?>
                 <form method="post"<?php if ($contactAction !== ''): ?> action="<?php echo portfolioPresentationEscape($contactAction); ?>#contact"<?php endif; ?>>
-                    <div class="portfolio-contact-field<?php echo $contactNameError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-name">Name</label><input id="portfolio-contact-name" type="text" name="name" maxlength="100" required autocomplete="name" value="<?php echo portfolioPresentationEscape($contactName); ?>"<?php echo $contactNameError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-name-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactNameError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-name-error"><?php echo portfolioPresentationEscape($contactNameError); ?></p><?php endif; ?></div>
-                    <div class="portfolio-contact-field<?php echo $contactEmailError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-email">Email</label><input id="portfolio-contact-email" type="email" name="email" maxlength="255" required autocomplete="email" value="<?php echo portfolioPresentationEscape($contactEmail); ?>"<?php echo $contactEmailError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-email-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactEmailError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-email-error"><?php echo portfolioPresentationEscape($contactEmailError); ?></p><?php endif; ?></div>
-                    <div class="portfolio-contact-field portfolio-contact-field--message<?php echo $contactMessageError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-message">Message</label><textarea id="portfolio-contact-message" name="message" maxlength="5000" required<?php echo $contactMessageError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-message-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php echo portfolioPresentationEscape($contactMessage); ?></textarea><?php if ($contactMessageError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-message-error"><?php echo portfolioPresentationEscape($contactMessageError); ?></p><?php endif; ?></div>
-                    <button type="submit"<?php echo $preview ? ' disabled aria-disabled="true"' : ''; ?>><span>Send message</span><?php echo portfolioPresentationSocialIcon('Email'); ?></button>
+                    <div class="portfolio-contact-field<?php echo $contactNameError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-name"><?php echo portfolioCopy('name'); ?></label><input dir="auto" id="portfolio-contact-name" type="text" name="name" maxlength="100" required autocomplete="name" value="<?php echo portfolioPresentationEscape($contactName); ?>"<?php echo $contactNameError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-name-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactNameError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-name-error"><?php echo portfolioPresentationEscape($contactNameError); ?></p><?php endif; ?></div>
+                    <div class="portfolio-contact-field<?php echo $contactEmailError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-email"><?php echo portfolioCopy('email'); ?></label><input id="portfolio-contact-email" type="email" name="email" maxlength="255" required autocomplete="email" value="<?php echo portfolioPresentationEscape($contactEmail); ?>"<?php echo $contactEmailError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-email-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php if ($contactEmailError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-email-error"><?php echo portfolioPresentationEscape($contactEmailError); ?></p><?php endif; ?></div>
+                    <div class="portfolio-contact-field portfolio-contact-field--message<?php echo $contactMessageError !== '' ? ' portfolio-contact-field--invalid' : ''; ?>"><label for="portfolio-contact-message"><?php echo portfolioCopy('message'); ?></label><textarea dir="auto" rows="4" id="portfolio-contact-message" name="message" maxlength="5000" required<?php echo $contactMessageError !== '' ? ' aria-invalid="true" aria-describedby="portfolio-contact-message-error"' : ''; ?><?php echo $preview ? ' disabled' : ''; ?>><?php echo portfolioPresentationEscape($contactMessage); ?></textarea><?php if ($contactMessageError !== ''): ?><p class="portfolio-contact-field-error" id="portfolio-contact-message-error"><?php echo portfolioPresentationEscape($contactMessageError); ?></p><?php endif; ?></div>
+                    <button type="submit"<?php echo $preview ? ' disabled aria-disabled="true"' : ''; ?>><span><?php echo portfolioCopy('sendMessage'); ?></span><?php echo portfolioPresentationSocialIcon('Email'); ?></button>
                 </form>
             </div>
         </section>
@@ -568,21 +565,21 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
 <footer class="portfolio-footer">
     <div class="portfolio-container portfolio-footer-primary">
         <div class="portfolio-footer-brand">
-            <a href="#top" aria-label="ATHER, home"><img class="portfolio-footer-logo" src="/assets/images/ather-navbar-logo.png" width="880" height="155" alt=""></a>
-            <p>A professional portfolio built with ATHER.</p>
+            <a href="#top" aria-label="<?php echo portfolioCopy('brandHome'); ?>"><?php renderPortfolioWordmark('portfolio-footer-logo'); ?></a>
+            <p><?php echo portfolioCopy('built'); ?></p>
         </div>
-        <nav class="portfolio-footer-navigation" aria-label="Portfolio footer navigation">
+        <nav class="portfolio-footer-navigation" aria-label="<?php echo portfolioCopy('footerNav'); ?>">
             <ul><?php foreach ($footerNavigation as $link): ?><li><a href="#<?php echo portfolioPresentationEscape($link['target']); ?>"><?php echo portfolioPresentationEscape($link['label']); ?></a></li><?php endforeach; ?></ul>
         </nav>
         <?php if ($socialLinks !== []): ?>
             <div class="portfolio-footer-social">
-                <ul aria-label="Portfolio social profiles"><?php foreach ($socialLinks as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo portfolioPresentationEscape($link['label'] . ' profile'); ?>"><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?></ul>
+                <ul aria-label="<?php echo portfolioCopy('profiles'); ?>"><?php foreach ($socialLinks as $link): ?><li><a href="<?php echo portfolioPresentationEscape($link['url']); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo portfolioPresentationEscape(sprintf(portfolioCopy('profileLabel'), $link['label'])); ?>"><?php echo portfolioPresentationSocialIcon($link['label']); ?></a></li><?php endforeach; ?></ul>
             </div>
         <?php endif; ?>
     </div>
     <div class="portfolio-container portfolio-footer-secondary">
-        <p class="portfolio-footer-copyright">&copy; <?php echo date('Y'); ?><?php if ($ownerName !== ''): ?> <?php echo portfolioPresentationEscape($ownerName); ?>.<?php else: ?>.<?php endif; ?> All rights reserved.</p>
-        <a class="portfolio-footer-back-to-top" href="#top" aria-label="Back to top"><span>Back to top</span><span aria-hidden="true">↑</span></a>
+        <p class="portfolio-footer-copyright">&copy; <?php echo date('Y'); ?><?php if ($ownerName !== ''): ?> <?php echo portfolioPresentationEscape($ownerName); ?>.<?php else: ?>.<?php endif; ?> <?php echo portfolioCopy('rights'); ?></p>
+        <a class="portfolio-footer-back-to-top" href="#top" aria-label="<?php echo portfolioCopy('top'); ?>"><span><?php echo portfolioCopy('top'); ?></span><span aria-hidden="true">↑</span></a>
     </div>
 </footer>
 </body>
