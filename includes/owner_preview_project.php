@@ -23,5 +23,5 @@ function ownerPreviewProjectPageData(PDO $database, AuthorizedPortfolioContext $
         'portfolio' => '/owner_preview.php',
         'media' => "/owner_media.php?type=project&id={$projectId}",
         'canonical' => null,
-    ], true);
+    ], true, ownedPublicLifecycleState($database, $context)['is_published'] === 1);
 }

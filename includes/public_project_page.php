@@ -20,10 +20,11 @@ require_once __DIR__ . '/portfolio_presentation.php';
  *     project: array{id: int, title: string, category: string, description: string, technologies: list<string>,
  *         live_url: ?string, github_url: ?string, image_url: ?string},
  *     portfolio_url: string,
- *     canonical_url: ?string
+ *     canonical_url: ?string,
+ *     portfolio_published: bool
  * }
  */
-function projectCaseStudyView(array $project, array $profile, array $urls, bool $preview): array
+function projectCaseStudyView(array $project, array $profile, array $urls, bool $preview, bool $portfolioPublished = true): array
 {
     $text = static fn (array $row, string $field): string => is_string($row[$field] ?? null) ? trim($row[$field]) : '';
     $technologies = is_array($project['technologies'] ?? null)
@@ -46,6 +47,8 @@ function projectCaseStudyView(array $project, array $profile, array $urls, bool 
         ],
         'portfolio_url' => $urls['portfolio'],
         'canonical_url' => $preview ? null : $urls['canonical'],
+        // B-08: the real portfolio state for the preview bar; a visitor page is always published.
+        'portfolio_published' => $preview ? $portfolioPublished : true,
     ];
 }
 
