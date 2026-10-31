@@ -148,7 +148,7 @@ final class PublicProjectPageTest extends TestCase
         self::assertStringContainsString('href="https://app.powerbi.com/view?r=1" rel="noopener noreferrer"', $html);
         self::assertStringContainsString('href="/p/jane-doe#projects"', $html);
         self::assertStringNotContainsString('private@example.test', $html);
-        self::assertDoesNotMatchRegularExpression('/<script(?![^>]*\\bsrc=)/i', $html, 'CSP: scripts must be external');
+        self::assertDoesNotMatchRegularExpression('/<script\\b(?![^>]*\\ssrc\\s*=)/i', $html, 'CSP: scripts must be external');
         self::assertStringNotContainsString('style=', $html, 'CSP: no inline styles');
 
         ob_start();
