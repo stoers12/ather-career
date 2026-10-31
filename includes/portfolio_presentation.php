@@ -6,6 +6,7 @@ require_once __DIR__ . '/presentation.php';
 require_once __DIR__ . '/validation.php';
 require_once __DIR__ . '/portfolio_copy.php';
 require_once __DIR__ . '/portfolio_shared_presentation.php';
+require_once __DIR__ . '/legal_presentation.php';
 
 function portfolioPresentationEscape(mixed $value): string
 {
@@ -579,6 +580,7 @@ function renderPortfolioPresentation(array $profile, array $skills, array $proje
     </div>
     <div class="portfolio-container portfolio-footer-secondary">
         <p class="portfolio-footer-copyright">&copy; <?php echo date('Y'); ?><?php if ($ownerName !== ''): ?> <?php echo portfolioPresentationEscape($ownerName); ?>.<?php else: ?>.<?php endif; ?> <?php echo portfolioCopy('rights'); ?></p>
+        <?php renderLegalLinks('en', 'portfolio'); ?>
         <a class="portfolio-footer-back-to-top" href="#top" aria-label="<?php echo portfolioCopy('top'); ?>"><span><?php echo portfolioCopy('top'); ?></span><span aria-hidden="true">↑</span></a>
     </div>
 </footer>

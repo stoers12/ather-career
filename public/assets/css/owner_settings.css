@@ -67,3 +67,6 @@
 @media (pointer:coarse) {
     .owner-language-options a, .owner-theme-choice > span:last-child, .owner-settings-question summary { min-block-size: 44px; }
 }
+
+.owner-settings .legal-links--settings { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-block: 16px; }
+.owner-settings .legal-links--settings a { display: inline-flex; align-items: center; min-height: 44px; color: var(--admin-primary); text-decoration: underline; text-underline-offset: 4px; }

@@ -282,6 +282,14 @@ jobs:
             ATHERCAR_SIGNUP_EVIDENCE_DIR="$RUNNER_TEMP/ather-signup-evidence" \
             node tests/Browser/run-signup-browser-tests.mjs
 
+      - name: Legal publication and consent browser checks
+        run: |
+          APP_ENV=test ATHERCAR_TEST_MODE=1 \
+            ATHERCAR_PLAYWRIGHT_MODULE="$RUNNER_TEMP/ather-editor-tools/node_modules/playwright" \
+            ATHERCAR_LEGAL_IMAGE="$PORTFOLIO_PRODUCTION_IMAGE" \
+            ATHERCAR_LEGAL_EVIDENCE_DIR="$RUNNER_TEMP/ather-legal-evidence" \
+            node tests/Browser/run-legal-pages-browser-tests.mjs
+
       - name: Private final-profile controls browser checks
         run: |
           set -euo pipefail

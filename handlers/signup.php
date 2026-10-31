@@ -7,6 +7,7 @@ require_once dirname(__DIR__) . '/includes/presentation.php';
 require_once dirname(__DIR__) . '/includes/signin_copy.php';
 require_once dirname(__DIR__) . '/includes/signup_copy.php';
 require_once dirname(__DIR__) . '/includes/account_entry_icons.php';
+require_once dirname(__DIR__) . '/includes/legal_presentation.php';
 
 require_once dirname(__DIR__) . '/includes/auth0_oidc.php';
 require_once dirname(__DIR__) . '/includes/owner_session.php';
@@ -81,6 +82,7 @@ header('Content-Language: ' . $locale);
                                 <?php endif; ?>
                             </div>
                             <?php endif; ?>
+                            <?php renderRegistrationLegalConsent($locale, ($_GET['legal'] ?? null) === 'required'); ?>
                             <button class="af-auth-button" type="submit"><span class="af-provider-icon" aria-hidden="true">G</span><?php echo signUpCopy('google', $locale); ?></button>
                         </form>
                         <?php else: ?>
@@ -95,6 +97,7 @@ header('Content-Language: ' . $locale);
                     <p class="af-method-note" id="registration-unavailable"><?php echo $canRegister ? signUpCopy('google_available', $locale) : ($registrationEnabled ? signUpCopy('signed_in', $locale) : signInCopy('unavailable', $locale)); ?></p>
                     <div class="af-warning"><?php echo accountEntryIcon('info'); ?><span><?php echo signUpCopy('age', $locale); ?></span></div>
                     <p class="af-footnote"><?php echo signUpCopy('existing', $locale); ?> <a href="signin.php?lang=<?php echo $locale; ?>"><?php echo signUpCopy('signin', $locale); ?></a></p>
+                    <?php renderLegalLinks($locale, 'auth'); ?>
                 </article>
             </div>
         </div>
