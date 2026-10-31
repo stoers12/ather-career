@@ -159,6 +159,7 @@ try{
    check(response.status()===200&&(response.headers()['cache-control']||'').includes('private')&&(response.headers()['cache-control']||'').includes('no-store')&&!response.headers().location,'Entry private presentation instead of redirect');
    check(await page.locator('[data-authenticated-entry="authorized"]').count()===1&&await page.locator('[data-entry-dashboard]').getAttribute('href')==='/owner.php'&&await page.locator('[data-entry-resume]').count()===0,'Completed entry fixed Dashboard action');
    check(await page.locator('form[action="/owner_switch_account.php"] input[name="csrf_token"]').count()===1&&await page.locator('form[action="/owner_logout.php"] input[name="csrf_token"]').count()===1&&await page.locator('form[action="/owner_register.php"]').count()===0,'Entry protected account controls');
+   check(await page.locator('[name="invitation_code"]').count()===0,'Authenticated entries must not collect an invitation');
    for(const theme of ['light','dark']){await page.evaluate(t=>document.documentElement.dataset.landingTheme=t,theme);for(const width of [1440,390,320]){
     await page.setViewportSize({width,height:1000});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Entry narrow layout overflow');
     if(route==='/signin.php'&&(width===1440||width===320))await page.screenshot({path:path.join(shots,'entry-dashboard-'+lang+'-'+theme+'-'+width+'.png'),fullPage:true});

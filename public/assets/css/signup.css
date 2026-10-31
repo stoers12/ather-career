@@ -8,3 +8,11 @@
 #ather-auth-flow .af-warning .hf-icon { color: var(--af-gold); margin-top: 2px; }
 #ather-auth-flow .af-footnote a { color: var(--af-green); text-decoration: underline; }
 #ather-auth-flow .af-footnote a:focus-visible { outline-offset: -3px; }
+
+#ather-auth-flow .af-invitation { display: grid; gap: 8px; margin-bottom: 16px; }
+#ather-auth-flow .af-invitation label { color: var(--af-ink); font-size: 14px; font-weight: 500; }
+#ather-auth-flow .af-invitation input { background: var(--af-surface); border: 1px solid var(--af-muted); border-radius: 12px; color: var(--af-ink); font: inherit; font-size: 16px; min-height: 48px; min-width: 0; padding: 10px 12px; width: 100%; }
+#ather-auth-flow .af-invitation input[aria-invalid="true"] { border-color: var(--af-danger); }
+#ather-auth-flow .af-invitation-hint, #ather-auth-flow .af-invitation-error { font-size: 13px; line-height: 1.8; margin: 0; }
+#ather-auth-flow .af-invitation-hint { color: var(--af-muted); }
+#ather-auth-flow .af-invitation-error { color: var(--af-danger); }

@@ -274,6 +274,14 @@ jobs:
           test "$(docker wait ather-career-ci-editor)" = 0
           docker logs ather-career-ci-editor
 
+      - name: Sign-up invitation browser checks
+        run: |
+          APP_ENV=test ATHERCAR_TEST_MODE=1 \
+            ATHERCAR_PLAYWRIGHT_MODULE="$RUNNER_TEMP/ather-editor-tools/node_modules/playwright" \
+            ATHERCAR_SIGNUP_IMAGE="$PORTFOLIO_PRODUCTION_IMAGE" \
+            ATHERCAR_SIGNUP_EVIDENCE_DIR="$RUNNER_TEMP/ather-signup-evidence" \
+            node tests/Browser/run-signup-browser-tests.mjs
+
       - name: Private final-profile controls browser checks
         run: |
           set -euo pipefail

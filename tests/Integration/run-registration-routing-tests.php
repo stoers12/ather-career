@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/auth0_oidc.php';
 require_once __DIR__ . '/../../includes/owner_session.php';
 require_once __DIR__ . '/../../includes/rate_limit.php';
+require_once __DIR__ . '/../../includes/signup_copy.php';
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
@@ -249,6 +250,27 @@ PHP;
     foreach (['true', 'yes', '0', ''] as $flag) { putenv('ATHERCAR_REGISTRATION_ENABLED=' . $flag); routingAssert(!auth0RegistrationIsEnabled(), 'Malformed switch enabled registration.'); }
     putenv('ATHERCAR_REGISTRATION_ENABLED');
     echo "PASS routing default-off GET/POST starts and AR/EN signup; strict switch values\n";
+
+    routingStartApp('invite'); $browser = routingBrowser();
+    foreach (['ar' => 'rtl', 'en' => 'ltr'] as $locale => $direction) {
+        $response = $browser->get('/signup.php?lang=' . $locale); $html = (string) $response->getBody();
+        $dom = new DOMDocument(); @$dom->loadHTML('<?xml encoding="UTF-8">' . $html); $xpath = new DOMXPath($dom);
+        $fields = [];
+        /** @var DOMElement $field */
+        foreach ($xpath->query('//form//*[@name]') as $field) { $fields[$field->getAttribute('name')] = $field->getAttribute('value'); }
+        routingAssert(array_keys($fields) === ['csrf_token', 'invitation_code'], 'Invite signup must post exactly CSRF and invitation code.');
+        routingAssert(str_contains($html, 'lang="' . $locale . '" dir="' . $direction . '"') && $xpath->query('//input[@name="invitation_code" and @required]')->length === 1, 'Invite signup locale or required field missing.');
+        routingSaveUi($html, 'signup-invite-' . $locale);
+        $fields['invitation_code'] = '<private-invalid-invitation>';
+        $response = routingDenied($database, $browser, static fn () => $browser->post('/owner_register.php', ['form_params' => $fields]), [303]);
+        routingAssert($response->getHeaderLine('Location') === '/signup.php?invitation=invalid', 'Invalid invitation redirect contract changed.');
+        $response = $browser->get($response->getHeaderLine('Location') . '&lang=' . $locale);
+        $html = (string) $response->getBody();
+        routingAssert($response->getStatusCode() === 200 && str_contains($html, 'id="invitation-error" role="alert"') && str_contains($html, signUpCopy('invitation_invalid', $locale)), 'Invalid invitation must show its translated announced error.');
+        routingAssert(!str_contains($html, 'private-invalid-invitation') && !str_contains($html, 'name="invitation_code" value='), 'Invalid invitation was echoed.');
+        routingSaveUi($html, 'signup-invite-invalid-' . $locale);
+    }
+    echo "PASS routing invite AR/EN exact form fields, real invalid-code POST/303, announced localized error and no code echo\n";
 
     routingStartApp('1'); $browser = routingBrowser();
     foreach (['ar' => 'rtl', 'en' => 'ltr'] as $locale => $direction) {
