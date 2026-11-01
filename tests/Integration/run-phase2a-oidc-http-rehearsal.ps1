@@ -406,7 +406,7 @@ function getDatabaseConnection(): PDO {
 
     # Seed only the disposable web container; the application-visible input
     # contract must reject bad requests before touching this authenticated session.
-    $seedCode = '$d=new PDO("sqlite:{DB}");$d->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);$d->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT, authz_version INTEGER)");$d->exec("INSERT INTO users VALUES (1,''active'',1)");'.Replace('{DB}', $fixtureDatabase)
+    $seedCode = '$d=new PDO("sqlite:{DB}");$d->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);$d->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT, authz_version INTEGER, deletion_requested_at TEXT NULL)");$d->exec("INSERT INTO users (id, account_status, authz_version) VALUES (1,''active'',1)");'.Replace('{DB}', $fixtureDatabase)
     & docker exec $container php -r $seedCode 1>$null 2>$null
     if ($LASTEXITCODE -ne 0) { throw 'Disposable switch User fixture could not be seeded.' }
     $seedSessionCode = 'require "includes/owner_session.php"; startOwnerSession(); establishVerifiedInternalUserSession(1,1); $_SESSION["csrf_token"]=str_repeat("a",64); echo session_name()."=".session_id(); session_write_close();'

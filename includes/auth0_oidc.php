@@ -453,5 +453,26 @@ function completeAuth0AuthorizationWithPurpose(Auth0OidcConfiguration $configura
         throw new Auth0OidcException('identity_invalid');
     }
 
+    auth0CompletedReturnDestination($transaction['return_to']);
+
     return new Auth0CompletedAuthorization($identity, $transaction['purpose'], $transaction['return_to']);
+}
+
+/**
+ * The allow-listed page that this request's completed sign-in asked to return
+ * to (L-03), or null. The callback stays unchanged: ownerJourneyDestination()
+ * reads it once, and only for an owner with full workspace access.
+ */
+function auth0CompletedReturnDestination(?string $set = null, bool $take = false): ?string
+{
+    static $destination = null;
+    if ($set !== null) {
+        $destination = in_array($set, AUTH0_RETURN_DESTINATIONS, true) ? $set : null;
+    }
+    $current = $destination;
+    if ($take) {
+        $destination = null;
+    }
+
+    return $current;
 }

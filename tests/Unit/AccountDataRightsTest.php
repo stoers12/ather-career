@@ -155,6 +155,19 @@ final class AccountDataRightsTest extends TestCase
         self::assertNull(consumeAuth0AuthorizationTransaction(['state' => 's', 'code' => 'c'])['return_to']);
     }
 
+    public function testACompletedSignInOffersItsReturnPageOnce(): void
+    {
+        $configuration = new Auth0OidcConfiguration('https://issuer.test/', 'issuer.test', 'id', 'secret', 'https://app.test/owner_oidc_callback.php');
+        $validator = static fn (): Auth0ValidatedIdentity => new Auth0ValidatedIdentity('https://issuer.test/', 'auth0|owner');
+        $_SESSION = [AUTH0_AUTH_TRANSACTION_KEY => ['state' => 's', 'code_verifier' => 'v', 'nonce' => 'n', 'created_at' => time(),
+            'purpose' => AUTH0_PURPOSE_SIGN_IN, 'return_to' => '/owner_settings.php#data']];
+        self::assertSame('/owner_settings.php#data', completeAuth0AuthorizationWithPurpose($configuration, ['state' => 's', 'code' => 'c'], $validator)->returnTo);
+        self::assertSame('/owner_settings.php#data', auth0CompletedReturnDestination(null, true));
+        self::assertNull(auth0CompletedReturnDestination(null, true));
+        auth0CompletedReturnDestination('https://evil.example/');
+        self::assertNull(auth0CompletedReturnDestination(null, true));
+    }
+
     /** @param list<Response> $responses */
     private function client(array $responses): Auth0ManagementClient
     {

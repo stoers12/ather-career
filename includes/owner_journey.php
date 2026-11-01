@@ -33,7 +33,8 @@ function ownerJourneyDestination(PDO $database, AuthenticatedUserContext $user):
     $deletion->execute([$current->userId]);
     if (is_string($deletion->fetchColumn())) { return '/owner_account_deletion.php'; }
     $state=ownerJourneyState($database,$current);
-    if ($state['access']) { return '/owner.php'; }
+    // A confirmation sign-in (L-03) returns to the page that asked for it.
+    if ($state['access']) { return (function_exists('auth0CompletedReturnDestination') ? auth0CompletedReturnDestination(null, true) : null) ?? '/owner.php'; }
     // No incomplete User receives Owner access. The unchanged completion core
     // also refuses to overwrite/adopt any unproven existing Portfolio.
     if ($state['state']==='maintenance') { return '/owner_onboarding.php'; }
