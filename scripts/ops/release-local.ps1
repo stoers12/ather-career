@@ -565,7 +565,9 @@ try {
         Complete-Step ('Backup hash and disposable restore counts verified: ' + $script:BackupCounts)
         Start-Step 'build'
         $target = if ($TestBuildTarget) { $TestBuildTarget } else { 'production' }
-        $null = Invoke-ReleaseNative docker @('build', '-f', (Join-Path $source 'Dockerfile'), '--target', $target,
+        # --pull and a fresh runtime-base stage install the current Debian security
+        # updates; a cached apt layer would keep shipping fixed vulnerabilities (L-12).
+        $null = Invoke-ReleaseNative docker @('build', '--pull', '--no-cache-filter', 'runtime-base', '-f', (Join-Path $source 'Dockerfile'), '--target', $target,
             '--build-arg', ('APP_VERSION=' + $script:FullSha), '-t', $script:Image, $source)
         $script:ImageLabel = Get-ImageRevision $script:Image
         Assert-Release ($script:ImageLabel -ceq $script:FullSha) 'Built image revision differs'

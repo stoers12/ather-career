@@ -48,3 +48,13 @@ The runner's exit status describes execution and cleanup, not whether vulnerabil
 Official references: [ZAP API](https://www.zaproxy.org/docs/api/), [ZAP command-line silent mode](https://www.zaproxy.org/docs/desktop/cmdline/), [Trivy](https://trivy.dev/), and [Composer audit](https://getcomposer.org/doc/03-cli.md#audit).
 
 Pinned tool/runtime inputs: `zaproxy/zap-stable:2.17.0`, `aquasec/trivy:0.76.1`, `composer:2.8.12`, `php:8.3.33-apache`, `mysql:8.4.7`, `caddy:2.10.2`.
+
+## Continuous checks (CI and releases)
+
+The full assessment above runs on demand: before the public launch, and after large changes. Two lighter checks run all the time.
+
+- **`composer audit --locked`** (CI step "PHP dependency vulnerability audit"). It fails when any package in `composer.lock` has a published advisory. Fix it by updating the package.
+- **Trivy on the production image** (CI step "Image vulnerability scan"). It fails on a HIGH or CRITICAL vulnerability **that has a fixed version**. The fix is to rebuild, because the Dockerfile upgrades Debian packages.
+  - Advisories without a fixed version do not block. They are triaged privately and picked up by the next rebuild once Debian ships a fix.
+- **Releases install current security updates.** `scripts/ops/release-local.ps1` builds with `--pull` and a fresh `runtime-base` stage, so a cached apt layer never keeps fixed vulnerabilities in a released image.
+  - Rebuild and release at least monthly, even without code changes.
