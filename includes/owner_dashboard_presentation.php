@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/owner_layout.php';
+require_once __DIR__ . '/owner_data_rights_notice.php';
 
 /**
  * Render only the B-01 contract; a failed read never looks like an empty account.
@@ -13,7 +14,7 @@ require_once __DIR__ . '/owner_layout.php';
  *     next_step: string, publication_state: string, public_url: ?string
  * }|null $data
  */
-function renderOwnerDashboard(?array $data, string $locale): void
+function renderOwnerDashboard(?array $data, string $locale, mixed $accountNotice = null): void
 {
     $copy = static fn (string $key): string => ownerDashboardCopy($key, $locale);
     $ownerName = $data['owner_name'] ?? '';
@@ -49,6 +50,7 @@ function renderOwnerDashboard(?array $data, string $locale): void
     </div>
     <?php if ($overview !== null): ?><a class="dashboard-button" href="/owner_projects.php?add=1"><?php echo evidenceHubOwnerIcon('plus'); ?><?php echo $copy('add_project'); ?></a><?php endif; ?>
 </header>
+<?php renderOwnerDataRightsAccountNotice($accountNotice, $locale, 'dashboard'); ?>
 <?php if ($overview === null): ?>
 <div class="dashboard-unavailable" role="alert">
     <h2><?php echo $copy('unavailable_title'); ?></h2>

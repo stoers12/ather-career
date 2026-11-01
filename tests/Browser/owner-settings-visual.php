@@ -10,5 +10,9 @@ $locale = ownerLocale();
 $_COOKIE['ather_owner_locale'] = $locale;
 $_SERVER['REQUEST_URI'] = '/owner_settings.php?lang=' . $locale;
 ownerLayoutStart('Settings', 'settings', true, ['locale' => $locale, 'account_name' => 'Sami Ahmad']);
-renderOwnerSettingsPage(ownerSettingsPageData($locale));
+renderOwnerSettingsPage(ownerSettingsPageData($locale) + ['data_rights' => [
+    'export_url' => '/owner_data_export.php', 'reauthenticate_url' => '/owner_reauthenticate.php',
+    'deletion_url' => '/owner_account_deletion.php', 'recently_authenticated' => false,
+    'recent_until' => null, 'confirmation_phrase' => 'sami-ahmad', 'grace_days' => 30, 'notice' => null,
+]]);
 ownerLayoutEnd();

@@ -1,0 +1,16 @@
+/* Standalone recovery composition; no workspace navigation for a closed account. */
+#ather-recovery-design .owner-deletion-product { display: block; max-width: 660px; margin-block: 32px; }
+#ather-recovery-design .owner-deletion-product .ap-card { max-width: 530px; }
+#ather-recovery-design .owner-deletion-product .ap-primary { cursor: pointer; }
+#ather-recovery-design .owner-deletion-product .ap-primary:hover { filter: brightness(.94); }
+#ather-recovery-design .owner-deletion-date { margin-block: 24px; padding: 18px; border: 1px solid var(--ap-border); border-radius: 12px; background: var(--ap-soft); }
+#ather-recovery-design .owner-deletion-date > span { display: block; color: var(--ap-muted); font-size: 13px; }
+#ather-recovery-design .owner-deletion-date time { display: block; margin-block: 6px; font-size: 22px; font-weight: 500; }
+#ather-recovery-design .owner-deletion-date p { font-size: 13px; color: var(--ap-muted); margin: 0; }
+#ather-recovery-design .owner-deletion-download { margin-block: 24px 12px; padding-block-start: 22px; border-block-start: 1px solid var(--ap-border); }
+#ather-recovery-design .owner-deletion-download h2 { font-size: 17px; font-weight: 500; margin: 0 0 8px; }
+#ather-recovery-design .owner-deletion-secondary, #ather-recovery-design .owner-deletion-logout { display: block; width: 100%; min-height: 44px; margin-block-start: 14px; padding: 12px; border: 1px solid var(--ap-green); border-radius: 12px; background: var(--ap-surface); color: var(--ap-green); font: inherit; font-size: 14px; cursor: pointer; overflow-wrap: anywhere; }
+#ather-recovery-design .owner-deletion-logout { border-color: transparent; color: var(--ap-muted); text-decoration: underline; text-underline-offset: 4px; }
+#ather-recovery-design .owner-deletion-secondary:hover, #ather-recovery-design .owner-deletion-logout:hover { background: var(--ap-soft); }
+#ather-recovery-design .owner-deletion-notice { padding: 12px; border-inline-start: 3px solid var(--ap-green); background: var(--ap-soft); color: var(--ap-ink); font-size: 14px; }
+@media (max-width: 430px) { #ather-recovery-design .owner-deletion-product { margin-block: 0; } }

@@ -44,7 +44,6 @@
 .owner-settings-question { padding-block: 21px; border-block-start: 1px solid var(--admin-border); }
 .owner-settings-question summary { font-size: calc(14px * var(--owner-text-scale, 1)); font-weight: 600; cursor: pointer; }
 .owner-settings-question p { margin-block-start: 12px; color: var(--admin-muted); font-size: calc(13px * var(--owner-text-scale, 1)); }
-.owner-workspace-page[data-owner-settings-section="help"] [data-owner-settings-panel="appearance"], .owner-workspace-page[data-owner-settings-section="appearance"] [data-owner-settings-panel="help"] { display: none; }
 @media (max-width:1000px) {
     .owner-settings-layout { grid-template-columns: minmax(0,1fr); gap: 20px; }
     .owner-settings-nav { flex-direction: row; flex-wrap: wrap; padding: 0; }
@@ -70,3 +69,20 @@
 
 .owner-settings .legal-links--settings { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-block: 16px; }
 .owner-settings .legal-links--settings a { display: inline-flex; align-items: center; min-height: 44px; color: var(--admin-primary); text-decoration: underline; text-underline-offset: 4px; }
+
+/* Every hash destination remains reachable before the enhancement runs. */
+.owner-workspace-page[data-owner-settings-section] [data-owner-settings-panel] { display: none; }
+.owner-workspace-page[data-owner-settings-section="appearance"] [data-owner-settings-panel="appearance"],
+.owner-workspace-page[data-owner-settings-section="help"] [data-owner-settings-panel="help"],
+.owner-workspace-page[data-owner-settings-section="data"] [data-owner-settings-panel="data"] { display: block; }
+.owner-data-description { margin-block: 10px 18px; color: var(--admin-muted); }
+.owner-data-danger { margin-block-start: 28px; padding-block-start: 24px; border-block-start: 2px solid var(--admin-danger); }
+.owner-data-danger h3 { color: var(--admin-danger); }
+.owner-data-confirmation summary { min-block-size: 44px; padding-block: 10px; cursor: pointer; color: var(--admin-danger); font-weight: 600; }
+.owner-data-confirmation summary:focus-visible { outline: 3px solid var(--owner-focus); outline-offset: 3px; }
+.owner-data-confirmation form { display: grid; justify-items: start; gap: 14px; padding-block-start: 14px; }
+.owner-data-confirmation label { display: block; }
+.owner-data-confirmation input[type="text"] { inline-size: 100%; max-inline-size: 360px; min-inline-size: 0; min-block-size: 44px; border-color: var(--admin-input-border); }
+.owner-settings-card :is(.button-primary,.button-secondary,.button-danger) { max-inline-size: 100%; min-block-size: 44px; white-space: normal; text-align: center; }
+.owner-settings-card .owner-data-delete { background: var(--admin-danger); border-color: var(--admin-danger); color: var(--admin-surface); }
+.owner-settings-card .owner-data-delete:hover { background: var(--admin-danger-hover); }

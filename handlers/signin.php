@@ -7,6 +7,7 @@ require_once dirname(__DIR__) . '/includes/presentation.php';
 require_once dirname(__DIR__) . '/includes/signin_copy.php';
 require_once dirname(__DIR__) . '/includes/signin_icons.php';
 require_once dirname(__DIR__) . '/includes/legal_presentation.php';
+require_once dirname(__DIR__) . '/includes/owner_data_rights_notice.php';
 
 httpRegisterExceptionBoundary('signin.php');
 httpRequireMethod(['GET', 'HEAD']);
@@ -57,6 +58,7 @@ header('Content-Language: ' . $locale);
                     </div>
                     <h1 id="signin-heading"><?php echo signInCopy('heading', $locale); ?></h1>
                     <p class="af-subtitle"><?php echo signInCopy('subtitle', $locale); ?></p>
+                    <?php renderOwnerDataRightsAccountNotice($_GET['account'] ?? null, $locale, 'signin'); ?>
                     <div class="af-actions">
                         <a class="af-auth-button" href="owner_login.php?method=google"><span class="af-provider-icon" aria-hidden="true">G</span><?php echo signInCopy('google', $locale); ?></a>
                         <button class="af-auth-button" type="button" disabled aria-describedby="microsoft-unavailable"><span class="af-provider-icon" aria-hidden="true">M</span><?php echo signInCopy('microsoft', $locale); ?></button>

@@ -39,4 +39,4 @@ if ($state === 'empty') {
     $data['overview']['recent'][0]['title'] = str_repeat('مشروع Project طويل ', 12);
     $data['overview']['recent'][0]['category'] = str_repeat('مجال Category ', 12);
 }
-renderOwnerDashboard($state === 'unavailable' ? null : $data, $locale);
+renderOwnerDashboard($state === 'unavailable' ? null : $data, $locale, $_GET['account'] ?? null);
