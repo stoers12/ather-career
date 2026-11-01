@@ -26,13 +26,13 @@ function renderOwnerSettingsDataSection(array $rights, string $locale): void
     <form method="post" action="<?php echo ownerEscapeHtml($rights['reauthenticate_url']); ?>" data-owner-form>
         <input type="hidden" name="csrf_token" value="<?php echo $token; ?>">
         <input type="hidden" name="return" value="data">
-        <button class="button-primary" type="submit"><?php echo $copy('confirm'); ?></button>
+        <button class="button-primary" type="submit" data-pending-label="<?php echo $copy('pending_confirm'); ?>"><?php echo $copy('confirm'); ?></button>
     </form>
     <?php else: ?>
     <div class="owner-data-download">
         <h3><?php echo $copy('download'); ?></h3>
         <p class="owner-data-description" id="data-download-hint"><?php echo $copy('zip'); ?></p>
-        <form method="post" action="<?php echo ownerEscapeHtml($rights['export_url']); ?>" data-owner-form>
+        <form method="post" action="<?php echo ownerEscapeHtml($rights['export_url']); ?>">
             <input type="hidden" name="csrf_token" value="<?php echo $token; ?>">
             <button class="button-secondary" type="submit" aria-describedby="data-download-hint"><?php echo $copy('download'); ?></button>
         </form>
@@ -47,7 +47,7 @@ function renderOwnerSettingsDataSection(array $rights, string $locale): void
                 <input type="hidden" name="action" value="request">
                 <label for="data-confirmation"><?php echo $copy('phrase_before'); ?> <bdi dir="auto"><?php echo ownerEscapeHtml($rights['confirmation_phrase']); ?></bdi> <?php echo $copy('phrase_after'); ?></label>
                 <input id="data-confirmation" type="text" name="confirmation" required dir="auto" autocomplete="off" autocapitalize="none" spellcheck="false"<?php echo $confirmationError ? ' aria-invalid="true" aria-describedby="data-error"' : ''; ?>>
-                <button class="button-danger owner-data-delete" type="submit"><?php echo $copy('request'); ?></button>
+                <button class="button-danger owner-data-delete" type="submit" data-pending-label="<?php echo $copy('pending_request'); ?>"><?php echo $copy('request'); ?></button>
             </form>
         </details>
     </div>

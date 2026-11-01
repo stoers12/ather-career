@@ -41,13 +41,26 @@ final class OwnerDataRightsPresentationTest extends TestCase
     }
 
     /** @param array<string, string> $expected */
-    private function assertForm(DOMXPath $xpath, string $url, array $expected): void
+    private function assertForm(DOMXPath $xpath, string $url, array $expected, string $locale): void
     {
         $forms = $xpath->query('//form[@action="' . $url . '"]');
         self::assertCount(1, $forms);
         $form = $forms->item(0);
         self::assertInstanceOf(DOMElement::class, $form);
         self::assertSame('post', strtolower($form->getAttribute('method')));
+        $export = $url === '/owner_data_export.php';
+        self::assertSame(!$export, $form->hasAttribute('data-owner-form'), 'Only exports bypass the navigation pending state');
+        if (!$export) {
+            $action = $xpath->query('.//input[@name="action"]', $form)->item(0);
+            $key = match ($url) {
+                '/owner_reauthenticate.php' => 'pending_confirm',
+                '/owner_logout.php' => 'pending_logout',
+                default => $action instanceof DOMElement && $action->getAttribute('value') === 'request' ? 'pending_request' : 'pending_cancel',
+            };
+            $button = $xpath->query('.//button', $form)->item(0);
+            self::assertInstanceOf(DOMElement::class, $button);
+            self::assertSame(ownerDataRightsCopy($key, $locale), $button->getAttribute('data-pending-label'));
+        }
         $actual = [];
         foreach ($xpath->query('.//input[@name]', $form) as $input) {
             self::assertInstanceOf(DOMElement::class, $input);
@@ -72,11 +85,11 @@ final class OwnerDataRightsPresentationTest extends TestCase
         if ($notice !== null) self::assertStringContainsString(ownerDataRightsCopy($notice, $locale), $document->textContent);
         $token = ['csrf_token' => str_repeat('a', 64)];
         if (!$recent) {
-            $this->assertForm($xpath, '/owner_reauthenticate.php', $token + ['return' => 'data']);
+            $this->assertForm($xpath, '/owner_reauthenticate.php', $token + ['return' => 'data'], $locale);
             self::assertCount(1, $xpath->query('//section[@id="data"]//form'));
         } else {
-            $this->assertForm($xpath, '/owner_data_export.php', $token);
-            $this->assertForm($xpath, '/owner_account_deletion.php', $token + ['action' => 'request', 'confirmation' => '']);
+            $this->assertForm($xpath, '/owner_data_export.php', $token, $locale);
+            $this->assertForm($xpath, '/owner_account_deletion.php', $token + ['action' => 'request', 'confirmation' => ''], $locale);
             self::assertCount(1, $xpath->query('//details//form[@action="/owner_account_deletion.php"]'));
             self::assertCount($notice === 'confirmation' ? 1 : 0, $xpath->query('//details[@open]'));
             self::assertSame('sami-<work>&"', $xpath->query('//label[@for="data-confirmation"]/bdi')->item(0)->textContent);
@@ -112,9 +125,9 @@ final class OwnerDataRightsPresentationTest extends TestCase
         self::assertInstanceOf(DOMElement::class, $time);
         self::assertSame($page['due_at'], $time->getAttribute('datetime'));
         $token = ['csrf_token' => str_repeat('b', 64)];
-        $this->assertForm($xpath, '/owner_account_deletion.php', $token + ['action' => 'cancel']);
-        $this->assertForm($xpath, '/owner_logout.php', $token);
-        $this->assertForm($xpath, $recent ? '/owner_data_export.php' : '/owner_reauthenticate.php', $recent ? $token : $token + ['return' => 'deletion']);
+        $this->assertForm($xpath, '/owner_account_deletion.php', $token + ['action' => 'cancel'], $locale);
+        $this->assertForm($xpath, '/owner_logout.php', $token, $locale);
+        $this->assertForm($xpath, $recent ? '/owner_data_export.php' : '/owner_reauthenticate.php', $recent ? $token : $token + ['return' => 'deletion'], $locale);
         self::assertCount(3, $xpath->query('//form'));
         self::assertCount($notice === 'reauthenticate' ? 1 : 0, $xpath->query('//*[@role="alert"]'));
         self::assertCount(0, $xpath->query('//aside | //*[@style or @onclick] | //script[not(@src)]'));

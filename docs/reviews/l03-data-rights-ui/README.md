@@ -1,5 +1,7 @@
 # L-03 data rights UI evidence
 
+Latest: [PR #105 review fixes, verification and after-download screenshot](review-fixes.md).
+
 Base: `origin/main` at `ccbf5faf08a9` (PR #104). Branch: `feat/l03-data-rights-ui`.
 
 All captures use synthetic account data and the actual PHP presentation. The final full required-gates run generated these 64 screenshots. Both languages, both themes, and 1440px / 390px are included. The due date fixture is `2026-12-01T23:30:00Z`; Asia/Amman displays December 2, 2026.

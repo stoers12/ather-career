@@ -54,7 +54,7 @@ function renderOwnerAccountDeletionPage(array $page): void
                 <form method="post" action="<?php echo $escape($page['cancel_url']); ?>" data-owner-form>
                     <input type="hidden" name="csrf_token" value="<?php echo $token; ?>">
                     <input type="hidden" name="action" value="cancel">
-                    <button class="ap-primary" type="submit"><?php echo $copy('cancel'); ?></button>
+                    <button class="ap-primary" type="submit" data-pending-label="<?php echo $copy('pending_cancel'); ?>"><?php echo $copy('cancel'); ?></button>
                 </form>
                 <section class="owner-deletion-download" aria-labelledby="deletion-download-title">
                     <h2 id="deletion-download-title"><?php echo $copy('download'); ?></h2>
@@ -62,15 +62,15 @@ function renderOwnerAccountDeletionPage(array $page): void
                     <?php if ($page['notice'] === 'reauthenticate'): ?>
                     <p class="owner-deletion-notice" role="alert"><?php echo $copy('reauthenticate'); ?></p>
                     <?php endif; ?>
-                    <form method="post" action="<?php echo $escape($page[$page['recently_authenticated'] ? 'export_url' : 'reauthenticate_url']); ?>" data-owner-form>
+                    <form method="post" action="<?php echo $escape($page[$page['recently_authenticated'] ? 'export_url' : 'reauthenticate_url']); ?>"<?php echo $page['recently_authenticated'] ? '' : ' data-owner-form'; ?>>
                         <input type="hidden" name="csrf_token" value="<?php echo $token; ?>">
                         <?php if (!$page['recently_authenticated']): ?><input type="hidden" name="return" value="deletion"><?php endif; ?>
-                        <button class="owner-deletion-secondary" type="submit"><?php echo $copy($page['recently_authenticated'] ? 'download' : 'confirm_download'); ?></button>
+                        <button class="owner-deletion-secondary" type="submit"<?php if (!$page['recently_authenticated']): ?> data-pending-label="<?php echo $copy('pending_confirm'); ?>"<?php endif; ?>><?php echo $copy($page['recently_authenticated'] ? 'download' : 'confirm_download'); ?></button>
                     </form>
                 </section>
                 <form method="post" action="<?php echo $escape($page['logout_url']); ?>" data-owner-form>
                     <input type="hidden" name="csrf_token" value="<?php echo $token; ?>">
-                    <button class="owner-deletion-logout" type="submit"><?php echo $copy('logout'); ?></button>
+                    <button class="owner-deletion-logout" type="submit" data-pending-label="<?php echo $copy('pending_logout'); ?>"><?php echo $copy('logout'); ?></button>
                 </form>
             </article>
         </main>

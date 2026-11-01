@@ -27,6 +27,10 @@ function ownerDataRightsCopy(string $key, string $locale): string
         'cancel' => ['ar' => 'إلغاء الحذف', 'en' => 'Cancel deletion'],
         'confirm_download' => ['ar' => 'أكّد هويتك لتنزيل بياناتك', 'en' => 'Confirm it is you to download your data'],
         'logout' => ['ar' => 'تسجيل الخروج', 'en' => 'Log out'],
+        'pending_confirm' => ['ar' => 'جارٍ تأكيد الهوية…', 'en' => 'Confirming your identity…'],
+        'pending_request' => ['ar' => 'جارٍ جدولة الحذف…', 'en' => 'Scheduling deletion…'],
+        'pending_cancel' => ['ar' => 'جارٍ إلغاء الحذف…', 'en' => 'Cancelling deletion…'],
+        'pending_logout' => ['ar' => 'جارٍ تسجيل الخروج…', 'en' => 'Logging out…'],
         'scheduled_notice' => ['ar' => 'تمت جدولة حذف حسابك. يمكنك تسجيل الدخول خلال 30 يومًا وإلغاء الحذف إن غيّرت رأيك.', 'en' => 'Your account deletion is scheduled. If you change your mind, sign in within 30 days and cancel deletion.'],
         'cancelled_notice' => ['ar' => 'تم إلغاء حذف حسابك. عاد كل شيء كما كان.', 'en' => 'Account deletion cancelled. Everything is restored.'],
     ];

@@ -1,5 +1,7 @@
 # L-03 verification output
 
+Latest: [PR #105 review fixes, verification and after-download screenshot](review-fixes.md).
+
 Date: 2026-11-01. Base `ccbf5faf08a9` / PR #104. Runtime source was verified by the full gate source manifest before adding this documentation and the generated screenshots. All databases, processes, networks and containers used for testing were disposable. The running `portfolio_course` stack was not changed.
 
 ## Required checks

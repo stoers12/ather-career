@@ -27,6 +27,68 @@ async function contrast(page) {
 
 module.exports = async function dataRightsChecks(browser, base, out) {
     const fixture = options => `${base}/tests/Browser/account-data-rights-visual.php?${new URLSearchParams(options)}${(options.view || 'settings') === 'settings' ? '#data' : ''}`;
+    // An attachment leaves this document open: the export button must remain usable.
+    for (const lang of ['ar', 'en']) {
+        const context = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'light' });
+        const page = await context.newPage();
+        const exportUrl = base + '/owner_data_export.php';
+        const zip = Buffer.alloc(22); zip.writeUInt32LE(0x06054b50, 0);
+        await page.route(exportUrl, route => route.fulfill({ status: 200,
+            headers: { 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="ather-data-test.zip"' }, body: zip }));
+        for (const view of ['settings', 'scheduled']) {
+            await page.goto(fixture({ lang, view, recent: '1' }));
+            await page.evaluate(() => { window.__l03ExportDocument = true; });
+            const url = page.url();
+            const button = page.locator('form[action="/owner_data_export.php"] button');
+            const label = await button.textContent();
+            const downloadEvent = page.waitForEvent('download');
+            await button.click();
+            const download = await downloadEvent;
+            assert.equal(await download.failure(), null, 'ZIP attachment completes');
+            assert.equal(page.url(), url, 'export leaves the current URL open');
+            assert.equal(await page.evaluate(() => window.__l03ExportDocument), true, 'the original document stays open');
+            assert.equal(await button.isEnabled(), true, `${view}/${lang}: export stays enabled after download`);
+            assert.equal(await button.textContent(), label, 'export keeps its localized label');
+            assert.equal(await button.getAttribute('aria-disabled'), null);
+            assert.equal(await page.locator('form[action="/owner_data_export.php"]').getAttribute('aria-busy'), null);
+            if (view === 'settings' && lang === 'ar') {
+                await page.mouse.move(0, 0); await page.evaluate(() => document.fonts.ready);
+                await page.screenshot({ path: path.join(out, 'l03-settings-after-download-ar-390.png'), fullPage: true });
+            }
+        }
+        await page.unroute(exportUrl);
+        let capturePending;
+        await page.exposeFunction('l03ReportPending', state => capturePending(state));
+        const confirm = lang === 'ar' ? 'جارٍ تأكيد الهوية…' : 'Confirming your identity…';
+        const actions = [
+            [{ view: 'settings' }, '/owner_reauthenticate.php', confirm],
+            [{ view: 'settings', recent: '1' }, '/owner_account_deletion.php', lang === 'ar' ? 'جارٍ جدولة الحذف…' : 'Scheduling deletion…'],
+            [{ view: 'scheduled' }, '/owner_account_deletion.php', lang === 'ar' ? 'جارٍ إلغاء الحذف…' : 'Cancelling deletion…'],
+            [{ view: 'scheduled' }, '/owner_reauthenticate.php', confirm],
+            [{ view: 'scheduled' }, '/owner_logout.php', lang === 'ar' ? 'جارٍ تسجيل الخروج…' : 'Logging out…'],
+        ];
+        for (const [options, url, pending] of actions) {
+            await page.goto(fixture({ lang, ...options }));
+            if (options.recent) {
+                await page.locator('.owner-data-confirmation summary').click();
+                await page.locator('[name="confirmation"]').fill('sami-ahmad');
+            }
+            await page.route(base + url, route => route.fulfill({ status: 200,
+                contentType: 'text/html', body: '<!doctype html><title>Synthetic action completed</title>' }));
+            const form = page.locator(`form[action="${url}"]`);
+            // Read the pending UI in submit order, before the navigation replaces it.
+            await form.evaluate(form => form.addEventListener('submit', event => {
+                window.l03ReportPending({ text: event.submitter.textContent,
+                    disabled: event.submitter.disabled, busy: form.getAttribute('aria-busy') });
+            }, { once: true }));
+            const state = new Promise(resolve => { capturePending = resolve; });
+            await form.locator('button').click();
+            assert.deepEqual(await state, { text: pending, disabled: true, busy: 'true' }, `${lang}/${url}: localized pending label`);
+            await page.unroute(base + url);
+        }
+        await context.close();
+    }
+    console.log('L03_DOWNLOAD_PENDING_PASSED: Settings and scheduled ZIP exports remain enabled without navigation; all other actions show localized AR/EN pending labels.');
     const cases = [
         ['settings-locked', { view: 'settings' }],
         ['settings-recent', { view: 'settings', recent: '1' }],
