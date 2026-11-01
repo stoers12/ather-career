@@ -1,0 +1,159 @@
+# Local development without Auth0 (L-15; docs/LOCAL_DEVELOPMENT.md).
+#
+#   docker compose -f docker-compose.dev-auth.yml up --build
+#
+# A separate project (ather_dev) with its own database, storage and ports, so
+# it never touches the resident portfolio_course stack. Sign-in goes to the
+# local OIDC mock instead of Auth0. Every value below is a development
+# placeholder, not a secret; the client id contains "-test-", which the
+# production security check rejects.
+name: ather_dev
+
+x-dev-auth: &dev-auth
+  APP_ENV: development
+  PUBLIC_BASE_URL: https://localhost:8444
+  EXPECTED_OIDC_ISSUER: https://auth.localhost:9443/
+  OIDC_CLIENT_ID: ather-dev-test-client
+  OIDC_CLIENT_SECRET: ather-dev-test-secret-not-a-real-secret
+  OIDC_REDIRECT_URI: https://localhost:8444/owner_oidc_callback.php
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    image: ather-dev-web:local
+    ports:
+      - "127.0.0.1:8444:8444"
+      - "127.0.0.1:9443:9443"
+    # Browsers resolve *.localhost to the loopback address by themselves (RFC 6761);
+    # this maps the issuer name inside the shared namespace too.
+    extra_hosts:
+      - "auth.localhost:127.0.0.1"
+    mem_limit: 768m
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - .:/var/www/app
+      - ./public:/var/www/public
+      # The image's Composer packages; a bind mount of the checkout would hide them.
+      - dev_vendor:/var/www/app/vendor
+      - dev_private_storage:/var/www/private-storage
+      # Only Caddy's public root certificate, never its keys.
+      - dev_ca:/dev-ca:ro
+      # Trust Caddy's local CA in every PHP SAPI (Apache and CLI).
+      - ./docker/dev-auth/php/zz-dev-auth-ca.ini:/usr/local/etc/php/conf.d/zz-dev-auth-ca.ini:ro
+    environment:
+      <<: *dev-auth
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: ather_dev
+      DB_USER: ather_dev
+      DB_PASSWORD: ather-dev-database-password
+      SESSION_COOKIE_SECURE: "1"
+      PRESERVED_V1_OIDC_SUBJECT: dev|owner
+      ATHERCAR_REGISTRATION_ENABLED: invite
+      EVIDENCE_HUB_OPAQUE_TARGET_HMAC_KEY: 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
+      ATHERCAR_STORAGE_ROOT: /var/www/private-storage
+      OIDC_MANAGEMENT_DOMAIN: auth.localhost
+      OIDC_MANAGEMENT_CLIENT_ID: ather-dev-test-client
+      OIDC_MANAGEMENT_CLIENT_SECRET: ather-dev-test-secret-not-a-real-secret
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php -r '$$body = @file_get_contents(\"http://127.0.0.1/health.php\"); exit($$body === \"OK\n\" ? 0 : 1);'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+
+  # HTTPS for the application and the mock issuer, inside web's network namespace.
+  https:
+    image: caddy@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    network_mode: "service:web"
+    security_opt:
+      - no-new-privileges:true
+    # Publish only the public root certificate (mode 0644) for PHP to trust.
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        caddy run --config /etc/caddy/Caddyfile --adapter caddyfile &
+        root=/data/caddy/pki/authorities/local/root.crt
+        until [ -s "$$root" ]; do sleep 1; done
+        cp "$$root" /dev-ca/root.crt && chmod 0644 /dev-ca/root.crt
+        wait
+    volumes:
+      - ./docker/dev-auth/Caddyfile:/etc/caddy/Caddyfile:ro
+      - dev_caddy_data:/data
+      - dev_ca:/dev-ca
+    depends_on:
+      web:
+        condition: service_healthy
+
+  # The Auth0 stand-in, also inside web's namespace (127.0.0.1:9080).
+  oidc-mock:
+    image: ather-dev-web:local
+    network_mode: "service:web"
+    entrypoint: ["php", "-S", "127.0.0.1:9080", "/var/www/app/scripts/dev/oidc-mock.php"]
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - .:/var/www/app:ro
+    environment:
+      <<: *dev-auth
+      ATHER_DEV_OIDC_MOCK: "1"
+      DEV_OIDC_STATE_DIR: /tmp/ather-oidc-mock
+    depends_on:
+      web:
+        condition: service_healthy
+
+  # One-shot: seal the owner-journey cutover so the sample portfolio's owner
+  # (dev|owner, bound at first start) reaches the dashboard. Idempotent.
+  setup:
+    image: ather-dev-web:local
+    entrypoint: ["php", "/var/www/app/database/capture-owner-journey-cutover.php", "--confirm-exclusive-maintenance", "--database=ather_dev"]
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - .:/var/www/app:ro
+      - dev_vendor:/var/www/app/vendor:ro
+    environment:
+      APP_ENV: development
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: ather_dev
+      DB_USER: ather_dev
+      DB_PASSWORD: ather-dev-database-password
+    depends_on:
+      web:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      MYSQL_DATABASE: ather_dev
+      MYSQL_USER: ather_dev
+      MYSQL_PASSWORD: ather-dev-database-password
+      MYSQL_ROOT_PASSWORD: ather-dev-root-password
+    volumes:
+      - dev_db_data:/var/lib/mysql
+      - ./database/portfolio_db.sql:/docker-entrypoint-initdb.d/01-portfolio.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysqladmin ping -h localhost -u root --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+volumes:
+  dev_db_data:
+  dev_vendor:
+  dev_private_storage:
+  dev_caddy_data:
+  dev_ca:

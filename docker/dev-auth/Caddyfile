@@ -1,0 +1,31 @@
+# Local HTTPS for development with the Auth0 mock (L-15). This container shares
+# the web container's network namespace. The issuer is auth.localhost: browsers
+# resolve *.localhost to the loopback address, and web maps it to 127.0.0.1, so
+# the browser (through the published ports), PHP and the mock agree on it.
+# The Auth0 SDK rejects an IP address as a domain. Caddy's internal
+# CA signs every site; PHP trusts it through php/zz-dev-auth-ca.ini.
+{
+    admin off
+    skip_install_trust
+    # Port 80 belongs to Apache in this shared namespace.
+    auto_https disable_redirects
+}
+
+# The application.
+https://localhost:8444 {
+    tls internal
+    reverse_proxy 127.0.0.1:80
+}
+
+# The OIDC issuer: discovery, sign-in page, token, JWKS and logout.
+https://auth.localhost:9443 {
+    tls internal
+    reverse_proxy 127.0.0.1:9080
+}
+
+# The Management API host the purge client calls (https://auth.localhost/...).
+# Not published: only PHP inside the namespace reaches it.
+https://auth.localhost:443 {
+    tls internal
+    reverse_proxy 127.0.0.1:9080
+}
