@@ -98,6 +98,8 @@ try {
                 if ([390, 1440].includes(width)) await page.screenshot({path: path.join(output, `${document}-${locale}-${theme}-${width}.png`), fullPage: true});
             }
             await page.locator('.legal-contents a').first().focus(); await page.keyboard.press('Enter');
+            // Following an in-page link updates the URL asynchronously; wait for it instead of racing it.
+            await page.waitForURL(/#section-1$/, {timeout: 5000});
             assert.equal(new URL(page.url()).hash, '#section-1');
             await context.close();
         }
