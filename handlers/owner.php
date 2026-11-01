@@ -30,4 +30,4 @@ try {
     $data = null;
 }
 
-renderOwnerDashboard($data, $locale);
+renderOwnerDashboard($data, $locale, $_GET['account'] ?? null);

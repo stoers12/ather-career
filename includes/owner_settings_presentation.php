@@ -5,12 +5,15 @@ declare(strict_types=1);
 require_once __DIR__ . '/owner_layout.php';
 require_once __DIR__ . '/owner_settings_copy.php';
 require_once __DIR__ . '/legal_presentation.php';
+require_once __DIR__ . '/owner_settings_data_presentation.php';
 
 /**
  * @param array{locale: string, languages: list<array{code: string, url: string, current: bool}>,
  *     appearance: array{storage_key: string, options: list<string>, default: string},
  *     text_size: array{storage_key: string, options: list<string>, default: string},
- *     motion: array{storage_key: string, options: list<string>, default: string}} $settings
+ *     motion: array{storage_key: string, options: list<string>, default: string},
+ *     data_rights?: array{export_url: string, reauthenticate_url: string, deletion_url: string,
+ *         recently_authenticated: bool, recent_until: ?int, confirmation_phrase: string, grace_days: int, notice: ?string}} $settings
  */
 function renderOwnerSettingsPage(array $settings): void
 {
@@ -26,6 +29,7 @@ function renderOwnerSettingsPage(array $settings): void
     <div class="owner-settings-layout">
         <nav class="owner-settings-nav" aria-label="<?php echo $copy('sections'); ?>">
             <a href="#appearance" data-owner-settings-link="appearance"><?php echo evidenceHubOwnerIcon('sliders-horizontal'); ?><?php echo $copy('appearance'); ?></a>
+            <?php if (isset($settings['data_rights'])): ?><a href="#data" data-owner-settings-link="data"><?php echo evidenceHubOwnerIcon('lock-keyhole'); ?><?php echo ownerEscapeHtml(ownerDataRightsCopy('title', $settings['locale'])); ?></a><?php endif; ?>
             <a href="#help" data-owner-settings-link="help"><?php echo evidenceHubOwnerIcon('circle-help'); ?><?php echo $copy('help'); ?></a>
         </nav>
         <div class="owner-settings-body">
@@ -68,7 +72,9 @@ function renderOwnerSettingsPage(array $settings): void
                     </select>
                 </div>
                 <?php endforeach; ?>
+                <p class="owner-preference-status"><?php echo evidenceHubOwnerIcon('check'); ?><?php echo $copy('browser_note'); ?></p>
             </section>
+            <?php if (isset($settings['data_rights'])) renderOwnerSettingsDataSection($settings['data_rights'], $settings['locale']); ?>
             <section class="owner-settings-card" id="help" data-owner-settings-panel="help" aria-labelledby="help-title">
                 <header><span class="owner-settings-eyebrow"><?php echo $copy('help_eyebrow'); ?></span><h2 id="help-title"><?php echo $copy('help'); ?></h2><p><?php echo $copy('help_intro'); ?></p></header>
                 <?php renderLegalLinks($settings['locale'], 'settings'); ?>
@@ -76,7 +82,6 @@ function renderOwnerSettingsPage(array $settings): void
                 <details class="owner-settings-question"><summary><?php echo $copy('q_' . $question); ?></summary><p><?php echo $copy('a_' . $question); ?></p></details>
                 <?php endforeach; ?>
             </section>
-            <p class="owner-preference-status"><?php echo evidenceHubOwnerIcon('check'); ?><?php echo $copy('browser_note'); ?></p>
         </div>
     </div>
 </div>

@@ -69,7 +69,7 @@
     }
     function settingsSection() {
         if (!root.classList.contains('owner-settings-page')) return;
-        var section = window.location.hash === '#help' ? 'help' : 'appearance';
+        var section = ['#help', '#data'].indexOf(window.location.hash) >= 0 ? window.location.hash.slice(1) : 'appearance';
         root.setAttribute('data-owner-settings-section', section);
         document.querySelectorAll('[data-owner-settings-panel]').forEach(function (panel) { panel.hidden = panel.getAttribute('data-owner-settings-panel') !== section; });
         document.querySelectorAll('[data-owner-settings-link]').forEach(function (link) {
@@ -115,7 +115,7 @@
     if (workspace) root.setAttribute('data-owner-sidebar', sidebarPreference === 'compact' && desktop && desktop.matches ? 'compact' : 'expanded');
     if (workspace) {
         Object.keys(preferences).forEach(function (name) { root.setAttribute(preferences[name].attribute, readPreference(preferences[name])); });
-        root.setAttribute('data-owner-settings-section', window.location.hash === '#help' ? 'help' : 'appearance');
+        root.setAttribute('data-owner-settings-section', ['#help', '#data'].indexOf(window.location.hash) >= 0 ? window.location.hash.slice(1) : 'appearance');
     }
     applyTheme();
     if (typeof document.addEventListener === 'function') document.addEventListener('DOMContentLoaded', function () {

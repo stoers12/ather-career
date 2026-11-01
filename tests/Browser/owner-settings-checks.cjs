@@ -40,7 +40,7 @@ module.exports = async function settingsChecks(browser, base, out, contrast) {
         const page = await c.newPage();
         const errors = []; page.on('pageerror', error => errors.push(error.message));
         await page.goto(settings(locale));
-        assert.equal(await page.locator('.owner-settings-nav a').count(), 2);
+        assert.equal(await page.locator('.owner-settings-nav a').count(), 3);
         assert.equal(await page.locator('.owner-settings-nav a[href="#appearance"]').getAttribute('aria-current'), 'location');
         assert.equal(await page.locator('.owner-nav-item[href="/owner_settings.php?lang=' + locale + '"]').getAttribute('aria-current'), 'page');
         assert.equal(await page.locator('.owner-nav-item[href="/owner_settings.php?lang=' + locale + '#help"]').count(), 1);
@@ -189,5 +189,6 @@ module.exports = async function settingsChecks(browser, base, out, contrast) {
             await c.close();
         }
     }
-    console.log('OWNER_SETTINGS_VISUAL_PASSED: two sections; appearance persistence/system; preferences before paint; no-JS language; ar/en themes and large-text layouts.');
+    await require('./account-data-rights-checks.cjs')(browser, base, out);
+    console.log('OWNER_SETTINGS_VISUAL_PASSED: three sections; appearance persistence/system; preferences before paint; no-JS language; ar/en themes and large-text layouts.');
 };

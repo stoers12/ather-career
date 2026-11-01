@@ -128,3 +128,5 @@ body { margin: 0; padding: 12px; font-size: 16px; line-height: 1.625; -webkit-fo
 
 #ather-auth-flow .legal-links--auth { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; margin-top: 16px; font-size: 12px; }
 #ather-auth-flow .legal-links--auth a { display: inline-flex; align-items: center; min-height: 44px; color: var(--af-green); text-decoration: underline; }
+
+#ather-auth-flow .af-account-notice { margin-block: 18px; padding: 14px; border: 1px solid var(--af-green); border-radius: 12px; background: var(--af-surface-soft); color: var(--af-ink); font-size: 14px; line-height: 1.85; }
