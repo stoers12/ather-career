@@ -77,6 +77,10 @@ jobs:
         run: |
           docker run --rm -v "$PWD:/app" -w /app composer:2 sh -ec 'composer install --no-interaction --prefer-dist && composer analyse'
 
+      - name: PHP dependency vulnerability audit
+        # Fails on any published advisory for a package in composer.lock (L-12).
+        run: docker run --rm -v "$PWD:/app:ro" -w /app composer:2 composer audit --locked --no-interaction
+
       - name: JavaScript syntax
         run: git ls-files -z '*.js' '*.mjs' '*.cjs' | xargs -0 -n1 node --check
 
@@ -88,6 +92,13 @@ jobs:
 
       - name: Build production PHP image
         run: docker compose -p ather-career-ci -f docker-compose.production.yml build web
+
+      - name: Image vulnerability scan
+        # Fails on a HIGH or CRITICAL vulnerability that has a fix available: the
+        # image then ships a fixed package version. Unfixed Debian advisories are
+        # reviewed in L-12 and tracked by rebuilding, so they do not block (L-12).
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.1             image --quiet --scanners vuln --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1             "$PORTFOLIO_PRODUCTION_IMAGE"
 
       - name: Verify OIDC issuer CSP startup guard in Apache and Caddy
         run: |
