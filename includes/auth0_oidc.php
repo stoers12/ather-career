@@ -6,6 +6,8 @@ require_once __DIR__ . '/auth0_signin_methods.php';
 
 const AUTH0_PURPOSE_SIGN_IN = 'sign-in';
 const AUTH0_PURPOSE_REGISTRATION = 'registration';
+// Fixed pages a fresh sign-in may return to, instead of the journey's default (L-03).
+const AUTH0_RETURN_DESTINATIONS = ['/owner_settings.php#data', '/owner_account_deletion.php'];
 
 // ATHERCAR_REGISTRATION_ENABLED: '1' open, 'invite' invite-only (L-01), anything else closed.
 function auth0RegistrationIsEnabled(): bool
@@ -245,13 +247,13 @@ function auth0Discovery(Auth0OidcConfiguration $configuration): array
 
 final readonly class Auth0CompletedAuthorization
 {
-    public function __construct(public Auth0ValidatedIdentity $identity, public string $purpose)
+    public function __construct(public Auth0ValidatedIdentity $identity, public string $purpose, public ?string $returnTo = null)
     {
     }
 }
 
 /** @return array{url: string, state: string, code_challenge: string} */
-function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $authorizationEndpoint, ?string $prompt = null, ?string $signInMethod = null, string $purpose = AUTH0_PURPOSE_SIGN_IN): array
+function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $authorizationEndpoint, ?string $prompt = null, ?string $signInMethod = null, string $purpose = AUTH0_PURPOSE_SIGN_IN, ?string $returnTo = null): array
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         throw new LogicException('Auth0 authorization requires an active server-side session.');
@@ -261,6 +263,9 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
     }
     if (!in_array($purpose, [AUTH0_PURPOSE_SIGN_IN, AUTH0_PURPOSE_REGISTRATION], true)) {
         throw new InvalidArgumentException('Authorization purpose is invalid.');
+    }
+    if ($returnTo !== null && ($purpose !== AUTH0_PURPOSE_SIGN_IN || !in_array($returnTo, AUTH0_RETURN_DESTINATIONS, true))) {
+        throw new InvalidArgumentException('Authorization return destination is invalid.');
     }
     $connection = auth0SignInConnection($signInMethod);
     if ($purpose === AUTH0_PURPOSE_REGISTRATION && (!auth0RegistrationIsEnabled() || $signInMethod !== 'google')) {
@@ -276,6 +281,7 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
         'nonce' => $nonce,
         'created_at' => time(),
         'purpose' => $purpose,
+        'return_to' => $returnTo,
     ];
     $parameters = [
         'client_id' => $configuration->clientId,
@@ -298,7 +304,7 @@ function beginAuth0Authorization(Auth0OidcConfiguration $configuration, string $
     return ['url' => $url, 'state' => $state, 'code_challenge' => $challenge];
 }
 
-/** @return array{code_verifier: string, nonce: string, purpose: string} */
+/** @return array{code_verifier: string, nonce: string, purpose: string, return_to: ?string} */
 function consumeAuth0AuthorizationTransaction(array $query): array
 {
     $transaction = $_SESSION[AUTH0_AUTH_TRANSACTION_KEY] ?? null;
@@ -336,7 +342,10 @@ function consumeAuth0AuthorizationTransaction(array $query): array
         throw new Auth0OidcException('code_missing');
     }
 
-    return ['code_verifier' => $transaction['code_verifier'], 'nonce' => $transaction['nonce'], 'purpose' => $transaction['purpose']];
+    $returnTo = $transaction['return_to'] ?? null;
+
+    return ['code_verifier' => $transaction['code_verifier'], 'nonce' => $transaction['nonce'], 'purpose' => $transaction['purpose'],
+        'return_to' => in_array($returnTo, AUTH0_RETURN_DESTINATIONS, true) ? $returnTo : null];
 }
 
 function validateAuth0AuthorizationCode(Auth0OidcConfiguration $configuration, string $code, string $verifier, string $nonce): Auth0ValidatedIdentity
@@ -444,5 +453,5 @@ function completeAuth0AuthorizationWithPurpose(Auth0OidcConfiguration $configura
         throw new Auth0OidcException('identity_invalid');
     }
 
-    return new Auth0CompletedAuthorization($identity, $transaction['purpose']);
+    return new Auth0CompletedAuthorization($identity, $transaction['purpose'], $transaction['return_to']);
 }

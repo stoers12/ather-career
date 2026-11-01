@@ -283,6 +283,7 @@ function resolvePublicReadContext(PDO $database, mixed $candidate): ?PublicReadC
          WHERE portfolios.public_slug = :public_slug
            AND portfolios.is_published = 1
            AND users.account_status = 'active'
+           AND users.deletion_requested_at IS NULL
          LIMIT 1"
     );
     $statement->execute(['public_slug' => $slug]);
@@ -332,6 +333,7 @@ function publicProjectEligibilitySql(): string
         JOIN users ON users.id=portfolios.owner_user_id
         WHERE projects.portfolio_id=:public_portfolio_id
           AND portfolios.is_published=1 AND users.account_status='active'
+          AND users.deletion_requested_at IS NULL
           AND projects.is_published=1";
 }
 

@@ -52,6 +52,10 @@ try {
     establishVerifiedInternalUserSession($user['user_id'], $user['authz_version']);
     recordOwnerEmailVerificationAfterLogin($user['user_id'], $user['authz_version'], auth0EmailVerifiedClassification($identity->emailVerifiedClaim, $identity->hasNonemptyEmail));
     $destination = ownerJourneyDestination($database, requireAuthenticatedUser($database));
+    // A confirmation sign-in (L-03) returns to the page that asked for it, unless the journey sends the owner elsewhere.
+    if ($destination === '/owner.php' && $completed->returnTo !== null) {
+        $destination = $completed->returnTo;
+    }
     $sessionWriteFailed = false;
     set_error_handler(static function () use (&$sessionWriteFailed): bool { $sessionWriteFailed = true; return true; });
     try { $sessionStored = session_write_close(); } finally { restore_error_handler(); }

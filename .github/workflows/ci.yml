@@ -236,6 +236,8 @@ jobs:
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-project-publication-tests.php
           # Per-type visibility migration, current Profile CAS and public projection.
           DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-contact-visibility-tests.php
+          # L-03 data rights: export isolation, immediate unpublish, cancel and the full purge.
+          DB_USER="$REGISTRATION_DB_USER" DB_PASSWORD="$REGISTRATION_DB_PASSWORD" rehearse tests/Integration/run-account-data-rights-tests.php
 
       - name: Authenticated draft editor browser checks
         run: |
@@ -741,7 +743,7 @@ jobs:
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php database/migrate.php | grep -x 'No pending migrations.'
           docker compose -p ather-career-ci -f docker-compose.production.yml exec -T web php scripts/check-production-security.php
 
-      - name: Verify startup on restored migrations 001-029
+      - name: Verify startup on restored migrations 001-031
         run: bash tests/Integration/check-restored-startup-idempotence.sh
 
       - name: Seed isolated public HTTP fixture

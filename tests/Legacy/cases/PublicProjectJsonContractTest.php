@@ -10,7 +10,7 @@ final class PublicProjectJsonContractTest
 
         $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $database->exec(
-            "CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT NOT NULL);
+            "CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT NOT NULL, deletion_requested_at TEXT NULL);
              CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT, is_published INTEGER NOT NULL);
              CREATE TABLE projects (is_published INTEGER NOT NULL DEFAULT 0, id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL, title TEXT, category TEXT, description TEXT, github_url TEXT, live_url TEXT, image_path TEXT, technologies TEXT, created_at TEXT NOT NULL)"
         );

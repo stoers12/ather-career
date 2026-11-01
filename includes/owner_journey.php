@@ -28,6 +28,10 @@ function ownerJourneyDestination(PDO $database, AuthenticatedUserContext $user):
 {
     $current=requireAuthenticatedUser($database);
     if ($current->userId!==$user->userId) { throw new AuthorizationDeniedException('Journey User mismatch.'); }
+    // An account scheduled for deletion (L-03) sees only the page that cancels it.
+    $deletion=$database->prepare('SELECT deletion_requested_at FROM users WHERE id=? LIMIT 1');
+    $deletion->execute([$current->userId]);
+    if (is_string($deletion->fetchColumn())) { return '/owner_account_deletion.php'; }
     $state=ownerJourneyState($database,$current);
     if ($state['access']) { return '/owner.php'; }
     // No incomplete User receives Owner access. The unchanged completion core
