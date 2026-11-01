@@ -43,8 +43,8 @@ final class ProfileContactTest
         $fields = array_values(array_diff(AUTHORIZED_PERSONAL_INFO_FIELDS, ['public_email_visible', 'public_phone_visible', 'profile_image_path']));
         $columns = implode(', ', array_map(static fn ($field) => $field . ' TEXT', [...$fields, 'profile_image_path']));
         $db->exec('CREATE TABLE personal_info (id INTEGER PRIMARY KEY, portfolio_id INTEGER UNIQUE, updated_at TEXT, profile_version INTEGER NOT NULL DEFAULT 1, public_email_visible INTEGER NOT NULL DEFAULT 0 CHECK(public_email_visible IN (0,1)), public_phone_visible INTEGER NOT NULL DEFAULT 0 CHECK(public_phone_visible IN (0,1)), ' . $columns . ')');
-        $db->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT); CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER, public_slug TEXT, is_published INTEGER); CREATE TABLE skills (id INTEGER PRIMARY KEY, portfolio_id INTEGER, skill_name TEXT)");
-        $db->exec("INSERT INTO users VALUES (1,'active'),(2,'active'); INSERT INTO portfolios VALUES (1,1,'contact-owner',1),(2,2,'other-owner',1)");
+        $db->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT, deletion_requested_at TEXT NULL); CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER, public_slug TEXT, is_published INTEGER); CREATE TABLE skills (id INTEGER PRIMARY KEY, portfolio_id INTEGER, skill_name TEXT)");
+        $db->exec("INSERT INTO users (id, account_status) VALUES (1,'active'),(2,'active'); INSERT INTO portfolios VALUES (1,1,'contact-owner',1),(2,2,'other-owner',1)");
         $context = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(1), 1);
         $other = AuthorizedPortfolioContext::fromValidatedOwnership(AuthenticatedUserContext::fromValidatedUser(2), 2);
         $id = createAuthorizedPersonalInfo($db, $context, array_map('trim', $profile));

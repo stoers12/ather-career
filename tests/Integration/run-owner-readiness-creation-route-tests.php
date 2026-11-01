@@ -99,13 +99,13 @@ try {
     putenv('DB_USER=root');
     putenv('DB_PASSWORD=' . $rootPassword);
     $db = new PDO("mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4", 'root', $rootPassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    $db->exec('CREATE TABLE users (id INT PRIMARY KEY, account_status VARCHAR(20) NOT NULL, authz_version INT NOT NULL)');
+    $db->exec('CREATE TABLE users (id INT PRIMARY KEY, account_status VARCHAR(20) NOT NULL, authz_version INT NOT NULL, deletion_requested_at TIMESTAMP NULL)');
     $db->exec('CREATE TABLE portfolios (id INT AUTO_INCREMENT PRIMARY KEY, owner_user_id INT NOT NULL UNIQUE, legacy_owner_user_id INT NULL)');
     $db->exec('CREATE TABLE personal_info (id INT PRIMARY KEY, portfolio_id INT NOT NULL)');
     $db->exec('CREATE TABLE onboarding_completions (user_id INT PRIMARY KEY, portfolio_id INT NOT NULL, profile_id INT NOT NULL)');
     $db->exec("CREATE TABLE owner_journey_cutover (id INT PRIMARY KEY,revision VARBINARY(64),snapshot_count INT,snapshot_digest BINARY(32),captured_at DATETIME(6))");
     $db->exec("INSERT INTO owner_journey_cutover VALUES (1,'owner-journey-cutover-v1',0,UNHEX(SHA2('[]',256)),UTC_TIMESTAMP(6))");
-    for ($id = 1; $id <= 16; $id++) { $db->exec("INSERT INTO users VALUES ({$id}, 'active', 1)"); }
+    for ($id = 1; $id <= 16; $id++) { $db->exec("INSERT INTO users (id, account_status, authz_version) VALUES ({$id}, 'active', 1)"); }
     foreach (['false','unknown','missing','malformed','stale','identity_mismatch','authz_mismatch','true','expired','session_authz_mismatch','invalid_session'] as $state) {
         foreach ([true,false] as $csrf) {
             [$status,$count]=routeCase($db,1,$state,$csrf,['email_verified'=>'true','user_id'=>'13']);

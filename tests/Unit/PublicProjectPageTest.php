@@ -19,7 +19,7 @@ final class PublicProjectPageTest extends TestCase
     {
         $this->database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $this->database->exec(
-            "CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT NOT NULL);
+            "CREATE TABLE users (id INTEGER PRIMARY KEY, account_status TEXT NOT NULL, deletion_requested_at TEXT NULL);
              CREATE TABLE portfolios (id INTEGER PRIMARY KEY, owner_user_id INTEGER NOT NULL, public_slug TEXT, is_published INTEGER NOT NULL, published_at TEXT NULL);
              CREATE TABLE personal_info (id INTEGER PRIMARY KEY, portfolio_id INTEGER NOT NULL UNIQUE, full_name TEXT, professional_title TEXT, hero_headline TEXT, location TEXT, about_me TEXT,
                 work_description TEXT, linkedin_url TEXT, github_url TEXT, instagram_url TEXT, facebook_url TEXT, website_url TEXT, profile_image_path TEXT,

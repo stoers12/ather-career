@@ -36,4 +36,6 @@ Backend: Claude. Frontend: Codex (slice FE-02, decision ق-33). Rule 2 of [ENGIN
 
 ## Not part of this contract
 
-Notifications, account and security, privacy and data. They are phase C features (P-01…P-05); each gets its own contract when its backend exists. Until then, **no sections, links or disabled placeholders for them appear on the page.**
+Notifications, and account and security. They are phase C features (P-01…P-04); each gets its own contract when its backend exists. Until then, **no sections, links or disabled placeholders for them appear on the page.**
+
+Privacy and data (P-05) now has its contract: [account-data-rights.md](account-data-rights.md). It adds `data_rights` to the template data and the `#data` section.

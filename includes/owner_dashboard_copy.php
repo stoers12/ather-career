@@ -161,7 +161,7 @@ function ownerPersistLocale(string $locale): void
 function ownerLanguageUrl(string $locale): string
 {
     $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/owner.php'), PHP_URL_PATH);
-    if (!in_array($path, ['/owner.php', '/owner_profile.php', '/owner_projects.php', '/owner_experiences.php', '/owner_messages.php', '/owner_publication.php', '/owner_settings.php', '/owner/evidence-hub'], true)
+    if (!in_array($path, ['/owner.php', '/owner_profile.php', '/owner_projects.php', '/owner_experiences.php', '/owner_messages.php', '/owner_publication.php', '/owner_settings.php', '/owner_account_deletion.php', '/owner/evidence-hub'], true)
         && (!is_string($path) || preg_match('@^/owner/projects/[1-9][0-9]*/evidence$@D', $path) !== 1)) {
         $path = '/owner.php';
     }

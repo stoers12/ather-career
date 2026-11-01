@@ -87,6 +87,7 @@ final class HttpValidationContractTest
             'handlers/owner_login.php' => "header('Location: ' . \$authorization['url'], true, 302)",
             'handlers/owner_register.php' => "header('Location: ' . \$authorization['url'], true, 302)",
             'handlers/owner_switch_account.php' => "header('Location: ' . \$authorization['url'], true, 302)",
+            'handlers/owner_reauthenticate.php' => "header('Location: ' . \$authorization['url'], true, 302)",
             'handlers/owner_auth_retry.php' => "header('Location: ' . \$authorization['url'], true, 302)",
             'handlers/owner_logout.php' => "header('Location: ' . \$logoutUrl, true, 303)",
         ];
